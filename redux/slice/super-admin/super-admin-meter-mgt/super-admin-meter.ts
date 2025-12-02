@@ -59,7 +59,7 @@ export const getAllMeters = createAsyncThunk(
     ) => {
         try {
             const res = await axiosInstance.get(
-                `/api/v1/meters?${limit}${page}`
+                `/api/v1/meters?page=${page}&limit=${limit}`
             );
             return res.data;
         } catch (error: any) {

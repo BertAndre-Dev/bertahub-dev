@@ -2,20 +2,30 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '@/utils/axiosInstance';
 
 
-// get all users by estate
+// get all users by estate (with pagination)
 export const getAllUsersByEstate = createAsyncThunk(
-    'super-admin-user/getAllUsersByEstate',
-    async (estateId: string, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.get(`/api/v1/user-mgt/estate/${estateId}`);
-            return res.data;
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
-        }
+  "super-admin-user/getAllUsersByEstate",
+  async (
+    {
+      estateId,
+      page = 1,
+      limit = 10,
+    }: { estateId: string; page?: number; limit?: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await axiosInstance.get(
+        `/api/v1/user-mgt/estate/${estateId}?page=${page}&limit=${limit}`
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error?.response?.data?.message || "Failed to fetch users",
+      });
     }
+  }
 );
+
 
 
 // get individual user

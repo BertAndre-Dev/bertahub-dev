@@ -140,16 +140,17 @@ const adminMeterSlice = createSlice({
             .addCase(getAllEstateMeter.fulfilled, (state, action) => {
                 state.getAllEstateMeterState = "succeeded";
                 state.status = "succeeded";
+
+                const pagination = action.payload?.pagination;
                 state.allAdminMeters = {
                     success: action.payload?.success ?? true,
-                    message:
-                        action.payload?.message ?? "Estate meters retrieved successfully.",
+                    message: action.payload?.message ?? "Estate meters retrieved successfully.",
                     data: action.payload?.data || [],
-                    pagination: action.payload?.pagination || {
-                        total: action.payload?.data?.length ?? 0,
-                        currentPage: 1,
-                        totalPages: 1,
-                        pageSize: 10,
+                    pagination: {
+                        total: pagination?.total ?? (action.payload?.data?.length ?? 0),
+                        currentPage: Number(pagination?.currentPage) || 1,
+                        totalPages: Number(pagination?.totalPages) || 1,
+                        pageSize: Number(pagination?.pageSize) || 10,
                     },
                 };
             })

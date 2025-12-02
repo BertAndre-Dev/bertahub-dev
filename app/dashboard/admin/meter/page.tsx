@@ -151,8 +151,21 @@ export default function AdminMeterManagement() {
           showPagination
           paginationInfo={{
             total: pagination?.total || 0,
-            current: Number(pagination?.page) || 1,
-            pageSize: Number(pagination?.limit) || 10,
+            current: Number(pagination?.currentPage) || 1,
+            pageSize: Number(pagination?.pageSize) || 10,
+          }}
+          onPageChange={(page) => {
+            if (!estateId) return; // ✅ Correct estate validation
+
+            dispatch(
+              getAllEstateMeter({
+                estateId, // ✅ Use correct estate ID
+                page,     // ✅ Use new page
+                limit: Number(pagination?.pageSize) || 10,
+              })
+            )
+              .unwrap()
+              .catch(() => toast.error("Failed to change page"));
           }}
         />
       </Card>

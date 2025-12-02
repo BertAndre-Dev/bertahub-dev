@@ -83,7 +83,7 @@ export default function SuperAdminUserPage() {
 
   // ✅ Fetch all estates on mount
   useEffect(() => {
-    dispatch(getAllEstates())
+   dispatch(getAllEstates({ page: 1, limit: Number(pagination?.pageSize) || 10 }))
       .unwrap()
       .catch(() => toast.error("Failed to fetch estates"))
   }, [dispatch])
@@ -91,11 +91,18 @@ export default function SuperAdminUserPage() {
   // ✅ Fetch users for the selected estate
   useEffect(() => {
     if (selectedEstate?.value) {
-      dispatch(getAllUsersByEstate(selectedEstate.value))
+      dispatch(
+        getAllUsersByEstate({
+          estateId: selectedEstate.value,
+          page: 1,
+          limit: Number(pagination?.pageSize) || 10,
+        })
+      )
         .unwrap()
-        .catch(() => toast.error("Failed to fetch users for selected estate"))
+        .catch(() => toast.error("Failed to fetch users for selected estate"));
     }
-  }, [selectedEstate, dispatch])
+  }, [selectedEstate, dispatch]);
+
 
   const handleEstateModal = (user?: SuperAdminUserData) => {
     setSelectedUser(user || null)
@@ -118,7 +125,13 @@ export default function SuperAdminUserPage() {
         toast.success(`${user.firstName} has been activated.`)
       }
 
-      if (selectedEstate?.value) await dispatch(getAllUsersByEstate(selectedEstate.value)).unwrap()
+      if (selectedEstate?.value) await dispatch(
+        getAllUsersByEstate({
+          estateId: selectedEstate.value,
+          page: 1,
+          limit: Number(pagination?.pageSize) || 10,
+        })
+      ).unwrap()
     } catch (err: any) {
       toast.error(err?.message || "Failed to update user status.")
     }
@@ -140,7 +153,13 @@ export default function SuperAdminUserPage() {
               try {
                 await dispatch(deleteUser(id)).unwrap()
                 toast.success(`${name} deleted successfully!`)
-                if (selectedEstate?.value) await dispatch(getAllUsersByEstate(selectedEstate.value)).unwrap()
+                if (selectedEstate?.value) await dispatch(
+        getAllUsersByEstate({
+          estateId: selectedEstate.value,
+          page: 1,
+          limit: Number(pagination?.pageSize) || 10,
+        })
+      ).unwrap()
               } catch (err: any) {
                 toast.error(err?.message || "Failed to delete user.")
               }
@@ -248,8 +267,21 @@ export default function SuperAdminUserPage() {
           showPagination={true}
           paginationInfo={{
             total: pagination?.total || 0,
-            current: pagination?.currentPage || 1,
-            pageSize: pagination?.pageSize || 10,
+            current: Number(pagination?.currentPage) || 1,
+            pageSize: Number(pagination?.pageSize) || 10,
+          }}
+          onPageChange={(page) => {
+            if (!selectedEstate?.value) return; // ✅ Prevent null access
+
+            dispatch(
+              getAllUsersByEstate({
+                estateId: selectedEstate.value,
+                page,
+                limit: Number(pagination?.pageSize) || 10,
+              })
+            )
+              .unwrap()
+              .catch(() => toast.error("Failed to change page"));
           }}
         />
       </Card>

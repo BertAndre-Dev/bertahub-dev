@@ -87,16 +87,17 @@ const superAdminUserSlice = createSlice({
             .addCase(getAllUsersByEstate.fulfilled, (state, action) => {
                 state.getAllUsersByEstateState = "succeeded";
                 state.status = "succeeded";
-                // ✅ Now store both data and pagination
+
+                const pagination = action.payload?.pagination;
                 state.allSuperAdminUsers = {
                     success: action.payload?.success ?? true,
                     message: action.payload?.message ?? "Estates users retrieved successfully",
                     data: action.payload?.data || [],
-                    pagination: action.payload?.pagination || {
-                    total: 0,
-                    currentPage: 1,
-                    totalPages: 1,
-                    pageSize: 10,
+                    pagination: {
+                        total: pagination?.total ?? (action.payload?.data?.length ?? 0),
+                        currentPage: Number(pagination?.currentPage) || 1,
+                        totalPages: Number(pagination?.totalPages) || 1,
+                        pageSize: Number(pagination?.pageSize) || 10,
                     },
                 };
             })

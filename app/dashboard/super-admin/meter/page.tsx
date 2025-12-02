@@ -55,12 +55,12 @@ export default function AdminMeterManagement() {
 
   const handleRefresh = async () => {
     try {
-      await dispatch(getAllMeters({ page: 1, limit: 10 })).unwrap();
+      await dispatch(getAllMeters({ page: 1, limit: Number(pagination?.pageSize) || 10 })).unwrap();
     } catch (error: any) {
-      console.error("Failed to refresh meters:", error);
       toast.error("Failed to refresh meter list");
     }
   };
+
 
   const handleOpenRemoveModal = (meter: AdminMeterData) => {
     setSelectedMeter(meter);
@@ -158,14 +158,17 @@ export default function AdminMeterManagement() {
         <Table
           columns={columns}
           data={allSuperAdminMeters}
-          emptyMessage={loading ? "Loading estate meters..." : "No meter found."}
           showPagination
           paginationInfo={{
             total: pagination?.total || 0,
             current: Number(pagination?.currentPage) || 1,
             pageSize: Number(pagination?.pageSize) || 10,
           }}
+          onPageChange={(page) => {
+            dispatch(getAllMeters({ page, limit: Number(pagination?.pageSize) || 10 }));
+          }}
         />
+
       </Card>
 
       {open && selectedMeter && (

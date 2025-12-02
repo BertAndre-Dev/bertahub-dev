@@ -31,14 +31,20 @@ export const createEstate = createAsyncThunk(
 // get all estate
 export const getAllEstates = createAsyncThunk(
     'super-admin-est-mgt/getAllEstates',
-    async (_, { rejectWithValue }) => {
+    async (
+        {
+            limit = 10,
+            page = 1,
+        }: { page?: number; limit?: number},
+        { rejectWithValue }
+    ) => {
         try {
-            const res = await axiosInstance.get('/api/v1/estate-mgt');
+            const res = await axiosInstance.get(
+                `/api/v1/estate-mgt?page=${page}&limit=${limit}`
+            );
             return res.data;
         } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
+            return rejectWithValue(error.response?.data);;
         }
     }
 );

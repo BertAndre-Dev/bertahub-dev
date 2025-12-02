@@ -44,7 +44,8 @@ const AssignMeterForm: React.FC<AssignMeterFormProps> = ({ close, refresh }) => 
     const loadEstates = async () => {
       try {
         setLoading(true);
-        const res = await dispatch(getAllEstates()).unwrap();
+        const res = await  dispatch(getAllEstates({ page: 1, limit: 10 })).unwrap()
+
 
         if (res?.success && res.data) {
           const options = res.data.map((estate: any) => ({
@@ -121,9 +122,8 @@ const AssignMeterForm: React.FC<AssignMeterFormProps> = ({ close, refresh }) => 
               required
             />
           </div>
-
           {/* Estate Dropdown */}
-          <div>
+          <div className="space-y-2">
             <Label>Estate</Label>
             {loading ? (
               <div className="border rounded-md px-3 py-2 text-sm text-gray-500 bg-gray-50">
@@ -131,14 +131,18 @@ const AssignMeterForm: React.FC<AssignMeterFormProps> = ({ close, refresh }) => 
               </div>
             ) : (
               <Select
-                options={estates}
                 value={formData.estateId}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                   setFormData((prev) => ({ ...prev, estateId: e.target.value }))
                 }
+                options={[
+                  { value: "", label: "Select an estate" }, // Placeholder option
+                  ...estates,
+                ]}
               />
             )}
           </div>
+
 
           {/* Submit Button */}
           <Button type="submit" disabled={loading || !formData.estateId || !formData.meterNumber} className="w-full">

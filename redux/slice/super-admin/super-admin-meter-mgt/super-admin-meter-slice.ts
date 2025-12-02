@@ -133,19 +133,21 @@ const superAdminMeterSlice = createSlice({
             .addCase(getAllMeters.fulfilled, (state, action) => {
                 state.getAllMetersState = "succeeded";
                 state.status = "succeeded";
+
+                const pagination = action.payload?.pagination;
                 state.allSuperAdminMeter = {
                     success: action.payload?.success ?? true,
-                    message:
-                        action.payload?.message ?? "All meters retrieved successfully.",
+                    message: action.payload?.message ?? "All meters retrieved successfully.",
                     data: action.payload?.data || [],
-                    pagination: action.payload?.pagination || {
-                        total: action.payload?.data?.length ?? 0,
-                        currentPage: 1,
-                        totalPages: 1,
-                        pageSize: 10,
+                    pagination: {
+                        total: pagination?.total ?? (action.payload?.data?.length ?? 0),
+                        currentPage: Number(pagination?.currentPage) || 1,
+                        totalPages: Number(pagination?.totalPages) || 1,
+                        pageSize: Number(pagination?.pageSize) || 10,
                     },
                 };
             })
+
             .addCase(getAllMeters.rejected, (state, action) => {
                 state.getAllMetersState = "failed";
                 state.status = "failed";

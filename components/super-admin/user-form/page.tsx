@@ -54,7 +54,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
 
       setLoadingEstates(true);
       try {
-        const res = await dispatch(getAllEstates() as any);
+        const res = await await  dispatch(getAllEstates({ page: 1, limit: 10 })).unwrap()
         const payload = res?.payload || res;
         const data = payload?.data || payload;
         if (Array.isArray(data)) setEstates(data);

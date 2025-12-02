@@ -59,7 +59,7 @@ export default function EstatePage() {
 
   // Fetch estates on mount
   useEffect(() => {
-    dispatch(getAllEstates())
+    dispatch(getAllEstates({ page: 1, limit: Number(pagination?.pageSize) || 10 }))
       .unwrap()
       .catch(() => {
         toast.error("Failed to fetch estates")
@@ -86,7 +86,7 @@ export default function EstatePage() {
         toast.success("Estate created successfully!")
       }
       handleCloseModal()
-      await dispatch(getAllEstates()).unwrap()
+      await dispatch(getAllEstates({ page: 1, limit: Number(pagination?.pageSize) || 10 })).unwrap()
     } catch (err: any) {
       toast.error(err?.message || "Failed to save estate")
     }
@@ -103,7 +103,7 @@ export default function EstatePage() {
         await dispatch(activateEstate(estate.id)).unwrap()
         toast.success(`${estate.name} has been activated.`)
       }
-      await dispatch(getAllEstates()).unwrap()
+      await dispatch(getAllEstates({ page: 1, limit: Number(pagination?.pageSize) || 10 })).unwrap()
     } catch (err: any) {
       toast.error(err?.message || "Failed to update estate status.")
     }
@@ -134,7 +134,7 @@ export default function EstatePage() {
               try {
                 await dispatch(deleteEstate(id)).unwrap()
                 toast.success(`${name} deleted successfully!`)
-                await dispatch(getAllEstates()).unwrap()
+                await dispatch(getAllEstates({ page: 1, limit: Number(pagination?.pageSize) || 10 })).unwrap()
               } catch (err: any) {
                 toast.error(err?.message || "Failed to delete estate.")
               }
@@ -298,9 +298,10 @@ export default function EstatePage() {
           showPagination={true}
           paginationInfo={{
             total: pagination?.total || 0,
-            current: pagination?.currentPage || 1,
-            pageSize: pagination?.pageSize || 10,
+            current: Number(pagination?.currentPage) || 1,
+            pageSize: Number(pagination?.pageSize) || 10,
           }}
+          onPageChange={(page) => dispatch(getAllEstates({ page, limit: Number(pagination?.pageSize) || 10 }))}
         />
       </Card>
 

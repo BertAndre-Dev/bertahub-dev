@@ -82,20 +82,22 @@ const estateSlice = createSlice({
         state.getAllEstatesState = "isLoading";
         state.status = "isLoading";
       })
+
       .addCase(getAllEstates.fulfilled, (state, action) => {
         state.getAllEstatesState = "succeeded";
         state.status = "succeeded";
-        // ✅ Now store both data and pagination
+
+        const pagination = action.payload?.pagination;
         state.allEstates = {
-          success: action.payload?.success ?? true,
-          message: action.payload?.message ?? "Estates retrieved successfully",
-          data: action.payload?.data || [],
-          pagination: action.payload?.pagination || {
-            total: 0,
-            currentPage: 1,
-            totalPages: 1,
-            pageSize: 10,
-          },
+            success: action.payload?.success ?? true,
+            message: action.payload?.message ?? "Estates retrieved successfully",
+            data: action.payload?.data || [],
+            pagination: {
+                total: pagination?.total ?? (action.payload?.data?.length ?? 0),
+                currentPage: Number(pagination?.currentPage) || 1,
+                totalPages: Number(pagination?.totalPages) || 1,
+                pageSize: Number(pagination?.pageSize) || 10,
+            },
         };
       })
       .addCase(getAllEstates.rejected, (state, action) => {

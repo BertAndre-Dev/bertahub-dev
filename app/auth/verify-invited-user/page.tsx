@@ -37,11 +37,19 @@ export default function VerifyInvitedUserPage() {
     email: "",
     tempPassword: "",
     newPassword: "",
-  })
+  });
 
   const [showTempPassword, setShowTempPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
-  const [error, setError] = useState("")
+  const [error, setError] = useState("");
+
+  const passwordChecks = (password: string) => ({
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
+  });
 
   // 🔹 Decode the token from URL and autofill email/tempPassword
   useEffect(() => {
@@ -172,13 +180,30 @@ export default function VerifyInvitedUserPage() {
               onClick={() => setShowNewPassword(!showNewPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
-              {showNewPassword ? (
-                <EyeOff className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
-              )}
+              {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+
+          {/* Password checker */}
+          <ul className="mt-2 text-sm space-y-1">
+            {Object.entries(passwordChecks(formData.newPassword)).map(([key, valid]) => (
+              <li
+                key={key}
+                className={`flex items-center gap-2 ${
+                  valid ? "text-green-600" : "text-gray-500"
+                }`}
+              >
+                <span className="font-bold">{valid ? "✔" : "✖"}</span>
+                <span>
+                  {key === "length" && "At least 8 characters"}
+                  {key === "uppercase" && "Contains uppercase letter"}
+                  {key === "lowercase" && "Contains lowercase letter"}
+                  {key === "number" && "Contains a number"}
+                  {key === "special" && "Contains a special character"}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Submit */}
