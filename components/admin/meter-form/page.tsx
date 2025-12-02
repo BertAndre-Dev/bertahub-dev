@@ -139,7 +139,11 @@ const AssignMeterForm: React.FC<AssignMeterFormProps> = ({ close, refresh, meter
                     </div>
                 ) : (
                     <Select
-                    options={entryOptions}
+                    options={[
+                      { value: "", label: "Select an address" }, // Placeholder option
+                      ...entryOptions,
+                    ]}
+                 
                     value={formData.addressId}
                     onChange={(e) =>
                         setFormData((prev) => ({ ...prev, addressId: e.target.value }))
