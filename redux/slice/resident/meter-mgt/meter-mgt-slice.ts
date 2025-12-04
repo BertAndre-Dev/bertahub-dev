@@ -4,6 +4,7 @@ import {
   vendPower,
   reconnectMeter,
   disconnectMeter,
+  getMeterVendHistory
 } from "./meter-mgt";
 
 interface VendorData {
@@ -45,14 +46,51 @@ export interface ResidentMeterResponse {
   pagination: Pagination;
 }
 
+//// VEND HISTORY
+
+export interface MeterVendHistoryResponse {
+  success: boolean;
+  message: string;
+  data: EnergyListItem[];
+  pagination: Pagination;
+}
+
+export interface EnergyListItem {
+  tt?: string;
+  amount: string;
+  krn?: string;
+  sgc?: string;
+  token?: string;
+  taxRate: string;
+  unit: string;
+  at?: string;
+  ti: string;
+  price: string;
+  receiptNo: string;
+  taxAmount: string;
+  tiDesc: string;
+  device: string;
+  value: string;
+  createdAt: string;
+}
+
+export interface Pagination {
+  total: number;
+  page: string;
+  limit: string;
+  pages: number;
+}
+
 export interface ResidentMeterState {
   getMeterByAddressState: "idle" | "isLoading" | "succeeded" | "failed";
   vendPowerState: "idle" | "isLoading" | "succeeded" | "failed";
   reconnectMeterState: "idle" | "isLoading" | "succeeded" | "failed";
   disconnectMeterState: "idle" | "isLoading" | "succeeded" | "failed";
+  getMeterVendHistoryState: "idle" | "isLoading" | "succeeded" | "failed";
   status: "idle" | "isLoading" | "succeeded" | "failed";
   residentMeter: ResidentMeterData | null;
   allResidentMeters: ResidentMeterResponse | null;
+  meterVendHistory: MeterVendHistoryResponse | null;
   error: string | null;
 }
 
@@ -61,9 +99,11 @@ const initialState: ResidentMeterState = {
   vendPowerState: "idle",
   reconnectMeterState: "idle",
   disconnectMeterState: "idle",
+  getMeterVendHistoryState: "idle",
   status: "idle",
   residentMeter: null,
   allResidentMeters: null,
+  meterVendHistory: null,
   error: null,
 };
 
@@ -93,6 +133,35 @@ const residentMeterSlice = createSlice({
         state.error = action.error.message || "Failed to fetch meter";
       });
 
+    // ✅ GET METER BY ADDRESS
+    builder
+    .addCase(getMeterVendHistory.pending, (state) => {
+        state.getMeterVendHistoryState = "isLoading";
+        state.status = "isLoading";
+    })
+    .addCase(getMeterVendHistory.fulfilled, (state, action) => {
+        state.getMeterVendHistoryState = "succeeded";
+        state.status = "succeeded";
+        state.meterVendHistory = {
+            success: action.payload?.success ?? true,
+            message:
+            action.payload?.message ??
+            "Bills retrieved successfully.",
+            data: action.payload?.data || [],
+            pagination: action.payload?.pagination || {
+                total: action.payload?.data?.length ?? 0,
+                currentPage: 1,
+                totalPages: 1,
+                pageSize: 10,
+            },
+        };
+    })
+    .addCase(getMeterVendHistory.rejected, (state, action) => {
+        state.getMeterVendHistoryState = "failed";
+        state.status = "failed";
+        state.error = action.error.message || "Failed to fetch bills for estate";
+    });
+
     // ✅ VEND POWER
     builder
       .addCase(vendPower.pending, (state) => {
@@ -110,11 +179,11 @@ const residentMeterSlice = createSlice({
               success: true,
               message: "Vending successfully",
               data: [newTras],
-              pagination: {
-                total: 1,
-                currentPage: 1,
-                totalPages: 1,
-                pageSize: 10,
+              pagination: action.payload?.pagination || {
+                  total: action.payload?.data?.length ?? 0,
+                  currentPage: 1,
+                  totalPages: 1,
+                  pageSize: 10,
               },
             };
           }

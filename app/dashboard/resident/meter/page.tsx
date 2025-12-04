@@ -7,15 +7,56 @@ import { toast } from "react-toastify";
 import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getMeterByAddress, reconnectMeter, disconnectMeter } from "@/redux/slice/resident/meter-mgt/meter-mgt";
+import { getMeterByAddress, reconnectMeter, disconnectMeter, getMeterVendHistory } from "@/redux/slice/resident/meter-mgt/meter-mgt";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import VendPower from "@/components/resident/vend-power/page";
+import Table from "@/components/tables/list/page";
+
+
+export interface MeterVendHistoryResponse {
+  success: boolean;
+  message: string;
+  data: EnergyListItem[];
+ 
+}
+
+
+export interface EnergyListItem {
+  tt?: string;
+  amount: string;
+  krn?: string;
+  sgc?: string;
+  token?: string;
+  taxRate: string;
+  unit: string;
+  at?: string;
+  ti: string;
+  price: string;
+  receiptNo: string;
+  taxAmount: string;
+  tiDesc: string;
+  device: string;
+  value: string;
+  createdAt: string;
+}
+
+
 
 export default function ResidentMeter() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
   const [addressId, setAddressId] = useState<string | null>(null);
   const [walletId, setWalletId] = useState<string | null>(null);
+  const { meterVendHistory, pagination, loading } = useSelector((state: RootState) => {
+    const vendState = state.residentMeter as any
+    const data = vendState.meterVendHistory?.data || []
+    const pagination = vendState.meterVendHistory?.pagination || {}
+    return {
+      meterVendHistory: Array.isArray(data) ? data : [],
+      pagination,
+      loading: vendState.loading || false,
+    }
+  })
 
   const meter = useSelector((state: RootState) => state.residentMeter.residentMeter);
 
@@ -40,6 +81,20 @@ export default function ResidentMeter() {
       }
     })();
   }, [dispatch]);
+
+
+  useEffect(() => {
+    if (meter?.meterNumber) {
+      dispatch(
+        getMeterVendHistory({
+          meterNumber: meter.meterNumber,
+          page: 1,
+          limit: 10,
+        })
+      );
+    }
+  }, [meter?.meterNumber]);
+
 
   const handleRefresh = async () => {
     if (!addressId) return;
@@ -71,6 +126,55 @@ export default function ResidentMeter() {
       toast.error("Failed to toggle meter status");
     }
   };
+
+
+  const vendColumns = [
+    {
+      key: "createdAt",
+      header: "Date",
+      accessor: (row: EnergyListItem & { transTime?: string }) => {
+        if (!row.transTime) return "N/A";
+        const date = new Date(row.transTime);
+        return date.toLocaleString("en-NG", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      },
+    },
+
+    {
+      key: "amount",
+      header: "Amount (₦)",
+      accessor: (row: EnergyListItem) => Number(row.amount).toLocaleString(),
+    },
+    {
+      key: "units",
+      header: "Units Bought",
+      accessor: (row: EnergyListItem) => `${row.value} ${row.unit}`,
+    },
+    {
+      key: "token",
+      header: "Token",
+      accessor: (row: EnergyListItem) => row.token || "N/A",
+    },
+    {
+      key: "price",
+      header: "Price (₦/kWh)",
+      accessor: (row: EnergyListItem) =>
+        row.price ? Number(row.price).toLocaleString() : "N/A",
+    },
+    {
+      key: "device",
+      header: "Meter Number",
+      accessor: (row: EnergyListItem) => row.device,
+    },
+  ];
+
+
 
   return (
     <div className="space-y-6">
@@ -105,6 +209,24 @@ export default function ResidentMeter() {
           </div>
         </CardContent>
       </Card>
+
+
+      <Card className="p-4">
+          <h2 className="font-semibold mb-4">Vend History</h2>
+          <Table
+            columns={vendColumns}
+            data={meterVendHistory || []}
+            emptyMessage={
+              loading ? "Loading Vend History..." : "No vend history available."
+            }
+            showPagination
+            paginationInfo={{
+              total: pagination?.total || meterVendHistory.length || 0,
+              current: Number(pagination?.page) || 1,
+              pageSize: Number(pagination?.limit) || 10,
+            }}
+          />
+        </Card>
 
       {open && meter && walletId && addressId && (
         <Modal visible={open} onClose={handleOpenModal}>

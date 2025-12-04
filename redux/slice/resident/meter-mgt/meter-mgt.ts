@@ -38,7 +38,7 @@ export const vendPower = createAsyncThunk(
     "meter-mgt/vendPower",
     async (data: VendData, { rejectWithValue }) => {
         try {
-            const res = await axiosInstance.post("/api/v1/meters/vend/trial", data);
+            const res = await axiosInstance.post("/api/v1/meters/vend", data);
             return res.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data);
@@ -68,6 +68,26 @@ export const reconnectMeter = createAsyncThunk(
       return res.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data);
+    }
+  }
+);
+
+
+export const getMeterVendHistory = createAsyncThunk(
+  "meter-mgt/getMeterVendHistory",
+  async (
+    { meterNumber, page = 1, limit = 10 }: { meterNumber: string; page?: number; limit?: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await axiosInstance.get(
+        `/api/v1/meters/vend-history/${meterNumber}?page=${page}&limit=${limit}`
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error?.response?.data?.message || "Failed to fetch vend history",
+      });
     }
   }
 );
