@@ -19,27 +19,30 @@ export default function ClientProvider({ children }: { children: ReactNode }) {
 
   if (!mounted) return null;
 
-  // Paths that should NOT use the Dashboard layout
+  // Paths that should NOT use the Dashboard layout (exact match only)
   const excludePaths = [
     '/',
     '/auth/sign-up',
     '/auth/login',
     '/auth/forgot-password',
+    '/security/visitor',
     '/error',
   ];
 
-  // Check if current path matches any excluded path
-  const isExcluded = excludePaths.some(path => pathName.startsWith(path));
+  // EXACT match only
+  const isExcluded = excludePaths.includes(pathName);
 
   return (
     <Provider store={store}>
       <PersistGate persistor={persistor}>
         <ToastContainer position="top-center" autoClose={3000} />
+
         {isExcluded ? (
           children
         ) : (
           <DashboardLayout>{children}</DashboardLayout>
         )}
+        
       </PersistGate>
     </Provider>
   );
