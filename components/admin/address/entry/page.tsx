@@ -36,6 +36,8 @@ export default function EntryPage() {
   const [fields, setFields] = useState<any[]>([]);
   const [stats, setStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState<any>({});
+
 
   // ✅ Fetch all data
   const fetchAllData = async () => {
@@ -74,6 +76,10 @@ export default function EntryPage() {
       const entryRes = await dispatch(
         getEntriesByField({ fieldId, page: 1, limit: 10 })
       ).unwrap();
+
+      setEntries(entryRes?.data || []);
+      setPagination(entryRes?.pagination || {});
+
 
       const allEntries = (entryRes?.data || []).map((e: any) => ({
         id: e.id,
@@ -305,12 +311,32 @@ export default function EntryPage() {
           emptyMessage={loading ? "Loading entries..." : "No entries found."}
           showPagination
           paginationInfo={{
-            total: mappedEntries.length,
-            current: 1,
-            pageSize: 10,
+            total: pagination.total ?? 0,
+            current: pagination.currentPage ?? 1,
+            pageSize: pagination.pageSize ?? 10,
+          }}
+          onPageChange={(page) => {
+            const fieldId = fields[0]?.id || fields[0]?._id;
+            if (!fieldId) return;
+
+            dispatch(
+              getEntriesByField({
+                fieldId,
+                page,
+                limit: pagination.pageSize ?? 10
+              })
+            )
+              .unwrap()
+              .then((res) => {
+                setEntries(res?.data || []);
+                setPagination(res?.pagination || {});
+              })
+              .catch(() => toast.error("Failed to change page"));
           }}
         />
+
       </Card>
+
 
       {/* Modal */}
       {open && user?.estateId && (

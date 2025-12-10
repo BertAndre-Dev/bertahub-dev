@@ -219,11 +219,20 @@ export default function AddressField() {
           showPagination
           paginationInfo={{
             total: pagination?.total || 0,
-            current: pagination?.currentPage || 1,
-            pageSize: pagination?.pageSize || 10,
+            current: Number(pagination?.currentPage) || 1,
+            pageSize: Number(pagination?.pageSize) || 10,
+          }}
+          onPageChange={(page) => {
+            if (!user?.estateId) return;
+            dispatch(
+              getFieldByEstate(user.estateId)
+            )
+              .unwrap()
+              .catch(() => toast.error("Failed to change page"));
           }}
         />
       </Card>
+
 
       {open && user?.estateId && (
         <Modal visible={open} onClose={handleCloseModal}>
