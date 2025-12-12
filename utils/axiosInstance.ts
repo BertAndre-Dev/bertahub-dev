@@ -27,25 +27,43 @@ axiosInstance.interceptors.request.use(
 );
 
 // Response interceptor to handle errors
-axiosInstance.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      toast.warning("Your session has expired. Please log in again.", {
-        position: "top-right",
-        autoClose: 3000,
-        pauseOnHover: true,
-        draggable: true,
-      });
+// axiosInstance.interceptors.response.use(
+//   (response: AxiosResponse) => response,
+//   (error: AxiosError) => {
+//     if (error.response?.status === 401) {
+//       toast.warning("Your session has expired. Please log in again.", {
+//         position: "top-right",
+//         autoClose: 3000,
+//         pauseOnHover: true,
+//         draggable: true,
+//       });
 
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/';
-      }
+//       if (typeof window !== 'undefined') {
+//         localStorage.removeItem('token');
+//         localStorage.removeItem('user');
+//         window.location.href = '/';
+//       }
+//     }
+//     return Promise.reject(error);
+//   }
+// );
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    const originalRequest = error.config;
+    if (
+      error.response?.status === 401 &&
+      !originalRequest?.url?.includes('/verify-invited-user')
+    ) {
+      toast.warning("Your session has expired. Please log in again.");
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }
 );
+
 
 export default axiosInstance;
