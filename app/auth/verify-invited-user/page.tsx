@@ -81,31 +81,42 @@ export default function VerifyInvitedUserPage() {
   }
 
   const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
-    const { email, tempPassword, newPassword } = formData
+    const { email, tempPassword, newPassword } = formData;
 
+    // 🔹 Basic validation
     if (!email || !tempPassword || !newPassword) {
-      setError("Please fill in all fields.")
-      return
+      setError("Please fill in all fields.");
+      return;
     }
 
     if (!email.includes("@")) {
-      setError("Please enter a valid email address.")
-      return
+      setError("Please enter a valid email address.");
+      return;
     }
 
     try {
-      const res = await dispatch(verifyInivitedUser(formData)).unwrap()
-      toast.success(res.message || "Account verified successfully.")
-      router.push("/") // redirect to login or dashboard
+      // 🔹 Attempt verification
+      const res = await dispatch(verifyInivitedUser(formData)).unwrap();
+
+      // 🔹 Success: show toast and navigate
+      toast.success(res?.message);
+      router.push("/"); // only navigate on success
+
     } catch (err: any) {
-      const message = err.res?.data?.message;
-      setError(message)
-      toast.error(message)
+      // 🔹 Extract error message safely
+      const message =
+        err?.message;
+      
+      setError(message);
+      toast.error(message);
+
+      // ❌ Do NOT navigate if there’s an error
     }
-  }
+  };
+
 
   return (
     <div className="max-w-md mx-auto space-y-8 py-10">

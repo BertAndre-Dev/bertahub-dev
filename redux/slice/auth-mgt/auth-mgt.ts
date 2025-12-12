@@ -127,9 +127,7 @@ export const iniviteUser = createAsyncThunk(
             const res = await axiosInstance.post('/api/v1/auth-mgt/invite-user', data);
             return res.data;
         } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
+            return rejectWithValue(error.response?.data);
         }
     }
 );
@@ -143,9 +141,7 @@ export const verifyInivitedUser = createAsyncThunk(
             const res = await axiosInstance.post('/api/v1/auth-mgt/verify-invited-user', data);
             return res.data;
         } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
+            return rejectWithValue(error.response?.data);
         }
     }
 );
