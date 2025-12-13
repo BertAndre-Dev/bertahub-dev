@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { FaCopy } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import Modal from "@/components/modal/page";
 import { toast } from "react-toastify";
@@ -159,8 +160,24 @@ export default function ResidentMeter() {
     {
       key: "token",
       header: "Token",
-      accessor: (row: EnergyListItem) => row.token || "N/A",
+      accessor: (row: EnergyListItem) => {
+        if (!row.token) return "N/A";
+
+        return (
+          <div className="flex items-center gap-2">
+            <span className="truncate max-w-[180px]">{row.token}</span>
+            <button
+              onClick={() => navigator.clipboard.writeText(row.token!)}
+              className="text-blue-600 hover:text-blue-800"
+              title="Copy Token"
+            >
+              <FaCopy size={14} />
+            </button>
+          </div>
+        );
+      },
     },
+
     {
       key: "price",
       header: "Price (₦/kWh)",

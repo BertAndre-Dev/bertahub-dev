@@ -70,7 +70,7 @@ export default function LoginPage() {
         } else if (role === "security") {
           router.push("/dashboard/security/dashboard")
         } else {
-          router.push("/dashboard/resident/dashboard")
+          router.push("/dashboard/resident/bills")
         }
       } else {
         toast.error(res?.message || "Login failed. Please try again.")

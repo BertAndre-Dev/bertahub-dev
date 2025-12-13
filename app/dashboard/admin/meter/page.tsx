@@ -46,6 +46,8 @@ export default function AdminMeterManagement() {
   const [open, setOpen] = useState(false);
   const [estateId, setEstateId] = useState<string | null>(null);
   const [selectedMeter, setSelectedMeter] = useState<AdminMeterData | null>(null);
+  const [search, setSearch] = useState("");
+
 
   const { allAdminMeters, pagination, loading } = useSelector((state: RootState) => {
     const adminMeterState = state.adminMeter as any;
@@ -70,18 +72,18 @@ export default function AdminMeterManagement() {
         }
 
         setEstateId(foundEstateId);
-        await dispatch(getAllEstateMeter({ estateId: foundEstateId, page: 1, limit: 10 })).unwrap();
+        await dispatch(getAllEstateMeter({ estateId: foundEstateId, page: 1, limit: 10, search: search || undefined, })).unwrap();
       } catch (error: any) {
         toast.error(error?.message);
       }
     })();
-  }, [dispatch]);
+  }, [dispatch, search]);
 
   // ✅ This fixes your "Cannot find name 'handleRefresh'" error
   const handleRefresh = async () => {
     if (!estateId) return;
     try {
-      await dispatch(getAllEstateMeter({ estateId, page: 1, limit: 10 })).unwrap();
+      await dispatch(getAllEstateMeter({ estateId, page: 1, limit: 10 ,  search: search || undefined,})).unwrap();
     } catch (error: any) {
       toast.error(error?.message);
     }
@@ -149,6 +151,8 @@ export default function AdminMeterManagement() {
           data={allAdminMeters || []}
           emptyMessage={loading ? "Loading estate meters..." : "No meter found."}
           showPagination
+          enableSearch
+          onSearch={(value) => setSearch(value)}
           paginationInfo={{
             total: pagination?.total || 0,
             current: Number(pagination?.currentPage) || 1,

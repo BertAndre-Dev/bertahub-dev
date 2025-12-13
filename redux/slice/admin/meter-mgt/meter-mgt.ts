@@ -31,24 +31,25 @@ export const getAllEstateMeter = createAsyncThunk(
             estateId,
             page = 1,
             limit = 10,
-        }: { estateId: string; page?: number; limit?: number},
+            search = ""
+        }: { estateId: string; page?: number; limit?: number; search?: string;},
         { rejectWithValue }
     ) => {
         try {
+
+            const params = new URLSearchParams();
+
+            params.append("page", String(page));
+            params.append("limit", String(limit));
+
+            if (search) {
+                params.append("search", search);
+            }
             const res = await axiosInstance.get(
-                `/api/v1/meters/estate/${estateId}`,
-                {
-                    params: {
-                        page,
-                        limit
-                    },
-                }
-            );
+                `/api/v1/meters/estate/${estateId}?${params.toString()}`);
             return res.data;
         } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
+            return rejectWithValue(error.response?.data);
         }
     }
 );

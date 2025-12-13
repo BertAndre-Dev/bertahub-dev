@@ -24,6 +24,8 @@ interface TableProps<T> {
   showPagination?: boolean;
   paginationInfo?: PaginationInfo;
   onPageChange?: (newPage: number) => void;
+  enableSearch?: boolean; 
+  onSearch?: (value: string) => void;
 }
 
 export default function Table<T extends { id?: string }>({
@@ -34,15 +36,37 @@ export default function Table<T extends { id?: string }>({
   showPagination = false,
   paginationInfo,
   onPageChange,
+  enableSearch = false,
+  onSearch
 }: TableProps<T>) {
   if (!paginationInfo) {
+    
     showPagination = false;
   }
 
   const totalPages = paginationInfo ? Math.ceil(paginationInfo.total / paginationInfo.pageSize) : 1;
+  const [searchValue, setSearchValue] = React.useState("");
+
 
   return (
     <div className="overflow-hidden border rounded-lg">
+      {enableSearch && (
+        <div className="p-4 border-b bg-muted/30">
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchValue}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearchValue(value);
+              onSearch?.(value);
+            }}
+            className="h-9 w-64 rounded-md border border-border px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+      )}
+
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 border-b border-border">

@@ -39,9 +39,9 @@ export const securityNav = [
 
 
 export const residentNav = [
-    { label: "Dashboard", icon: FiHome, path: '/dashboard/resident/dashboard' },
+    // { label: "Dashboard", icon: FiHome, path: '/dashboard/resident/dashboard' },
     { label: "Bills Management", icon: FiUsers, path: '/dashboard/resident/bills'  },
     { label: "Meter Management", icon: FiUsers, path: '/dashboard/resident/meter'  },
     { label: "Transactions", icon: FiUsers, path: '/dashboard/resident/transaction'  },
-    { label: "Settings", icon: FiSettings, path: '/dashboard/resident/settings'  },
+    // { label: "Settings", icon: FiSettings, path: '/dashboard/resident/settings'  },
 ]

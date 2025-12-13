@@ -101,12 +101,12 @@ export default function AdminVisitorManagement() {
             header: "Created At",
             key: "createdAt",
             render: (item: any) =>
-            new Date(item.visitor.createdAt).toLocaleString(),
+            new Date(item.createdAt).toLocaleString(),
         },
         {
             header: "Visitor Code",
             key: "visitorCode",
-            render: (item: any) => item.visitor.visitorCode,
+            render: (item: any) => item.visitorCode,
         },
         {
             header: "Status",
@@ -114,12 +114,12 @@ export default function AdminVisitorManagement() {
             render: (item: any) => (
             <span
                 className={`px-2 py-1 rounded text-xs ${
-                item.visitor.isVerified
+                item.isVerified
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
                 }`}
             >
-                {item.visitor.isVerified ? "Verified" : "Not Verified"}
+                {item.isVerified ? "Verified" : "Not Verified"}
             </span>
             ),
         },
@@ -145,7 +145,7 @@ export default function AdminVisitorManagement() {
             header: "Verify",
             key: "verify",
             render: (item: any) => {
-            if (item.visitor.isVerified) {
+            if (item.isVerified) {
                 return (
                 <CheckCircle className="w-5 h-5 text-green-500 opacity-70" />
                 );
@@ -153,7 +153,7 @@ export default function AdminVisitorManagement() {
 
             return (
                 <button
-                onClick={() => handleVerify(item.visitor.visitorCode)}
+                onClick={() => handleVerify(item.visitorCode)}
                 className="text-blue-600 hover:text-blue-800"
                 >
                 <ShieldCheck className="w-5 h-5" />

@@ -27,37 +27,10 @@ axiosInstance.interceptors.request.use(
 );
 
 // Response interceptor to handle errors
-// axiosInstance.interceptors.response.use(
-//   (response: AxiosResponse) => response,
-//   (error: AxiosError) => {
-//     if (error.response?.status === 401) {
-//       toast.warning("Your session has expired. Please log in again.", {
-//         position: "top-right",
-//         autoClose: 3000,
-//         pauseOnHover: true,
-//         draggable: true,
-//       });
-
-//       if (typeof window !== 'undefined') {
-//         localStorage.removeItem('token');
-//         localStorage.removeItem('user');
-//         window.location.href = '/';
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );
-
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    const originalRequest = error.config;
-
-    // Only remove token and redirect for 401s NOT from verify-invited-user
-    if (
-      error.response?.status === 401 &&
-      !originalRequest?.url?.includes('/auth/verify-invited-user')
-    ) {
+    if (error.response?.status === 401) {
       toast.warning("Your session has expired. Please log in again.", {
         position: "top-right",
         autoClose: 3000,
@@ -71,11 +44,8 @@ axiosInstance.interceptors.response.use(
         window.location.href = '/';
       }
     }
-
     return Promise.reject(error);
   }
 );
-
-
 
 export default axiosInstance;

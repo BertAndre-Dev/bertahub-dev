@@ -49,24 +49,40 @@ export const reAssignMeter = createAsyncThunk(
 
 
 export const getAllMeters = createAsyncThunk(
-    "super-admin-meter/getAllMeters",
-    async (
-        {
-            limit = 10,
-            page = 1,
-        }: { page?: number; limit?: number},
-        { rejectWithValue }
-    ) => {
-        try {
-            const res = await axiosInstance.get(
-                `/api/v1/meters?page=${page}&limit=${limit}`
-            );
-            return res.data;
-        } catch (error: any) {
-            return rejectWithValue(error.response?.data);;
-        }
+  "super-admin-meter/getAllMeters",
+  async (
+    {
+      page = 1,
+      limit = 10,
+      search = "",
+    }: {
+      page: number;
+      limit: number;
+      search?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const params = new URLSearchParams();
+
+      params.append("page", String(page));
+      params.append("limit", String(limit));
+
+      if (search) {
+        params.append("search", search);
+      }
+
+      const res = await axiosInstance.get(
+        `/api/v1/meters?${params.toString()}`
+      );
+
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data);
     }
+  }
 );
+
 
 
 export const getMeter = createAsyncThunk(

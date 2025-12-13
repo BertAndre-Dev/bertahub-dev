@@ -30,6 +30,8 @@ export default function AdminMeterManagement() {
   const [open, setOpen] = useState(false);
   const [selectedMeter, setSelectedMeter] = useState<AdminMeterData | null>(null);
   const [assignMeter, setAssignMeter] = useState(false);
+  const [search, setSearch] = useState("");
+
 
   const { allSuperAdminMeters, pagination, loading } = useSelector((state: RootState) => {
     const superAdminMeter = state.superAdminMeter as any;
@@ -44,18 +46,18 @@ export default function AdminMeterManagement() {
   useEffect(() => {
     const fetchMeters = async () => {
       try {
-        await dispatch(getAllMeters({ page: 1, limit: 10 })).unwrap();
+        await dispatch(getAllMeters({ page: 1, limit: 10, search: search || undefined, })).unwrap();
       } catch (error: any) {
         console.error("Failed to fetch meters:", error);
         toast.error("Failed to fetch meters");
       }
     };
     fetchMeters();
-  }, [dispatch]);
+  }, [dispatch, search]);
 
   const handleRefresh = async () => {
     try {
-      await dispatch(getAllMeters({ page: 1, limit: Number(pagination?.pageSize) || 10 })).unwrap();
+      await dispatch(getAllMeters({ page: 1, limit: Number(pagination?.pageSize) || 10,  search: search || undefined, })).unwrap();
     } catch (error: any) {
       toast.error("Failed to refresh meter list");
     }
@@ -159,6 +161,8 @@ export default function AdminMeterManagement() {
           columns={columns}
           data={allSuperAdminMeters}
           showPagination
+          enableSearch
+          onSearch={(value) => setSearch(value)}
           paginationInfo={{
             total: pagination?.total || 0,
             current: Number(pagination?.currentPage) || 1,
