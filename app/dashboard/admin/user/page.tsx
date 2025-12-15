@@ -2,13 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Edit,
-  Power,
-  PowerOff,
-  Trash2,
-  Plus,
-} from "lucide-react";
+import { Power, PowerOff, Trash2, Plus } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import {
   getAllUsersByEstate,
@@ -45,6 +39,7 @@ export default function AdminUserPage() {
   const [open, setOpen] = useState(false);
   const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUserData | null>(null);
+
   const { allAdminUsers, pagination, loading } = useSelector((state: RootState) => {
     const userState = state.adminUser as any;
     const response = userState.allAdminUsers;
@@ -56,29 +51,15 @@ export default function AdminUserPage() {
     };
   });
 
-  const { allEstates } = useSelector((state: RootState) => {
-    const estateState = state.estate as any;
-    const data = estateState.allEstates?.data || [];
-    const pagination = estateState.allEstates?.pagination || {};
-    return {
-      allEstates: Array.isArray(data) ? data : [],
-      pagination,
-    };
-  });
-
-  // ✅ Fetch users function (can be reused anywhere)
-  const fetchAdminUsers = async () => {
-    if (!selectedEstate?.value) return;
+  const fetchAdminUsers = async (estateId?: string, page = 1) => {
+    if (!estateId) return;
     try {
-      await dispatch(
-        getAllUsersByEstate({ estateId: selectedEstate.value })
-      ).unwrap();
+      await dispatch(getAllUsersByEstate({ estateId, page, limit: 10 })).unwrap();
     } catch {
-      toast.error("Failed to refresh users.");
+      toast.error("Failed to fetch users.");
     }
   };
 
-  // ✅ Fetch signed in user → load estate users on mount
   useEffect(() => {
     (async () => {
       try {
@@ -88,7 +69,7 @@ export default function AdminUserPage() {
         const estateId = userRes?.data?.estateId;
         if (estateId) {
           setSelectedEstate({ label: "My Estate", value: estateId });
-          await dispatch(getAllUsersByEstate({ estateId })).unwrap();
+          await fetchAdminUsers(estateId);
         } else {
           toast.warning("No estate found for this user.");
         }
@@ -98,12 +79,9 @@ export default function AdminUserPage() {
     })();
   }, [dispatch]);
 
-// ✅ Fetch users whenever selected estate changes
-useEffect(() => {
-  fetchAdminUsers();
-}, [selectedEstate]);
-
-
+  useEffect(() => {
+    if (selectedEstate?.value) fetchAdminUsers(selectedEstate.value);
+  }, [selectedEstate]);
 
   const handleEstateModal = (user?: AdminUserData) => {
     setSelectedUser(user || null);
@@ -116,8 +94,8 @@ useEffect(() => {
   };
 
   const handleToggleStatus = async (user: AdminUserData) => {
+    if (!user.id) return;
     try {
-      if (!user.id) return;
       if (user.isActive) {
         await dispatch(suspendUser(user.id)).unwrap();
         toast.info(`${user.firstName} has been suspended.`);
@@ -125,8 +103,7 @@ useEffect(() => {
         await dispatch(activateUser(user.id)).unwrap();
         toast.success(`${user.firstName} has been activated.`);
       }
-      if (selectedEstate?.value)
-        await dispatch(getAllUsersByEstate({ estateId: selectedEstate.value })).unwrap();
+      if (selectedEstate?.value) fetchAdminUsers(selectedEstate.value);
     } catch (err: any) {
       toast.error(err?.message || "Failed to update user status.");
     }
@@ -137,14 +114,12 @@ useEffect(() => {
     try {
       await dispatch(deleteUser(id)).unwrap();
       toast.success(`${name} deleted successfully!`);
-      if (selectedEstate?.value)
-        await dispatch(getAllUsersByEstate({ estateId: selectedEstate.value })).unwrap();
+      if (selectedEstate?.value) fetchAdminUsers(selectedEstate.value);
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete user.");
     }
   };
 
-  // ✅ Table Columns
   const columns = [
     { key: "firstName", header: "First Name" },
     { key: "lastName", header: "Last Name" },
@@ -168,10 +143,6 @@ useEffect(() => {
       header: "Actions",
       render: (item: AdminUserData) => (
         <div className="flex items-center gap-1">
-          {/* <Button variant="ghost" size="sm" onClick={() => handleEstateModal(item)}>
-            <Edit className="w-4 h-4 text-blue-600" />
-          </Button> */}
-
           <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(item)}>
             {item.isActive ? (
               <PowerOff className="w-4 h-4 text-red-600" />
@@ -211,8 +182,13 @@ useEffect(() => {
           showPagination={true}
           paginationInfo={{
             total: pagination?.total || 0,
-            current: pagination?.page || 1,
-            pageSize: pagination?.limit || 10,
+            current: Number(pagination?.currentPage) || 1,
+            pageSize: Number(pagination?.pageSize) || 10,
+          }}
+          onPageChange={(page) => {
+            if (!selectedEstate?.value) return;
+
+            fetchAdminUsers(selectedEstate.value, page);
           }}
         />
       </Card>
@@ -220,7 +196,7 @@ useEffect(() => {
       {/* Modal */}
       {open && (
         <Modal visible={open} onClose={handleCloseModal}>
-          <InviteUserForm close={handleCloseModal} refresh={fetchAdminUsers}/>
+          <InviteUserForm close={handleCloseModal} refresh={() => fetchAdminUsers(selectedEstate?.value)} />
         </Modal>
       )}
     </div>

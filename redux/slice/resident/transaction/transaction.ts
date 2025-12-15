@@ -120,17 +120,17 @@ export const getTransaction = createAsyncThunk(
 
 export const verifyTransaction = createAsyncThunk(
   'transaction/verifyTransaction',
-  async ({ tx_ref, paymentType }: VerifyTransactionPayload, { rejectWithValue }) => {
+  async ({ tx_ref }: VerifyTransactionPayload, { rejectWithValue }) => {
     try {
-      if (!tx_ref || !paymentType) {
+      if (!tx_ref ) {
         throw new Error("Missing required fields for verification");
       }
 
-      console.log("📦 Verifying transaction:", { tx_ref, paymentType });
+      console.log("📦 Verifying transaction:", { tx_ref });
 
       // ✅ POST request, but parameters go in the query string
       const response = await axiosInstance.post(
-        `/api/v1/transaction-mgt/verify?tx_ref=${encodeURIComponent(tx_ref)}&paymentType=${encodeURIComponent(paymentType)}`,
+        `/api/v1/transaction-mgt/verify?tx_ref=${encodeURIComponent(tx_ref)}`,
         {} // empty request body
       );
 
