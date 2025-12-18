@@ -109,7 +109,7 @@ export default function TransactionPage() {
 
   const handleOpenModal = () => setOpen((prev) => !prev);
 
-  // 🔹 Fund Wallet Handler
+// 🔹 Fund Wallet Handler
   const handleFundWallet = async ({
     userId,
     walletId,
@@ -130,7 +130,14 @@ export default function TransactionPage() {
     country: string;
   }) => {
     try {
-      // 1️⃣ Create a transaction
+      // ⚠️ Check if amount exceeds the maximum limit BEFORE any transaction
+      const MAX_AMOUNT = 200_000;
+      if (amount > MAX_AMOUNT) {
+        toast.error(`You cannot fund more than ${MAX_AMOUNT.toLocaleString()}`);
+        return; // Stop further execution
+      }
+
+      // ✅ Only now we create a transaction
       const txRes = await dispatch(
         createTransaction({ userId, walletId, amount, description, type })
       ).unwrap();
@@ -138,7 +145,7 @@ export default function TransactionPage() {
       const tx_ref = txRes?.data?.tx_ref;
       if (!tx_ref) throw new Error("Transaction reference not found");
 
-      // 2️⃣ Initialize payment on Flutterwave
+      // Initialize payment on Flutterwave
       const paymentRes = await dispatch(
         initializePayment({
           tx_ref,
@@ -155,13 +162,16 @@ export default function TransactionPage() {
       const paymentUrl = paymentRes?.data?.link || paymentRes?.data?.url;
       if (!paymentUrl) throw new Error("Payment URL not received");
 
-      // 3️⃣ Redirect to Flutterwave
+      // Redirect to Flutterwave
       window.location.href = paymentUrl;
     } catch (err: any) {
       console.error("❌ Fund wallet error:", err);
       toast.error(err?.message || "Failed to fund wallet.");
     }
   };
+
+
+
 
   // 🔹 Automatically verify transaction when redirected back
   useEffect(() => {

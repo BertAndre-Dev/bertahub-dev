@@ -102,6 +102,12 @@ export default function FundWalletForm({
       return;
     }
 
+    const MAX_AMOUNT = 200_000;
+    if (amount > MAX_AMOUNT) {
+      toast.error(`You cannot fund more than ${MAX_AMOUNT.toLocaleString()}`);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -124,6 +130,7 @@ export default function FundWalletForm({
       setSubmitting(false);
     }
   };
+
 
   return (
     <Card className="w-full max-w-md mx-auto">
