@@ -37,7 +37,10 @@ interface AdminMeterData {
   lastCredit?: number;
   createdAt?: string; 
   updatedAt?: string; 
-  addressId: string;
+  addressId: {
+    id: string;
+    data: Record<string, string>;
+  };
   vendorData?: VendorData;
 }
 
@@ -47,6 +50,8 @@ export default function AdminMeterManagement() {
   const [estateId, setEstateId] = useState<string | null>(null);
   const [selectedMeter, setSelectedMeter] = useState<AdminMeterData | null>(null);
   const [search, setSearch] = useState("");
+  const [meters, setMeters] = useState<AdminMeterData[]>([]);
+
 
 
   const { allAdminMeters, pagination, loading } = useSelector((state: RootState) => {
@@ -99,9 +104,42 @@ export default function AdminMeterManagement() {
     setOpen(false);
   };
 
+  const getAllAddressKeys = (data: AdminMeterData[]) => {
+    const keys = new Set<string>();
+
+    data.forEach((item) => {
+      if (item.addressId?.data) {
+        Object.keys(item.addressId.data).forEach((key) => {
+          keys.add(key);
+        });
+      }
+    });
+
+    return Array.from(keys);
+  };
+
+  const getAddressColumns = (data: AdminMeterData[]) => {
+    if (!data.length) return [];
+
+    const addressKeys = getAllAddressKeys(data);
+
+    return addressKeys.map((key) => ({
+      key: `address_${key}`, // virtual key (used only for React)
+      header: key
+        .replace(/([A-Z])/g, " $1")
+        .replace(/^./, (c) => c.toUpperCase()),
+      render: (item: AdminMeterData) =>
+        item.addressId?.data?.[key] ?? "-",
+    }));
+  };
+
+
   const columns = [
     { key: "createdAt", header: "Created Date" },
     { key: "meterNumber", header: "Meter Number" },
+      // 🔹 Dynamic Address Columns
+    ...getAddressColumns(allAdminMeters),
+
     {
       key: "isActive",
       header: "Status",

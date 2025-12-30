@@ -23,6 +23,10 @@ interface AdminUserData {
   firstName: string;
   lastName: string;
   email: string;
+  addressId: {
+    id: string;
+    data: Record<string, string>;
+  };
   role: string;
   isActive?: boolean;
   invitationStatus?: string;
@@ -120,10 +124,42 @@ export default function AdminUserPage() {
     }
   };
 
+
+  const getAllAddressKeys = (data: AdminUserData[]) => {
+    const keys = new Set<string>();
+
+    data.forEach((item) => {
+      if (item.addressId?.data) {
+        Object.keys(item.addressId.data).forEach((key) => {
+          keys.add(key);
+        });
+      }
+    });
+
+    return Array.from(keys);
+  };
+
+  const getAddressColumns = (data: AdminUserData[]) => {
+    if (!data.length) return [];
+
+    const addressKeys = getAllAddressKeys(data);
+
+    return addressKeys.map((key) => ({
+      key: `address_${key}`, // virtual key (used only for React)
+      header: key
+        .replace(/([A-Z])/g, " $1")
+        .replace(/^./, (c) => c.toUpperCase()),
+      render: (item: AdminUserData) =>
+        item.addressId?.data?.[key] ?? "-",
+    }));
+  };
+
   const columns = [
     { key: "firstName", header: "First Name" },
     { key: "lastName", header: "Last Name" },
     { key: "email", header: "Email" },
+     // 🔹 Dynamic Address Columns
+    ...getAddressColumns(allAdminUsers),
     { key: "role", header: "Role" },
     {
       key: "invitationStatus",
