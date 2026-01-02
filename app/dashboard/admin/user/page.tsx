@@ -39,31 +39,48 @@ interface EstateOption {
 
 export default function AdminUserPage() {
   const dispatch = useDispatch<AppDispatch>();
+
   const [user, setUser] = useState<any>(null);
   const [open, setOpen] = useState(false);
   const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUserData | null>(null);
+  const [search, setSearch] = useState("");
 
-  const { allAdminUsers, pagination, loading } = useSelector((state: RootState) => {
-    const userState = state.adminUser as any;
-    const response = userState.allAdminUsers;
+  const { allAdminUsers, pagination, loading } = useSelector(
+    (state: RootState) => {
+      const userState = state.adminUser as any;
+      const response = userState.allAdminUsers;
 
-    return {
-      allAdminUsers: Array.isArray(response?.data) ? response.data : [],
-      pagination: response?.pagination ?? {},
-      loading: userState.getAllUsersByEstateState === "isLoading",
-    };
-  });
+      return {
+        allAdminUsers: Array.isArray(response?.data) ? response.data : [],
+        pagination: response?.pagination ?? {},
+        loading: userState.getAllUsersByEstateState === "isLoading",
+      };
+    }
+  );
 
-  const fetchAdminUsers = async (estateId?: string, page = 1) => {
+  const fetchAdminUsers = async (
+    estateId?: string,
+    page = 1,
+    searchTerm?: string
+  ) => {
     if (!estateId) return;
+
     try {
-      await dispatch(getAllUsersByEstate({ estateId, page, limit: 10 })).unwrap();
+      await dispatch(
+        getAllUsersByEstate({
+          estateId,
+          page,
+          limit: 10,
+          search: searchTerm,
+        })
+      ).unwrap();
     } catch {
       toast.error("Failed to fetch users.");
     }
   };
 
+  // Fetch signed-in user + estate users
   useEffect(() => {
     (async () => {
       try {
@@ -73,7 +90,7 @@ export default function AdminUserPage() {
         const estateId = userRes?.data?.estateId;
         if (estateId) {
           setSelectedEstate({ label: "My Estate", value: estateId });
-          await fetchAdminUsers(estateId);
+          await fetchAdminUsers(estateId, 1, "");
         } else {
           toast.warning("No estate found for this user.");
         }
@@ -83,9 +100,12 @@ export default function AdminUserPage() {
     })();
   }, [dispatch]);
 
+  // Refetch when estate or search changes
   useEffect(() => {
-    if (selectedEstate?.value) fetchAdminUsers(selectedEstate.value);
-  }, [selectedEstate]);
+    if (selectedEstate?.value) {
+      fetchAdminUsers(selectedEstate.value, 1, search);
+    }
+  }, [selectedEstate, search]);
 
   const handleEstateModal = (user?: AdminUserData) => {
     setSelectedUser(user || null);
@@ -99,6 +119,7 @@ export default function AdminUserPage() {
 
   const handleToggleStatus = async (user: AdminUserData) => {
     if (!user.id) return;
+
     try {
       if (user.isActive) {
         await dispatch(suspendUser(user.id)).unwrap();
@@ -107,7 +128,10 @@ export default function AdminUserPage() {
         await dispatch(activateUser(user.id)).unwrap();
         toast.success(`${user.firstName} has been activated.`);
       }
-      if (selectedEstate?.value) fetchAdminUsers(selectedEstate.value);
+
+      if (selectedEstate?.value) {
+        fetchAdminUsers(selectedEstate.value, 1, search);
+      }
     } catch (err: any) {
       toast.error(err?.message || "Failed to update user status.");
     }
@@ -115,24 +139,25 @@ export default function AdminUserPage() {
 
   const handleDeleteUser = async (id?: string, name?: string) => {
     if (!id) return;
+
     try {
       await dispatch(deleteUser(id)).unwrap();
       toast.success(`${name} deleted successfully!`);
-      if (selectedEstate?.value) fetchAdminUsers(selectedEstate.value);
+
+      if (selectedEstate?.value) {
+        fetchAdminUsers(selectedEstate.value, 1, search);
+      }
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete user.");
     }
   };
-
 
   const getAllAddressKeys = (data: AdminUserData[]) => {
     const keys = new Set<string>();
 
     data.forEach((item) => {
       if (item.addressId?.data) {
-        Object.keys(item.addressId.data).forEach((key) => {
-          keys.add(key);
-        });
+        Object.keys(item.addressId.data).forEach((key) => keys.add(key));
       }
     });
 
@@ -145,7 +170,7 @@ export default function AdminUserPage() {
     const addressKeys = getAllAddressKeys(data);
 
     return addressKeys.map((key) => ({
-      key: `address_${key}`, // virtual key (used only for React)
+      key: `address_${key}`,
       header: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (c) => c.toUpperCase()),
@@ -158,7 +183,6 @@ export default function AdminUserPage() {
     { key: "firstName", header: "First Name" },
     { key: "lastName", header: "Last Name" },
     { key: "email", header: "Email" },
-     // 🔹 Dynamic Address Columns
     ...getAddressColumns(allAdminUsers),
     { key: "role", header: "Role" },
     {
@@ -167,7 +191,9 @@ export default function AdminUserPage() {
       render: (item: AdminUserData) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            item.invitationStatus ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            item.invitationStatus
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
           }`}
         >
           {item.invitationStatus ? "Completed" : "Not Completed"}
@@ -179,7 +205,11 @@ export default function AdminUserPage() {
       header: "Actions",
       render: (item: AdminUserData) => (
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(item)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleToggleStatus(item)}
+          >
             {item.isActive ? (
               <PowerOff className="w-4 h-4 text-red-600" />
             ) : (
@@ -187,7 +217,11 @@ export default function AdminUserPage() {
             )}
           </Button>
 
-          <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(item.id, item.firstName)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDeleteUser(item.id, item.firstName)}
+          >
             <Trash2 className="w-4 h-4 text-red-600" />
           </Button>
         </div>
@@ -201,7 +235,9 @@ export default function AdminUserPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground mt-1">View users by estate</p>
+          <p className="text-muted-foreground mt-1">
+            View users by estate
+          </p>
         </div>
 
         <Button onClick={() => handleEstateModal()} className="flex items-center gap-2">
@@ -209,12 +245,25 @@ export default function AdminUserPage() {
         </Button>
       </div>
 
+      {/* Search */}
+      <Card className="p-4">
+        <input
+          type="text"
+          placeholder="Search users by name or email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </Card>
+
       {/* Table */}
       <Card className="p-4">
         <Table
           columns={columns}
           data={allAdminUsers}
-          emptyMessage={loading ? "Loading users..." : "No users found for this estate"}
+          emptyMessage={
+            loading ? "Loading users..." : "No users found for this estate"
+          }
           showPagination={true}
           paginationInfo={{
             total: pagination?.total || 0,
@@ -223,8 +272,7 @@ export default function AdminUserPage() {
           }}
           onPageChange={(page) => {
             if (!selectedEstate?.value) return;
-
-            fetchAdminUsers(selectedEstate.value, page);
+            fetchAdminUsers(selectedEstate.value, page, search);
           }}
         />
       </Card>
@@ -232,7 +280,12 @@ export default function AdminUserPage() {
       {/* Modal */}
       {open && (
         <Modal visible={open} onClose={handleCloseModal}>
-          <InviteUserForm close={handleCloseModal} refresh={() => fetchAdminUsers(selectedEstate?.value)} />
+          <InviteUserForm
+            close={handleCloseModal}
+            refresh={() =>
+              fetchAdminUsers(selectedEstate?.value, 1, search)
+            }
+          />
         </Modal>
       )}
     </div>

@@ -130,12 +130,12 @@ export default function TransactionPage() {
     country: string;
   }) => {
     try {
-      // ⚠️ Check if amount exceeds the maximum limit BEFORE any transaction
-      const MAX_AMOUNT = 200_000;
-      if (amount > MAX_AMOUNT) {
-        toast.error(`You cannot fund more than ${MAX_AMOUNT.toLocaleString()}`);
-        return; // Stop further execution
-      }
+      // // ⚠️ Check if amount exceeds the maximum limit BEFORE any transaction
+      // const MAX_AMOUNT = 200_000;
+      // if (amount > MAX_AMOUNT) {
+      //   toast.error(`You cannot fund more than ${MAX_AMOUNT.toLocaleString()}`);
+      //   return; // Stop further execution
+      // }
 
       // ✅ Only now we create a transaction
       const txRes = await dispatch(

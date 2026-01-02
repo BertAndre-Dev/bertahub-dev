@@ -2,25 +2,46 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '@/utils/axiosInstance';
 
 
-// get all users by estate
+// get all users by estate (with search)
 export const getAllUsersByEstate = createAsyncThunk(
   'admin-user/getAllUsersByEstate',
   async (
-    { estateId, page = 1, limit = 10 }: { estateId: string; page?: number; limit?: number },
+    {
+      estateId,
+      page = 1,
+      limit = 10,
+      search,
+    }: {
+      estateId: string;
+      page?: number;
+      limit?: number;
+      search?: string;
+    },
     { rejectWithValue }
   ) => {
     try {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      });
+
+      if (search && search.trim()) {
+        params.append('search', search.trim());
+      }
+
       const res = await axiosInstance.get(
-        `/api/v1/user-mgt/estate/${estateId}?page=${page}&limit=${limit}`
+        `/api/v1/user-mgt/estate/${estateId}?${params.toString()}`
       );
+
       return res.data;
     } catch (error: any) {
       return rejectWithValue({
-        message: error?.response?.data?.message || 'Unable to fetch users'
+        message: error?.response?.data?.message || 'Unable to fetch users',
       });
     }
   }
 );
+
 
 
 

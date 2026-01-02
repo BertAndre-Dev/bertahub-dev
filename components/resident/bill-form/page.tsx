@@ -32,8 +32,6 @@ export default function BillsForm({ billId, onSubmitSuccess, onClose }: BillsFor
   const [frequency, setFrequency] = useState<FrequencyOption>("yearly");
 
   const frequencyOptions = [
-    { label: "Monthly", value: "monthly" },
-    { label: "Quarterly", value: "quarterly" },
     { label: "Yearly", value: "yearly" }
   ];
 
