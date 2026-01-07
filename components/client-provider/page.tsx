@@ -25,7 +25,6 @@ export default function ClientProvider({ children }: { children: ReactNode }) {
     '/auth/sign-up',
     '/auth/login',
     '/auth/forgot-password',
-    '/security/visitor',
     '/error',
   ];
 
