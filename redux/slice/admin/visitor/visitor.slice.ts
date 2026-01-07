@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getVisitorsByEstate, verifyVisitor } from "./visitor";
+import { getVisitorsByEstate, verifyVisitor, getVisitorDetailsByCode } from "./visitor";
 
 export interface VisitorEntry {
   id: string;
@@ -37,6 +37,7 @@ export interface VisitorsResponse {
 export interface VisitorState {
   getVisitorsByEstateState: "idle" | "isLoading" | "succeeded" | "failed";
   verifyVisitorState: "idle" | "isLoading" | "succeeded" | "failed";
+  getVisitorDetailsByCodeState: "idle" | "isLoading" | "succeeded" | "failed";
   status: "idle" | "isLoading" | "succeeded" | "failed";
   allVisitors: VisitorsResponse | null;
   verifyResult: { success: boolean; message: string } | null;
@@ -46,6 +47,7 @@ export interface VisitorState {
 const initialState: VisitorState = {
   getVisitorsByEstateState: "idle",
   verifyVisitorState: "idle",
+  getVisitorDetailsByCodeState: "idle",
   status: "idle",
   allVisitors: null,
   verifyResult: null,
@@ -78,6 +80,23 @@ const visitorSlice = createSlice({
       })
       .addCase(getVisitorsByEstate.rejected, (state, action) => {
         state.getVisitorsByEstateState = "failed";
+        state.status = "failed";
+        state.error = action.error.message || "Failed to fetch visitors";
+      });
+
+
+    builder
+      .addCase(getVisitorDetailsByCode.pending, (state) => {
+        state.getVisitorDetailsByCodeState = "isLoading";
+        state.status = "isLoading";
+      })
+      .addCase(getVisitorDetailsByCode.fulfilled, (state, action) => {
+        state.getVisitorDetailsByCodeState = "succeeded";
+        state.status = "succeeded";
+        state.allVisitors = action.payload || null;
+      })
+      .addCase(getVisitorDetailsByCode.rejected, (state, action) => {
+        state.getVisitorDetailsByCodeState = "failed";
         state.status = "failed";
         state.error = action.error.message || "Failed to fetch visitors";
       });

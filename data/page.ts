@@ -33,8 +33,8 @@ export const adminNav = [
 
 export const securityNav = [
     { label: "Dashboard", icon: FiHome, path: '/dashboard/security/dashboard' },
-    { label: "Visitors Management", icon: FiUsers, path: '/dashboard/security/visitor'  },
-    { label: "Settings", icon: FiSettings, path: '/dashboard/security/settings'  },
+    { label: "View Visitor", icon: FiUsers, path: '/dashboard/security/view-visitor'  },
+    { label: "Verify Visitor", icon: FiSettings, path: '/dashboard/security/verify-visitor'  },
 ]
 
 

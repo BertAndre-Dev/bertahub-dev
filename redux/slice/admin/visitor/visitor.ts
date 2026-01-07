@@ -5,6 +5,10 @@ interface VisitorData {
     visitorCode: string;
 };
 
+interface GetVisitorDetailsParams {
+  code: string;
+}
+
 
 export const verifyVisitor = createAsyncThunk(
     "visitor/verifyVisitor",
@@ -30,4 +34,23 @@ export const getVisitorsByEstate = createAsyncThunk(
             return rejectWithValue(error.response?.data);
         }
     }
-)
+);
+
+
+export const getVisitorDetailsByCode = createAsyncThunk(
+  "visitor/getVisitorDetailsByCode",
+  async ({ code }: GetVisitorDetailsParams, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get(
+        `/api/v1/visitor-mgt/view-details`,
+        {
+          params: { code },
+        }
+      );
+
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data);
+    }
+  }
+);
