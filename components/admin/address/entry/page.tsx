@@ -288,8 +288,8 @@ export default function EntryPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+        <div className="pb-4 md:pb-0">
           <h1 className="font-heading text-3xl font-bold">Estate Field Entries</h1>
           <p className="text-muted-foreground mt-1">
             Manage and view entries for all estate fields
