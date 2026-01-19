@@ -136,12 +136,13 @@ export default function EntryPage() {
             size="sm"
             variant="outline"
             onClick={() => toast.dismiss(confirmId)}
+            className="cursor-pointer"
             >
             Cancel
             </Button>
             <Button
             size="sm"
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
             onClick={async () => {
                 toast.dismiss(confirmId);
                 try {
@@ -212,13 +213,14 @@ export default function EntryPage() {
         header: "Actions",
         render: (item: any) => (
             <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)}>
+            <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)} className="cursor-pointer">
                 <Edit2 className="w-4 h-4 text-blue-600" />
             </Button>
             <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleDeleteEntry(item.id, item.data?.name || "entry")}
+                className="cursor-pointer"
             >
                 <Trash2 className="w-4 h-4 text-red-600" />
             </Button>
@@ -294,7 +296,7 @@ export default function EntryPage() {
           </p>
         </div>
 
-        <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
+        <Button onClick={() => handleOpenModal()} className="flex items-center gap-2 cursor-pointer">
           <Plus className="w-4 h-4" />
           Create Entry
         </Button>

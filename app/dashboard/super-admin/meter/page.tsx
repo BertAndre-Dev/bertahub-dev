@@ -101,25 +101,56 @@ export default function AdminMeterManagement() {
   };
 
 
-  const handleDeleteMeter = async (meterId: string) => {
+  const handleDeleteMeter = async (meterId?: string, meterNumber?: string) => {
     if (!meterId) {
       toast.error("Meter ID is missing");
       return;
     }
 
-    try {
-      const response = await dispatch(deleteMeter(meterId)).unwrap();
-
-      toast.success(response?.message || "Meter deleted successfully");
-
-      handleRefresh();
-    } catch (error: any) {
-      toast.error(
-        error?.message ||
-        error?.data?.message ||
-        "Failed to delete meter"
-      );
-    }
+    const confirmId = toast.info(
+      <div className="flex flex-col gap-2">
+        <p className="text-sm">
+          Are you sure you want to delete meter <strong>{meterNumber || meterId}</strong>?
+        </p>
+        <div className="flex justify-end gap-2 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => toast.dismiss(confirmId)}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            className="bg-red-600 hover:bg-red-700 text-white"
+            onClick={async () => {
+              toast.dismiss(confirmId);
+              try {
+                const response = await dispatch(deleteMeter(meterId)).unwrap();
+                toast.success(response?.message || "Meter deleted successfully");
+                handleRefresh();
+              } catch (error: any) {
+                toast.error(
+                  error?.message ||
+                  error?.data?.message ||
+                  "Failed to delete meter"
+                );
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </div>,
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        hideProgressBar: true,
+        closeButton: false,
+      }
+    );
   };
 
 
@@ -167,7 +198,7 @@ export default function AdminMeterManagement() {
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => handleDeleteMeter(item.id!)}
+            onClick={() => handleDeleteMeter(item.id, item.meterNumber)}
           >
             <Trash className="w-4 h-4" />
           </Button>
