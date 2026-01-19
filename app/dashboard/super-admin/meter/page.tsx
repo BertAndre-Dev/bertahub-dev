@@ -19,8 +19,8 @@ interface AdminMeterData {
   isAssigned?: boolean;
   estateId?: string;
   lastCredit?: number;
-  createdAt?: string; 
-  updatedAt?: string; 
+  createdAt?: string;
+  updatedAt?: string;
   addressId: string;
   vendorData?: any;
 }
@@ -57,7 +57,7 @@ export default function AdminMeterManagement() {
 
   const handleRefresh = async () => {
     try {
-      await dispatch(getAllMeters({ page: 1, limit: Number(pagination?.pageSize) || 10,  search: search || undefined, })).unwrap();
+      await dispatch(getAllMeters({ page: 1, limit: Number(pagination?.pageSize) || 10, search: search || undefined, })).unwrap();
     } catch (error: any) {
       toast.error("Failed to refresh meter list");
     }
@@ -164,9 +164,8 @@ export default function AdminMeterManagement() {
       header: "Status",
       render: (item: AdminMeterData) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-          }`}
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            }`}
         >
           {item.isActive ? "Active" : "Inactive"}
         </span>
@@ -177,9 +176,8 @@ export default function AdminMeterManagement() {
       header: "Assigned Status",
       render: (item: AdminMeterData) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            item.isAssigned ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-          }`}
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${item.isAssigned ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            }`}
         >
           {item.isAssigned ? "Assigned" : "Not Assigned"}
         </span>
@@ -254,14 +252,14 @@ export default function AdminMeterManagement() {
       )}
 
 
-      {assignMeter &&  (
+      {assignMeter && (
         <Modal visible={assignMeter} onClose={handleAssignMeter}>
-            <AssignMeterForm
+          <AssignMeterForm
             close={handleAssignMeter}
             refresh={handleRefresh}
-            />
+          />
         </Modal>
-        )}
+      )}
     </div>
   );
 }
