@@ -4,7 +4,8 @@ import {
     getAllMeters,
     reAssignMeter,
     removeEstateMeter,
-    getMeter
+    getMeter,
+    deleteMeter
 } from './super-admin-meter';
 
 
@@ -56,8 +57,9 @@ export interface SuperAdminMeterState {
     getAllMetersState: "idle" | "isLoading" | "succeeded" | "failed";
     reAssignMeterState: "idle" | "isLoading" | "succeeded" | "failed";
     removeEstateMeterState: "idle" | "isLoading" | "succeeded" | "failed";
-    status: "idle" | "isLoading" | "succeeded" | "failed";
     getMeterState: "idle" | "isLoading" | "succeeded" | "failed";
+    deleteMeterState: "idle" | "isLoading" | "succeeded" | "failed";
+    status: "idle" | "isLoading" | "succeeded" | "failed";
     superAdminMeter: SuperAdminMeterData | null;
     allSuperAdminMeter: SuperAdminMeterResponse | null;
     error: string | null;
@@ -70,6 +72,7 @@ const initialState: SuperAdminMeterState = {
     reAssignMeterState: "idle",
     removeEstateMeterState: "idle",
     getMeterState: "idle",
+    deleteMeterState: "idle",
     status: "idle",
     superAdminMeter: null,
     allSuperAdminMeter: null,
@@ -197,7 +200,6 @@ const superAdminMeterSlice = createSlice({
             });
 
 
-        
         // ✅ GET SINGLE METER
         builder
             .addCase(getMeter.pending, (state) => {
@@ -210,6 +212,33 @@ const superAdminMeterSlice = createSlice({
             .addCase(getMeter.rejected, (state, action) => {
                 state.getMeterState = "failed";
                 state.error = action.error.message || "Failed to fetch meter";
+            });
+
+
+        // ✅ DELETE SINGLE METER
+        builder
+            .addCase(deleteMeter.pending, (state) => {
+                state.deleteMeterState = "isLoading";
+            })
+            .addCase(deleteMeter.fulfilled, (state, action) => {
+                state.deleteMeterState = "succeeded";
+
+                const deletedMeterId = action.meta.arg; // 👈 meterId passed to thunk
+
+                if (state.allSuperAdminMeter?.data) {
+                    state.allSuperAdminMeter.data =
+                    state.allSuperAdminMeter.data.filter(
+                        (meter) => meter.id !== deletedMeterId
+                    );
+
+                    // ✅ keep pagination in sync
+                    state.allSuperAdminMeter.pagination.total -= 1;
+                }
+            })
+
+            .addCase(deleteMeter.rejected, (state, action) => {
+                state.deleteMeterState = "failed";
+                state.error = action.error.message || "Failed to delete meter";
             });
         
             

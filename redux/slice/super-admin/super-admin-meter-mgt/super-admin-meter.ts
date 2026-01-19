@@ -96,3 +96,16 @@ export const getMeter = createAsyncThunk(
         }
     }
 );
+
+
+export const deleteMeter = createAsyncThunk(
+  "super-admin-meter/deleteMeter",
+  async (meterId: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.delete(`/api/v1/meters/${meterId}`);
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data);
+    }
+  }
+)

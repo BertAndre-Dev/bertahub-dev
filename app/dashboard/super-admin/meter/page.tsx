@@ -9,7 +9,7 @@ import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Plus, Trash } from "lucide-react";
-import { getAllMeters, removeEstateMeter } from "@/redux/slice/super-admin/super-admin-meter-mgt/super-admin-meter";
+import { deleteMeter, getAllMeters, removeEstateMeter } from "@/redux/slice/super-admin/super-admin-meter-mgt/super-admin-meter";
 import AssignMeterForm from "@/components/super-admin/meter-form/page";
 
 interface AdminMeterData {
@@ -80,25 +80,49 @@ export default function AdminMeterManagement() {
   }
 
   const handleRemoveMeter = async () => {
-  if (!selectedMeter) return;
+    if (!selectedMeter) return;
 
-  try {
-    // Pass meterNumber and estateId as expected by removeEstateMeter thunk
-    await dispatch(
-      removeEstateMeter({
-        meterNumber: selectedMeter.meterNumber,
-        estateId: selectedMeter.estateId || "",
-      })
-    ).unwrap();
+    try {
+      // Pass meterNumber and estateId as expected by removeEstateMeter thunk
+      await dispatch(
+        removeEstateMeter({
+          meterNumber: selectedMeter.meterNumber,
+          estateId: selectedMeter.estateId || "",
+        })
+      ).unwrap();
 
-    toast.success("Meter removed successfully");
-    handleRefresh();
-    handleCloseModal();
-  } catch (error: any) {
-    console.error("Failed to remove meter:", error);
-    toast.error(error?.message || "Failed to remove meter");
-  }
-};
+      toast.success("Meter removed successfully");
+      handleRefresh();
+      handleCloseModal();
+    } catch (error: any) {
+      console.error("Failed to remove meter:", error);
+      toast.error(error?.message || "Failed to remove meter");
+    }
+  };
+
+
+  const handleDeleteMeter = async (meterId: string) => {
+    if (!meterId) {
+      toast.error("Meter ID is missing");
+      return;
+    }
+
+    try {
+      const response = await dispatch(deleteMeter(meterId)).unwrap();
+
+      toast.success(response?.message || "Meter deleted successfully");
+
+      handleRefresh();
+    } catch (error: any) {
+      toast.error(
+        error?.message ||
+        error?.data?.message ||
+        "Failed to delete meter"
+      );
+    }
+  };
+
+
 
 
   const columns = [
@@ -132,12 +156,22 @@ export default function AdminMeterManagement() {
     },
     {
       key: "actions",
-      header: "Remove Meter",
+      header: "Action",
       render: (item: AdminMeterData) => (
         <div className="flex items-center gap-2">
-          <Button variant="destructive" size="sm" onClick={() => handleOpenRemoveModal(item)}>
+          {/* <Button variant="destructive" size="sm" onClick={() => handleOpenRemoveModal(item)}>
             <Trash className="w-4 h-4 text-white" />
+          </Button> */}
+
+          {/* Delete permanently */}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => handleDeleteMeter(item.id!)}
+          >
+            <Trash className="w-4 h-4" />
           </Button>
+
         </div>
       ),
     },
