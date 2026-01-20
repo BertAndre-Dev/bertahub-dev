@@ -15,7 +15,6 @@ type Transaction = {
     paymentStatus: string;
     type: string;
     createdAt: string;
-    serviceCharge?: number;
     user?: {
         firstName: string;
         lastName: string;
@@ -82,12 +81,6 @@ export default function TransactionsPage() {
                 align: "right" as const,
             },
             { key: "description", header: "Description" },
-            {
-                key: "serviceCharge",
-                header: "Service Charge (₦)",
-                render: (item: Transaction) => `₦${Number(item.serviceCharge || 0).toLocaleString()}`,
-                align: "right" as const,
-            },
             {
                 key: "paymentStatus",
                 header: "Payment Status",
