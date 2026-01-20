@@ -41,14 +41,26 @@ export default function TransactionsPage() {
 
     const columns = useMemo(
         () => [
+            {
+                key: "createdAt",
+                header: "Date",
+                render: (item: Transaction) =>
+                    new Date(item.createdAt).toLocaleString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    }),
+            },
             { key: "tx_ref", header: "Reference" },
-            { key: "description", header: "Description" },
             {
                 key: "amount",
                 header: "Amount (₦)",
                 render: (item: Transaction) => `₦${Number(item.amount || 0).toLocaleString()}`,
                 align: "right" as const,
             },
+            { key: "description", header: "Description" },
             {
                 key: "serviceCharge",
                 header: "Service Charge (₦)",
@@ -80,18 +92,6 @@ export default function TransactionsPage() {
                         {item.type}
                     </span>
                 ),
-            },
-            {
-                key: "createdAt",
-                header: "Date",
-                render: (item: Transaction) =>
-                    new Date(item.createdAt).toLocaleString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    }),
             },
         ],
         []
