@@ -59,17 +59,17 @@ export default function TransactionsPage() {
                     }),
             },
             {
-                key: "user",
+                key: "firstName",
                 header: "First Name",
                 render: (item: Transaction) => item.user?.firstName || "—",
             },
             {
-                key: "user",
+                key: "lastName",
                 header: "Last Name",
                 render: (item: Transaction) => item.user?.lastName || "—",
             },
             {
-                key: "user",
+                key: "email",
                 header: "Email",
                 render: (item: Transaction) => item.user?.email || "—",
             },
