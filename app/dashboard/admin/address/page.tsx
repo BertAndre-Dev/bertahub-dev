@@ -16,9 +16,9 @@ const AddressPage = () => {
             switch (activeTab) {
               case "Entries Fields":
                 return <FieldEntry />
-                case "Address Fields":
-                  return <AddressField />
-                  default:
+              case "Address Fields":
+                return <AddressField />
+              default:
                 return null
             }
           }}
