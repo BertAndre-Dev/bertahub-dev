@@ -7,21 +7,27 @@ import axiosInstance from "@/utils/axiosInstance"
 import { toast } from "react-toastify"
 
 type Transaction = {
-    id: string
-    tx_ref: string
-    description: string
-    amount: number
-    paymentStatus: string
-    type: string
-    createdAt: string
-    serviceCharge?: number
+    id?: string;
+    _id?: string;
+    tx_ref: string;
+    description: string;
+    amount: number;
+    paymentStatus: string;
+    type: string;
+    createdAt: string;
+    serviceCharge?: number;
+    user?: {
+        firstName: string;
+        lastName: string;
+        email: string;
+    }
 }
 
 type PaginationState = {
-    total: number
-    current: number
-    pageSize: number
-    totalPages: number
+    total: number;
+    current: number;
+    pageSize: number;
+    totalPages: number;
 }
 
 const toNumber = (value: number | string | undefined, fallback: number) => {
@@ -52,6 +58,21 @@ export default function TransactionsPage() {
                         hour: "2-digit",
                         minute: "2-digit",
                     }),
+            },
+            {
+                key: "user",
+                header: "First Name",
+                render: (item: Transaction) => item.user?.firstName || "—",
+            },
+            {
+                key: "user",
+                header: "Last Name",
+                render: (item: Transaction) => item.user?.lastName || "—",
+            },
+            {
+                key: "user",
+                header: "Email",
+                render: (item: Transaction) => item.user?.email || "—",
             },
             { key: "tx_ref", header: "Reference" },
             {
@@ -116,7 +137,15 @@ export default function TransactionsPage() {
                     ? toNumber(apiPagination.pages, 1)
                     : Math.max(1, Math.ceil(normalizedTotal / (normalizedLimit || 1)))
 
-            setTransactions(Array.isArray(data) ? data : [])
+            // Normalize data: map _id to id if needed
+            const normalizedData = Array.isArray(data)
+                ? data.map((item: any) => ({
+                    ...item,
+                    id: item.id || item._id,
+                }))
+                : []
+
+            setTransactions(normalizedData)
             setPagination({
                 total: normalizedTotal,
                 current: normalizedPage,

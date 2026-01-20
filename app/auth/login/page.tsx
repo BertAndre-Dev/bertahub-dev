@@ -30,12 +30,17 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
 
-  // Load saved email on component mount
+  // Load saved email and password on component mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedEmail = localStorage.getItem("rememberedEmail")
+      const savedPassword = localStorage.getItem("rememberedPassword")
       if (savedEmail) {
-        setFormData((prev) => ({ ...prev, email: savedEmail }))
+        setFormData((prev) => ({
+          ...prev,
+          email: savedEmail,
+          password: savedPassword || "",
+        }))
         setRememberMe(true)
       }
     }
@@ -74,8 +79,10 @@ export default function LoginPage() {
         // ✅ Handle remember me functionality
         if (rememberMe) {
           localStorage.setItem("rememberedEmail", formData.email)
+          localStorage.setItem("rememberedPassword", formData.password)
         } else {
           localStorage.removeItem("rememberedEmail")
+          localStorage.removeItem("rememberedPassword")
         }
 
         toast.success(res.message || "Signed in successfully")
@@ -148,9 +155,9 @@ export default function LoginPage() {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
               {showPassword ? (
-                <EyeOff className="w-4 h-4" />
+                <EyeOff className="w-4 h-4 cursor-pointer" />
               ) : (
-                <Eye className="w-4 h-4" />
+                <Eye className="w-4 h-4 cursor-pointer" />
               )}
             </button>
           </div>
