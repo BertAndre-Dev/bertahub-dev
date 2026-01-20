@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useDispatch, useSelector } from "react-redux"
@@ -28,6 +28,18 @@ export default function LoginPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
+
+  // Load saved email on component mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedEmail = localStorage.getItem("rememberedEmail")
+      if (savedEmail) {
+        setFormData((prev) => ({ ...prev, email: savedEmail }))
+        setRememberMe(true)
+      }
+    }
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -58,6 +70,13 @@ export default function LoginPage() {
         // ✅ Save user + token to localStorage
         localStorage.setItem("user", JSON.stringify(user))
         localStorage.setItem("token", token)
+
+        // ✅ Handle remember me functionality
+        if (rememberMe) {
+          localStorage.setItem("rememberedEmail", formData.email)
+        } else {
+          localStorage.removeItem("rememberedEmail")
+        }
 
         toast.success(res.message || "Signed in successfully")
 
@@ -138,8 +157,13 @@ export default function LoginPage() {
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" className="w-4 h-4 rounded border-border" />
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 rounded border-border cursor-pointer"
+            />
             Remember me
           </label>
           <Link
