@@ -41,6 +41,7 @@ export default function TransactionPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [estateId, setEstateId] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
   const [transId, setTransId] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,6 +53,9 @@ export default function TransactionPage() {
     (state: RootState) => state.residentTransaction.allTransactions?.pagination
   );
   const wallet = useSelector((state: RootState) => state.wallet.wallet);
+  const createWalletState = useSelector(
+    (state: RootState) => state.wallet.createWalletState
+  );
   const loading =
     useSelector(
       (state: RootState) => state.residentTransaction.getTransactionHistoryState
@@ -65,6 +69,7 @@ export default function TransactionPage() {
         const userRes = await dispatch(getSignedInUser()).unwrap();
         const id = userRes?.data?.id;
         const userEmail = userRes?.data?.email;
+        const userEstateId = userRes?.data?.estateId || userRes?.data?.estate?.id;
 
         if (!id) {
           toast.warning("No user found.");
@@ -73,6 +78,7 @@ export default function TransactionPage() {
 
         setUserId(id);
         setEmail(userEmail || "");
+        if (userEstateId) setEstateId(userEstateId);
 
         // ✅ Fetch transactions (paginated)
         await dispatch(getTransactionHistory({ userId: id, page: 1, limit }));
@@ -97,9 +103,18 @@ export default function TransactionPage() {
 
   // 🔹 Create Wallet
   const handleCreateWallet = async () => {
-    if (!userId) return;
+    if (!userId) {
+      toast.warning("No user found.");
+      return;
+    }
+    if (!estateId) {
+      toast.warning("No estate found for this user.");
+      return;
+    }
     try {
-      await dispatch(createWallet({ userId, balance: 0, lockedBalance: 0 })).unwrap();
+      await dispatch(
+        createWallet({ userId, estateId, balance: 0, lockedBalance: 0 })
+      ).unwrap();
       toast.success("Wallet created successfully.");
       dispatch(getWallet(userId));
     } catch (error: any) {
@@ -284,12 +299,19 @@ export default function TransactionPage() {
                 </p>
               </div>
 
-              <Button onClick={handleOpenModal} size="lg" className="px-6">
+                    <Button onClick={handleOpenModal} size="lg" className="px-6">
                 Fund Wallet
               </Button>
             </div>
           ) : (
-            <Button onClick={handleCreateWallet}>Create Wallet</Button>
+                    <Button
+                      onClick={handleCreateWallet}
+                      disabled={createWalletState === "isLoading"}
+                    >
+                      {createWalletState === "isLoading"
+                        ? "Creating wallet..."
+                        : "Create Wallet"}
+                    </Button>
           )}
         </CardContent>
       </Card>

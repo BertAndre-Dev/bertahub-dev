@@ -124,6 +124,34 @@ export default function AdminVisitorManagement() {
             ),
         },
         {
+            header: "Viewed By",
+            key: "viewedBy",
+            render: (item: any) => {
+            if (!item.viewedBy) {
+                return <span className="text-gray-500 text-xs">Not viewed</span>;
+            }
+            return (
+                <span className="text-xs">
+                {item.viewedBy.firstName} {item.viewedBy.lastName}
+                </span>
+            );
+            },
+        },
+        {
+            header: "Verified By",
+            key: "verifiedBy",
+            render: (item: any) => {
+            if (!item.verifiedBy) {
+                return <span className="text-gray-500 text-xs">Not verified</span>;
+            }
+            return (
+                <span className="text-xs">
+                {item.verifiedBy.firstName} {item.verifiedBy.lastName}
+                </span>
+            );
+            },
+        },
+        {
             header: "Address",
             key: "entries",
             render: (item: any) => {

@@ -15,7 +15,7 @@ import {
     initializePayment,
     verifyTransaction,
     getTransactionHistory
-} from "@/redux/slice/resident/transaction/transaction";
+} from "@/redux/slice/estate-admin/transaction/transaction";
 
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
@@ -41,20 +41,24 @@ export default function TransactionPage() {
     const dispatch = useDispatch<AppDispatch>();
     const [open, setOpen] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
+    const [estateId, setEstateId] = useState<string | null>(null);
     const [email, setEmail] = useState<string>("");
     const [transId, setTransId] = useState<string>("");
     const [currentPage, setCurrentPage] = useState(1);
     const [limit] = useState(10);
     const transactions = useSelector(
-        (state: RootState) => state.residentTransaction.allTransactions?.data || []
+        (state: RootState) => state.estateAdminTransaction.allTransactions?.data || []
     );
     const pagination = useSelector(
-        (state: RootState) => state.residentTransaction.allTransactions?.pagination
+        (state: RootState) => state.estateAdminTransaction.allTransactions?.pagination
     );
     const wallet = useSelector((state: RootState) => state.wallet.wallet);
+    const createWalletState = useSelector(
+        (state: RootState) => state.wallet.createWalletState
+    );
     const loading =
         useSelector(
-            (state: RootState) => state.residentTransaction.getTransactionHistoryState
+            (state: RootState) => state.estateAdminTransaction.getTransactionHistoryState
         ) === "isLoading";
 
 
@@ -65,6 +69,8 @@ export default function TransactionPage() {
                 const userRes = await dispatch(getSignedInUser()).unwrap();
                 const id = userRes?.data?.id;
                 const userEmail = userRes?.data?.email;
+                const estateIdFromUser =
+                    userRes?.data?.estateId || userRes?.data?.estate?.id;
 
                 if (!id) {
                     toast.warning("No user found.");
@@ -73,6 +79,7 @@ export default function TransactionPage() {
 
                 setUserId(id);
                 setEmail(userEmail || "");
+                if (estateIdFromUser) setEstateId(estateIdFromUser);
 
                 // ✅ Fetch transactions (paginated)
                 await dispatch(getTransactionHistory({ userId: id, page: 1, limit }));
@@ -97,9 +104,18 @@ export default function TransactionPage() {
 
     // 🔹 Create Wallet
     const handleCreateWallet = async () => {
-        if (!userId) return;
+        if (!userId) {
+            toast.warning("No user found.");
+            return;
+        }
+        if (!estateId) {
+            toast.warning("No estate found for this user.");
+            return;
+        }
         try {
-            await dispatch(createWallet({ userId, balance: 0, lockedBalance: 0 })).unwrap();
+            await dispatch(
+                createWallet({ userId, estateId, balance: 0, lockedBalance: 0 })
+            ).unwrap();
             toast.success("Wallet created successfully.");
             dispatch(getWallet(userId));
         } catch (error: any) {
@@ -152,7 +168,7 @@ export default function TransactionPage() {
                     amount,
                     country,
                     currency,
-                    redirect_url: `${window.location.origin}/dashboard/resident/transaction`,
+                    redirect_url: `${window.location.origin}/dashboard/estate-admin/transactions`,
                     payment_options: paymentOption,
                     customer: { email },
                     customizations: { title: "Wallet Funding", description },
@@ -169,8 +185,6 @@ export default function TransactionPage() {
             toast.error(err?.message || "Failed to fund wallet.");
         }
     };
-
-
 
 
     // 🔹 Automatically verify transaction when redirected back
@@ -289,13 +303,20 @@ export default function TransactionPage() {
                             </Button>
                         </div>
                     ) : (
-                        <Button onClick={handleCreateWallet}>Create Wallet</Button>
+                        <Button
+                            onClick={handleCreateWallet}
+                            disabled={createWalletState === "isLoading"}
+                        >
+                            {createWalletState === "isLoading"
+                                ? "Creating wallet..."
+                                : "Create Wallet"}
+                        </Button>
                     )}
                 </CardContent>
             </Card>
 
             {/* Transactions Table */}
-            <Card className="p-4">
+            {/* <Card className="p-4">
                 <h2 className="font-semibold mb-4">Transaction History</h2>
                 <Table
                     columns={columns}
@@ -341,7 +362,7 @@ export default function TransactionPage() {
                         <p className="text-center text-gray-500">Loading form...</p>
                     )}
                 </div>
-            </Modal>
+            </Modal> */}
         </div>
     );
 }
