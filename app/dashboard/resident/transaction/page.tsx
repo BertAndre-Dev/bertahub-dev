@@ -53,9 +53,9 @@ export default function TransactionPage() {
   );
   const wallet = useSelector((state: RootState) => state.wallet.wallet);
   const loading =
-  useSelector(
-    (state: RootState) => state.residentTransaction.getTransactionHistoryState
-  ) === "isLoading";
+    useSelector(
+      (state: RootState) => state.residentTransaction.getTransactionHistoryState
+    ) === "isLoading";
 
 
   // 🔹 Fetch signed-in user and wallet on mount
@@ -109,7 +109,7 @@ export default function TransactionPage() {
 
   const handleOpenModal = () => setOpen((prev) => !prev);
 
-// 🔹 Fund Wallet Handler
+  // 🔹 Fund Wallet Handler
   const handleFundWallet = async ({
     userId,
     walletId,
@@ -294,7 +294,7 @@ export default function TransactionPage() {
         </CardContent>
       </Card>
 
-{/* Transactions Table */}
+      {/* Transactions Table */}
       <Card className="p-4">
         <h2 className="font-semibold mb-4">Transaction History</h2>
         <Table

@@ -27,6 +27,7 @@ export const adminNav = [
     { label: "Bills Management", icon: LuReceipt, path: "/dashboard/admin/bills" },
     { label: "Meter Management", icon: IoSpeedometerOutline, path: '/dashboard/admin/meter' },
     { label: "Visitors Management", icon: FiUsers, path: '/dashboard/admin/visitor' },
+    { label: "Estate Admin", icon: FiUsers, path: '/dashboard/estate-admin/transactions' },
     { label: "Settings", icon: FiSettings, path: '/dashboard/admin/settings' },
 ];
 
