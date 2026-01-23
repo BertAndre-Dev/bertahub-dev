@@ -135,18 +135,7 @@ export default function AdminMeterManagement() {
 
 
   const columns = [
-    {
-      key: "createdAt",
-      header: "Created Date",
-      render: (item: AdminMeterData) =>
-        item.createdAt
-          ? new Date(item.createdAt).toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })
-          : "—",
-    },
+    { key: "createdAt", header: "Created Date" },
     { key: "meterNumber", header: "Meter Number" },
       // 🔹 Dynamic Address Columns
     ...getAddressColumns(allAdminMeters),

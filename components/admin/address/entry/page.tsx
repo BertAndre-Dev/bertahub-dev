@@ -116,58 +116,57 @@ export default function EntryPage() {
     setSelectedEntry(null);
   };
 
-  // ✅ Delete function
-  const handleDeleteEntry = async (entryId?: string, label?: string) => {
+    // ✅ Delete function
+    const handleDeleteEntry = async (entryId?: string, label?: string) => {
     if (!entryId) {
-      toast.error("Missing entry ID");
-      return;
+        toast.error("Missing entry ID");
+        return;
     }
 
     console.log("Delete clicked for:", entryId);
 
     const confirmId = toast.info(
-      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
         <p className="text-sm">
-          Are you sure you want to delete{" "}
-          <strong>{label || "this entry"}</strong>?
+            Are you sure you want to delete{" "}
+            <strong>{label || "this entry"}</strong>?
         </p>
         <div className="flex justify-end gap-2 mt-2">
-          <Button
+            <Button
             size="sm"
             variant="outline"
             onClick={() => toast.dismiss(confirmId)}
-            className="cursor-pointer"
-          >
+            >
             Cancel
-          </Button>
-          <Button
+            </Button>
+            <Button
             size="sm"
-            className="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+            className="bg-red-600 hover:bg-red-700 text-white"
             onClick={async () => {
-              toast.dismiss(confirmId);
-              try {
+                toast.dismiss(confirmId);
+                try {
                 await dispatch(deleteEntry(entryId)).unwrap();
                 toast.success(`${label || "Entry"} deleted successfully!`);
                 await fetchAllData();
-              } catch (err: any) {
+                } catch (err: any) {
                 toast.error(err?.message || "Failed to delete entry.");
-              }
+                }
             }}
-          >
+            >
             Delete
-          </Button>
+            </Button>
         </div>
-      </div>,
-      {
+        </div>,
+        {
         position: "top-center",
         autoClose: false,
         closeOnClick: false,
         draggable: false,
         hideProgressBar: true,
         closeButton: false,
-      }
+        }
     );
-  };
+    };
 
 
   // ✅ Build dynamic table
@@ -202,30 +201,29 @@ export default function EntryPage() {
       render: (item: any) =>
         item.createdAt
           ? new Date(item.createdAt).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
           : "—",
     },
     {
-      key: "actions",
-      header: "Actions",
-      render: (item: any) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)} className="cursor-pointer">
-            <Edit2 className="w-4 h-4 text-blue-600" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDeleteEntry(item.id, item.data?.name || "entry")}
-            className="cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4 text-red-600" />
-          </Button>
-        </div>
-      ),
+        key: "actions",
+        header: "Actions",
+        render: (item: any) => (
+            <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)}>
+                <Edit2 className="w-4 h-4 text-blue-600" />
+            </Button>
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDeleteEntry(item.id, item.data?.name || "entry")}
+            >
+                <Trash2 className="w-4 h-4 text-red-600" />
+            </Button>
+            </div>
+        ),
     }
 
 
@@ -288,15 +286,15 @@ export default function EntryPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
-        <div className="pb-4 md:pb-0">
+      <div className="flex items-center justify-between">
+        <div>
           <h1 className="font-heading text-3xl font-bold">Estate Field Entries</h1>
           <p className="text-muted-foreground mt-1">
             Manage and view entries for all estate fields
           </p>
         </div>
 
-        <Button onClick={() => handleOpenModal()} className="flex items-center gap-2 cursor-pointer">
+        <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
           Create Entry
         </Button>

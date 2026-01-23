@@ -159,8 +159,9 @@ export default function AddressField() {
       header: "Status",
       render: (item: any) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}
         >
           {item.isActive ? "Active" : "Inactive"}
         </span>
@@ -172,10 +173,10 @@ export default function AddressField() {
       render: (item: any) =>
         item.createdAt
           ? new Date(item.createdAt).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
           : "—",
     },
     {
@@ -200,8 +201,8 @@ export default function AddressField() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
-        <h1 className="font-heading text-3xl font-bold pb-4 md:pb-0">
+      <div className="flex items-center justify-between">
+        <h1 className="font-heading text-3xl font-bold">
           Address Field Management
         </h1>
         <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">

@@ -101,46 +101,13 @@ export default function BillPage() {
   const handleDeleteBill = async (id?: string, name?: string) => {
     if (!id || !estateId) return;
 
-    const confirmId = toast.info(
-      <div className="flex flex-col gap-2">
-        <p className="text-sm">
-          Are you sure you want to delete <strong>{name}</strong>?
-        </p>
-        <div className="flex justify-end gap-2 mt-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => toast.dismiss(confirmId)}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={async () => {
-              toast.dismiss(confirmId);
-              try {
-                await dispatch(deleteBill(id)).unwrap();
-                toast.success(`${name} deleted successfully.`);
-                await dispatch(getBillsByEstate({ estateId, page: 1, limit: 10 })).unwrap();
-              } catch (err: any) {
-                toast.error(err?.message || "Failed to delete bill.");
-              }
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      </div>,
-      {
-        position: "top-center",
-        autoClose: false,
-        closeOnClick: false,
-        draggable: false,
-        hideProgressBar: true,
-        closeButton: false,
-      }
-    );
+    try {
+      await dispatch(deleteBill(id)).unwrap();
+      toast.success(`${name} deleted successfully.`);
+      await dispatch(getBillsByEstate({ estateId, page: 1, limit: 10 })).unwrap();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete bill.");
+    }
   };
 
   const handleSubmitBill = async (data: BillData) => {

@@ -155,6 +155,8 @@ export default function EstatePage() {
     );
   };
 
+
+
   const columns = [
     { key: "name", header: "Estate Name" },
     { key: "address", header: "Address" },
@@ -200,7 +202,6 @@ export default function EstatePage() {
             size="sm"
             onClick={() => handleEstateModal(item)}
             title="Edit Estate"
-            className="cursor-pointer"
           >
             <Edit className="w-4 h-4 text-blue-600 " />
           </Button>
@@ -212,7 +213,6 @@ export default function EstatePage() {
               size="sm"
               onClick={() => handleToggleStatus(item)}
               title="Suspend Estate"
-              className="cursor-pointer"
             >
               <PowerOff className="w-4 h-4 text-red-600 " />
             </Button>
@@ -222,7 +222,6 @@ export default function EstatePage() {
               size="sm"
               onClick={() => handleToggleStatus(item)}
               title="Activate Estate"
-              className="cursor-pointer"
             >
               <Power className="w-4 h-4 text-green-600 " />
             </Button>
@@ -234,7 +233,6 @@ export default function EstatePage() {
             size="sm"
             onClick={() => handleDeleteEstate(item.id, item.name)}
             title="Delete Estate"
-            className="cursor-pointer"
           >
             <Trash2 className="w-4 h-4 text-red-600 " />
           </Button>

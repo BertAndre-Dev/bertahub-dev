@@ -19,8 +19,8 @@ interface AdminMeterData {
   isAssigned?: boolean;
   estateId?: string;
   lastCredit?: number;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: string; 
+  updatedAt?: string; 
   addressId: string;
   vendorData?: any;
 }
@@ -57,7 +57,7 @@ export default function AdminMeterManagement() {
 
   const handleRefresh = async () => {
     try {
-      await dispatch(getAllMeters({ page: 1, limit: Number(pagination?.pageSize) || 10, search: search || undefined, })).unwrap();
+      await dispatch(getAllMeters({ page: 1, limit: Number(pagination?.pageSize) || 10,  search: search || undefined, })).unwrap();
     } catch (error: any) {
       toast.error("Failed to refresh meter list");
     }
@@ -101,56 +101,25 @@ export default function AdminMeterManagement() {
   };
 
 
-  const handleDeleteMeter = async (meterId?: string, meterNumber?: string) => {
+  const handleDeleteMeter = async (meterId: string) => {
     if (!meterId) {
       toast.error("Meter ID is missing");
       return;
     }
 
-    const confirmId = toast.info(
-      <div className="flex flex-col gap-2">
-        <p className="text-sm">
-          Are you sure you want to delete meter <strong>{meterNumber || meterId}</strong>?
-        </p>
-        <div className="flex justify-end gap-2 mt-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => toast.dismiss(confirmId)}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={async () => {
-              toast.dismiss(confirmId);
-              try {
-                const response = await dispatch(deleteMeter(meterId)).unwrap();
-                toast.success(response?.message || "Meter deleted successfully");
-                handleRefresh();
-              } catch (error: any) {
-                toast.error(
-                  error?.message ||
-                  error?.data?.message ||
-                  "Failed to delete meter"
-                );
-              }
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      </div>,
-      {
-        position: "top-center",
-        autoClose: false,
-        closeOnClick: false,
-        draggable: false,
-        hideProgressBar: true,
-        closeButton: false,
-      }
-    );
+    try {
+      const response = await dispatch(deleteMeter(meterId)).unwrap();
+
+      toast.success(response?.message || "Meter deleted successfully");
+
+      handleRefresh();
+    } catch (error: any) {
+      toast.error(
+        error?.message ||
+        error?.data?.message ||
+        "Failed to delete meter"
+      );
+    }
   };
 
 
@@ -164,8 +133,9 @@ export default function AdminMeterManagement() {
       header: "Status",
       render: (item: AdminMeterData) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}
         >
           {item.isActive ? "Active" : "Inactive"}
         </span>
@@ -176,8 +146,9 @@ export default function AdminMeterManagement() {
       header: "Assigned Status",
       render: (item: AdminMeterData) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${item.isAssigned ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            item.isAssigned ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}
         >
           {item.isAssigned ? "Assigned" : "Not Assigned"}
         </span>
@@ -196,7 +167,7 @@ export default function AdminMeterManagement() {
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => handleDeleteMeter(item.id, item.meterNumber)}
+            onClick={() => handleDeleteMeter(item.id!)}
           >
             <Trash className="w-4 h-4" />
           </Button>
@@ -252,14 +223,14 @@ export default function AdminMeterManagement() {
       )}
 
 
-      {assignMeter && (
+      {assignMeter &&  (
         <Modal visible={assignMeter} onClose={handleAssignMeter}>
-          <AssignMeterForm
+            <AssignMeterForm
             close={handleAssignMeter}
             refresh={handleRefresh}
-          />
+            />
         </Modal>
-      )}
+        )}
     </div>
   );
 }

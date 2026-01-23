@@ -66,7 +66,7 @@ export default function SuperAdminUserPage() {
   })
 
 
-  const { allEstates } = useSelector((state: RootState) => {
+  const { allEstates} = useSelector((state: RootState) => {
     const estateState = state.estate as any
     const data = estateState.allEstates?.data || []
     const pagination = estateState.allEstates?.pagination || {}
@@ -83,7 +83,7 @@ export default function SuperAdminUserPage() {
 
   // ✅ Fetch all estates on mount
   useEffect(() => {
-    dispatch(getAllEstates({ page: 1, limit: Number(pagination?.pageSize) || 10 }))
+   dispatch(getAllEstates({ page: 1, limit: Number(pagination?.pageSize) || 10 }))
       .unwrap()
       .catch(() => toast.error("Failed to fetch estates"))
   }, [dispatch])
@@ -154,12 +154,12 @@ export default function SuperAdminUserPage() {
                 await dispatch(deleteUser(id)).unwrap()
                 toast.success(`${name} deleted successfully!`)
                 if (selectedEstate?.value) await dispatch(
-                  getAllUsersByEstate({
-                    estateId: selectedEstate.value,
-                    page: 1,
-                    limit: Number(pagination?.pageSize) || 10,
-                  })
-                ).unwrap()
+        getAllUsersByEstate({
+          estateId: selectedEstate.value,
+          page: 1,
+          limit: Number(pagination?.pageSize) || 10,
+        })
+      ).unwrap()
               } catch (err: any) {
                 toast.error(err?.message || "Failed to delete user.")
               }
@@ -197,8 +197,9 @@ export default function SuperAdminUserPage() {
       header: "Status",
       render: (item: SuperAdminUserData) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}
         >
           {item.isActive ? "Active" : "Inactive"}
         </span>
@@ -239,21 +240,21 @@ export default function SuperAdminUserPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* ✅ Estate Dropdown */}
-          <div className="w-64">
+            {/* ✅ Estate Dropdown */}
+            <div className="w-64">
             <Select
-              options={estateOptions}
-              placeholder="Select an estate..."
-              value={selectedEstate}
-              onChange={(option) => setSelectedEstate(option)}
-              isSearchable
+                options={estateOptions}
+                placeholder="Select an estate..."
+                value={selectedEstate}
+                onChange={(option) => setSelectedEstate(option)}
+                isSearchable
             />
-          </div>
+            </div>
 
-          <Button onClick={() => handleEstateModal()} className="flex items-center gap-2 cursor-pointer">
-            <Plus className="w-4 h-4" />
-            Invite User
-          </Button>
+            <Button onClick={() => handleEstateModal()} className="flex items-center gap-2 cursor-pointer">
+                <Plus className="w-4 h-4" />
+                Invite User
+            </Button>
         </div>
       </div>
 
@@ -288,7 +289,7 @@ export default function SuperAdminUserPage() {
       {/* User Edit Modal */}
       {open && (
         <Modal visible={open} onClose={handleCloseModal}>
-          <InviteUserForm close={handleCloseModal} />
+          <InviteUserForm  close={handleCloseModal}/>
         </Modal>
       )}
     </div>

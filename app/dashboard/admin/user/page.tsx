@@ -30,7 +30,6 @@ interface AdminUserData {
   role: string;
   isActive?: boolean;
   invitationStatus?: string;
-  createdAt?: string;
 }
 
 interface EstateOption {
@@ -141,49 +140,16 @@ export default function AdminUserPage() {
   const handleDeleteUser = async (id?: string, name?: string) => {
     if (!id) return;
 
-    const confirmId = toast.info(
-      <div className="flex flex-col gap-2">
-        <p className="text-sm">
-          Are you sure you want to delete <strong>{name}</strong>?
-        </p>
-        <div className="flex justify-end gap-2 mt-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => toast.dismiss(confirmId)}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={async () => {
-              toast.dismiss(confirmId);
-              try {
-                await dispatch(deleteUser(id)).unwrap();
-                toast.success(`${name} deleted successfully!`);
+    try {
+      await dispatch(deleteUser(id)).unwrap();
+      toast.success(`${name} deleted successfully!`);
 
-                if (selectedEstate?.value) {
-                  fetchAdminUsers(selectedEstate.value, 1, search);
-                }
-              } catch (err: any) {
-                toast.error(err?.message || "Failed to delete user.");
-              }
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      </div>,
-      {
-        position: "top-center",
-        autoClose: false,
-        closeOnClick: false,
-        draggable: false,
-        hideProgressBar: true,
-        closeButton: false,
+      if (selectedEstate?.value) {
+        fetchAdminUsers(selectedEstate.value, 1, search);
       }
-    );
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete user.");
+    }
   };
 
   const getAllAddressKeys = (data: AdminUserData[]) => {
@@ -213,30 +179,7 @@ export default function AdminUserPage() {
     }));
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "-";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
   const columns = [
-    {
-      key: "createdAt",
-      header: "Created At",
-      render: (item: AdminUserData) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDate(item.createdAt)}
-        </span>
-      ),
-    },
     { key: "firstName", header: "First Name" },
     { key: "lastName", header: "Last Name" },
     { key: "email", header: "Email" },
@@ -247,10 +190,11 @@ export default function AdminUserPage() {
       header: "Invitation Status",
       render: (item: AdminUserData) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${item.invitationStatus
-            ? "bg-green-100 text-green-700"
-            : "bg-red-100 text-red-700"
-            }`}
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            item.invitationStatus
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
         >
           {item.invitationStatus ? "Completed" : "Not Completed"}
         </span>

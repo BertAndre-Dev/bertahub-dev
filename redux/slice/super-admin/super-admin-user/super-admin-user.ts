@@ -4,26 +4,26 @@ import axiosInstance from '@/utils/axiosInstance';
 
 // get all users by estate (with pagination)
 export const getAllUsersByEstate = createAsyncThunk(
-    "super-admin-user/getAllUsersByEstate",
-    async (
-        {
-            estateId,
-            page = 1,
-            limit = 10,
-        }: { estateId: string; page?: number; limit?: number },
-        { rejectWithValue }
-    ) => {
-        try {
-            const res = await axiosInstance.get(
-                `/api/v1/user-mgt/estate/${estateId}?page=${page}&limit=${limit}`
-            );
-            return res.data;
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error?.response?.data?.message || "Failed to fetch users",
-            });
-        }
+  "super-admin-user/getAllUsersByEstate",
+  async (
+    {
+      estateId,
+      page = 1,
+      limit = 10,
+    }: { estateId: string; page?: number; limit?: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await axiosInstance.get(
+        `/api/v1/user-mgt/estate/${estateId}?page=${page}&limit=${limit}`
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error?.response?.data?.message || "Failed to fetch users",
+      });
     }
+  }
 );
 
 
@@ -63,7 +63,7 @@ export const deleteUser = createAsyncThunk(
 // suspend an user
 export const suspendUser = createAsyncThunk(
     'super-admin-user/suspendUser',
-    async (id: string, { rejectWithValue }) => {
+    async(id: string, { rejectWithValue }) => {
         try {
             const res = await axiosInstance.put(`/api/v1/user-mgt/${id}/suspend-user`);
             return res.data;
@@ -79,7 +79,7 @@ export const suspendUser = createAsyncThunk(
 // activate an user
 export const activateUser = createAsyncThunk(
     'super-admin-user/activateUser',
-    async (id: string, { rejectWithValue }) => {
+    async(id: string, { rejectWithValue }) => {
         try {
             const res = await axiosInstance.put(`/api/v1/user-mgt/${id}/activate-user`);
             return res.data;
