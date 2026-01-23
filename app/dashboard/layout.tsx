@@ -89,10 +89,10 @@ export default function DashboardLayout({
       role === "super admin"
         ? superAdminNav
         : role === "admin"
-          ? adminNav
-          : role === "resident"
-            ? residentNav
-            : securityNav
+        ? adminNav
+        : role === "resident"
+        ? residentNav
+        : securityNav
 
     return navItems.map((item, i) => {
       const Icon = item.icon
@@ -102,10 +102,11 @@ export default function DashboardLayout({
         <Link
           key={i}
           href={item.path}
-          className={`flex items-center w-full gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${active
-            ? "bg-primary/10 text-primary font-semibold"
-            : "text-muted-foreground hover:bg-muted/50"
-            }`}
+          className={`flex items-center w-full gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+            active
+              ? "bg-primary/10 text-primary font-semibold"
+              : "text-muted-foreground hover:bg-muted/50"
+          }`}
         >
           <Icon className="w-4 h-4" />
           {sidebarOpen && <span>{item.label}</span>}
@@ -129,8 +130,9 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 z-40 ${sidebarOpen ? "w-64" : "w-20"
-          }`}
+        className={`fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 z-40 ${
+          sidebarOpen ? "w-64" : "w-20"
+        }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -149,7 +151,7 @@ export default function DashboardLayout({
           {/* User Info */}
           <div className="border-t border-sidebar-border p-4">
             <button
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-sidebar-accent transition-colors"
               onClick={handleSignOut}
             >
               <div className="w-8 h-8 bg-sidebar-primary rounded-full flex items-center justify-center text-white">
@@ -177,7 +179,7 @@ export default function DashboardLayout({
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 hover:bg-muted rounded-lg transition-colors"
             >
-              {sidebarOpen ? <X className="w-5 h-5 cursor-pointer" /> : <Menu className="w-5 h-5 cursor-pointer" />}
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
             <div className="flex items-center gap-4">
@@ -190,7 +192,7 @@ export default function DashboardLayout({
                 />
               </div>
               <button className="p-2 hover:bg-muted rounded-lg transition-colors relative">
-                <Bell className="w-5 h-5 cursor-pointer" />
+                <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
               </button>
               <Button
@@ -199,7 +201,7 @@ export default function DashboardLayout({
                 onClick={handleSignOut}
                 className="text-muted-foreground hover:text-foreground"
               >
-                <LogOut className="w-5 h-5 cursor-pointer" />
+                <LogOut className="w-5 h-5" />
               </Button>
             </div>
           </div>

@@ -111,75 +111,49 @@ export default function Table<T extends { id?: string }>({
         </table>
       </div>
 
-      {showPagination && paginationInfo && (() => {
-        const currentPage = paginationInfo.current;
-        const maxVisiblePages = 5;
-        
-        // Calculate which page numbers to show
-        const getVisiblePages = () => {
-          if (totalPages <= maxVisiblePages) {
-            // Show all pages if total is less than or equal to max visible
-            return Array.from({ length: totalPages }, (_, i) => i + 1);
-          }
-          
-          // Calculate start and end of visible page range
-          let start = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-          let end = Math.min(totalPages, start + maxVisiblePages - 1);
-          
-          // Adjust start if we're near the end
-          if (end - start < maxVisiblePages - 1) {
-            start = Math.max(1, end - maxVisiblePages + 1);
-          }
-          
-          return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-        };
-        
-        const visiblePages = getVisiblePages();
-        
-        return (
-          <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-t border-border bg-muted/30 gap-2 md:gap-0">
-            <p className="text-sm text-muted-foreground">
-              Showing {(paginationInfo.current - 1) * paginationInfo.pageSize + 1} -{" "}
-              {Math.min(paginationInfo.current * paginationInfo.pageSize, paginationInfo.total)} of{" "}
-              {paginationInfo.total} records
-            </p>
+      {showPagination && paginationInfo && (
+        <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-t border-border bg-muted/30 gap-2 md:gap-0">
+          <p className="text-sm text-muted-foreground">
+            Showing {(paginationInfo.current - 1) * paginationInfo.pageSize + 1} -{" "}
+            {Math.min(paginationInfo.current * paginationInfo.pageSize, paginationInfo.total)} of{" "}
+            {paginationInfo.total} records
+          </p>
 
-            <div className="flex gap-2">
-              {/* Previous Button */}
+          <div className="flex gap-2">
+            {/* Previous Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange && onPageChange(paginationInfo.current - 1)}
+              disabled={paginationInfo.current <= 1}
+            >
+              Previous
+            </Button>
+
+            {/* Page Numbers */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
               <Button
-                variant="outline"
+                key={pageNum}
+                variant={pageNum === paginationInfo.current ? "default" : "outline"}
                 size="sm"
-                onClick={() => onPageChange && onPageChange(paginationInfo.current - 1)}
-                disabled={paginationInfo.current <= 1}
+                onClick={() => onPageChange && onPageChange(pageNum)}
               >
-                Previous
+                {pageNum}
               </Button>
+            ))}
 
-              {/* Page Numbers */}
-              {visiblePages.map((pageNum) => (
-                <Button
-                  key={pageNum}
-                  variant={pageNum === paginationInfo.current ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onPageChange && onPageChange(pageNum)}
-                >
-                  {pageNum}
-                </Button>
-              ))}
-
-              {/* Next Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange && onPageChange(paginationInfo.current + 1)}
-                disabled={paginationInfo.current >= totalPages}
-              >
-                Next
-              </Button>
-            </div>
+            {/* Next Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange && onPageChange(paginationInfo.current + 1)}
+              disabled={paginationInfo.current >= totalPages}
+            >
+              Next
+            </Button>
           </div>
-        );
-      })()}
+        </div>
+      )}
     </div>
   );
 }

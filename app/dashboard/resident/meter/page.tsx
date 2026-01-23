@@ -13,11 +13,14 @@ import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import VendPower from "@/components/resident/vend-power/page";
 import Table from "@/components/tables/list/page";
 
+
 export interface MeterVendHistoryResponse {
   success: boolean;
   message: string;
   data: EnergyListItem[];
+ 
 }
+
 
 export interface EnergyListItem {
   tt?: string;
@@ -37,6 +40,8 @@ export interface EnergyListItem {
   value: string;
   createdAt: string;
 }
+
+
 
 export default function ResidentMeter() {
   const dispatch = useDispatch<AppDispatch>();
@@ -128,7 +133,7 @@ export default function ResidentMeter() {
     {
       key: "createdAt",
       header: "Date",
-      render: (row: EnergyListItem & { transTime?: string }) => {
+      accessor: (row: EnergyListItem & { transTime?: string }) => {
         if (!row.transTime) return "N/A";
         const date = new Date(row.transTime);
         return date.toLocaleString("en-NG", {
@@ -145,41 +150,28 @@ export default function ResidentMeter() {
     {
       key: "amount",
       header: "Amount (₦)",
-      render: (row: EnergyListItem) => Number(row.amount).toLocaleString(),
+      accessor: (row: EnergyListItem) => Number(row.amount).toLocaleString(),
     },
     {
       key: "units",
       header: "Units Bought",
-      render: (row: EnergyListItem) => `${row.value} ${row.unit}`,
+      accessor: (row: EnergyListItem) => `${row.value} ${row.unit}`,
     },
     {
       key: "token",
       header: "Token",
-      render: (row: EnergyListItem) => {
+      accessor: (row: EnergyListItem) => {
         if (!row.token) return "N/A";
-
-        const handleCopyToken = async () => {
-          try {
-            await navigator.clipboard.writeText(row.token!);
-            toast.success("Token copied to clipboard!");
-          } catch (error) {
-            toast.error("Failed to copy token");
-          }
-        };
 
         return (
           <div className="flex items-center gap-2">
             <span className="truncate max-w-[180px]">{row.token}</span>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCopyToken();
-              }}
-              className="text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+              onClick={() => navigator.clipboard.writeText(row.token!)}
+              className="text-blue-600 hover:text-blue-800"
               title="Copy Token"
-              type="button"
             >
-              <FaCopy size={9} />
+              <FaCopy size={14} />
             </button>
           </div>
         );
@@ -189,13 +181,13 @@ export default function ResidentMeter() {
     {
       key: "price",
       header: "Price (₦/kWh)",
-      render: (row: EnergyListItem) =>
+      accessor: (row: EnergyListItem) =>
         row.price ? Number(row.price).toLocaleString() : "N/A",
     },
     {
       key: "device",
       header: "Meter Number",
-      render: (row: EnergyListItem) => row.device,
+      accessor: (row: EnergyListItem) => row.device,
     },
   ];
 
@@ -222,9 +214,9 @@ export default function ResidentMeter() {
                 Buy Power
               </Button>
 
-              <Button
-                onClick={handleToggleMeter}
-                size="lg"
+              <Button 
+                onClick={handleToggleMeter} 
+                size="lg" 
                 className="px-6 capitalize"
                 variant={meter?.isActive ? "destructive" : "default"}
               >
@@ -237,21 +229,21 @@ export default function ResidentMeter() {
 
 
       <Card className="p-4">
-        <h2 className="font-semibold mb-4">Vend History</h2>
-        <Table
-          columns={vendColumns}
-          data={meterVendHistory || []}
-          emptyMessage={
-            loading ? "Loading Vend History..." : "No vend history available."
-          }
-          showPagination
-          paginationInfo={{
-            total: pagination?.total || meterVendHistory.length || 0,
-            current: Number(pagination?.page) || 1,
-            pageSize: Number(pagination?.limit) || 10,
-          }}
-        />
-      </Card>
+          <h2 className="font-semibold mb-4">Vend History</h2>
+          <Table
+            columns={vendColumns}
+            data={meterVendHistory || []}
+            emptyMessage={
+              loading ? "Loading Vend History..." : "No vend history available."
+            }
+            showPagination
+            paginationInfo={{
+              total: pagination?.total || meterVendHistory.length || 0,
+              current: Number(pagination?.page) || 1,
+              pageSize: Number(pagination?.limit) || 10,
+            }}
+          />
+        </Card>
 
       {open && meter && walletId && addressId && (
         <Modal visible={open} onClose={handleOpenModal}>

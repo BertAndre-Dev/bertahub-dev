@@ -27,22 +27,21 @@ export const adminNav = [
     { label: "Bills Management", icon: LuReceipt, path: "/dashboard/admin/bills" },
     { label: "Meter Management", icon: IoSpeedometerOutline, path: '/dashboard/admin/meter' },
     { label: "Visitors Management", icon: FiUsers, path: '/dashboard/admin/visitor' },
-    { label: "Estate Admin", icon: FiUsers, path: '/dashboard/estate-admin/transactions' },
     { label: "Settings", icon: FiSettings, path: '/dashboard/admin/settings' },
 ];
 
 
 export const securityNav = [
     { label: "Dashboard", icon: FiHome, path: '/dashboard/security/dashboard' },
-    { label: "View Visitor", icon: FiUsers, path: '/dashboard/security/view-visitor' },
-    { label: "Verify Visitor", icon: FiSettings, path: '/dashboard/security/verify-visitor' },
+    { label: "View Visitor", icon: FiUsers, path: '/dashboard/security/view-visitor'  },
+    { label: "Verify Visitor", icon: FiSettings, path: '/dashboard/security/verify-visitor'  },
 ]
 
 
 export const residentNav = [
     // { label: "Dashboard", icon: FiHome, path: '/dashboard/resident/dashboard' },
-    { label: "Bills Management", icon: FiUsers, path: '/dashboard/resident/bills' },
-    { label: "Meter Management", icon: FiUsers, path: '/dashboard/resident/meter' },
-    { label: "Transactions", icon: FiUsers, path: '/dashboard/resident/transaction' },
+    { label: "Bills Management", icon: FiUsers, path: '/dashboard/resident/bills'  },
+    { label: "Meter Management", icon: FiUsers, path: '/dashboard/resident/meter'  },
+    { label: "Transactions", icon: FiUsers, path: '/dashboard/resident/transaction'  },
     // { label: "Settings", icon: FiSettings, path: '/dashboard/resident/settings'  },
 ]

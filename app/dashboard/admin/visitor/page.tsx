@@ -75,120 +75,93 @@ export default function AdminVisitorManagement() {
 
 
   const handleVerify = async (visitorCode: string) => {
-    try {
-      const res = await dispatch(verifyVisitor({ visitorCode })).unwrap();
+        try {
+            const res = await dispatch(verifyVisitor({ visitorCode })).unwrap();
 
-      toast.success(res.message);
+            toast.success(res.message);
 
-      // Refresh visitor list
-      if (estateId) {
-        await dispatch(
-          getVisitorsByEstate({
-            estateId,
-            page: pagination.page,
-            limit: pagination.limit,
-          })
-        );
-      }
-    } catch (error: any) {
-      toast.error(error?.message);
-    }
-  };
+            // Refresh visitor list
+            if (estateId) {
+            await dispatch(
+                getVisitorsByEstate({
+                estateId,
+                page: pagination.page,
+                limit: pagination.limit,
+                })
+            );
+            }
+        } catch (error: any) {
+            toast.error(error?.message);
+        }
+    };
 
 
   const columns = [
-    {
-      header: "Created At",
-      key: "createdAt",
-      render: (item: any) =>
-        new Date(item.createdAt).toLocaleString(),
-    },
-    {
-      header: "Visitor Code",
-      key: "visitorCode",
-      render: (item: any) => item.visitorCode,
-    },
-    {
-      header: "Status",
-      key: "isVerified",
-      render: (item: any) => (
-        <span
-          className={`px-2 py-1 rounded text-sm ${item.isVerified
-            ? "bg-green-100 text-green-700"
-            : "bg-red-100 text-red-700"
-            }`}
-        >
-          {item.isVerified ? "Verified" : "Not Verified"}
-        </span>
-      ),
-    },
-    {
-      header: "Viewed By",
-      key: "viewedBy",
-      render: (item: any) => {
-        if (!item.viewedBy) {
-          return <span className="text-gray-500 text-sm">Not viewed</span>;
-        }
-        return (
-          <span className="text-sm">
-            {item.viewedBy.firstName} {item.viewedBy.lastName}
-          </span>
-        );
-      },
-    },
-    {
-      header: "Verified By",
-      key: "verifiedBy",
-      render: (item: any) => {
-        if (!item.verifiedBy) {
-          return <span className="text-gray-500 text-sm">Not verified</span>;
-        }
-        return (
-          <span className="text-sm">
-            {item.verifiedBy.firstName} {item.verifiedBy.lastName}
-          </span>
-        );
-      },
-    },
-    {
-      header: "Address",
-      key: "entries",
-      render: (item: any) => {
-        if (!item.entries?.length)
-          return <span className="text-gray-500 text-sm">No entries</span>;
+        {
+            header: "Created At",
+            key: "createdAt",
+            render: (item: any) =>
+            new Date(item.createdAt).toLocaleString(),
+        },
+        {
+            header: "Visitor Code",
+            key: "visitorCode",
+            render: (item: any) => item.visitorCode,
+        },
+        {
+            header: "Status",
+            key: "isVerified",
+            render: (item: any) => (
+            <span
+                className={`px-2 py-1 rounded text-xs ${
+                item.isVerified
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+            >
+                {item.isVerified ? "Verified" : "Not Verified"}
+            </span>
+            ),
+        },
+        {
+            header: "Address",
+            key: "entries",
+            render: (item: any) => {
+            if (!item.entries?.length)
+                return <span className="text-gray-500 text-xs">No entries</span>;
 
-        return item.entries.map((entry: any, index: number) => (
-          <div key={index} className="text-sm">
-            {Object.entries(entry.data)
-              .map(([key, value]) => `${key}: ${value}`)
-              .join(", ")}
-          </div>
-        ));
-      },
-    },
+            return item.entries.map((entry: any, index: number) => (
+                <div key={index} className="text-xs">
+                {Object.entries(entry.data)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join(", ")}
+                </div>
+            ));
+            },
+        },
 
 
-    {
-      header: "Verify",
-      key: "verify",
-      render: (item: any) => {
-        if (item.isVerified) {
-          return (
-            <CheckCircle className="w-5 h-5 text-green-500 opacity-70" />
-          );
-        }
+        {
+            header: "Verify",
+            key: "verify",
+            render: (item: any) => {
+            if (item.isVerified) {
+                return (
+                <CheckCircle className="w-5 h-5 text-green-500 opacity-70" />
+                );
+            }
 
-        return (
-          <button
-            onClick={() => handleVerify(item.visitorCode)}
-            className="p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800 cursor-pointer transition-colors duration-200"
-          >
-            <ShieldCheck className="w-5 h-5" />
-          </button>
-        );
-      },
-    },
-  ];
+            return (
+                <button
+                onClick={() => handleVerify(item.visitorCode)}
+                className="text-blue-600 hover:text-blue-800"
+                >
+                <ShieldCheck className="w-5 h-5" />
+                </button>
+            );
+            },
+        },
+    ];
 
 
   return (

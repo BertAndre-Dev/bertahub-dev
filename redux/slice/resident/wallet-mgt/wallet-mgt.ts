@@ -4,7 +4,6 @@ import axiosInstance from "@/utils/axiosInstance";
 
 interface WalletData {
   userId: string;
-  estateId: string;
   balance: number;
   lockedBalance: number;
 }

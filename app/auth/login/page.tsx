@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useDispatch, useSelector } from "react-redux"
@@ -28,23 +28,6 @@ export default function LoginPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
-  const [rememberMe, setRememberMe] = useState(false)
-
-  // Load saved email and password on component mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedEmail = localStorage.getItem("rememberedEmail")
-      const savedPassword = localStorage.getItem("rememberedPassword")
-      if (savedEmail) {
-        setFormData((prev) => ({
-          ...prev,
-          email: savedEmail,
-          password: savedPassword || "",
-        }))
-        setRememberMe(true)
-      }
-    }
-  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -75,15 +58,6 @@ export default function LoginPage() {
         // ✅ Save user + token to localStorage
         localStorage.setItem("user", JSON.stringify(user))
         localStorage.setItem("token", token)
-
-        // ✅ Handle remember me functionality
-        if (rememberMe) {
-          localStorage.setItem("rememberedEmail", formData.email)
-          localStorage.setItem("rememberedPassword", formData.password)
-        } else {
-          localStorage.removeItem("rememberedEmail")
-          localStorage.removeItem("rememberedPassword")
-        }
 
         toast.success(res.message || "Signed in successfully")
 
@@ -155,22 +129,17 @@ export default function LoginPage() {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
               {showPassword ? (
-                <EyeOff className="w-4 h-4 cursor-pointer" />
+                <EyeOff className="w-4 h-4" />
               ) : (
-                <Eye className="w-4 h-4 cursor-pointer" />
+                <Eye className="w-4 h-4" />
               )}
             </button>
           </div>
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-border cursor-pointer"
-            />
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" className="w-4 h-4 rounded border-border" />
             Remember me
           </label>
           <Link
