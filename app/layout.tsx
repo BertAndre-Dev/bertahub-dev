@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   title: "Estate Management System",
   description: "Modern estate management application for residents, managers, and administrators",
   generator: "v0.app",
+  icons: {
+    icon: "/icon.png",
+  },
 }
 
 export default function RootLayout({
