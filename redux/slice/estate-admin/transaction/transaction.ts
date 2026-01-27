@@ -37,35 +37,44 @@ interface PaymentPayload {
   customizations: PaymentCustomizations;
 }
 
+interface TransferPayload {
+  amount: number;
+  currency: string;
+  narration: string;
+  bankCode: string;
+  accountNumber: string;
+  reference: string;
+}
+
 
 export const createTransaction = createAsyncThunk(
-    "estate-admin-transaction/createTransaction",
-    async (data: TransactionData, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.post("/api/v1/transaction-mgt", data);
-            return res.data; 
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message || "Transaction created successfully."
-            })
-        }
+  "estate-admin-transaction/createTransaction",
+  async (data: TransactionData, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("/api/v1/transaction-mgt", data);
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.res?.data?.message || "Transaction created successfully."
+      })
     }
+  }
 );
 
 
-export const initializePayment = createAsyncThunk(
-    "estate-admin-transaction/initializePayment",
-    async (data: PaymentPayload, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.post("/api/v1/payment-mgt/initialize", data);
-            return res.data; 
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message || "Payment initialized successfully."
-            })
-        }
-    }
-);
+// export const initializePayment = createAsyncThunk(
+//   "estate-admin-transaction/initializePayment",
+//   async (data: PaymentPayload, { rejectWithValue }) => {
+//     try {
+//       const res = await axiosInstance.post("/api/v1/payment-mgt/initialize", data);
+//       return res.data;
+//     } catch (error: any) {
+//       return rejectWithValue({
+//         message: error.res?.data?.message || "Payment initialized successfully."
+//       })
+//     }
+//   }
+// );
 
 
 // ✅ Get paginated transaction history
@@ -101,6 +110,48 @@ export const getTransactionHistory = createAsyncThunk(
   }
 );
 
+// ✅ Get paginated estate transaction history
+export const getEstateTransactionHistory = createAsyncThunk(
+  "estate-admin-transaction/getEstateTransactionHistory",
+  async (
+    {
+      estateId,
+      page = 1,
+      limit = 10,
+      type,
+      paymentStatus,
+    }: {
+      estateId: string;
+      page?: number;
+      limit?: number;
+      type?: string;
+      paymentStatus?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const params: Record<string, any> = {
+        estateId,
+        page,
+        limit,
+      };
+
+      if (type) params.type = type;
+      if (paymentStatus) params.paymentStatus = paymentStatus;
+
+      const res = await axiosInstance.get(
+        `/api/v1/transaction-mgt/estate-history`,
+        { params }
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message:
+          error?.response?.data?.message || "Failed to fetch estate transactions",
+      });
+    }
+  }
+);
 
 
 export const getTransaction = createAsyncThunk(
@@ -122,7 +173,7 @@ export const verifyTransaction = createAsyncThunk(
   'estate-admin-transaction/verifyTransaction',
   async ({ tx_ref }: VerifyTransactionPayload, { rejectWithValue }) => {
     try {
-      if (!tx_ref ) {
+      if (!tx_ref) {
         throw new Error("Missing required fields for verification");
       }
 
@@ -138,6 +189,23 @@ export const verifyTransaction = createAsyncThunk(
     } catch (error: any) {
       console.error("❌ Verify transaction error:", error.response?.data || error.message);
       return rejectWithValue(error.response?.data || { message: error.message });
+    }
+  }
+);
+
+// ✅ Transfer funds (withdrawal)
+export const transferFunds = createAsyncThunk(
+  "estate-admin-transaction/transferFunds",
+  async (data: TransferPayload, { rejectWithValue }) => {
+    try {
+      console.log("💸 Transferring funds:", data);
+      const res = await axiosInstance.post("/api/v1/payment-mgt/transfer", data);
+      return res.data;
+    } catch (error: any) {
+      console.error("❌ Transfer funds error:", error.response?.data || error.message);
+      return rejectWithValue({
+        message: error?.response?.data?.message || "Failed to transfer funds.",
+      });
     }
   }
 );

@@ -3,50 +3,54 @@ import {
     createTransaction,
     getTransaction,
     getTransactionHistory,
+    getEstateTransactionHistory,
     verifyTransaction,
-    initializePayment
+    // initializePayment,
+    transferFunds
 } from './transaction';
 
 interface TransactionData {
-  walletId: string;
-  type: string;
-  amount: number;
-  description: string;
-  userId: string;
-  id?: string;
-  paymentStatus?: string;
-  tx_ref?: string;
-  createdAt?: string;
-  updatedAt?: string;
+    walletId: string;
+    type: string;
+    amount: number;
+    description: string;
+    userId: string;
+    id?: string;
+    paymentStatus?: string;
+    tx_ref?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface Pagination {
-  total: number;
-  currentPage: number;
-  totalPages: number;
-  pageSize: number;
+    total: number;
+    currentPage: number;
+    totalPages: number;
+    pageSize: number;
 }
 
 export interface TransactionResponse {
-  success: boolean;
-  message: string;
-  data: TransactionData[];
-  pagination: Pagination;
+    success: boolean;
+    message: string;
+    data: TransactionData[];
+    pagination: Pagination;
 }
 
 // ✅ Payment Response Interface
 export interface PaymentResponse {
-  status: string;
-  message: string;
-  data?: any;
+    status: string;
+    message: string;
+    data?: any;
 }
 
 export interface TransactionState {
     createTransactionState: "idle" | "isLoading" | "succeeded" | "failed";
     getTransactionState: "idle" | "isLoading" | "succeeded" | "failed";
     getTransactionHistoryState: "idle" | "isLoading" | "succeeded" | "failed";
+    getEstateTransactionHistoryState: "idle" | "isLoading" | "succeeded" | "failed";
     verifyTransactionState: "idle" | "isLoading" | "succeeded" | "failed";
     initializePaymentState: "idle" | "isLoading" | "succeeded" | "failed";
+    transferFundsState: "idle" | "isLoading" | "succeeded" | "failed";
     status: "idle" | "isLoading" | "succeeded" | "failed";
     transaction: TransactionData | null;
     allTransactions: TransactionResponse | null;
@@ -58,8 +62,10 @@ const initialState: TransactionState = {
     createTransactionState: "idle",
     getTransactionState: "idle",
     getTransactionHistoryState: "idle",
+    getEstateTransactionHistoryState: "idle",
     verifyTransactionState: "idle",
     initializePaymentState: "idle",
+    transferFundsState: "idle",
     status: "idle",
     transaction: null,
     allTransactions: null,
@@ -153,6 +159,36 @@ const transactionSlice = createSlice({
                 state.error = action.error.message || "Failed to fetch transactions";
             });
 
+        // ✅ GET ESTATE TRANSACTION HISTORY
+        builder
+            .addCase(getEstateTransactionHistory.pending, (state) => {
+                state.getEstateTransactionHistoryState = "isLoading";
+                state.status = "isLoading";
+            })
+            .addCase(getEstateTransactionHistory.fulfilled, (state, action) => {
+                state.getEstateTransactionHistoryState = "succeeded";
+                state.status = "succeeded";
+                const apiPagination = action.payload?.pagination || {};
+                // Map API pagination structure (page, pages, limit) to our internal structure (currentPage, totalPages, pageSize)
+                state.allTransactions = {
+                    success: action.payload?.success ?? true,
+                    message:
+                        action.payload?.message ?? "Estate transactions retrieved successfully.",
+                    data: action.payload?.data || [],
+                    pagination: {
+                        total: apiPagination.total ?? 0,
+                        currentPage: apiPagination.page ?? 1,
+                        totalPages: apiPagination.pages ?? 1,
+                        pageSize: apiPagination.limit ?? 10,
+                    },
+                };
+            })
+            .addCase(getEstateTransactionHistory.rejected, (state, action) => {
+                state.getEstateTransactionHistoryState = "failed";
+                state.status = "failed";
+                state.error = action.error.message || "Failed to fetch estate transactions";
+            });
+
         // ✅ VERIFY TRANSACTION
         builder
             .addCase(verifyTransaction.pending, (state) => {
@@ -170,22 +206,40 @@ const transactionSlice = createSlice({
                     "Failed to verify transaction";
             });
 
-        // ✅ INITIALIZE PAYMENT
+        // ✅ INITIALIZE PAYMENT (commented out - not currently used)
+        // builder
+        //     .addCase(initializePayment.pending, (state) => {
+        //         state.initializePaymentState = "isLoading";
+        //         state.error = null;
+        //     })
+        //     .addCase(initializePayment.fulfilled, (state, action) => {
+        //         state.initializePaymentState = "succeeded";
+        //         state.paymentData = action.payload;
+        //     })
+        //     .addCase(initializePayment.rejected, (state, action) => {
+        //         state.initializePaymentState = "failed";
+        //         state.error =
+        //             (action.payload as { message: string })?.message ||
+        //             action.error.message ||
+        //             "Failed to initialize payment";
+        //     });
+
+        // ✅ TRANSFER FUNDS
         builder
-            .addCase(initializePayment.pending, (state) => {
-                state.initializePaymentState = "isLoading";
+            .addCase(transferFunds.pending, (state) => {
+                state.transferFundsState = "isLoading";
                 state.error = null;
             })
-            .addCase(initializePayment.fulfilled, (state, action) => {
-                state.initializePaymentState = "succeeded";
+            .addCase(transferFunds.fulfilled, (state, action) => {
+                state.transferFundsState = "succeeded";
                 state.paymentData = action.payload;
             })
-            .addCase(initializePayment.rejected, (state, action) => {
-                state.initializePaymentState = "failed";
+            .addCase(transferFunds.rejected, (state, action) => {
+                state.transferFundsState = "failed";
                 state.error =
                     (action.payload as { message: string })?.message ||
                     action.error.message ||
-                    "Failed to initialize payment";
+                    "Failed to transfer funds";
             });
     },
 });

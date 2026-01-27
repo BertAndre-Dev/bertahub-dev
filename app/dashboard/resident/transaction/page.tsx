@@ -299,19 +299,19 @@ export default function TransactionPage() {
                 </p>
               </div>
 
-                    <Button onClick={handleOpenModal} size="lg" className="px-6">
+              <Button onClick={handleOpenModal} size="lg" className="px-6">
                 Fund Wallet
               </Button>
             </div>
           ) : (
-                    <Button
-                      onClick={handleCreateWallet}
-                      disabled={createWalletState === "isLoading"}
-                    >
-                      {createWalletState === "isLoading"
-                        ? "Creating wallet..."
-                        : "Create Wallet"}
-                    </Button>
+            <Button
+              onClick={handleCreateWallet}
+              disabled={createWalletState === "isLoading"}
+            >
+              {createWalletState === "isLoading"
+                ? "Creating wallet..."
+                : "Create Wallet"}
+            </Button>
           )}
         </CardContent>
       </Card>
@@ -351,7 +351,7 @@ export default function TransactionPage() {
       </Card>
 
       <Modal visible={open} onClose={handleOpenModal}>
-        <div className="p-6 bg-white rounded-md shadow-md w-full max-w-md mx-auto">
+        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto">
           {userId && wallet ? (
             <FundWalletForm
               userId={userId}

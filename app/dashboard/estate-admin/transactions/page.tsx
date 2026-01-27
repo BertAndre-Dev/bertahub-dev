@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Modal from "@/components/modal/page";
-import FundWalletForm from "@/components/resident/wallet/fund-wallet/page";
+import WithdrawFundForm from "@/components/estate-admin/transactions/fund-wallet-form/page";
 
 import {
     createWallet,
@@ -12,9 +12,10 @@ import {
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
     createTransaction,
-    initializePayment,
     verifyTransaction,
-    getTransactionHistory
+    getTransactionHistory,
+    getEstateTransactionHistory,
+    transferFunds
 } from "@/redux/slice/estate-admin/transaction/transaction";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -58,7 +59,7 @@ export default function TransactionPage() {
     );
     const loading =
         useSelector(
-            (state: RootState) => state.estateAdminTransaction.getTransactionHistoryState
+            (state: RootState) => state.estateAdminTransaction.getEstateTransactionHistoryState
         ) === "isLoading";
 
 
@@ -81,8 +82,10 @@ export default function TransactionPage() {
                 setEmail(userEmail || "");
                 if (estateIdFromUser) setEstateId(estateIdFromUser);
 
-                // ✅ Fetch transactions (paginated)
-                await dispatch(getTransactionHistory({ userId: id, page: 1, limit }));
+                // ✅ Fetch estate transactions (paginated) using estateId
+                if (estateIdFromUser) {
+                    await dispatch(getEstateTransactionHistory({ estateId: estateIdFromUser, page: 1, limit }));
+                }
 
                 // ✅ Fetch wallet
                 const walletRes = await dispatch(getWallet(id)).unwrap();
@@ -96,9 +99,9 @@ export default function TransactionPage() {
 
     // 🔹 Pagination Handler
     const handlePageChange = async (newPage: number) => {
-        if (!userId) return;
+        if (!estateId) return;
         setCurrentPage(newPage);
-        await dispatch(getTransactionHistory({ userId, page: newPage, limit }));
+        await dispatch(getEstateTransactionHistory({ estateId, page: newPage, limit }));
     };
 
 
@@ -125,67 +128,73 @@ export default function TransactionPage() {
 
     const handleOpenModal = () => setOpen((prev) => !prev);
 
-    // 🔹 Fund Wallet Handler
-    const handleFundWallet = async ({
+    // 🔹 Withdraw Fund Handler
+    const handleSumbit = async ({
         userId,
         walletId,
         amount,
         description,
         type,
         currency,
-        paymentOption,
         country,
+        bankCode,
+        accountNumber,
     }: {
         userId: string;
         walletId: string;
         amount: number;
         description: string;
-        type: "credit";
+        type: "debit";
         currency: string;
-        paymentOption: string;
         country: string;
+        bankCode?: string;
+        accountNumber?: string;
     }) => {
         try {
-            // // ⚠️ Check if amount exceeds the maximum limit BEFORE any transaction
-            // const MAX_AMOUNT = 200_000;
-            // if (amount > MAX_AMOUNT) {
-            //   toast.error(`You cannot fund more than ${MAX_AMOUNT.toLocaleString()}`);
-            //   return; // Stop further execution
-            // }
+            if (!bankCode || !accountNumber) {
+                toast.error("Bank code and account number are required for withdrawal.");
+                return;
+            }
 
-            // ✅ Only now we create a transaction
+            // Generate a unique reference for the transfer
+            const reference = `withdraw_${userId}_${Date.now()}`;
+
+            // Create transaction record first
             const txRes = await dispatch(
                 createTransaction({ userId, walletId, amount, description, type })
             ).unwrap();
 
-            const tx_ref = txRes?.data?.tx_ref;
-            if (!tx_ref) throw new Error("Transaction reference not found");
+            const tx_ref = txRes?.data?.tx_ref || reference;
 
-            // Initialize payment on Flutterwave
-            const paymentRes = await dispatch(
-                initializePayment({
-                    tx_ref,
+            // Transfer funds to bank account
+            await dispatch(
+                transferFunds({
                     amount,
-                    country,
                     currency,
-                    redirect_url: `${window.location.origin}/dashboard/estate-admin/transactions`,
-                    payment_options: paymentOption,
-                    customer: { email },
-                    customizations: { title: "Wallet Funding", description },
+                    narration: description || `Withdrawal of ${currency} ${amount}`,
+                    bankCode,
+                    accountNumber,
+                    reference: tx_ref,
                 })
             ).unwrap();
 
-            const paymentUrl = paymentRes?.data?.link || paymentRes?.data?.url;
-            if (!paymentUrl) throw new Error("Payment URL not received");
+            toast.success("Fund withdrawal initiated successfully!");
 
-            // Redirect to Flutterwave
-            window.location.href = paymentUrl;
+            // Refresh wallet balance and transactions
+            await dispatch(getWallet(userId));
+            if (estateId) {
+                await dispatch(getEstateTransactionHistory({ estateId, page: currentPage, limit }));
+            }
+
+            // Close modal
+            setOpen(false);
         } catch (err: any) {
-            console.error("❌ Fund wallet error:", err);
-            toast.error(err?.message || "Failed to fund wallet.");
+            console.error("❌ Withdraw fund error:", err);
+            const errorMessage = err?.message || err?.payload?.message || "Failed to withdraw fund.";
+            toast.error(errorMessage);
+            throw err; // Re-throw to let form handle it
         }
     };
-
 
     // 🔹 Automatically verify transaction when redirected back
     useEffect(() => {
@@ -214,11 +223,11 @@ export default function TransactionPage() {
 
                 // ✅ Trigger verification via Redux thunk
                 const verificationRes = await dispatch(
-                    verifyTransaction({ tx_ref, paymentType: "fundWallet" })
+                    verifyTransaction({ tx_ref, paymentType: "withdrawFund" })
                 ).unwrap();
 
                 console.log("✅ Verification response:", verificationRes);
-                toast.success("Wallet funded successfully!");
+                toast.success("Withdrawal successfull!");
 
                 // Refresh wallet balance
                 await dispatch(getWallet(currentUserId));
@@ -299,7 +308,7 @@ export default function TransactionPage() {
                             </div>
 
                             <Button onClick={handleOpenModal} size="lg" className="px-6">
-                                Fund Wallet
+                                Withdraw Fund
                             </Button>
                         </div>
                     ) : (
@@ -316,7 +325,7 @@ export default function TransactionPage() {
             </Card>
 
             {/* Transactions Table */}
-            {/* <Card className="p-4">
+            <Card className="p-4">
                 <h2 className="font-semibold mb-4">Transaction History</h2>
                 <Table
                     columns={columns}
@@ -340,7 +349,7 @@ export default function TransactionPage() {
                     </Button>
                     <Button
                         disabled={
-                            currentPage >= Math.ceil((pagination?.total || 0) / limit)
+                            currentPage >= (pagination?.totalPages || 1)
                         }
                         onClick={() => handlePageChange(currentPage + 1)}
                     >
@@ -350,19 +359,20 @@ export default function TransactionPage() {
             </Card>
 
             <Modal visible={open} onClose={handleOpenModal}>
-                <div className="p-6 bg-white rounded-md shadow-md w-full max-w-md mx-auto">
+                <div className=" bg-white rounded-md shadow-md w-full max-w-md mx-auto">
                     {userId && wallet ? (
-                        <FundWalletForm
+                        <WithdrawFundForm
                             userId={userId}
                             walletId={wallet.id ?? ""}
-                            onSubmit={handleFundWallet}
+                            onSubmit={handleSumbit}
+
                             onClose={handleOpenModal}
                         />
                     ) : (
                         <p className="text-center text-gray-500">Loading form...</p>
                     )}
                 </div>
-            </Modal> */}
+            </Modal>
         </div>
     );
 }
