@@ -48,10 +48,12 @@ export default function TransactionPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [limit] = useState(10);
     const transactions = useSelector(
-        (state: RootState) => state.estateAdminTransaction.allTransactions?.data || []
+        (state: RootState) =>
+            (state as any).estateAdminTransaction?.allTransactions?.data || []
     );
     const pagination = useSelector(
-        (state: RootState) => state.estateAdminTransaction.allTransactions?.pagination
+        (state: RootState) =>
+            (state as any).estateAdminTransaction?.allTransactions?.pagination
     );
     const wallet = useSelector((state: RootState) => state.wallet.wallet);
     const createWalletState = useSelector(
@@ -59,7 +61,8 @@ export default function TransactionPage() {
     );
     const loading =
         useSelector(
-            (state: RootState) => state.estateAdminTransaction.getEstateTransactionHistoryState
+            (state: RootState) =>
+                (state as any).estateAdminTransaction?.getEstateTransactionHistoryState
         ) === "isLoading";
 
 
@@ -117,7 +120,7 @@ export default function TransactionPage() {
         }
         try {
             await dispatch(
-                createWallet({ userId, estateId, balance: 0, lockedBalance: 0 })
+                createWallet({ userId, balance: 0, lockedBalance: 0 })
             ).unwrap();
             toast.success("Wallet created successfully.");
             dispatch(getWallet(userId));
