@@ -13,7 +13,6 @@ import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
     createTransaction,
     verifyTransaction,
-    getTransactionHistory,
     getEstateTransactionHistory,
     transferFunds
 } from "@/redux/slice/estate-admin/transaction/transaction";
