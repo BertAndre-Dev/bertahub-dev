@@ -15,6 +15,7 @@ import adminMeterSliceReducer from '@/redux/slice/admin/meter-mgt/meter-mgt-slic
 import residentMeterSliceReducer from '@/redux/slice/resident/meter-mgt/meter-mgt-slice';
 import superAdminMeterSliceReducer from '@/redux/slice/super-admin/super-admin-meter-mgt/super-admin-meter-slice';
 import visitorSliceReducer from '@/redux/slice/admin/visitor/visitor.slice';
+import residentVisitorSliceReducer from '@/redux/slice/resident/visitor/visitor-slice';
 
 
 const persistConfig = {
@@ -38,6 +39,7 @@ const persistedAdminMeterliceReducer = persistReducer(persistConfig, adminMeterS
 const persistedResidentMeterliceReducer = persistReducer(persistConfig, residentMeterSliceReducer);
 const persistedSuperAdmintMeterliceReducer = persistReducer(persistConfig, superAdminMeterSliceReducer);
 const persistedVisitorSliceReducer = persistReducer(persistConfig, visitorSliceReducer);
+const persistedResidentVisitorSliceReducer = persistReducer(persistConfig, residentVisitorSliceReducer);
 
 
 export const store = configureStore({
@@ -56,6 +58,7 @@ export const store = configureStore({
         residentMeter: persistedResidentMeterliceReducer,
         superAdminMeter: persistedSuperAdmintMeterliceReducer,
         visitor: persistedVisitorSliceReducer,
+        residentVisitor: persistedResidentVisitorSliceReducer,
     },
 
     middleware: (getDefaultMiddleware) =>
