@@ -16,6 +16,7 @@ export const superAdminNav = [
     { label: "Meter Management", icon: IoSpeedometerOutline, path: '/dashboard/super-admin/meter' },
     { label: "Transactions", icon: GrTransaction, path: '/dashboard/super-admin/transactions' },
     { label: "Visitors Management", icon: FiUsers, path: '/dashboard/super-admin/visitors' },
+    { label: "Payment Management", icon: FiUsers, path: '/dashboard/estate-admin/transactions' },
     { label: "Settings", icon: FiSettings, path: '/dashboard/super-admin/settings' },
 ];
 

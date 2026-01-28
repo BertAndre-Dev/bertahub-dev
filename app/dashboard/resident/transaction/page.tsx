@@ -52,10 +52,13 @@ export default function TransactionPage() {
     (state: RootState) => state.residentTransaction.allTransactions?.pagination
   );
   const wallet = useSelector((state: RootState) => state.wallet.wallet);
+  const createWalletState = useSelector(
+    (state: RootState) => state.wallet.createWalletState
+  );
   const loading =
-  useSelector(
-    (state: RootState) => state.residentTransaction.getTransactionHistoryState
-  ) === "isLoading";
+    useSelector(
+      (state: RootState) => state.residentTransaction.getTransactionHistoryState
+    ) === "isLoading";
 
 
   // 🔹 Fetch signed-in user and wallet on mount
@@ -289,7 +292,14 @@ export default function TransactionPage() {
               </Button>
             </div>
           ) : (
-            <Button onClick={handleCreateWallet}>Create Wallet</Button>
+            <Button
+              onClick={handleCreateWallet}
+              disabled={createWalletState === "isLoading"}
+            >
+              {createWalletState === "isLoading"
+                ? "Creating wallet..."
+                : "Create Wallet"}
+            </Button>
           )}
         </CardContent>
       </Card>
@@ -329,7 +339,7 @@ export default function TransactionPage() {
       </Card>
 
       <Modal visible={open} onClose={handleOpenModal}>
-        <div className="p-6 bg-white rounded-md shadow-md w-full max-w-md mx-auto">
+        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto">
           {userId && wallet ? (
             <FundWalletForm
               userId={userId}
