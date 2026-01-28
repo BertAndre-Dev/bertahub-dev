@@ -156,11 +156,8 @@ const residentVisitorSlice = createSlice({
         }
         
         // Update singleVisitor if it's the one being updated
-        if (updatedVisitor && state.singleVisitor?.visitor.id === updatedVisitor.id) {
-          state.singleVisitor = {
-            ...state.singleVisitor,
-            visitor: { ...state.singleVisitor.visitor, ...updatedVisitor },
-          };
+        if (updatedVisitor && state.singleVisitor && state.singleVisitor.visitor.id === updatedVisitor.id) {
+          state.singleVisitor.visitor = { ...state.singleVisitor.visitor, ...updatedVisitor };
         }
       })
       .addCase(updateVisitor.rejected, (state, action: any) => {
