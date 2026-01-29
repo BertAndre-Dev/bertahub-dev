@@ -4,11 +4,19 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useDispatch } from "react-redux"
+import { toast } from "react-toastify"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowRight, CheckCircle } from "lucide-react"
+import { forgotPassword } from "@/redux/slice/auth-mgt/auth-mgt"
+import type { AppDispatch } from "@/redux/store"
 
 export default function ForgotPasswordPage() {
+  const router = useRouter()
+  const dispatch = useDispatch<AppDispatch>()
+
   const [email, setEmail] = useState("")
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState("")
@@ -17,28 +25,38 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    setLoading(true)
 
     if (!email) {
       setError("Please enter your email address")
-      setLoading(false)
       return
     }
 
     if (!email.includes("@")) {
       setError("Please enter a valid email")
-      setLoading(false)
       return
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      setSubmitted(true)
+    setLoading(true)
+
+    try {
+      const res = await dispatch(forgotPassword({ email })).unwrap()
+
+      toast.success(res?.message || "Reset code sent to your email")
+      // Navigate to reset password page with email prefilled
+      router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`)
+    } catch (err: any) {
+      const message =
+        err?.message ||
+        err?.payload ||
+        "Failed to send reset link. Please try again."
+      setError(message)
+      toast.error(message)
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
-  if (submitted) {
+    if (submitted) {
     return (
       <div className="space-y-8 text-center">
         <div className="flex justify-center">
@@ -79,12 +97,13 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="font-heading text-3xl font-bold">Reset Password</h1>
-        <p className="text-muted-foreground">
-          Enter your email address and we'll send you a link to reset your password
-        </p>
-      </div>
+        <div className="space-y-2">
+          <h1 className="font-heading text-3xl font-bold">Send Reset Code</h1>
+          <p className="text-muted-foreground">
+            Enter your email address and we'll send you a one-time code to
+            reset your password
+          </p>
+        </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -94,8 +113,11 @@ export default function ForgotPasswordPage() {
         )}
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Email Address</label>
+          <label className="text-sm font-medium" htmlFor="forgot-email">
+            Email Address
+          </label>
           <Input
+            id="forgot-email"
             type="email"
             placeholder="admin@estate.com"
             value={email}
@@ -105,7 +127,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 group" disabled={loading}>
-          {loading ? "Sending..." : "Send Reset Link"}
+          {loading ? "Sending..." : "Send Reset Code"}
           {!loading && <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
         </Button>
       </form>

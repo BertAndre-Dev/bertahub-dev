@@ -77,10 +77,10 @@ export const getSignedInUser = createAsyncThunk(
 );
 
 
-// reset pasword
+// reset password
 export const resetPassword = createAsyncThunk(
     'auth-mgt/resetPassword',
-    async (data: {email: string, resetOtp: string, newPassword: string }, { rejectWithValue}) => {
+    async (data: {email: string, resetToken: string, newPassword: string }, { rejectWithValue}) => {
         try {
             const res = await axiosInstance.post('/api/v1/auth-mgt/reset-password', data);
             return res.data;
