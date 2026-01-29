@@ -1,88 +1,89 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { useDispatch, useSelector } from "react-redux"
-import { toast } from "react-toastify"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Eye, EyeOff, ArrowRight } from "lucide-react"
-import { signIn } from "@/redux/slice/auth-mgt/auth-mgt"
-import type { AppDispatch, RootState } from "@/redux/store"
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { signIn } from "@/redux/slice/auth-mgt/auth-mgt";
+import type { AppDispatch, RootState } from "@/redux/store";
 
 interface FormState {
-  email: string
-  password: string
+  email: string;
+  password: string;
 }
 
 export default function LoginPage() {
-  const router = useRouter()
-  const dispatch = useDispatch<AppDispatch>()
-  const { signInStatus } = useSelector((state: RootState) => state.auth)
-  const loading = signInStatus === "isLoading"
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const { signInStatus } = useSelector((state: RootState) => state.auth);
+  const loading = signInStatus === "isLoading";
 
   const [formData, setFormData] = useState<FormState>({
     email: "",
     password: "",
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
     if (!formData.email || !formData.password) {
-      setError("Please fill in all fields")
-      return
+      setError("Please fill in all fields");
+      return;
     }
 
     if (!formData.email.includes("@")) {
-      setError("Please enter a valid email")
-      return
+      setError("Please enter a valid email");
+      return;
     }
 
     try {
-      const res = await dispatch(signIn(formData)).unwrap()
+      const res = await dispatch(signIn(formData)).unwrap();
 
       // ✅ Login success
       if (res?.accessToken && res?.data) {
-        const user = res.data
-        const token = res.accessToken
+        const user = res.data;
+        const token = res.accessToken;
 
         // ✅ Save user + token to localStorage
-        localStorage.setItem("user", JSON.stringify(user))
-        localStorage.setItem("token", token)
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("token", token);
 
-        toast.success(res.message || "Signed in successfully")
+        toast.success(res.message || "Signed in successfully");
 
         // ✅ Redirect based on role
-        const role = user.role?.toLowerCase()
+        const role = user.role?.toLowerCase();
         if (role === "super admin") {
-          router.push("/dashboard/super-admin/dashboard")
+          router.push("/dashboard/super-admin/dashboard");
         } else if (role === "admin") {
-          router.push("/dashboard/admin/dashboard")
+          router.push("/dashboard/admin/dashboard");
         } else if (role === "security") {
-          router.push("/dashboard/security/view-visitor")
+          router.push("/dashboard/security/view-visitor");
+        } else if (role === "estate admin") {
+          router.push("/dashboard/estate-admin/dashboard");
         } else {
-          router.push("/dashboard/resident/bills")
+          router.push("/dashboard/resident/bills");
         }
       } else {
-        toast.error(res?.message || "Login failed. Please try again.")
-        setError(res?.message || "Login failed. Please try again.")
+        toast.error(res?.message || "Login failed. Please try again.");
+        setError(res?.message || "Login failed. Please try again.");
       }
     } catch (err: any) {
-      const message =
-        err?.message || "Something went wrong. Please try again."
-      setError(message)
-      toast.error(message)
+      const message = err?.message || "Something went wrong. Please try again.";
+      setError(message);
+      toast.error(message);
     }
-  }
+  };
 
   return (
     <div className="space-y-8">
@@ -180,5 +181,5 @@ export default function LoginPage() {
         </Button>
       </Link>
     </div>
-  )
+  );
 }

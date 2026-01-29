@@ -14,7 +14,7 @@ import {
   createTransaction,
   initializePayment,
   verifyTransaction,
-  getTransactionHistory
+  getTransactionHistory,
 } from "@/redux/slice/resident/transaction/transaction";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -22,7 +22,6 @@ import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
-
 
 interface TransactionData {
   walletId: string;
@@ -46,20 +45,20 @@ export default function TransactionPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
   const transactions = useSelector(
-    (state: RootState) => state.residentTransaction.allTransactions?.data || []
+    (state: RootState) => state.residentTransaction.allTransactions?.data || [],
   );
   const pagination = useSelector(
-    (state: RootState) => state.residentTransaction.allTransactions?.pagination
+    (state: RootState) => state.residentTransaction.allTransactions?.pagination,
   );
   const wallet = useSelector((state: RootState) => state.wallet.wallet);
   const createWalletState = useSelector(
-    (state: RootState) => state.wallet.createWalletState
+    (state: RootState) => state.wallet.createWalletState,
   );
   const loading =
     useSelector(
-      (state: RootState) => state.residentTransaction.getTransactionHistoryState
+      (state: RootState) =>
+        state.residentTransaction.getTransactionHistoryState,
     ) === "isLoading";
-
 
   // 🔹 Fetch signed-in user and wallet on mount
   useEffect(() => {
@@ -82,7 +81,8 @@ export default function TransactionPage() {
 
         // ✅ Fetch wallet
         const walletRes = await dispatch(getWallet(id)).unwrap();
-        if (!walletRes?.data?.id) toast.warning("No wallet found for this user.");
+        if (!walletRes?.data?.id)
+          toast.warning("No wallet found for this user.");
       } catch (err) {
         console.error("❌ Initialization error:", err);
         toast.error("Failed to load data.");
@@ -97,12 +97,13 @@ export default function TransactionPage() {
     await dispatch(getTransactionHistory({ userId, page: newPage, limit }));
   };
 
-
   // 🔹 Create Wallet
   const handleCreateWallet = async () => {
     if (!userId) return;
     try {
-      await dispatch(createWallet({ userId, balance: 0, lockedBalance: 0 })).unwrap();
+      await dispatch(
+        createWallet({ userId, balance: 0, lockedBalance: 0 }),
+      ).unwrap();
       toast.success("Wallet created successfully.");
       dispatch(getWallet(userId));
     } catch (error: any) {
@@ -112,7 +113,7 @@ export default function TransactionPage() {
 
   const handleOpenModal = () => setOpen((prev) => !prev);
 
-// 🔹 Fund Wallet Handler
+  // 🔹 Fund Wallet Handler
   const handleFundWallet = async ({
     userId,
     walletId,
@@ -142,7 +143,7 @@ export default function TransactionPage() {
 
       // ✅ Only now we create a transaction
       const txRes = await dispatch(
-        createTransaction({ userId, walletId, amount, description, type })
+        createTransaction({ userId, walletId, amount, description, type }),
       ).unwrap();
 
       const tx_ref = txRes?.data?.tx_ref;
@@ -159,7 +160,7 @@ export default function TransactionPage() {
           payment_options: paymentOption,
           customer: { email },
           customizations: { title: "Wallet Funding", description },
-        })
+        }),
       ).unwrap();
 
       const paymentUrl = paymentRes?.data?.link || paymentRes?.data?.url;
@@ -172,9 +173,6 @@ export default function TransactionPage() {
       toast.error(err?.message || "Failed to fund wallet.");
     }
   };
-
-
-
 
   // 🔹 Automatically verify transaction when redirected back
   useEffect(() => {
@@ -203,7 +201,7 @@ export default function TransactionPage() {
 
         // ✅ Trigger verification via Redux thunk
         const verificationRes = await dispatch(
-          verifyTransaction({ tx_ref, paymentType: "fundWallet" })
+          verifyTransaction({ tx_ref, paymentType: "fundWallet" }),
         ).unwrap();
 
         console.log("✅ Verification response:", verificationRes);
@@ -215,7 +213,7 @@ export default function TransactionPage() {
         // Clean up URL params
         const url = new URL(window.location.href);
         ["tx_ref", "trx_ref", "transaction_id", "status"].forEach((key) =>
-          url.searchParams.delete(key)
+          url.searchParams.delete(key),
         );
         window.history.replaceState({}, document.title, url.toString());
       } catch (err: any) {
@@ -230,7 +228,6 @@ export default function TransactionPage() {
     const timer = setTimeout(verifyTransactionAsync, 800);
     return () => clearTimeout(timer);
   }, [dispatch, userId, email]);
-
 
   // Table columns for paid bills
   const columns = [
@@ -269,7 +266,6 @@ export default function TransactionPage() {
     },
   ];
 
-
   return (
     <div className="space-y-6">
       <Card className="p-6 shadow-md">
@@ -304,13 +300,15 @@ export default function TransactionPage() {
         </CardContent>
       </Card>
 
-{/* Transactions Table */}
+      {/* Transactions Table */}
       <Card className="p-4">
         <h2 className="font-semibold mb-4">Transaction History</h2>
         <Table
           columns={columns}
           data={transactions}
-          emptyMessage={loading ? "Loading transactions..." : "No transactions found."}
+          emptyMessage={
+            loading ? "Loading transactions..." : "No transactions found."
+          }
           showPagination
           paginationInfo={{
             total: pagination?.total || transactions.length || 0,
