@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { Building2 } from "lucide-react"
-import Link from "next/link"
+import type React from "react";
+import { Building2 } from "lucide-react";
+import Link from "next/link";
 
 export default function AuthLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen flex">
@@ -15,17 +15,19 @@ export default function AuthLayout({
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex-col justify-between p-12">
         <Link href="/" className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary-foreground rounded-lg flex items-center justify-center">
-            <Building2 className="w-6 h-6 text-primary" />
+            <Building2 className="w-6 h-6 text-primary cursor-pointer" />
           </div>
           <span className="font-heading font-bold text-2xl">EstateHub</span>
         </Link>
 
         <div className="space-y-6">
           <div>
-            <h1 className="font-heading text-4xl font-bold mb-4 text-balance">Manage Your Estate with Confidence</h1>
+            <h1 className="font-heading text-4xl font-bold mb-4 text-balance">
+              Manage Your Estate with Confidence
+            </h1>
             <p className="text-lg opacity-90">
-              Join thousands of estate managers and residents using EstateHub to streamline operations and improve
-              community living.
+              Join thousands of estate managers and residents using EstateHub to
+              streamline operations and improve community living.
             </p>
           </div>
 
@@ -45,7 +47,9 @@ export default function AuthLayout({
           </div>
         </div>
 
-        <p className="text-sm opacity-75">© 2025 EstateHub. All rights reserved.</p>
+        <p className="text-sm opacity-75">
+          © 2025 EstateHub. All rights reserved.
+        </p>
       </div>
 
       {/* Right Side - Auth Form */}
@@ -53,5 +57,5 @@ export default function AuthLayout({
         <div className="w-full max-w-md">{children}</div>
       </div>
     </div>
-  )
+  );
 }

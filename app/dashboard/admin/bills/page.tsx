@@ -20,6 +20,7 @@ import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
+import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 
 interface BillData {
   id?: string;
@@ -37,7 +38,7 @@ export default function BillPage() {
   const [open, setOpen] = useState(false);
 
   const { allBills, pagination, loading } = useSelector((state: RootState) => {
-    const billState = state.adminBill as any
+    const billState = state.adminBill as any;
     return {
       allBills: billState?.allBills?.data || [],
       pagination: billState?.allBills?.pagination || {},
@@ -49,7 +50,6 @@ export default function BillPage() {
     };
   });
 
-  
   useEffect(() => {
     (async () => {
       try {
@@ -63,7 +63,9 @@ export default function BillPage() {
 
         setEstateId(foundEstateId);
 
-        await dispatch(getBillsByEstate({ estateId: foundEstateId, page: 1, limit: 10 })).unwrap();
+        await dispatch(
+          getBillsByEstate({ estateId: foundEstateId, page: 1, limit: 10 }),
+        ).unwrap();
       } catch {
         toast.error("Failed to fetch bills.");
       }
@@ -92,7 +94,9 @@ export default function BillPage() {
         toast.success(`${bill.name} activated.`);
       }
 
-      await dispatch(getBillsByEstate({ estateId, page: 1, limit: 10 })).unwrap();
+      await dispatch(
+        getBillsByEstate({ estateId, page: 1, limit: 10 }),
+      ).unwrap();
     } catch (err: any) {
       toast.error(err?.message);
     }
@@ -101,13 +105,16 @@ export default function BillPage() {
   const handleDeleteBill = async (id?: string, name?: string) => {
     if (!id || !estateId) return;
 
-    try {
-      await dispatch(deleteBill(id)).unwrap();
-      toast.success(`${name} deleted successfully.`);
-      await dispatch(getBillsByEstate({ estateId, page: 1, limit: 10 })).unwrap();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to delete bill.");
-    }
+    confirmDeleteToast({
+      name,
+      onConfirm: async () => {
+        await dispatch(deleteBill(id)).unwrap();
+        toast.success(`${name} deleted successfully.`);
+        await dispatch(
+          getBillsByEstate({ estateId, page: 1, limit: 10 }),
+        ).unwrap();
+      },
+    });
   };
 
   const handleSubmitBill = async (data: BillData) => {
@@ -123,8 +130,9 @@ export default function BillPage() {
       }
 
       handleCloseModal();
-      await dispatch(getBillsByEstate({ estateId, page: 1, limit: 10 })).unwrap();
-
+      await dispatch(
+        getBillsByEstate({ estateId, page: 1, limit: 10 }),
+      ).unwrap();
     } catch (err: any) {
       toast.error(err?.message || "Failed to save bill.");
     }
@@ -140,7 +148,9 @@ export default function BillPage() {
       render: (item: BillData) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            item.isActive
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
           }`}
         >
           {item.isActive ? "Active" : "Suspended"}
@@ -152,15 +162,26 @@ export default function BillPage() {
       header: "Actions",
       render: (item: BillData) => (
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)}>
+          <Button
+            className="cursor-pointer"
+            variant="ghost"
+            size="sm"
+            onClick={() => handleOpenModal(item)}
+          >
             <Edit2 className="w-4 h-4 text-blue-600" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleStatusToggle(item)}>
+          <Button
+            className="cursor-pointer"
+            variant="ghost"
+            size="sm"
+            onClick={() => handleStatusToggle(item)}
+          >
             <span className="text-yellow-600 text-sm">
               {item.isActive ? "Suspend" : "Activate"}
             </span>
           </Button>
           <Button
+            className="cursor-pointer"
             variant="ghost"
             size="sm"
             onClick={() => handleDeleteBill(item.id, item.name)}
@@ -177,7 +198,10 @@ export default function BillPage() {
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-3xl font-bold">Estate Bills</h1>
 
-        <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
+        <Button
+          onClick={() => handleOpenModal()}
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Create Bill
         </Button>
