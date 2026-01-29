@@ -17,11 +17,11 @@ export const superAdminNav = [
     icon: BsBuildings,
     path: "/dashboard/super-admin/estate",
   },
-  {
-    label: "Address Management",
-    icon: BsBuildings,
-    path: "/dashboard/super-admin/address",
-  },
+//   {
+//     label: "Address Management",
+//     icon: BsBuildings,
+//     path: "/dashboard/super-admin/address",
+//   },
   {
     label: "User Management",
     icon: FiUsers,
@@ -37,21 +37,16 @@ export const superAdminNav = [
     icon: IoSpeedometerOutline,
     path: "/dashboard/super-admin/meter",
   },
-  {
-    label: "Transactions",
-    icon: GrTransaction,
-    path: "/dashboard/super-admin/transactions",
-  },
-  {
-    label: "Visitors Management",
-    icon: FiUsers,
-    path: "/dashboard/super-admin/visitors",
-  },
-  {
-    label: "Payment Management",
-    icon: FiUsers,
-    path: "/dashboard/estate-admin/transactions",
-  },
+//   {
+//     label: "Transactions",
+//     icon: GrTransaction,
+//     path: "/dashboard/super-admin/transactions",
+//   },
+//   {
+//     label: "Visitors Management",
+//     icon: FiUsers,
+//     path: "/dashboard/super-admin/visitors",
+//   },
   {
     label: "Settings",
     icon: FiSettings,
@@ -81,11 +76,6 @@ export const adminNav = [
     label: "Visitors Management",
     icon: FiUsers,
     path: "/dashboard/admin/visitor",
-  },
-  {
-    label: "Estate Admin",
-    icon: FiUsers,
-    path: "/dashboard/admin/estate-admin",
   },
   { label: "Settings", icon: FiSettings, path: "/dashboard/admin/settings" },
 ];

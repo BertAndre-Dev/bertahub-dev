@@ -17,6 +17,7 @@ import { AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
 import Modal from "@/components/modal/page";
 import EntryForm from "../forms/entry-form/page";
+import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 
 interface EntryData {
   estateId: string;
@@ -37,7 +38,6 @@ export default function EntryPage() {
   const [stats, setStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState<any>({});
-
 
   // ✅ Fetch all data
   const fetchAllData = async () => {
@@ -74,12 +74,11 @@ export default function EntryPage() {
       }
 
       const entryRes = await dispatch(
-        getEntriesByField({ fieldId, page: 1, limit: 10 })
+        getEntriesByField({ fieldId, page: 1, limit: 10 }),
       ).unwrap();
 
       setEntries(entryRes?.data || []);
       setPagination(entryRes?.pagination || {});
-
 
       const allEntries = (entryRes?.data || []).map((e: any) => ({
         id: e.id,
@@ -116,58 +115,22 @@ export default function EntryPage() {
     setSelectedEntry(null);
   };
 
-    // ✅ Delete function
-    const handleDeleteEntry = async (entryId?: string, label?: string) => {
+  // ✅ Delete function
+  const handleDeleteEntry = async (entryId?: string, label?: string) => {
     if (!entryId) {
-        toast.error("Missing entry ID");
-        return;
+      toast.error("Missing entry ID");
+      return;
     }
 
-    console.log("Delete clicked for:", entryId);
-
-    const confirmId = toast.info(
-        <div className="flex flex-col gap-2">
-        <p className="text-sm">
-            Are you sure you want to delete{" "}
-            <strong>{label || "this entry"}</strong>?
-        </p>
-        <div className="flex justify-end gap-2 mt-2">
-            <Button
-            size="sm"
-            variant="outline"
-            onClick={() => toast.dismiss(confirmId)}
-            >
-            Cancel
-            </Button>
-            <Button
-            size="sm"
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={async () => {
-                toast.dismiss(confirmId);
-                try {
-                await dispatch(deleteEntry(entryId)).unwrap();
-                toast.success(`${label || "Entry"} deleted successfully!`);
-                await fetchAllData();
-                } catch (err: any) {
-                toast.error(err?.message || "Failed to delete entry.");
-                }
-            }}
-            >
-            Delete
-            </Button>
-        </div>
-        </div>,
-        {
-        position: "top-center",
-        autoClose: false,
-        closeOnClick: false,
-        draggable: false,
-        hideProgressBar: true,
-        closeButton: false,
-        }
-    );
-    };
-
+    confirmDeleteToast({
+      name: label || "this entry",
+      onConfirm: async () => {
+        await dispatch(deleteEntry(entryId)).unwrap();
+        toast.success(`${label || "Entry"} deleted successfully!`);
+        await fetchAllData();
+      },
+    });
+  };
 
   // ✅ Build dynamic table
   const mappedEntries =
@@ -208,25 +171,29 @@ export default function EntryPage() {
           : "—",
     },
     {
-        key: "actions",
-        header: "Actions",
-        render: (item: any) => (
-            <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)}>
-                <Edit2 className="w-4 h-4 text-blue-600" />
-            </Button>
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeleteEntry(item.id, item.data?.name || "entry")}
-            >
-                <Trash2 className="w-4 h-4 text-red-600" />
-            </Button>
-            </div>
-        ),
-    }
-
-
+      key: "actions",
+      header: "Actions",
+      render: (item: any) => (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleOpenModal(item)}
+          >
+            <Edit2 className="w-4 h-4 text-blue-600" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              handleDeleteEntry(item.id, item.data?.name || "entry")
+            }
+          >
+            <Trash2 className="w-4 h-4 text-red-600" />
+          </Button>
+        </div>
+      ),
+    },
   ];
 
   // ✅ Stats Card Section
@@ -240,7 +207,12 @@ export default function EntryPage() {
     if (!Object.keys(fieldStats).length && !totalEntries) return null;
 
     const statItems = [
-      { label: "Total Entries", value: totalEntries, icon: List, color: "bg-gray-500/10" },
+      {
+        label: "Total Entries",
+        value: totalEntries,
+        icon: List,
+        color: "bg-gray-500/10",
+      },
       ...Object.entries(fieldStats).map(([key, value]) => {
         let color = "bg-blue-500/10";
         let Icon = Database;
@@ -269,8 +241,12 @@ export default function EntryPage() {
             <Card key={i} className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground capitalize">{stat.label}</p>
-                  <p className="font-heading text-2xl font-bold mt-2">{String(stat.value)}</p>
+                  <p className="text-sm text-muted-foreground capitalize">
+                    {stat.label}
+                  </p>
+                  <p className="font-heading text-2xl font-bold mt-2">
+                    {String(stat.value)}
+                  </p>
                 </div>
                 <div className={`p-3 rounded-lg ${stat.color}`}>
                   <Icon className="w-6 h-6" />
@@ -288,13 +264,18 @@ export default function EntryPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold">Estate Field Entries</h1>
+          <h1 className="font-heading text-3xl font-bold">
+            Estate Field Entries
+          </h1>
           <p className="text-muted-foreground mt-1">
             Manage and view entries for all estate fields
           </p>
         </div>
 
-        <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
+        <Button
+          onClick={() => handleOpenModal()}
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Create Entry
         </Button>
@@ -323,8 +304,8 @@ export default function EntryPage() {
               getEntriesByField({
                 fieldId,
                 page,
-                limit: pagination.pageSize ?? 10
-              })
+                limit: pagination.pageSize ?? 10,
+              }),
             )
               .unwrap()
               .then((res) => {
@@ -334,9 +315,7 @@ export default function EntryPage() {
               .catch(() => toast.error("Failed to change page"));
           }}
         />
-
       </Card>
-
 
       {/* Modal */}
       {open && user?.estateId && (

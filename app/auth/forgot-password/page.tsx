@@ -1,62 +1,62 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useDispatch } from "react-redux"
-import { toast } from "react-toastify"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ArrowRight, CheckCircle } from "lucide-react"
-import { forgotPassword } from "@/redux/slice/auth-mgt/auth-mgt"
-import type { AppDispatch } from "@/redux/store"
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ArrowRight, CheckCircle } from "lucide-react";
+import { forgotPassword } from "@/redux/slice/auth-mgt/auth-mgt";
+import type { AppDispatch } from "@/redux/store";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter()
-  const dispatch = useDispatch<AppDispatch>()
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
 
-  const [email, setEmail] = useState("")
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
     if (!email) {
-      setError("Please enter your email address")
-      return
+      setError("Please enter your email address");
+      return;
     }
 
     if (!email.includes("@")) {
-      setError("Please enter a valid email")
-      return
+      setError("Please enter a valid email");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
-      const res = await dispatch(forgotPassword({ email })).unwrap()
+      const res = await dispatch(forgotPassword({ email })).unwrap();
 
-      toast.success(res?.message || "Reset code sent to your email")
+      toast.success(res?.message || "Reset code sent to your email");
       // Navigate to reset password page with email prefilled
-      router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`)
+      router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       const message =
         err?.message ||
         err?.payload ||
-        "Failed to send reset link. Please try again."
-      setError(message)
-      toast.error(message)
+        "Failed to send reset link. Please try again.";
+      setError(message);
+      toast.error(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-    if (submitted) {
+  if (submitted) {
     return (
       <div className="space-y-8 text-center">
         <div className="flex justify-center">
@@ -68,7 +68,8 @@ export default function ForgotPasswordPage() {
         <div className="space-y-2">
           <h1 className="font-heading text-3xl font-bold">Check Your Email</h1>
           <p className="text-muted-foreground">
-            We've sent a password reset link to <span className="font-medium text-foreground">{email}</span>
+            We've sent a password reset link to{" "}
+            <span className="font-medium text-foreground">{email}</span>
           </p>
         </div>
 
@@ -82,28 +83,36 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div className="space-y-3">
-          <Button onClick={() => setSubmitted(false)} variant="outline" size="lg" className="w-full">
+          <Button
+            onClick={() => setSubmitted(false)}
+            variant="outline"
+            size="lg"
+            className="w-full cursor-pointer"
+          >
             Try Another Email
           </Button>
           <Link href="/auth/login">
-            <Button size="lg" className="w-full bg-primary hover:bg-primary/90">
+            <Button
+              size="lg"
+              className="w-full bg-primary hover:bg-primary/90 cursor-pointer"
+            >
               Back to Sign In
             </Button>
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-8">
-        <div className="space-y-2">
-          <h1 className="font-heading text-3xl font-bold">Send Reset Code</h1>
-          <p className="text-muted-foreground">
-            Enter your email address and we'll send you a one-time code to
-            reset your password
-          </p>
-        </div>
+      <div className="space-y-2">
+        <h1 className="font-heading text-3xl font-bold">Send Reset Code</h1>
+        <p className="text-muted-foreground">
+          Enter your email address and we'll send you a one-time code to reset
+          your password
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -126,17 +135,28 @@ export default function ForgotPasswordPage() {
           />
         </div>
 
-        <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 group" disabled={loading}>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full bg-primary hover:bg-primary/90 group cursor-pointer"
+          disabled={loading}
+        >
           {loading ? "Sending..." : "Send Reset Code"}
-          {!loading && <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
+          {!loading && (
+            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 cursor-pointer transition-transform" />
+          )}
         </Button>
       </form>
 
       <Link href="/auth/login">
-        <Button variant="outline" size="lg" className="w-full bg-transparent">
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full bg-transparent cursor-pointer"
+        >
           Back to Sign In
         </Button>
       </Link>
     </div>
-  )
+  );
 }

@@ -9,7 +9,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { resetPassword } from "@/redux/slice/auth-mgt/auth-mgt";
 import type { AppDispatch } from "@/redux/store";
 
@@ -33,6 +33,8 @@ export default function ResetPasswordPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Prefill email from query param if present
   useEffect(() => {
@@ -144,36 +146,66 @@ export default function ResetPasswordPage() {
           <label className="text-sm font-medium" htmlFor="new-password">
             New Password
           </label>
-          <Input
-            id="new-password"
-            name="newPassword"
-            type="password"
-            placeholder="••••••••"
-            value={formData.newPassword}
-            onChange={handleChange}
-            className="h-11"
-          />
+          <div className="relative">
+            <Input
+              id="new-password"
+              name="newPassword"
+              type={showNewPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={formData.newPassword}
+              onChange={handleChange}
+              className="h-11 pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={showNewPassword ? "Hide password" : "Show password"}
+            >
+              {showNewPassword ? (
+                <EyeOff className="h-4 w-4 cursor-pointer" />
+              ) : (
+                <Eye className="h-4 w-4 cursor-pointer" />
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="confirm-password">
             Confirm New Password
           </label>
-          <Input
-            id="confirm-password"
-            name="confirmPassword"
-            type="password"
-            placeholder="••••••••"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            className="h-11"
-          />
+          <div className="relative">
+            <Input
+              id="confirm-password"
+              name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className="h-11 pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={
+                showConfirmPassword ? "Hide password" : "Show password"
+              }
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-4 w-4 cursor-pointer" />
+              ) : (
+                <Eye className="h-4 w-4 cursor-pointer" />
+              )}
+            </button>
+          </div>
         </div>
 
         <Button
           type="submit"
           size="lg"
-          className="w-full bg-primary hover:bg-primary/90 group"
+          className="w-full bg-primary hover:bg-primary/90 group cursor-pointer"
           disabled={loading}
         >
           {loading ? "Resetting..." : "Reset Password"}
@@ -184,7 +216,11 @@ export default function ResetPasswordPage() {
       </form>
 
       <Link href="/auth/login">
-        <Button variant="outline" size="lg" className="w-full bg-transparent">
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full bg-transparent cursor-pointer"
+        >
           Back to Sign In
         </Button>
       </Link>

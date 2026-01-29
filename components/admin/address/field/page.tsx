@@ -17,6 +17,7 @@ import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
 import Modal from "@/components/modal/page";
 import FieldForm from "../forms/field-form/page";
+import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 
 interface FieldData {
   estateId: string;
@@ -36,7 +37,7 @@ export default function AddressField() {
 
   // ✅ Get Redux state
   const { allField, pagination, loading } = useSelector((state: RootState) => {
-    const fieldState = state.adminField as any
+    const fieldState = state.adminField as any;
     return {
       allField: fieldState.allField,
       pagination: fieldState.allField?.pagination || {},
@@ -80,7 +81,9 @@ export default function AddressField() {
   const handleSubmitField = async (data: FieldData) => {
     try {
       if (selectedField?.id) {
-        await dispatch(updateField({ fieldId: selectedField.id, data })).unwrap();
+        await dispatch(
+          updateField({ fieldId: selectedField.id, data }),
+        ).unwrap();
         toast.success("Field updated successfully!");
       } else {
         await dispatch(createField(data)).unwrap();
@@ -98,46 +101,17 @@ export default function AddressField() {
 
   const handleDeleteField = async (id?: string, name?: string) => {
     if (!id) return;
-    const confirmId = toast.info(
-      <div className="flex flex-col gap-2">
-        <p className="text-sm">
-          Are you sure you want to delete <strong>{name || "this field"}</strong>?
-        </p>
-        <div className="flex justify-end gap-2 mt-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => toast.dismiss(confirmId)}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={async () => {
-              toast.dismiss(confirmId);
-              try {
-                await dispatch(deleteField(id)).unwrap();
-                toast.success(`${name || "Field"} deleted successfully!`);
-                if (user?.estateId) {
-                  await dispatch(getFieldByEstate(user.estateId)).unwrap();
-                }
-              } catch (err: any) {
-                toast.error(err?.message || "Failed to delete field.");
-              }
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      </div>,
-      {
-        position: "top-center",
-        autoClose: false,
-        hideProgressBar: true,
-        closeButton: false,
-      }
-    );
+
+    confirmDeleteToast({
+      name: name || "this field",
+      onConfirm: async () => {
+        await dispatch(deleteField(id)).unwrap();
+        toast.success(`${name || "Field"} deleted successfully!`);
+        if (user?.estateId) {
+          await dispatch(getFieldByEstate(user.estateId)).unwrap();
+        }
+      },
+    });
   };
 
   // ✅ Use data directly from state
@@ -160,7 +134,9 @@ export default function AddressField() {
       render: (item: any) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            item.isActive
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
           }`}
         >
           {item.isActive ? "Active" : "Inactive"}
@@ -184,7 +160,11 @@ export default function AddressField() {
       header: "Actions",
       render: (item: any) => (
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => handleOpenModal(item)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleOpenModal(item)}
+          >
             <Edit2 className="w-4 h-4 text-blue-600" />
           </Button>
           <Button
@@ -205,7 +185,10 @@ export default function AddressField() {
         <h1 className="font-heading text-3xl font-bold">
           Address Field Management
         </h1>
-        <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
+        <Button
+          onClick={() => handleOpenModal()}
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Create Field
         </Button>
@@ -224,15 +207,12 @@ export default function AddressField() {
           }}
           onPageChange={(page) => {
             if (!user?.estateId) return;
-            dispatch(
-              getFieldByEstate(user.estateId)
-            )
+            dispatch(getFieldByEstate(user.estateId))
               .unwrap()
               .catch(() => toast.error("Failed to change page"));
           }}
         />
       </Card>
-
 
       {open && user?.estateId && (
         <Modal visible={open} onClose={handleCloseModal}>

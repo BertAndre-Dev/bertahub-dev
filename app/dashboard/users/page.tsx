@@ -1,17 +1,37 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Search, Plus, Edit2, Trash2, MoreVertical, Filter, Download } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useState } from "react";
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  MoreVertical,
+  Filter,
+  Download,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
+import { toast } from "react-toastify";
 
 export default function UsersPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedRole, setSelectedRole] = useState("all")
-  const [selectedStatus, setSelectedStatus] = useState("all")
-  const [showAddUser, setShowAddUser] = useState(false)
-  const [editingUser, setEditingUser] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+
+  const handleDeleteUser = (name: string) => {
+    confirmDeleteToast({
+      name,
+      onConfirm: async () => {
+        // This page is using mock data (no API/delete yet).
+        toast.success(`${name} deleted successfully!`);
+      },
+    });
+  };
 
   // Mock user data
   const allUsers = [
@@ -75,37 +95,43 @@ export default function UsersPage() {
       joinDate: "2024-02-28",
       avatar: "LA",
     },
-  ]
+  ];
 
   // Filter users
   const filteredUsers = allUsers.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.unit.includes(searchTerm)
+      user.unit.includes(searchTerm);
 
-    const matchesRole = selectedRole === "all" || user.role.toLowerCase() === selectedRole.toLowerCase()
-    const matchesStatus = selectedStatus === "all" || user.status.toLowerCase() === selectedStatus.toLowerCase()
+    const matchesRole =
+      selectedRole === "all" ||
+      user.role.toLowerCase() === selectedRole.toLowerCase();
+    const matchesStatus =
+      selectedStatus === "all" ||
+      user.status.toLowerCase() === selectedStatus.toLowerCase();
 
-    return matchesSearch && matchesRole && matchesStatus
-  })
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   const getRoleColor = (role: string) => {
     switch (role) {
       case "Admin":
-        return "bg-red-500/10 text-red-700"
+        return "bg-red-500/10 text-red-700";
       case "Manager":
-        return "bg-blue-500/10 text-blue-700"
+        return "bg-blue-500/10 text-blue-700";
       case "Staff":
-        return "bg-purple-500/10 text-purple-700"
+        return "bg-purple-500/10 text-purple-700";
       default:
-        return "bg-gray-500/10 text-gray-700"
+        return "bg-gray-500/10 text-gray-700";
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
-    return status === "Active" ? "bg-green-500/10 text-green-700" : "bg-gray-500/10 text-gray-700"
-  }
+    return status === "Active"
+      ? "bg-green-500/10 text-green-700"
+      : "bg-gray-500/10 text-gray-700";
+  };
 
   return (
     <div className="space-y-6">
@@ -113,9 +139,14 @@ export default function UsersPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold">Users</h1>
-          <p className="text-muted-foreground mt-1">Manage estate residents, staff, and administrators</p>
+          <p className="text-muted-foreground mt-1">
+            Manage estate residents, staff, and administrators
+          </p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90 w-full md:w-auto" onClick={() => setShowAddUser(true)}>
+        <Button
+          className="bg-primary hover:bg-primary/90 w-full md:w-auto"
+          onClick={() => setShowAddUser(true)}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add User
         </Button>
@@ -138,8 +169,11 @@ export default function UsersPage() {
           {/* Filter Controls */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Role</label>
+              <label className="text-sm font-medium" htmlFor="users-role">
+                Role
+              </label>
               <select
+                id="users-role"
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
@@ -153,8 +187,11 @@ export default function UsersPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
+              <label className="text-sm font-medium" htmlFor="users-status">
+                Status
+              </label>
               <select
+                id="users-status"
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
@@ -166,7 +203,11 @@ export default function UsersPage() {
             </div>
 
             <div className="flex items-end gap-2">
-              <Button variant="outline" size="sm" className="flex-1 bg-transparent">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 bg-transparent"
+              >
                 <Filter className="w-4 h-4 mr-2" />
                 More Filters
               </Button>
@@ -184,18 +225,33 @@ export default function UsersPage() {
           <table className="w-full">
             <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold">User</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Role</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Unit</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Join Date</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">
+                  User
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">
+                  Role
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">
+                  Unit
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">
+                  Join Date
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-muted/30 transition-colors">
+                  <tr
+                    key={user.id}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium">
@@ -203,7 +259,9 @@ export default function UsersPage() {
                         </div>
                         <div>
                           <p className="font-medium text-sm">{user.name}</p>
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {user.email}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -222,7 +280,9 @@ export default function UsersPage() {
                         {user.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{user.joinDate}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">
+                      {user.joinDate}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <Button
@@ -233,10 +293,19 @@ export default function UsersPage() {
                         >
                           <Edit2 className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-destructive cursor-pointer"
+                          onClick={() => handleDeleteUser(user.name)}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-muted-foreground">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground"
+                        >
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </div>
@@ -246,7 +315,9 @@ export default function UsersPage() {
               ) : (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
-                    <p className="text-muted-foreground">No users found matching your criteria</p>
+                    <p className="text-muted-foreground">
+                      No users found matching your criteria
+                    </p>
                   </td>
                 </tr>
               )}
@@ -260,10 +331,15 @@ export default function UsersPage() {
             Showing {filteredUsers.length} of {allUsers.length} users
           </p>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              className="cursor-pointer"
+            >
               Previous
             </Button>
-            <Button variant="outline" size="sm">
+            <Button className="cursor-pointer" variant="outline" size="sm">
               Next
             </Button>
           </div>
@@ -275,22 +351,48 @@ export default function UsersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">
             <div className="p-6 space-y-4">
-              <h2 className="font-heading text-xl font-bold">{editingUser ? "Edit User" : "Add New User"}</h2>
+              <h2 className="font-heading text-xl font-bold">
+                {editingUser ? "Edit User" : "Add New User"}
+              </h2>
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium">Full Name</label>
-                  <Input placeholder="John Doe" className="mt-1 h-10" />
+                  <label
+                    className="text-sm font-medium"
+                    htmlFor="user-full-name"
+                  >
+                    Full Name
+                  </label>
+                  <Input
+                    id="user-full-name"
+                    placeholder="John Doe"
+                    className="mt-1 h-10"
+                  />
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium">Email</label>
-                  <Input type="email" placeholder="john@estate.com" className="mt-1 h-10" />
+                  <label className="text-sm font-medium" htmlFor="user-email">
+                    Email
+                  </label>
+                  <Input
+                    id="user-email"
+                    type="email"
+                    placeholder="john@estate.com"
+                    className="mt-1 h-10"
+                  />
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium">Role</label>
-                  <select className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mt-1">
+                  <label
+                    className="text-sm font-medium"
+                    htmlFor="user-modal-role"
+                  >
+                    Role
+                  </label>
+                  <select
+                    id="user-modal-role"
+                    className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mt-1"
+                  >
                     <option>Admin</option>
                     <option>Manager</option>
                     <option>Staff</option>
@@ -299,8 +401,14 @@ export default function UsersPage() {
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium">Unit</label>
-                  <Input placeholder="101" className="mt-1 h-10" />
+                  <label className="text-sm font-medium" htmlFor="user-unit">
+                    Unit
+                  </label>
+                  <Input
+                    id="user-unit"
+                    placeholder="101"
+                    className="mt-1 h-10"
+                  />
                 </div>
               </div>
 
@@ -309,8 +417,8 @@ export default function UsersPage() {
                   variant="outline"
                   className="flex-1 bg-transparent"
                   onClick={() => {
-                    setShowAddUser(false)
-                    setEditingUser(null)
+                    setShowAddUser(false);
+                    setEditingUser(null);
                   }}
                 >
                   Cancel
@@ -318,8 +426,8 @@ export default function UsersPage() {
                 <Button
                   className="flex-1 bg-primary hover:bg-primary/90"
                   onClick={() => {
-                    setShowAddUser(false)
-                    setEditingUser(null)
+                    setShowAddUser(false);
+                    setEditingUser(null);
                   }}
                 >
                   {editingUser ? "Update" : "Add"} User
@@ -330,5 +438,5 @@ export default function UsersPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

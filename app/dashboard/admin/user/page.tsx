@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import Modal from "@/components/modal/page";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import InviteUserForm from "@/components/admin/user-form/page";
+import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 
 interface AdminUserData {
   id?: string;
@@ -142,16 +143,17 @@ export default function AdminUserPage() {
   const handleDeleteUser = async (id?: string, name?: string) => {
     if (!id) return;
 
-    try {
-      await dispatch(deleteUser(id)).unwrap();
-      toast.success(`${name} deleted successfully!`);
+    confirmDeleteToast({
+      name,
+      onConfirm: async () => {
+        await dispatch(deleteUser(id)).unwrap();
+        toast.success(`${name} deleted successfully!`);
 
-      if (selectedEstate?.value) {
-        fetchAdminUsers(selectedEstate.value, 1, search);
-      }
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to delete user.");
-    }
+        if (selectedEstate?.value) {
+          fetchAdminUsers(selectedEstate.value, 1, search);
+        }
+      },
+    });
   };
 
   const getAllAddressKeys = (data: AdminUserData[]) => {

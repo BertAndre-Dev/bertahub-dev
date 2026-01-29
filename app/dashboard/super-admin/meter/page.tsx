@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,13 @@ import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Plus, Trash } from "lucide-react";
-import { deleteMeter, getAllMeters, removeEstateMeter } from "@/redux/slice/super-admin/super-admin-meter-mgt/super-admin-meter";
+import {
+  deleteMeter,
+  getAllMeters,
+  removeEstateMeter,
+} from "@/redux/slice/super-admin/super-admin-meter-mgt/super-admin-meter";
 import AssignMeterForm from "@/components/super-admin/meter-form/page";
+import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 
 interface AdminMeterData {
   id?: string;
@@ -19,8 +24,8 @@ interface AdminMeterData {
   isAssigned?: boolean;
   estateId?: string;
   lastCredit?: number;
-  createdAt?: string; 
-  updatedAt?: string; 
+  createdAt?: string;
+  updatedAt?: string;
   addressId: string;
   vendorData?: any;
 }
@@ -28,25 +33,30 @@ interface AdminMeterData {
 export default function AdminMeterManagement() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
-  const [selectedMeter, setSelectedMeter] = useState<AdminMeterData | null>(null);
+  const [selectedMeter, setSelectedMeter] = useState<AdminMeterData | null>(
+    null,
+  );
   const [assignMeter, setAssignMeter] = useState(false);
   const [search, setSearch] = useState("");
 
-
-  const { allSuperAdminMeters, pagination, loading } = useSelector((state: RootState) => {
-    const superAdminMeter = state.superAdminMeter as any;
-    return {
-      allSuperAdminMeters: superAdminMeter?.allSuperAdminMeter?.data || [],
-      pagination: superAdminMeter?.allSuperAdminMeter?.pagination || {},
-      loading: superAdminMeter?.getAllMetersState === "isLoading",
-    };
-  });
+  const { allSuperAdminMeters, pagination, loading } = useSelector(
+    (state: RootState) => {
+      const superAdminMeter = state.superAdminMeter as any;
+      return {
+        allSuperAdminMeters: superAdminMeter?.allSuperAdminMeter?.data || [],
+        pagination: superAdminMeter?.allSuperAdminMeter?.pagination || {},
+        loading: superAdminMeter?.getAllMetersState === "isLoading",
+      };
+    },
+  );
 
   // Fetch meters on mount
   useEffect(() => {
     const fetchMeters = async () => {
       try {
-        await dispatch(getAllMeters({ page: 1, limit: 10, search: search || undefined, })).unwrap();
+        await dispatch(
+          getAllMeters({ page: 1, limit: 10, search: search || undefined }),
+        ).unwrap();
       } catch (error: any) {
         console.error("Failed to fetch meters:", error);
         toast.error("Failed to fetch meters");
@@ -57,12 +67,17 @@ export default function AdminMeterManagement() {
 
   const handleRefresh = async () => {
     try {
-      await dispatch(getAllMeters({ page: 1, limit: Number(pagination?.pageSize) || 10,  search: search || undefined, })).unwrap();
+      await dispatch(
+        getAllMeters({
+          page: 1,
+          limit: Number(pagination?.pageSize) || 10,
+          search: search || undefined,
+        }),
+      ).unwrap();
     } catch (error: any) {
       toast.error("Failed to refresh meter list");
     }
   };
-
 
   const handleOpenRemoveModal = (meter: AdminMeterData) => {
     setSelectedMeter(meter);
@@ -74,10 +89,9 @@ export default function AdminMeterManagement() {
     setOpen(false);
   };
 
-
   const handleAssignMeter = () => {
     setAssignMeter((prev) => !prev);
-  }
+  };
 
   const handleRemoveMeter = async () => {
     if (!selectedMeter) return;
@@ -88,7 +102,7 @@ export default function AdminMeterManagement() {
         removeEstateMeter({
           meterNumber: selectedMeter.meterNumber,
           estateId: selectedMeter.estateId || "",
-        })
+        }),
       ).unwrap();
 
       toast.success("Meter removed successfully");
@@ -100,30 +114,21 @@ export default function AdminMeterManagement() {
     }
   };
 
-
   const handleDeleteMeter = async (meterId: string) => {
     if (!meterId) {
       toast.error("Meter ID is missing");
       return;
     }
 
-    try {
-      const response = await dispatch(deleteMeter(meterId)).unwrap();
-
-      toast.success(response?.message || "Meter deleted successfully");
-
-      handleRefresh();
-    } catch (error: any) {
-      toast.error(
-        error?.message ||
-        error?.data?.message ||
-        "Failed to delete meter"
-      );
-    }
+    confirmDeleteToast({
+      name: "this meter",
+      onConfirm: async () => {
+        const response = await dispatch(deleteMeter(meterId)).unwrap();
+        toast.success(response?.message || "Meter deleted successfully");
+        handleRefresh();
+      },
+    });
   };
-
-
-
 
   const columns = [
     { key: "createdAt", header: "Created Date" },
@@ -134,7 +139,9 @@ export default function AdminMeterManagement() {
       render: (item: AdminMeterData) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            item.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            item.isActive
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
           }`}
         >
           {item.isActive ? "Active" : "Inactive"}
@@ -147,7 +154,9 @@ export default function AdminMeterManagement() {
       render: (item: AdminMeterData) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            item.isAssigned ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            item.isAssigned
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
           }`}
         >
           {item.isAssigned ? "Assigned" : "Not Assigned"}
@@ -166,12 +175,12 @@ export default function AdminMeterManagement() {
           {/* Delete permanently */}
           <Button
             variant="destructive"
+            className="cursor-pointer"
             size="sm"
             onClick={() => handleDeleteMeter(item.id!)}
           >
             <Trash className="w-4 h-4" />
           </Button>
-
         </div>
       ),
     },
@@ -203,34 +212,38 @@ export default function AdminMeterManagement() {
             pageSize: Number(pagination?.pageSize) || 10,
           }}
           onPageChange={(page) => {
-            dispatch(getAllMeters({ page, limit: Number(pagination?.pageSize) || 10 }));
+            dispatch(
+              getAllMeters({ page, limit: Number(pagination?.pageSize) || 10 }),
+            );
           }}
         />
-
       </Card>
 
       {open && selectedMeter && (
         <Modal visible={open} onClose={handleCloseModal}>
           <div className="space-y-4 p-4">
             <h2 className="text-lg font-semibold">Remove Meter</h2>
-            <p>Are you sure you want to remove meter <strong>{selectedMeter.meterNumber}</strong>?</p>
+            <p>
+              Are you sure you want to remove meter{" "}
+              <strong>{selectedMeter.meterNumber}</strong>?
+            </p>
             <div className="flex justify-end gap-2 mt-4">
-              <Button variant="ghost" onClick={handleCloseModal}>Cancel</Button>
-              <Button variant="destructive" onClick={handleRemoveMeter}>Remove</Button>
+              <Button variant="ghost" onClick={handleCloseModal}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleRemoveMeter}>
+                Remove
+              </Button>
             </div>
           </div>
         </Modal>
       )}
 
-
-      {assignMeter &&  (
+      {assignMeter && (
         <Modal visible={assignMeter} onClose={handleAssignMeter}>
-            <AssignMeterForm
-            close={handleAssignMeter}
-            refresh={handleRefresh}
-            />
+          <AssignMeterForm close={handleAssignMeter} refresh={handleRefresh} />
         </Modal>
-        )}
+      )}
     </div>
   );
 }
