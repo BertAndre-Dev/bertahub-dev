@@ -1,98 +1,98 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { useSearchParams, useRouter } from "next/navigation"
-import { useDispatch } from "react-redux"
-import { toast } from "react-toastify"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ArrowRight } from "lucide-react"
-import { resetPassword } from "@/redux/slice/auth-mgt/auth-mgt"
-import type { AppDispatch } from "@/redux/store"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ArrowRight } from "lucide-react";
+import { resetPassword } from "@/redux/slice/auth-mgt/auth-mgt";
+import type { AppDispatch } from "@/redux/store";
 
 interface FormState {
-  email: string
-  resetToken: string
-  newPassword: string
-  confirmPassword: string
+  email: string;
+  resetToken: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 export default function ResetPasswordPage() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const dispatch = useDispatch<AppDispatch>()
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
 
   const [formData, setFormData] = useState<FormState>({
     email: "",
     resetToken: "",
     newPassword: "",
     confirmPassword: "",
-  })
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Prefill email from query param if present
   useEffect(() => {
-    const emailFromQuery = searchParams.get("email")
+    const emailFromQuery = searchParams.get("email");
     if (emailFromQuery) {
-      setFormData((prev) => ({ ...prev, email: emailFromQuery }))
+      setFormData((prev) => ({ ...prev, email: emailFromQuery }));
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
-    const { email, resetToken, newPassword, confirmPassword } = formData
+    const { email, resetToken, newPassword, confirmPassword } = formData;
 
     if (!email || !resetToken || !newPassword || !confirmPassword) {
-      setError("Please fill in all fields")
-      return
+      setError("Please fill in all fields");
+      return;
     }
 
     if (!email.includes("@")) {
-      setError("Please enter a valid email")
-      return
+      setError("Please enter a valid email");
+      return;
     }
 
     if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters")
-      return
+      setError("Password must be at least 6 characters");
+      return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match")
-      return
+      setError("Passwords do not match");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       const res = await dispatch(
         resetPassword({ email, resetToken, newPassword }),
-      ).unwrap()
+      ).unwrap();
 
-      toast.success(res?.message || "Password reset successfully")
+      toast.success(res?.message || "Password reset successfully");
       // After successful reset, send user back to login
-      router.push("/auth/login")
+      router.push("/auth/login");
     } catch (err: any) {
       const message =
         err?.message ||
         err?.payload ||
-        "Failed to reset password. Please try again."
-      setError(message)
-      toast.error(message)
+        "Failed to reset password. Please try again.";
+      setError(message);
+      toast.error(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-8">
@@ -189,6 +189,5 @@ export default function ResetPasswordPage() {
         </Button>
       </Link>
     </div>
-  )
+  );
 }
-
