@@ -1,19 +1,19 @@
 // components/shared/DataGrid.tsx
-"use client"
+"use client";
 
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Edit2, Trash2 } from "lucide-react"
-import React from "react"
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Edit2, Trash2 } from "lucide-react";
+import React from "react";
 
 interface DataGridProps<T> {
-  data: T[]
-  keyField: keyof T
-  renderHeader: (item: T) => React.ReactNode
-  renderContent: (item: T) => React.ReactNode
-  onEdit?: (item: T) => void
-  onDelete?: (item: T) => void
-  onClick?: (item: T) => void
+  data: T[];
+  keyField: keyof T;
+  renderHeader: (item: T) => React.ReactNode;
+  renderContent: (item: T) => React.ReactNode;
+  onEdit?: (item: T) => void;
+  onDelete?: (item: T) => void;
+  onClick?: (item: T) => void;
 }
 
 export default function DataGrid<T>({
@@ -44,8 +44,8 @@ export default function DataGrid<T>({
                   size="sm"
                   className="flex-1 bg-transparent"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onEdit(item)
+                    e.stopPropagation();
+                    onEdit(item);
                   }}
                 >
                   <Edit2 className="w-4 h-4 mr-2" />
@@ -58,8 +58,8 @@ export default function DataGrid<T>({
                   size="sm"
                   className="flex-1 bg-transparent"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onDelete(item)
+                    e.stopPropagation();
+                    onDelete(item);
                   }}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
@@ -71,5 +71,5 @@ export default function DataGrid<T>({
         </Card>
       ))}
     </div>
-  )
+  );
 }

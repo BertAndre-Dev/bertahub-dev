@@ -43,18 +43,24 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
 
   // ✅ FIXED: Properly select estate slice
   const estateState = useSelector((state: RootState) => state.estate);
-  const estateListFromStore = estateState?.allEstates?.data || estateState?.allEstates || [];
+  const estateListFromStore =
+    estateState?.allEstates?.data || estateState?.allEstates || [];
 
   useEffect(() => {
     async function fetchEstates() {
-      if (Array.isArray(estateListFromStore) && estateListFromStore.length > 0) {
+      if (
+        Array.isArray(estateListFromStore) &&
+        estateListFromStore.length > 0
+      ) {
         setEstates(estateListFromStore);
         return;
       }
 
       setLoadingEstates(true);
       try {
-        const res = await await  dispatch(getAllEstates({ page: 1, limit: 10 })).unwrap()
+        const res = await await dispatch(
+          getAllEstates({ page: 1, limit: 10 }),
+        ).unwrap();
         const payload = res?.payload || res;
         const data = payload?.data || payload;
         if (Array.isArray(data)) setEstates(data);
@@ -71,6 +77,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
   }, [dispatch]);
 
   const roleOptions = [
+    { value: "estate admin", label: "Estate Admin" },
     { value: "admin", label: "Admin" },
     { value: "resident", label: "Resident" },
   ];
@@ -114,7 +121,8 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
       resetForm();
       close();
     } catch (err: any) {
-      const message = err?.response?.data?.message || "Failed to invite user (unknown error)";
+      const message =
+        err?.response?.data?.message || "Failed to invite user (unknown error)";
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -123,9 +131,25 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
 
   const renderTextFields = () => {
     const fields = [
-      { label: "First Name", name: "firstName", placeholder: "Enter first name", required: true },
-      { label: "Last Name", name: "lastName", placeholder: "Enter last name", required: true },
-      { label: "Email", name: "email", placeholder: "user@example.com", required: true, type: "email" },
+      {
+        label: "First Name",
+        name: "firstName",
+        placeholder: "Enter first name",
+        required: true,
+      },
+      {
+        label: "Last Name",
+        name: "lastName",
+        placeholder: "Enter last name",
+        required: true,
+      },
+      {
+        label: "Email",
+        name: "email",
+        placeholder: "user@example.com",
+        required: true,
+        type: "email",
+      },
     ];
 
     const nodes: JSX.Element[] = [];
@@ -144,7 +168,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
             required={f.required}
             className="mb-2"
           />
-        </div>
+        </div>,
       );
     }
     return nodes;
@@ -153,7 +177,9 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
   return (
     <Card className="max-w-lg mx-auto mt-6">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Invite User to Estate</CardTitle>
+        <CardTitle className="text-lg font-semibold">
+          Invite User to Estate
+        </CardTitle>
       </CardHeader>
 
       <CardContent>
@@ -164,7 +190,9 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
             <Label>Estate</Label>
             <Select
               options={estateOptions}
-              value={estateOptions.find((o) => o.value === formData.estateId) ?? null}
+              value={
+                estateOptions.find((o) => o.value === formData.estateId) ?? null
+              }
               onChange={(opt) => handleSelectChange("estateId", opt)}
               isLoading={loadingEstates}
               placeholder="Select estate..."
@@ -183,7 +211,11 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
             />
           </div>
 
-          <Button type="submit" className="w-full mt-2 cursor-pointer" disabled={submitting}>
+          <Button
+            type="submit"
+            className="w-full mt-2 cursor-pointer"
+            disabled={submitting}
+          >
             {submitting ? "Inviting..." : "Invite User"}
           </Button>
         </form>

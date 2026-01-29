@@ -42,7 +42,9 @@ export default function AdminUserPage() {
 
   const [user, setUser] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(null);
+  const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(
+    null,
+  );
   const [selectedUser, setSelectedUser] = useState<AdminUserData | null>(null);
   const [search, setSearch] = useState("");
 
@@ -56,13 +58,13 @@ export default function AdminUserPage() {
         pagination: response?.pagination ?? {},
         loading: userState.getAllUsersByEstateState === "isLoading",
       };
-    }
+    },
   );
 
   const fetchAdminUsers = async (
     estateId?: string,
     page = 1,
-    searchTerm?: string
+    searchTerm?: string,
   ) => {
     if (!estateId) return;
 
@@ -73,7 +75,7 @@ export default function AdminUserPage() {
           page,
           limit: 10,
           search: searchTerm,
-        })
+        }),
       ).unwrap();
     } catch {
       toast.error("Failed to fetch users.");
@@ -174,8 +176,7 @@ export default function AdminUserPage() {
       header: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (c) => c.toUpperCase()),
-      render: (item: AdminUserData) =>
-        item.addressId?.data?.[key] ?? "-",
+      render: (item: AdminUserData) => item.addressId?.data?.[key] ?? "-",
     }));
   };
 
@@ -235,12 +236,13 @@ export default function AdminUserPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground mt-1">
-            View users by estate
-          </p>
+          <p className="text-muted-foreground mt-1">View users by estate</p>
         </div>
 
-        <Button onClick={() => handleEstateModal()} className="flex items-center gap-2">
+        <Button
+          onClick={() => handleEstateModal()}
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" /> Invite User
         </Button>
       </div>
@@ -282,9 +284,7 @@ export default function AdminUserPage() {
         <Modal visible={open} onClose={handleCloseModal}>
           <InviteUserForm
             close={handleCloseModal}
-            refresh={() =>
-              fetchAdminUsers(selectedEstate?.value, 1, search)
-            }
+            refresh={() => fetchAdminUsers(selectedEstate?.value, 1, search)}
           />
         </Modal>
       )}

@@ -66,7 +66,7 @@ export default function BillPage() {
         } else {
           // get bills payable for estate
           const estateRes = await dispatch(
-            getBillsByEstate({ estateId: eId, page: 1, limit: 10 })
+            getBillsByEstate({ estateId: eId, page: 1, limit: 10 }),
           ).unwrap();
           const estateData = estateRes?.data || [];
           setPayableBills(estateData);
@@ -75,7 +75,7 @@ export default function BillPage() {
 
         // get bills already paid by resident
         const residentRes = await dispatch(
-          getResidentBills({ residentId: uId, page: 1, limit: 10 })
+          getResidentBills({ residentId: uId, page: 1, limit: 10 }),
         ).unwrap();
         const residentData = residentRes?.data || [];
         setPaidBills(residentData);
@@ -105,14 +105,14 @@ export default function BillPage() {
     try {
       if (estateId) {
         const estateRes = await dispatch(
-          getBillsByEstate({ estateId, page: 1, limit: 50 })
+          getBillsByEstate({ estateId, page: 1, limit: 50 }),
         ).unwrap();
         setPayableBills(estateRes?.data || []);
         setPayablePagination(estateRes?.pagination || {});
       }
 
       const residentRes = await dispatch(
-        getResidentBills({ residentId: userId, page: 1, limit: 50 })
+        getResidentBills({ residentId: userId, page: 1, limit: 50 }),
       ).unwrap();
       setPaidBills(residentRes?.data || []);
       setPaidPagination(residentRes?.pagination || {});
@@ -124,35 +124,40 @@ export default function BillPage() {
 
   // Table columns for paid bills
   const columns = [
-  { key: "billName", header: "Bill Name" },
-  { key: "frequency", header: "Frequency" },
-  {
-    key: "amountPaid",
-    header: "Amount Paid",
-    render: (item: any) => `₦${Number(item.amountPaid ?? 0).toLocaleString()}`
-  },
-  {
-    key: "nextDueDate",
-    header: "Next Due Date",
-    render: (item: any) =>
-      item.nextDueDate ? new Date(item.nextDueDate).toLocaleString() : "-"
-  },
-  {
-    key: "lastPaymentDate",
-    header: "Last Payment Date",
-    render: (item: any) =>
-      item.lastPaymentDate
-        ? new Date(item.lastPaymentDate).toLocaleString()
-        : "-"
-  }
-];
-
+    { key: "billName", header: "Bill Name" },
+    { key: "frequency", header: "Frequency" },
+    {
+      key: "amountPaid",
+      header: "Amount Paid",
+      render: (item: any) =>
+        `₦${Number(item.amountPaid ?? 0).toLocaleString()}`,
+    },
+    {
+      key: "nextDueDate",
+      header: "Next Due Date",
+      render: (item: any) =>
+        item.nextDueDate ? new Date(item.nextDueDate).toLocaleString() : "-",
+    },
+    {
+      key: "lastPaymentDate",
+      header: "Last Payment Date",
+      render: (item: any) =>
+        item.lastPaymentDate
+          ? new Date(item.lastPaymentDate).toLocaleString()
+          : "-",
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-3xl font-bold">Estate Bills</h1>
-        <Button onClick={() => toast.info("To pay a bill, click any payable bill card.")} className="flex items-center gap-2">
+        <Button
+          onClick={() =>
+            toast.info("To pay a bill, click any payable bill card.")
+          }
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           How to Pay
         </Button>
@@ -163,16 +168,26 @@ export default function BillPage() {
         {loading ? (
           <p className="text-muted-foreground">Loading bills...</p>
         ) : payableBills.length === 0 ? (
-          <p className="text-muted-foreground">No payable bills for this estate.</p>
+          <p className="text-muted-foreground">
+            No payable bills for this estate.
+          </p>
         ) : (
           payableBills.map((b) => (
-            <Card key={b.id} className="p-4 cursor-pointer hover:shadow-md" onClick={() => b.id && handleOpenModal(b.id)}>
+            <Card
+              key={b.id}
+              className="p-4 cursor-pointer hover:shadow-md"
+              onClick={() => b.id && handleOpenModal(b.id)}
+            >
               <div className="flex flex-col">
                 <div>
-                  <h3 className="text-sm font-semibold capitalize text-blue-600">{b.name}</h3>
+                  <h3 className="text-sm font-semibold capitalize text-blue-600">
+                    {b.name}
+                  </h3>
                 </div>
                 <div className="">
-                  <p className="text-md font-bold mt-1 capitalize">₦{Number(b.yearlyAmount ?? 0).toLocaleString()}/annum</p>
+                  <p className="text-md font-bold mt-1 capitalize">
+                    ₦{Number(b.yearlyAmount ?? 0).toLocaleString()}/annum
+                  </p>
                 </div>
               </div>
             </Card>
@@ -186,7 +201,11 @@ export default function BillPage() {
         <Table
           columns={columns}
           data={paidBills || []}
-          emptyMessage={loading ? "Loading paid bills..." : "You haven't paid any bills yet."}
+          emptyMessage={
+            loading
+              ? "Loading paid bills..."
+              : "You haven't paid any bills yet."
+          }
           showPagination
           paginationInfo={{
             total: paidPagination?.total || paidBills.length || 0,
@@ -205,7 +224,6 @@ export default function BillPage() {
           />
         </Modal>
       )}
-
     </div>
   );
 }
