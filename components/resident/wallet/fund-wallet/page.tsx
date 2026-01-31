@@ -149,6 +149,11 @@ export default function FundWalletForm({
               placeholder="Enter amount"
               required
             />
+            {amount > 0 && (
+              <p className="text-red-600 text-sm mt-1.5">
+                A service charge of ₦230 will be applied.
+              </p>
+            )}
           </div>
 
           <div>

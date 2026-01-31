@@ -46,39 +46,41 @@ export interface ResidentMeterResponse {
   pagination: Pagination;
 }
 
-//// VEND HISTORY
+//// VEND HISTORY – full API response shape
+
+export interface MeterVendHistoryPagination {
+  total: number;
+  page: string;
+  limit: string;
+  pages: number;
+}
 
 export interface MeterVendHistoryResponse {
   success: boolean;
   message: string;
   data: EnergyListItem[];
-  pagination: Pagination;
+  pagination: MeterVendHistoryPagination;
 }
 
+/** Vend history item; value = units bought (kWh) */
 export interface EnergyListItem {
   tt?: string;
   amount: string;
   krn?: string;
   sgc?: string;
   token?: string;
-  taxRate: string;
+  taxRate?: string;
   unit: string;
   at?: string;
-  ti: string;
+  ti?: string;
   price: string;
   receiptNo: string;
-  taxAmount: string;
-  tiDesc: string;
+  taxAmount?: string;
+  tiDesc?: string;
   device: string;
+  /** Units bought (kWh) */
   value: string;
   createdAt: string;
-}
-
-export interface Pagination {
-  total: number;
-  page: string;
-  limit: string;
-  pages: number;
 }
 
 export interface ResidentMeterState {
@@ -146,13 +148,13 @@ const residentMeterSlice = createSlice({
             success: action.payload?.success ?? true,
             message:
             action.payload?.message ??
-            "Bills retrieved successfully.",
+            "Meter vend history retrieved successfully.",
             data: action.payload?.data || [],
             pagination: action.payload?.pagination || {
                 total: action.payload?.data?.length ?? 0,
-                currentPage: 1,
-                totalPages: 1,
-                pageSize: 10,
+                page: "1",
+                limit: "10",
+                pages: 1,
             },
         };
     })

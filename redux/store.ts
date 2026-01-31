@@ -12,6 +12,7 @@ import residentBillSliceReducer from '@/redux/slice/resident/bill-mgt/bills-mgt-
 import walletSliceReducer from '@/redux/slice/resident/wallet-mgt/wallet-mgt-slice';
 import transactionSliceReducer from '@/redux/slice/resident/transaction/transaction-slice';
 import estateAdminTransactionSliceReducer from '@/redux/slice/estate-admin/transaction/transaction-slice';
+import estateAdminEstateBillsSliceReducer from '@/redux/slice/estate-admin/estate-bills/estate-bills-slice';
 import adminMeterSliceReducer from '@/redux/slice/admin/meter-mgt/meter-mgt-slice';
 import residentMeterSliceReducer from '@/redux/slice/resident/meter-mgt/meter-mgt-slice';
 import superAdminMeterSliceReducer from '@/redux/slice/super-admin/super-admin-meter-mgt/super-admin-meter-slice';
@@ -37,6 +38,7 @@ const persistedResidentBillReducer = persistReducer(persistConfig, residentBillS
 const persistedWalletSliceReducer = persistReducer(persistConfig, walletSliceReducer);
 const persistedTransactionSliceReducer = persistReducer(persistConfig, transactionSliceReducer);
 const persistedEstateAdminTransactionSliceReducer = persistReducer(persistConfig, estateAdminTransactionSliceReducer);
+const persistedEstateAdminEstateBillsSliceReducer = persistReducer(persistConfig, estateAdminEstateBillsSliceReducer);
 const persistedAdminMeterliceReducer = persistReducer(persistConfig, adminMeterSliceReducer);
 const persistedResidentMeterliceReducer = persistReducer(persistConfig, residentMeterSliceReducer);
 const persistedSuperAdmintMeterliceReducer = persistReducer(persistConfig, superAdminMeterSliceReducer);
@@ -57,6 +59,7 @@ export const store = configureStore({
         wallet: persistedWalletSliceReducer,
         residentTransaction: persistedTransactionSliceReducer,
         estateAdminTransaction: persistedEstateAdminTransactionSliceReducer,
+        estateAdminEstateBills: persistedEstateAdminEstateBillsSliceReducer,
         adminMeter: persistedAdminMeterliceReducer,
         residentMeter: persistedResidentMeterliceReducer,
         superAdminMeter: persistedSuperAdmintMeterliceReducer,

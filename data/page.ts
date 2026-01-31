@@ -1,9 +1,7 @@
-import { FiHome, FiSettings, FiLogOut } from "react-icons/fi";
+import { FiHome, FiSettings, FiUsers, FiMapPin, FiCheckCircle } from "react-icons/fi";
 import { BsBuildings } from "react-icons/bs";
 import { IoSpeedometerOutline } from "react-icons/io5";
-import { LiaMoneyBillSolid } from "react-icons/lia";
 import { GrTransaction } from "react-icons/gr";
-import { FiUsers } from "react-icons/fi";
 import { LuReceipt } from "react-icons/lu";
 
 export const superAdminNav = [
@@ -58,7 +56,7 @@ export const adminNav = [
   { label: "Dashboard", icon: FiHome, path: "/dashboard/admin/dashboard" },
   {
     label: "Address Management",
-    icon: FiUsers,
+    icon: FiMapPin,
     path: "/dashboard/admin/address",
   },
   { label: "User Management", icon: FiUsers, path: "/dashboard/admin/user" },
@@ -89,7 +87,7 @@ export const securityNav = [
   },
   {
     label: "Verify Visitor",
-    icon: FiSettings,
+    icon: FiCheckCircle,
     path: "/dashboard/security/verify-visitor",
   },
 ];
@@ -98,17 +96,17 @@ export const residentNav = [
   // { label: "Dashboard", icon: FiHome, path: '/dashboard/resident/dashboard' },
   {
     label: "Bills Management",
-    icon: FiUsers,
+    icon: LuReceipt,
     path: "/dashboard/resident/bills",
   },
   {
     label: "Meter Management",
-    icon: FiUsers,
+    icon: IoSpeedometerOutline,
     path: "/dashboard/resident/meter",
   },
   {
     label: "Transactions",
-    icon: FiUsers,
+    icon: GrTransaction,
     path: "/dashboard/resident/transaction",
   },
   {
@@ -127,7 +125,12 @@ export const estateAdminNav = [
   },
   {
     label: "Transactions",
-    icon: FiUsers,
+    icon: GrTransaction,
     path: "/dashboard/estate-admin/transactions",
+  },
+  {
+    label: "Estate Bills",
+    icon: LuReceipt,
+    path: "/dashboard/estate-admin/bills",
   },
 ];
