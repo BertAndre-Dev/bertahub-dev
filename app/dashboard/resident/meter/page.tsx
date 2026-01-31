@@ -12,34 +12,7 @@ import { getMeterByAddress, reconnectMeter, disconnectMeter, getMeterVendHistory
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import VendPower from "@/components/resident/vend-power/page";
 import Table from "@/components/tables/list/page";
-
-
-export interface MeterVendHistoryResponse {
-  success: boolean;
-  message: string;
-  data: EnergyListItem[];
- 
-}
-
-
-export interface EnergyListItem {
-  tt?: string;
-  amount: string;
-  krn?: string;
-  sgc?: string;
-  token?: string;
-  taxRate: string;
-  unit: string;
-  at?: string;
-  ti: string;
-  price: string;
-  receiptNo: string;
-  taxAmount: string;
-  tiDesc: string;
-  device: string;
-  value: string;
-  createdAt: string;
-}
+import type { EnergyListItem } from "@/redux/slice/resident/meter-mgt/meter-mgt-slice";
 
 
 
@@ -65,7 +38,12 @@ export default function ResidentMeter() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const foundAddressId: string | null = userRes?.data?.addressId ?? null;
+        const rawAddressId = userRes?.data?.addressId;
+        // API may return addressId as object { id: string, data?: ... } or as string
+        const foundAddressId: string | null =
+          typeof rawAddressId === "string"
+            ? rawAddressId
+            : rawAddressId?.id ?? null;
         const foundWalletId: string | null = userRes?.data?.walletId ?? null;
 
         if (!foundAddressId) {
@@ -129,13 +107,24 @@ export default function ResidentMeter() {
   };
 
 
+  const handleVendPageChange = (newPage: number) => {
+    if (!meter?.meterNumber) return;
+    dispatch(
+      getMeterVendHistory({
+        meterNumber: meter.meterNumber,
+        page: newPage,
+        limit: Number(pagination?.limit) || 10,
+      })
+    );
+  };
+
   const vendColumns = [
     {
       key: "createdAt",
       header: "Date",
-      accessor: (row: EnergyListItem & { transTime?: string }) => {
-        if (!row.transTime) return "N/A";
-        const date = new Date(row.transTime);
+      render: (row: EnergyListItem) => {
+        if (!row.createdAt) return "N/A";
+        const date = new Date(row.createdAt);
         return date.toLocaleString("en-NG", {
           year: "numeric",
           month: "short",
@@ -146,27 +135,31 @@ export default function ResidentMeter() {
         });
       },
     },
-
     {
       key: "amount",
       header: "Amount (₦)",
-      accessor: (row: EnergyListItem) => Number(row.amount).toLocaleString(),
+      render: (row: EnergyListItem) => Number(row.amount).toLocaleString(),
     },
     {
       key: "units",
       header: "Units Bought",
-      accessor: (row: EnergyListItem) => `${row.value} ${row.unit}`,
+      render: (row: EnergyListItem) => `${row.value} ${row.unit}`,
+    },
+    {
+      key: "receiptNo",
+      header: "Receipt No",
+      render: (row: EnergyListItem) => row.receiptNo ?? "—",
     },
     {
       key: "token",
       header: "Token",
-      accessor: (row: EnergyListItem) => {
+      render: (row: EnergyListItem) => {
         if (!row.token) return "N/A";
-
         return (
           <div className="flex items-center gap-2">
             <span className="truncate max-w-[180px]">{row.token}</span>
             <button
+              type="button"
               onClick={() => navigator.clipboard.writeText(row.token!)}
               className="text-blue-600 hover:text-blue-800"
               title="Copy Token"
@@ -177,17 +170,16 @@ export default function ResidentMeter() {
         );
       },
     },
-
     {
       key: "price",
       header: "Price (₦/kWh)",
-      accessor: (row: EnergyListItem) =>
+      render: (row: EnergyListItem) =>
         row.price ? Number(row.price).toLocaleString() : "N/A",
     },
     {
       key: "device",
       header: "Meter Number",
-      accessor: (row: EnergyListItem) => row.device,
+      render: (row: EnergyListItem) => row.device,
     },
   ];
 
@@ -238,10 +230,11 @@ export default function ResidentMeter() {
             }
             showPagination
             paginationInfo={{
-              total: pagination?.total || meterVendHistory.length || 0,
+              total: pagination?.total ?? meterVendHistory.length ?? 0,
               current: Number(pagination?.page) || 1,
               pageSize: Number(pagination?.limit) || 10,
             }}
+            onPageChange={handleVendPageChange}
           />
         </Card>
 
