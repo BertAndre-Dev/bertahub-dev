@@ -3,7 +3,7 @@ import { createWallet, getWallet } from "./wallet-mgt";
 
 interface WalletData {
   id?: string;
-  userId: string;
+  estateId: string;
   balance: number;
   temporaryBalance: number;
   lockedBalance: number;

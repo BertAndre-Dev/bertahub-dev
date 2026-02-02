@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 
 interface WalletData {
+  estateId: string;
   balance: number;
   lockedBalance: number;
 }
