@@ -41,39 +41,151 @@ export default function ViewVisitorPage() {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
-    <div className="max-w-xl mx-auto p-6 space-y-6">
-      <h2 className="text-lg font-semibold">View Visitor</h2>
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+      <h2 className="text-xl sm:text-2xl font-semibold">View Visitor</h2>
 
-      <Label>Visitor Code</Label>
-      <Input
-        value={code}
-        onChange={(e) => setCode(e.target.value.toUpperCase())}
-        placeholder="EZR-HP5O"
-      />
-
-      <Button
-        className="w-full"
-        onClick={handleView}
-        disabled={loading}
-      >
-        {loading ? "Loading..." : "View Details"}
-      </Button>
+      <div className="space-y-2">
+        <Label>Visitor Code</Label>
+        <div className="flex gap-2">
+          <Input
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder="EZR-HP5O"
+            className="flex-1"
+          />
+          <Button onClick={handleView} disabled={loading} className="w-32">
+            {loading ? "Loading..." : "Search"}
+          </Button>
+        </div>
+      </div>
 
       {visitor && (
-        <div className="border rounded-lg p-4 space-y-2 bg-gray-50">
-          <p><strong>Name:</strong> {visitor.firstName} {visitor.lastName}</p>
-          <p><strong>Purpose:</strong> {visitor.purpose}</p>
-          <p><strong>Status:</strong> Not Verified</p>
+        <div className="border rounded-lg p-4 sm:p-6 space-y-5 bg-white shadow-sm">
+          <div className="pb-4 border-b">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Visitor Information
+            </h3>
+          </div>
 
-          <Button
-            className="w-full mt-4"
-            onClick={() =>
-              router.push(`/visitor/verify?code=${visitor.visitorCode}`)
-            }
-          >
-            Proceed to Verify
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">
+                First Name
+              </p>
+              <p className="font-medium text-gray-900">{visitor.firstName}</p>
+            </div>
+
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">
+                Last Name
+              </p>
+              <p className="font-medium text-gray-900">{visitor.lastName}</p>
+            </div>
+
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">
+                Phone Number
+              </p>
+              <p className="font-medium text-gray-900">{visitor.phone}</p>
+            </div>
+
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">
+                Visitor Code
+              </p>
+              <p className="font-medium text-blue-600">{visitor.visitorCode}</p>
+            </div>
+
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">
+                Purpose of Visit
+              </p>
+              <p className="font-medium text-gray-900">{visitor.purpose}</p>
+            </div>
+
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">Status</p>
+              <span
+                className={`inline-block px-3 py-1 text-xs sm:text-sm font-medium rounded-full ${
+                  visitor.isVerified
+                    ? "bg-green-100 text-green-700"
+                    : "bg-yellow-100 text-yellow-700"
+                }`}
+              >
+                {visitor.isVerified ? "Verified" : "Not Verified"}
+              </span>
+            </div>
+
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">Estate</p>
+              <p className="font-medium text-gray-900">
+                {visitor.estateId?.name || "N/A"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">Address</p>
+              <p className="font-medium text-gray-900">
+                {visitor.addressId?.data?.block},{" "}
+                {visitor.addressId?.data?.unit}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">
+                Visiting Resident
+              </p>
+              <p className="font-medium text-gray-900">
+                {visitor.residentId?.firstName} {visitor.residentId?.lastName}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">
+                Created At
+              </p>
+              <p className="font-medium text-gray-900">
+                {formatDate(visitor.createdAt)}
+              </p>
+            </div>
+
+            {visitor.updatedAt !== visitor.createdAt && (
+              <div className="sm:col-span-2">
+                <p className="text-xs sm:text-sm text-gray-500 mb-1">
+                  Last Updated
+                </p>
+                <p className="font-medium text-gray-900">
+                  {formatDate(visitor.updatedAt)}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Uncomment if you want the verify button */}
+          {/* {!visitor.isVerified && (
+            <div className="pt-4 border-t">
+              <Button
+                className="w-full"
+                onClick={() =>
+                  router.push(`/visitor/verify?code=${visitor.visitorCode}`)
+                }
+              >
+                Proceed to Verify
+              </Button>
+            </div>
+          )} */}
         </div>
       )}
     </div>

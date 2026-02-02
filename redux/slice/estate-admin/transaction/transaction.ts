@@ -61,22 +61,6 @@ export const createTransaction = createAsyncThunk(
   }
 );
 
-
-// export const initializePayment = createAsyncThunk(
-//   "estate-admin-transaction/initializePayment",
-//   async (data: PaymentPayload, { rejectWithValue }) => {
-//     try {
-//       const res = await axiosInstance.post("/api/v1/payment-mgt/initialize", data);
-//       return res.data;
-//     } catch (error: any) {
-//       return rejectWithValue({
-//         message: error.res?.data?.message || "Payment initialized successfully."
-//       })
-//     }
-//   }
-// );
-
-
 // ✅ Get paginated transaction history
 export const getTransactionHistory = createAsyncThunk(
   "estate-admin-transaction/getTransactionHistory",
