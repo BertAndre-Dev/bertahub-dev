@@ -3,7 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
-import { createVisitor, updateVisitor, getVisitorById } from "@/redux/slice/resident/visitor/visitor";
+import {
+  createVisitor,
+  updateVisitor,
+  getVisitorById,
+} from "@/redux/slice/resident/visitor/visitor";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,7 +18,7 @@ interface VisitorFormProps {
   visitorId?: string | null;
   residentId: string;
   estateId: string;
-  addressId: string;
+  addressId: string | { id: string; data: { block: string; unit: string } };
   onSubmitSuccess?: () => void;
   onClose?: () => void;
 }
@@ -36,7 +40,19 @@ export default function VisitorForm({
     lastName: "",
     phone: "",
     purpose: "",
+    address: "",
   });
+
+  // Auto-populate address from addressId prop
+  useEffect(() => {
+    if (addressId && typeof addressId === "object" && addressId.data) {
+      const { block, unit } = addressId.data;
+      setFormData((prev) => ({
+        ...prev,
+        address: `${block}, ${unit}`,
+      }));
+    }
+  }, [addressId]);
 
   useEffect(() => {
     if (visitorId) {
@@ -52,6 +68,7 @@ export default function VisitorForm({
               lastName: visitor.lastName || "",
               phone: visitor.phone || "",
               purpose: visitor.purpose || "",
+              address: visitor.address || "",
             });
           }
         } catch (err: any) {
@@ -64,7 +81,9 @@ export default function VisitorForm({
     }
   }, [visitorId, dispatch]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -72,7 +91,12 @@ export default function VisitorForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.firstName || !formData.lastName || !formData.phone || !formData.purpose) {
+    if (
+      !formData.firstName ||
+      !formData.lastName ||
+      !formData.phone ||
+      !formData.purpose
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -90,11 +114,16 @@ export default function VisitorForm({
               phone: formData.phone,
               purpose: formData.purpose,
             },
-          })
+          }),
         ).unwrap();
         toast.success("Visitor updated successfully");
       } else {
-        // Create visitor
+        // Create visitor - extract addressId string if it's an object
+        const addressIdString =
+          typeof addressId === "object" && addressId !== null
+            ? addressId.id
+            : addressId;
+
         await dispatch(
           createVisitor({
             firstName: formData.firstName,
@@ -103,8 +132,8 @@ export default function VisitorForm({
             purpose: formData.purpose,
             residentId,
             estateId,
-            addressId,
-          })
+            addressId: addressIdString,
+          }),
         ).unwrap();
         toast.success("Visitor created successfully");
       }
@@ -112,7 +141,9 @@ export default function VisitorForm({
       onSubmitSuccess?.();
       onClose?.();
     } catch (err: any) {
-      toast.error(err?.message || `Failed to ${visitorId ? "update" : "create"} visitor`);
+      toast.error(
+        err?.message || `Failed to ${visitorId ? "update" : "create"} visitor`,
+      );
     } finally {
       setSubmitting(false);
     }
@@ -160,6 +191,20 @@ export default function VisitorForm({
             </div>
 
             <div>
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                name="address"
+                type="text"
+                value={formData.address}
+                onChange={handleInputChange}
+                placeholder="Address"
+                disabled
+                className="mt-1 bg-gray-50"
+              />
+            </div>
+
+            <div>
               <Label htmlFor="phone">Phone Number *</Label>
               <Input
                 id="phone"
@@ -199,12 +244,16 @@ export default function VisitorForm({
           >
             Cancel
           </Button>
-          <Button type="submit" className="flex-1" disabled={loading || submitting}>
+          <Button
+            type="submit"
+            className="flex-1"
+            disabled={loading || submitting}
+          >
             {submitting
               ? `${visitorId ? "Updating" : "Creating"}...`
               : visitorId
-              ? "Update Visitor"
-              : "Create Visitor"}
+                ? "Update Visitor"
+                : "Create Visitor"}
           </Button>
         </div>
       </CardContent>
