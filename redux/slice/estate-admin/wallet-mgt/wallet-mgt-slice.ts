@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { createWallet, getWallet } from "./wallet-mgt";
+import { createWallet, getWallet, getEstateCredits } from "./wallet-mgt";
 
 interface WalletData {
   id?: string;
@@ -25,21 +25,49 @@ export interface WalletResponse {
   pagination: Pagination;
 }
 
+export interface EstateCreditItem {
+  id?: string;
+  _id?: string;
+  amount?: number;
+  walletId?: string;
+  estateId?: string;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: unknown;
+}
+
+export interface EstateCreditsResponse {
+  success?: boolean;
+  data?: EstateCreditItem[];
+  summary?: Record<string, unknown>;
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    pages?: number;
+  };
+}
+
 export interface WalletState {
   createWalletState: "idle" | "isLoading" | "succeeded" | "failed";
   getWalletState: "idle" | "isLoading" | "succeeded" | "failed";
+  getEstateCreditsState: "idle" | "isLoading" | "succeeded" | "failed";
   status: "idle" | "isLoading" | "succeeded" | "failed";
   wallet: WalletData | null;
   allWallets: WalletResponse | null;
+  estateCredits: EstateCreditsResponse | null;
   error: string | null;
 }
 
 const initialState: WalletState = {
   createWalletState: "idle",
   getWalletState: "idle",
+  getEstateCreditsState: "idle",
   status: "idle",
   wallet: null,
   allWallets: null,
+  estateCredits: null,
   error: null,
 };
 
@@ -98,6 +126,31 @@ const walletSlice = createSlice({
       .addCase(getWallet.rejected, (state, action) => {
         state.getWalletState = "failed";
         state.error = action.error.message || "Failed to fetch wallet";
+      });
+
+    // GET ESTATE CREDITS
+    builder
+      .addCase(getEstateCredits.pending, (state) => {
+        state.getEstateCreditsState = "isLoading";
+      })
+      .addCase(getEstateCredits.fulfilled, (state, action) => {
+        state.getEstateCreditsState = "succeeded";
+        const rawCredits: EstateCreditItem[] = action.payload?.data ?? [];
+        const normalizedCredits = rawCredits.map((item) => ({
+          ...item,
+          // Backend typically returns `_id`; Table keys prefer `id`.
+          id: (item as any)?.id ?? (item as any)?._id,
+        }));
+        state.estateCredits = {
+          success: action.payload?.success,
+          data: normalizedCredits,
+          summary: action.payload?.summary,
+          pagination: action.payload?.pagination,
+        };
+      })
+      .addCase(getEstateCredits.rejected, (state, action) => {
+        state.getEstateCreditsState = "failed";
+        state.error = action.error.message || "Failed to fetch estate credits";
       });
   },
 });

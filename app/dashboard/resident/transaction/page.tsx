@@ -44,6 +44,7 @@ export default function TransactionPage() {
   const [transId, setTransId] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
+  const [continuingPaymentTxRef, setContinuingPaymentTxRef] = useState<string | null>(null);
   const transactions = useSelector(
     (state: RootState) => state.residentTransaction.allTransactions?.data || [],
   );
@@ -112,6 +113,49 @@ export default function TransactionPage() {
   };
 
   const handleOpenModal = () => setOpen((prev) => !prev);
+
+  // 🔹 Continue payment for not-paid transaction
+  const handleContinuePayment = async (item: {
+    tx_ref?: string;
+    amount?: number;
+    description?: string;
+  }) => {
+    const tx_ref = item.tx_ref;
+    if (!tx_ref || !email) {
+      toast.error("Missing transaction reference or email.");
+      return;
+    }
+    const amount = Number(item.amount) || 0;
+    if (amount <= 0) {
+      toast.error("Invalid amount.");
+      return;
+    }
+    setContinuingPaymentTxRef(tx_ref);
+    try {
+      const paymentRes = await dispatch(
+        initializePayment({
+          tx_ref,
+          amount,
+          country: "NG",
+          currency: "NGN",
+          redirect_url: `${window.location.origin}/dashboard/resident/transaction`,
+          payment_options: "card",
+          customer: { email },
+          customizations: {
+            title: "Wallet Funding",
+            description: item.description || "Continue payment",
+          },
+        }),
+      ).unwrap();
+
+      const paymentUrl = paymentRes?.data?.link || paymentRes?.data?.url;
+      if (!paymentUrl) throw new Error("Payment URL not received");
+      window.location.href = paymentUrl;
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to continue payment.");
+      setContinuingPaymentTxRef(null);
+    }
+  };
 
   // 🔹 Fund Wallet Handler
   const handleFundWallet = async ({
@@ -229,7 +273,7 @@ export default function TransactionPage() {
     return () => clearTimeout(timer);
   }, [dispatch, userId, email]);
 
-  // Table columns for paid bills
+  // Table columns for transaction history
   const columns = [
     {
       key: "createdAt",
@@ -263,6 +307,23 @@ export default function TransactionPage() {
             {item.paymentStatus || "Pending"}
           </span>
         ),
+    },
+    {
+      key: "actions",
+      header: "Action",
+      render: (item: any) =>
+        item.paymentStatus === "not-paid" ? (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={continuingPaymentTxRef === item.tx_ref}
+            onClick={() => handleContinuePayment(item)}
+          >
+            {continuingPaymentTxRef === item.tx_ref
+              ? "Redirecting..."
+              : "Continue payment"}
+          </Button>
+        ) : null,
     },
   ];
 
