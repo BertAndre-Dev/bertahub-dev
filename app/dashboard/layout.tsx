@@ -218,7 +218,7 @@ export default function DashboardLayout({
                   className="bg-transparent outline-none text-sm w-48"
                 />
               </div>
-              <button className="p-2 hover:bg-muted rounded-lg transition-colors relative">
+              <button title="Notifications" className="p-2 hover:bg-muted rounded-lg transition-colors relative">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
               </button>
