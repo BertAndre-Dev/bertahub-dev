@@ -151,7 +151,7 @@ export default function DashboardLayout({
               className={`flex items-center ${!sidebarOpen && "justify-center w-full"}`}
             >
               <NextImage
-                src="/icon.png"
+                src="/logo.svg"
                 alt="BertaHub"
                 width={50}
                 height={50}
