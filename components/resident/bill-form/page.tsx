@@ -98,7 +98,12 @@ export default function BillsForm({ billId, onSubmitSuccess, onClose }: BillsFor
       onSubmitSuccess?.();
       onClose?.();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to pay bill");
+      const message =
+        err?.message ||
+        err?.response?.data?.message ||
+        (typeof err?.response?.data === "string" ? err.response.data : null) ||
+        "Failed to pay bill";
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

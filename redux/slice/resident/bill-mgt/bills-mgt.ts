@@ -63,8 +63,8 @@ export const getBill = createAsyncThunk(
             return res.data;
         } catch (error: any) {
             return rejectWithValue({
-                message: error.res?.data?.message
-            })
+                message: error?.response?.data?.message || "Failed to load bill",
+            });
         }
     }
 );
@@ -79,8 +79,8 @@ export const payBill = createAsyncThunk(
             return res.data;
         } catch (error: any) {
             return rejectWithValue({
-                message: error.res?.data?.message
-            })
+                message: error?.response?.data?.message || "Failed to pay bill",
+            });
         }
     }
 );
