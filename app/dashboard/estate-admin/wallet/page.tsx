@@ -22,6 +22,12 @@ import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import type { EstateCreditItem } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt-slice";
 
+// Extend the type to include all fields from API
+interface ExtendedEstateCreditItem extends EstateCreditItem {
+  serviceCharge?: number;
+  source?: string;
+}
+
 export default function EstateAdminWalletPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
@@ -56,10 +62,7 @@ export default function EstateAdminWalletPage() {
         const user = userRes?.data ?? null;
         const id = user?.id || user?._id || null;
         const estateIdFromUser =
-          user?.estateId ||
-          user?.estate?._id ||
-          user?.estate?.id ||
-          null;
+          user?.estateId || user?.estate?._id || user?.estate?.id || null;
 
         // `userId` is only needed for withdrawal; don't block credits fetch on it.
         if (id) setUserId(id);
@@ -91,9 +94,7 @@ export default function EstateAdminWalletPage() {
   // Fetch estate credits when page changes
   useEffect(() => {
     if (!estateId || creditsPage === 1) return;
-    dispatch(
-      getEstateCredits({ estateId, page: creditsPage, limit }),
-    );
+    dispatch(getEstateCredits({ estateId, page: creditsPage, limit }));
   }, [estateId, creditsPage, limit, dispatch]);
 
   const handleCreateWallet = async () => {
@@ -193,7 +194,8 @@ export default function EstateAdminWalletPage() {
           setUserId(currentUserId ?? null);
           setEstateId(currentEstateId ?? null);
         }
-        if (!currentUserId || !currentEstateId) throw new Error("User or estate not found");
+        if (!currentUserId || !currentEstateId)
+          throw new Error("User or estate not found");
 
         await dispatch(
           verifyTransaction({ tx_ref, paymentType: "withdrawFund" }),
@@ -201,7 +203,11 @@ export default function EstateAdminWalletPage() {
         toast.success("Withdrawal successful!");
         await dispatch(getWallet(currentEstateId));
         await dispatch(
-          getEstateCredits({ estateId: currentEstateId, page: creditsPage, limit }),
+          getEstateCredits({
+            estateId: currentEstateId,
+            page: creditsPage,
+            limit,
+          }),
         );
 
         const url = new URL(window.location.href);
@@ -210,7 +216,9 @@ export default function EstateAdminWalletPage() {
         );
         window.history.replaceState({}, document.title, url.toString());
       } catch (err: any) {
-        toast.error(err?.message || err?.payload?.message || "Verification failed");
+        toast.error(
+          err?.message || err?.payload?.message || "Verification failed",
+        );
       }
     };
     const timer = setTimeout(verifyTransactionAsync, 800);
@@ -221,7 +229,7 @@ export default function EstateAdminWalletPage() {
     {
       key: "createdAt",
       header: "Date",
-      render: (item: EstateCreditItem) =>
+      render: (item: ExtendedEstateCreditItem) =>
         item.createdAt
           ? new Date(item.createdAt).toLocaleString("en-NG", {
               year: "numeric",
@@ -235,27 +243,40 @@ export default function EstateAdminWalletPage() {
     {
       key: "amount",
       header: "Amount (₦)",
-      render: (item: EstateCreditItem) =>
+      render: (item: ExtendedEstateCreditItem) =>
         typeof item.amount === "number"
           ? Number(item.amount).toLocaleString()
           : "—",
     },
-    // {
-    //   key: "description",
-    //   header: "Description",
-    //   render: (item: EstateCreditItem) => item.description ?? "—",
-    // },
     {
-        key: "status",
-        header: "Status",
-        render: (item: EstateCreditItem) => item.status ?? "—",
-    }
+      key: "serviceCharge",
+      header: "Service Charge (₦)",
+      render: (item: ExtendedEstateCreditItem) =>
+        typeof item.serviceCharge === "number"
+          ? Number(item.serviceCharge).toLocaleString()
+          : "—",
+    },
+    {
+      key: "source",
+      header: "Source",
+      render: (item: ExtendedEstateCreditItem) => item.source ?? "—",
+    },
+    {
+      key: "description",
+      header: "Description",
+      render: (item: ExtendedEstateCreditItem) => item.description ?? "—",
+    },
   ];
 
-  const pag = creditsPagination as { total?: number; page?: number; limit?: number; pages?: number } | undefined;
-  const total = typeof pag?.total === "number" ? pag.total : Number(pag?.total) || 0;
-  const pageNum = typeof pag?.page === "number" ? pag.page : Number(pag?.page) || creditsPage;
-  const pageSize = typeof pag?.limit === "number" ? pag.limit : Number(pag?.limit) || limit;
+  const pag = creditsPagination as
+    | { total?: number; page?: number; limit?: number; pages?: number }
+    | undefined;
+  const total =
+    typeof pag?.total === "number" ? pag.total : Number(pag?.total) || 0;
+  const pageNum =
+    typeof pag?.page === "number" ? pag.page : Number(pag?.page) || creditsPage;
+  const pageSize =
+    typeof pag?.limit === "number" ? pag.limit : Number(pag?.limit) || limit;
 
   return (
     <div className="space-y-6">
@@ -294,7 +315,7 @@ export default function EstateAdminWalletPage() {
         <p className="text-sm text-muted-foreground mb-4">
           Amounts credited to wallets in this estate.
         </p>
-        <Table<EstateCreditItem>
+        <Table<ExtendedEstateCreditItem>
           columns={creditsColumns}
           data={creditsData}
           emptyMessage={
@@ -316,7 +337,9 @@ export default function EstateAdminWalletPage() {
             Prev
           </Button>
           <Button
-            disabled={pageNum >= (creditsPagination?.pages ?? 1) || total <= pageSize}
+            disabled={
+              pageNum >= (creditsPagination?.pages ?? 1) || total <= pageSize
+            }
             onClick={() => setCreditsPage((p) => p + 1)}
           >
             Next
