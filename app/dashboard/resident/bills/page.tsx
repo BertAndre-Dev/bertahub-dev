@@ -133,18 +133,16 @@ export default function BillPage() {
         `₦${Number(item.amountPaid ?? 0).toLocaleString()}`,
     },
     {
+      key: "startDate",
+      header: "Start Date",
+      render: (item: any) =>
+        item.startDate ? new Date(item.startDate).toLocaleString() : "-",
+    },
+    {
       key: "nextDueDate",
       header: "Next Due Date",
       render: (item: any) =>
         item.nextDueDate ? new Date(item.nextDueDate).toLocaleString() : "-",
-    },
-    {
-      key: "lastPaymentDate",
-      header: "Last Payment Date",
-      render: (item: any) =>
-        item.lastPaymentDate
-          ? new Date(item.lastPaymentDate).toLocaleString()
-          : "-",
     },
   ];
 

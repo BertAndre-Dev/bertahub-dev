@@ -75,7 +75,7 @@ export const adminNav = [
     icon: FiUsers,
     path: "/dashboard/admin/visitor",
   },
-  { label: "Settings", icon: FiSettings, path: "/dashboard/admin/settings" },
+  // { label: "Settings", icon: FiSettings, path: "/dashboard/admin/settings" },
 ];
 
 export const securityNav = [

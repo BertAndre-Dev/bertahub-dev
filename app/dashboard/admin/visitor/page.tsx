@@ -1,7 +1,9 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Table from "@/components/tables/list/page";
+import Modal from "@/components/modal/page";
 import { toast } from "react-toastify";
 import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
@@ -11,11 +13,13 @@ import {
   verifyVisitor,
 } from "@/redux/slice/admin/visitor/visitor";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-import { CheckCircle, ShieldCheck } from "lucide-react";
+import { CheckCircle, ShieldCheck, UserPlus } from "lucide-react";
+import AdminVisitorForm from "@/components/admin/visitor-form/page";
 
 export default function AdminVisitorManagement() {
   const dispatch = useDispatch<AppDispatch>();
   const [estateId, setEstateId] = useState<string | null>(null);
+  const [addVisitorOpen, setAddVisitorOpen] = useState(false);
 
   const { visitors, pagination, loading } = useSelector((state: RootState) => {
     const visitorState = state.visitor;
@@ -219,9 +223,41 @@ export default function AdminVisitorManagement() {
     },
   ];
 
+  const refreshVisitors = () => {
+    if (estateId) {
+      dispatch(
+        getVisitorsByEstate({
+          estateId,
+          page: pagination.page,
+          limit: pagination.limit,
+        }),
+      );
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="font-heading text-3xl font-bold">Visitor Management</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-heading text-3xl font-bold">Visitor Management</h1>
+        <Button
+          onClick={() => setAddVisitorOpen(true)}
+          disabled={!estateId}
+          className="gap-2"
+        >
+          <UserPlus className="w-4 h-4" />
+          Add Visitor
+        </Button>
+      </div>
+
+      <Modal visible={addVisitorOpen} onClose={() => setAddVisitorOpen(false)}>
+        {estateId && (
+          <AdminVisitorForm
+            estateId={estateId}
+            onSubmitSuccess={refreshVisitors}
+            onClose={() => setAddVisitorOpen(false)}
+          />
+        )}
+      </Modal>
 
       <Card className="p-4">
         <Table

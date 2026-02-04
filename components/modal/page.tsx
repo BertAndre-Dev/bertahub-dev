@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 
 interface ModalProps {
   visible: boolean;
@@ -47,12 +48,32 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
               max-h-[50vh] 
               flex 
               flex-col
+              relative
             "
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 100, damping: 20 }}
           >
+            <button
+              onClick={onClose}
+              className="
+                absolute 
+                cursor-pointer
+                top-4 
+                right-4 
+                p-1 
+                rounded-lg 
+                hover:bg-gray-100 
+                transition-colors
+                focus:outline-none
+                focus:ring-2
+                focus:ring-gray-300
+              "
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5 text-gray-600" />
+            </button>
             <div className="w-full">{children}</div>
           </motion.div>
         </motion.div>
