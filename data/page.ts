@@ -129,8 +129,8 @@ export const estateAdminNav = [
     path: "/dashboard/estate-admin/transactions",
   },
   {
-    label: "Estate Bills",
+    label: "Wallet",
     icon: LuReceipt,
-    path: "/dashboard/estate-admin/bills",
+    path: "/dashboard/estate-admin/wallet",
   },
 ];

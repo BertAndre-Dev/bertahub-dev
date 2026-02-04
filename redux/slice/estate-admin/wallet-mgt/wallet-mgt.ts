@@ -8,7 +8,7 @@ interface WalletData {
 }
 
 export const createWallet = createAsyncThunk(
-  "wallet-mgt/createWallet",
+  "estate-admin-wallet-mgt/createWallet",
   async (data: WalletData, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.post("/api/v1/wallet-mgt", data);
@@ -22,7 +22,7 @@ export const createWallet = createAsyncThunk(
 );
 
 export const getWallet = createAsyncThunk(
-  "wallet/getWallet",
+  "estate-admin-wallet/getWallet",
   async (estateId: string, { rejectWithValue }) => {
     try {
       if (!estateId) {
@@ -43,6 +43,36 @@ export const getWallet = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue({
         message: error.response?.data?.message || "Failed to fetch wallet",
+      });
+    }
+  },
+);
+
+/** Get list of amounts credited to wallets in an estate. GET /api/v1/wallet-mgt/estate-credits */
+export const getEstateCredits = createAsyncThunk(
+  "estate-admin-wallet/getEstateCredits",
+  async (
+    {
+      estateId,
+      page = 1,
+      limit = 10,
+    }: { estateId: string; page?: number; limit?: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      if (!estateId) {
+        return rejectWithValue({
+          message: "Estate ID is required to fetch estate credits",
+        });
+      }
+      const res = await axiosInstance.get("/api/v1/wallet-mgt/estate-credits/{estateId}", {
+        params: { estateId, page, limit },
+      });
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message:
+          error.response?.data?.message || "Failed to fetch estate credits",
       });
     }
   },

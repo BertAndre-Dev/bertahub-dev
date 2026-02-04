@@ -24,7 +24,7 @@ interface TableProps<T> {
   showPagination?: boolean;
   paginationInfo?: PaginationInfo;
   onPageChange?: (newPage: number) => void;
-  enableSearch?: boolean; 
+  enableSearch?: boolean;
   onSearch?: (value: string) => void;
 }
 
@@ -37,16 +37,16 @@ export default function Table<T extends { id?: string }>({
   paginationInfo,
   onPageChange,
   enableSearch = false,
-  onSearch
+  onSearch,
 }: TableProps<T>) {
   if (!paginationInfo) {
-    
     showPagination = false;
   }
 
-  const totalPages = paginationInfo ? Math.ceil(paginationInfo.total / paginationInfo.pageSize) : 1;
+  const totalPages = paginationInfo
+    ? Math.ceil(paginationInfo.total / paginationInfo.pageSize)
+    : 1;
   const [searchValue, setSearchValue] = React.useState("");
-
 
   return (
     <div className="overflow-hidden border rounded-lg">
@@ -65,7 +65,6 @@ export default function Table<T extends { id?: string }>({
           />
         </div>
       )}
-
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -95,14 +94,19 @@ export default function Table<T extends { id?: string }>({
                       key={String(col.key)}
                       className={`px-6 py-4 text-${col.align || "left"} whitespace-nowrap capitalize`}
                     >
-                      {col.render ? col.render(item) : String((item as any)[col.key] ?? "—")}
+                      {col.render
+                        ? col.render(item)
+                        : String((item as any)[col.key] ?? "—")}
                     </td>
                   ))}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center text-muted-foreground">
+                <td
+                  colSpan={columns.length}
+                  className="px-6 py-12 text-center text-muted-foreground"
+                >
                   {emptyMessage}
                 </td>
               </tr>
@@ -114,9 +118,13 @@ export default function Table<T extends { id?: string }>({
       {showPagination && paginationInfo && (
         <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-t border-border bg-muted/30 gap-2 md:gap-0">
           <p className="text-sm text-muted-foreground">
-            Showing {(paginationInfo.current - 1) * paginationInfo.pageSize + 1} -{" "}
-            {Math.min(paginationInfo.current * paginationInfo.pageSize, paginationInfo.total)} of{" "}
-            {paginationInfo.total} records
+            Showing {(paginationInfo.current - 1) * paginationInfo.pageSize + 1}{" "}
+            -{" "}
+            {Math.min(
+              paginationInfo.current * paginationInfo.pageSize,
+              paginationInfo.total,
+            )}{" "}
+            of {paginationInfo.total} records
           </p>
 
           <div className="flex gap-2">
@@ -124,29 +132,37 @@ export default function Table<T extends { id?: string }>({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange && onPageChange(paginationInfo.current - 1)}
+              onClick={() =>
+                onPageChange && onPageChange(paginationInfo.current - 1)
+              }
               disabled={paginationInfo.current <= 1}
             >
               Previous
             </Button>
 
             {/* Page Numbers */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <Button
-                key={pageNum}
-                variant={pageNum === paginationInfo.current ? "default" : "outline"}
-                size="sm"
-                onClick={() => onPageChange && onPageChange(pageNum)}
-              >
-                {pageNum}
-              </Button>
-            ))}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (pageNum) => (
+                <Button
+                  key={pageNum}
+                  variant={
+                    pageNum === paginationInfo.current ? "default" : "outline"
+                  }
+                  size="sm"
+                  onClick={() => onPageChange && onPageChange(pageNum)}
+                >
+                  {pageNum}
+                </Button>
+              ),
+            )}
 
             {/* Next Button */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange && onPageChange(paginationInfo.current + 1)}
+              onClick={() =>
+                onPageChange && onPageChange(paginationInfo.current + 1)
+              }
               disabled={paginationInfo.current >= totalPages}
             >
               Next
