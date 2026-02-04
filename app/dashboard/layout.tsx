@@ -20,6 +20,7 @@ import {
   logoutLocally,
 } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import NextImage from "next/image"; // ✅ Renamed import to avoid conflict
 
 export default function DashboardLayout({
   children,
@@ -147,11 +148,14 @@ export default function DashboardLayout({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-sidebar-border">
             <div
-              className={`flex items-center gap-3 ${!sidebarOpen && "justify-center w-full"}`}
+              className={`flex items-center ${!sidebarOpen && "justify-center w-full"}`}
             >
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-                E
-              </div>
+              <NextImage
+                src="/logo.svg"
+                alt="BertaHub"
+                width={50}
+                height={50}
+              />
               {sidebarOpen && (
                 <span className="font-heading font-bold text-lg">BertAhub</span>
               )}
@@ -214,7 +218,7 @@ export default function DashboardLayout({
                   className="bg-transparent outline-none text-sm w-48"
                 />
               </div>
-              <button className="p-2 hover:bg-muted rounded-lg transition-colors relative">
+              <button title="Notifications" className="p-2 hover:bg-muted rounded-lg transition-colors relative">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
               </button>

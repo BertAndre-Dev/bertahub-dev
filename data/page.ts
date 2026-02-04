@@ -25,11 +25,11 @@ export const superAdminNav = [
     icon: FiUsers,
     path: "/dashboard/super-admin/user",
   },
-  {
-    label: "Bills Management",
-    icon: LuReceipt,
-    path: "/dashboard/super-admin/bills",
-  },
+  // {
+  //   label: "Bills Management",
+  //   icon: LuReceipt,
+  //   path: "/dashboard/super-admin/bills",
+  // },
   {
     label: "Meter Management",
     icon: IoSpeedometerOutline,
