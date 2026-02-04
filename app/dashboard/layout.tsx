@@ -20,6 +20,7 @@ import {
   logoutLocally,
 } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import NextImage from "next/image"; // ✅ Renamed import to avoid conflict
 
 export default function DashboardLayout({
   children,
@@ -147,11 +148,14 @@ export default function DashboardLayout({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-sidebar-border">
             <div
-              className={`flex items-center gap-3 ${!sidebarOpen && "justify-center w-full"}`}
+              className={`flex items-center ${!sidebarOpen && "justify-center w-full"}`}
             >
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-                E
-              </div>
+              <NextImage
+                src="/icon.png"
+                alt="BertaHub"
+                width={50}
+                height={50}
+              />
               {sidebarOpen && (
                 <span className="font-heading font-bold text-lg">BertAhub</span>
               )}
