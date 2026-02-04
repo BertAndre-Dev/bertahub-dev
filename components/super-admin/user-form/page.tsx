@@ -79,7 +79,6 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
   const roleOptions = [
     { value: "estate admin", label: "Estate Admin" },
     { value: "admin", label: "Admin" },
-    { value: "resident", label: "Resident" },
   ];
 
   const estateOptions = estates.map((est: any) => ({
