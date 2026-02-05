@@ -9,13 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { verifyVisitor } from "@/redux/slice/admin/visitor/visitor";
+import { formatVisitorCode } from "@/lib/utils";
 
 export default function VerifyVisitorPage() {
   const dispatch = useDispatch<AppDispatch>();
   const searchParams = useSearchParams();
 
   const initialCode = searchParams.get("code") || "";
-  const [code, setCode] = useState(initialCode);
+  const [code, setCode] = useState(formatVisitorCode(initialCode));
   const [loading, setLoading] = useState(false);
 
   const handleVerify = async () => {
@@ -46,13 +47,17 @@ export default function VerifyVisitorPage() {
       <Label>Visitor Code</Label>
       <Input
         value={code}
-        onChange={(e) => setCode(e.target.value.toUpperCase())}
+        onChange={(e) => setCode(formatVisitorCode(e.target.value))}
+        title="Visitor Code"
+        placeholder="EZR-HP5O"
+        // className="w-full"
       />
 
       <Button
         className="w-full"
         onClick={handleVerify}
         disabled={loading}
+        title="Verify Visitor"
       >
         {loading ? "Verifying..." : "Verify Visitor"}
       </Button>
