@@ -36,13 +36,25 @@ export default function TransactionPage() {
   const [email, setEmail] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
-  const [activeTab, setActiveTab] = useState<"history" | "vends" | "paid-bills">("history");
+  const [activeTab, setActiveTab] = useState<
+    "history" | "vends" | "paid-bills"
+  >("history");
   const [vendsData, setVendsData] = useState<any[]>([]);
-  const [vendsPagination, setVendsPagination] = useState<{ total: number; page: number; limit: number; pages: number } | null>(null);
+  const [vendsPagination, setVendsPagination] = useState<{
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  } | null>(null);
   const [vendsPage, setVendsPage] = useState(1);
   const [loadingVends, setLoadingVends] = useState(false);
   const [paidBillsData, setPaidBillsData] = useState<any[]>([]);
-  const [paidBillsPagination, setPaidBillsPagination] = useState<{ total: number; page: number; limit: number; pages: number } | null>(null);
+  const [paidBillsPagination, setPaidBillsPagination] = useState<{
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  } | null>(null);
   const [paidBillsPage, setPaidBillsPage] = useState(1);
   const [loadingPaidBills, setLoadingPaidBills] = useState(false);
   const transactions = useSelector(
@@ -219,6 +231,16 @@ export default function TransactionPage() {
         item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
     },
     {
+      key: "user",
+      header: "Resident",
+      render: (item: any) =>
+        item.user
+          ? [item.user.firstName, item.user.lastName]
+              .filter(Boolean)
+              .join(" ") || item.user.email
+          : "-",
+    },
+    {
       key: "type",
       header: "Type",
       render: (item: any) =>
@@ -255,6 +277,16 @@ export default function TransactionPage() {
         item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
     },
     {
+      key: "user",
+      header: "Resident",
+      render: (item: any) =>
+        item.user
+          ? [item.user.firstName, item.user.lastName]
+              .filter(Boolean)
+              .join(" ") || item.user.email
+          : "-",
+    },
+    {
       key: "meterNumber",
       header: "Meter",
       render: (item: any) => item.meterNumber ?? "-",
@@ -263,14 +295,6 @@ export default function TransactionPage() {
       key: "amount",
       header: "Amount (₦)",
       render: (item: any) => item.amount?.toLocaleString() ?? 0,
-    },
-    {
-      key: "user",
-      header: "User",
-      render: (item: any) =>
-        item.user
-          ? [item.user.firstName, item.user.lastName].filter(Boolean).join(" ") || item.user.email
-          : "-",
     },
     {
       key: "transId",
@@ -287,6 +311,16 @@ export default function TransactionPage() {
         item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
     },
     {
+      key: "user",
+      header: "Resident",
+      render: (item: any) =>
+        item.user
+          ? [item.user.firstName, item.user.lastName]
+              .filter(Boolean)
+              .join(" ") || item.user.email
+          : "-",
+    },
+    {
       key: "bill",
       header: "Bill",
       render: (item: any) => item.bill?.name ?? "-",
@@ -297,18 +331,12 @@ export default function TransactionPage() {
       render: (item: any) => item.amountPaid?.toLocaleString() ?? 0,
     },
     {
-      key: "user",
-      header: "Resident",
-      render: (item: any) =>
-        item.user
-          ? [item.user.firstName, item.user.lastName].filter(Boolean).join(" ") || item.user.email
-          : "-",
-    },
-    {
       key: "status",
       header: "Status",
       render: (item: any) => (
-        <span className="text-green-600 font-medium capitalize">{item.status ?? "-"}</span>
+        <span className="text-green-600 font-medium capitalize">
+          {item.status ?? "-"}
+        </span>
       ),
     },
   ];
@@ -412,7 +440,9 @@ export default function TransactionPage() {
               columns={paidBillsColumns}
               data={paidBillsData}
               emptyMessage={
-                loadingPaidBills ? "Loading paid bills..." : "No paid bills found."
+                loadingPaidBills
+                  ? "Loading paid bills..."
+                  : "No paid bills found."
               }
               showPagination
               paginationInfo={{
