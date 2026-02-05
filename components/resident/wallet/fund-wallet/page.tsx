@@ -63,12 +63,14 @@ export default function FundWalletForm({
   onSubmit,
   onClose,
 }: FundWalletFormProps) {
-  const [amount, setAmount] = useState<number>(0);
+  const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [currency, setCurrency] = useState<string>("NGN");
   const [country, setCountry] = useState<string>("NG");
   const [paymentOption, setPaymentOption] = useState<string>("card");
-  const [availablePaymentOptions, setAvailablePaymentOptions] = useState<{ code: string; label: string }[]>(paymentOptionsMap["NGN"]);
+  const [availablePaymentOptions, setAvailablePaymentOptions] = useState<
+    { code: string; label: string }[]
+  >(paymentOptionsMap["NGN"]);
   const [submitting, setSubmitting] = useState(false);
 
   // Update payment options when currency changes
@@ -97,13 +99,14 @@ export default function FundWalletForm({
       return;
     }
 
-    if (!amount || amount <= 0) {
+    const numAmount = Number(amount);
+    if (!numAmount || numAmount <= 0) {
       toast.error("Please enter a valid amount.");
       return;
     }
 
     // const MAX_AMOUNT = 200_000;
-    // if (amount > MAX_AMOUNT) {
+    // if (numAmount > MAX_AMOUNT) {
     //   toast.error(`You cannot fund more than ${MAX_AMOUNT.toLocaleString()}`);
     //   return;
     // }
@@ -114,7 +117,7 @@ export default function FundWalletForm({
       await onSubmit({
         userId,
         walletId,
-        amount,
+        amount: numAmount,
         description,
         type: "credit",
         currency,
@@ -131,12 +134,13 @@ export default function FundWalletForm({
     }
   };
 
-
   return (
     <Card className="w-full max-w-md mx-auto">
       <form onSubmit={handleSubmit}>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-blue-600">Fund Wallet</CardTitle>
+          <CardTitle className="text-lg font-semibold text-blue-600">
+            Fund Wallet
+          </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -145,11 +149,11 @@ export default function FundWalletForm({
             <Input
               type="number"
               value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
+              onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter amount"
               required
             />
-            {amount > 0 && (
+            {Number(amount) > 0 && (
               <p className="text-red-600 text-sm mt-1.5">
                 A service charge of ₦230 will be applied.
               </p>
@@ -169,6 +173,7 @@ export default function FundWalletForm({
           <div>
             <Label>Currency / Country</Label>
             <select
+              title="Currency / Country"
               className="w-full border border-gray-300 rounded px-3 py-2"
               value={country}
               onChange={handleCurrencyChange}
@@ -184,6 +189,7 @@ export default function FundWalletForm({
           <div>
             <Label>Payment Option</Label>
             <select
+              title="Payment Option"
               className="w-full border border-gray-300 rounded px-3 py-2"
               value={paymentOption}
               onChange={(e) => setPaymentOption(e.target.value)}
@@ -197,7 +203,7 @@ export default function FundWalletForm({
           </div>
 
           <Button type="submit" className="w-full mt-4" disabled={submitting}>
-            {submitting ? "Processing..." : `Fund Wallet ₦${amount}`}
+            {submitting ? "Processing..." : `Fund Wallet ₦${amount || 0}`}
           </Button>
         </CardContent>
       </form>
