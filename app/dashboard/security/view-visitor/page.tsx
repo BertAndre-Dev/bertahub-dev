@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { getVisitorDetailsByCode } from "@/redux/slice/admin/visitor/visitor";
+import { formatVisitorCode } from "@/lib/utils";
 
 export default function ViewVisitorPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -61,7 +62,7 @@ export default function ViewVisitorPage() {
         <div className="flex gap-2">
           <Input
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onChange={(e) => setCode(formatVisitorCode(e.target.value))}
             placeholder="EZR-HP5O"
             className="flex-1"
           />
@@ -105,7 +106,7 @@ export default function ViewVisitorPage() {
               <p className="text-xs sm:text-sm text-gray-500 mb-1">
                 Visitor Code
               </p>
-              <p className="font-medium text-blue-600">{visitor.visitorCode}</p>
+              <p className="font-medium text-blue-600">{formatVisitorCode(visitor.visitorCode)}</p>
             </div>
 
             <div>
