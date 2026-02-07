@@ -7,6 +7,7 @@ interface WalletData {
   balance: number;
   temporaryBalance: number;
   lockedBalance: number;
+  accountNumber?: string;
   createdAt?: string;
   updatedAt?: string;
 }
