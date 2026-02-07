@@ -1,15 +1,16 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 
-interface WalletData {
+interface CreateWalletData {
   estateId: string;
   balance: number;
   lockedBalance: number;
+  accountNumber: string;
 }
 
 export const createWallet = createAsyncThunk(
   "estate-admin-wallet-mgt/createWallet",
-  async (data: WalletData, { rejectWithValue }) => {
+  async (data: CreateWalletData, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.post("/api/v1/wallet-mgt", data);
       return res.data;

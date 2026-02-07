@@ -2,6 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import Modal from "@/components/modal/page";
 import WithdrawFundForm from "@/components/estate-admin/transactions/fund-wallet-form/page";
 import {
@@ -31,6 +33,9 @@ interface ExtendedEstateCreditItem extends EstateCreditItem {
 export default function EstateAdminWalletPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
+  const [createWalletModalOpen, setCreateWalletModalOpen] = useState(false);
+  const [createWalletAccountNumber, setCreateWalletAccountNumber] =
+    useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [estateId, setEstateId] = useState<string | null>(null);
   const [creditsPage, setCreditsPage] = useState(1);
@@ -85,8 +90,11 @@ export default function EstateAdminWalletPage() {
             limit,
           }),
         ).unwrap();
-      } catch (err) {
-        toast.error("Failed to load data.");
+      } catch (err: any) {
+        // Display the actual API error message
+        const errorMessage =
+          err?.message || err?.payload?.message || "Failed to load data.";
+        toast.error(errorMessage);
       }
     })();
   }, [dispatch, limit]);
@@ -99,14 +107,25 @@ export default function EstateAdminWalletPage() {
 
   const handleCreateWallet = async () => {
     if (!estateId) {
-      toast.warning("No estate found for this user.");
+      toast.warning("No estate found.");
+      return;
+    }
+    if (!createWalletAccountNumber.trim()) {
+      toast.warning("Please enter the account number you want to withdraw to.");
       return;
     }
     try {
       await dispatch(
-        createWallet({ estateId, balance: 0, lockedBalance: 0 }),
+        createWallet({
+          estateId,
+          balance: 0,
+          lockedBalance: 0,
+          accountNumber: createWalletAccountNumber.trim(),
+        }),
       ).unwrap();
       toast.success("Wallet created successfully.");
+      setCreateWalletModalOpen(false);
+      setCreateWalletAccountNumber("");
       if (estateId) dispatch(getWallet(estateId));
     } catch (error: any) {
       toast.error(error?.message || "Failed to create wallet.");
@@ -299,7 +318,7 @@ export default function EstateAdminWalletPage() {
             </div>
           ) : (
             <Button
-              onClick={handleCreateWallet}
+              onClick={() => setCreateWalletModalOpen(true)}
               disabled={createWalletState === "isLoading"}
             >
               {createWalletState === "isLoading"
@@ -353,12 +372,64 @@ export default function EstateAdminWalletPage() {
             <WithdrawFundForm
               userId={userId}
               walletId={wallet.id ?? ""}
+              defaultAccountNumber={wallet.accountNumber ?? ""}
               onSubmit={handleWithdrawSubmit}
               onClose={handleOpenModal}
             />
           ) : (
             <p className="text-center text-gray-500">Loading form...</p>
           )}
+        </div>
+      </Modal>
+
+      <Modal
+        visible={createWalletModalOpen}
+        onClose={() => {
+          setCreateWalletModalOpen(false);
+          setCreateWalletAccountNumber("");
+        }}
+      >
+        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto p-6">
+          <h2 className="text-lg font-semibold mb-4">Create Wallet</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Your withdrawal will be sent to this account number. This
+            information is automatically filled in from your Withdrawal from.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="create-wallet-account">Account Number</Label>
+              <Input
+                id="create-wallet-account"
+                type="text"
+                value={createWalletAccountNumber}
+                onChange={(e) => setCreateWalletAccountNumber(e.target.value)}
+                placeholder="e.g. 0002299900"
+                className="mt-2"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCreateWalletModalOpen(false);
+                  setCreateWalletAccountNumber("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateWallet}
+                disabled={
+                  createWalletState === "isLoading" ||
+                  !createWalletAccountNumber.trim()
+                }
+              >
+                {createWalletState === "isLoading"
+                  ? "Creating..."
+                  : "Create Wallet"}
+              </Button>
+            </div>
+          </div>
         </div>
       </Modal>
     </div>

@@ -16,10 +16,10 @@ const countries = [
   // { code: "GH", currency: "GHS", name: "Ghana" },
 ];
 
-
 interface FundWalletFormProps {
   userId: string;
   walletId: string;
+  defaultAccountNumber?: string;
   onSubmit: (data: {
     userId: string;
     walletId: string;
@@ -37,21 +37,30 @@ interface FundWalletFormProps {
 export default function FundWalletForm({
   userId,
   walletId,
+  defaultAccountNumber = "",
   onSubmit,
   onClose,
 }: FundWalletFormProps) {
   const [amount, setAmount] = useState<number>();
-  const [accountNumber, setAccountNumber] = useState<string>("");
+  const [accountNumber, setAccountNumber] =
+    useState<string>(defaultAccountNumber);
+
+  useEffect(() => {
+    if (defaultAccountNumber) setAccountNumber(defaultAccountNumber);
+  }, [defaultAccountNumber]);
   const [description, setDescription] = useState<string>("");
   const [currency, setCurrency] = useState<string>("NGN");
   const [country, setCountry] = useState<string>("NG");
   const [submitting, setSubmitting] = useState(false);
-  const [banks, setBanks] = useState<{ id: number; code: string; name: string }[]>([]);
+  const [banks, setBanks] = useState<
+    { id: number; code: string; name: string }[]
+  >([]);
   const [selectedBank, setSelectedBank] = useState<string>("");
   const [loadingBanks, setLoadingBanks] = useState(false);
   const [accountName, setAccountName] = useState<string>("");
   const [verifyingAccount, setVerifyingAccount] = useState(false);
-  const [accountVerificationError, setAccountVerificationError] = useState<string>("");
+  const [accountVerificationError, setAccountVerificationError] =
+    useState<string>("");
 
   // Fetch banks when country is NG
   useEffect(() => {
@@ -59,9 +68,12 @@ export default function FundWalletForm({
       if (country === "NG") {
         setLoadingBanks(true);
         try {
-          const response = await axiosInstance.get("/api/v1/payment-mgt/banks", {
-            params: { country }
-          });
+          const response = await axiosInstance.get(
+            "/api/v1/payment-mgt/banks",
+            {
+              params: { country },
+            },
+          );
 
           if (response.data?.success && response.data?.data) {
             setBanks(response.data.data);
@@ -94,12 +106,15 @@ export default function FundWalletForm({
         setAccountName("");
 
         try {
-          const response = await axiosInstance.get("/api/v1/payment-mgt/verify-bank-account", {
-            params: {
-              accountNumber: accountNumber.trim(),
-              bankCode: selectedBank,
+          const response = await axiosInstance.get(
+            "/api/v1/payment-mgt/verify-bank-account",
+            {
+              params: {
+                accountNumber: accountNumber.trim(),
+                bankCode: selectedBank,
+              },
             },
-          });
+          );
 
           if (response.data?.account_name) {
             setAccountName(response.data.account_name);
@@ -195,7 +210,9 @@ export default function FundWalletForm({
     <Card className="w-full max-w-md mx-auto">
       <form onSubmit={handleSubmit}>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-blue-600">Withdraw Fund</CardTitle>
+          <CardTitle className="text-lg font-semibold text-blue-600">
+            Withdraw Fund
+          </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -215,13 +232,9 @@ export default function FundWalletForm({
             <Input
               type="text"
               value={accountNumber}
-              onChange={(e) => {
-                setAccountNumber(e.target.value);
-                // Reset verification when account number changes
-                setAccountName("");
-                setAccountVerificationError("");
-              }}
+              readOnly
               placeholder="Enter account number"
+                className="bg-gray-50 cursor-not-allowed"
               required
             />
           </div>
@@ -229,6 +242,7 @@ export default function FundWalletForm({
           <div>
             <Label>Currency / Country</Label>
             <select
+              title="Currency / Country"
               className="w-full border border-gray-300 rounded px-3 py-2"
               value={country}
               onChange={handleCurrencyChange}
@@ -245,6 +259,7 @@ export default function FundWalletForm({
             <div>
               <Label>Select Bank</Label>
               <select
+                title="Select Bank"
                 className="w-full border border-gray-300 rounded px-3 py-2"
                 value={selectedBank}
                 onChange={(e) => {
@@ -267,7 +282,9 @@ export default function FundWalletForm({
                 <p className="text-sm text-gray-500 mt-1">Loading banks...</p>
               )}
               {verifyingAccount && accountNumber.trim() && selectedBank && (
-                <p className="text-sm text-gray-500 mt-1">Verifying account...</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Verifying account...
+                </p>
               )}
               {accountName && !verifyingAccount && (
                 <p className="text-sm text-green-600 font-medium mt-1">
@@ -275,7 +292,9 @@ export default function FundWalletForm({
                 </p>
               )}
               {accountVerificationError && !verifyingAccount && (
-                <p className="text-sm text-red-600 mt-1">{accountVerificationError}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {accountVerificationError}
+                </p>
               )}
             </div>
           )}
