@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
-import BillsForm from "@/components/admin/bills-form/page";
+import BillsForm, {
+  type BillSubmitData,
+} from "@/components/admin/bills-form/page";
 
 import {
   activateBill,
@@ -117,7 +119,7 @@ export default function BillPage() {
     });
   };
 
-  const handleSubmitBill = async (data: BillData) => {
+  const handleSubmitBill = async (data: BillSubmitData) => {
     if (!estateId) return;
 
     try {
