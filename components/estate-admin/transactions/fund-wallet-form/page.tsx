@@ -227,7 +227,7 @@ export default function FundWalletForm({
             />
           </div>
 
-          <div>
+          {/* <div>
             <Label>Account Number</Label>
             <Input
               type="text"
@@ -237,7 +237,7 @@ export default function FundWalletForm({
                 className="bg-gray-50 cursor-not-allowed"
               required
             />
-          </div>
+          </div> */}
 
           <div>
             <Label>Currency / Country</Label>
@@ -257,7 +257,7 @@ export default function FundWalletForm({
 
           {country === "NG" && (
             <div>
-              <Label>Select Bank</Label>
+              <Label>Please select the bank linked to the account number you registered.</Label>
               <select
                 title="Select Bank"
                 className="w-full border border-gray-300 rounded px-3 py-2"
