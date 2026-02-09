@@ -6,7 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "react-toastify";
-import { axiosInstance } from "@/utils/axiosInstance";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/redux/store";
+import { getBanks, verifyBankAccount } from "@/redux/slice/estate-admin/fund-wallet/fund-wallet";
+import {
+  clearBanks,
+  clearVerifiedAccount,
+} from "@/redux/slice/estate-admin/fund-wallet/fund-wallet-slice";
 
 // Country/currency/payment data (you can fetch dynamically from your backend)
 const countries = [
@@ -41,6 +47,15 @@ export default function FundWalletForm({
   onSubmit,
   onClose,
 }: FundWalletFormProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    banks,
+    getBanksState,
+    verifyBankAccountState,
+    verifiedAccountName: accountName,
+    error: fundWalletError,
+  } = useSelector((state: RootState) => state.estateAdminFundWallet);
+
   const [amount, setAmount] = useState<number>();
   const [accountNumber, setAccountNumber] =
     useState<string>(defaultAccountNumber);
@@ -52,97 +67,51 @@ export default function FundWalletForm({
   const [currency, setCurrency] = useState<string>("NGN");
   const [country, setCountry] = useState<string>("NG");
   const [submitting, setSubmitting] = useState(false);
-  const [banks, setBanks] = useState<
-    { id: number; code: string; name: string }[]
-  >([]);
   const [selectedBank, setSelectedBank] = useState<string>("");
-  const [loadingBanks, setLoadingBanks] = useState(false);
-  const [accountName, setAccountName] = useState<string>("");
-  const [verifyingAccount, setVerifyingAccount] = useState(false);
-  const [accountVerificationError, setAccountVerificationError] =
-    useState<string>("");
+
+  const loadingBanks = getBanksState === "isLoading";
+  const verifyingAccount = verifyBankAccountState === "isLoading";
+  const accountVerificationError =
+    verifyBankAccountState === "failed" ? fundWalletError ?? "" : "";
+
+  // Toast when getBanks fails
+  useEffect(() => {
+    if (getBanksState === "failed" && fundWalletError) {
+      toast.error(fundWalletError);
+    }
+  }, [getBanksState, fundWalletError]);
 
   // Fetch banks when country is NG
   useEffect(() => {
-    const fetchBanks = async () => {
-      if (country === "NG") {
-        setLoadingBanks(true);
-        try {
-          const response = await axiosInstance.get(
-            "/api/v1/payment-mgt/banks",
-            {
-              params: { country },
-            },
-          );
+    if (country === "NG") {
+      dispatch(getBanks(country));
+    } else {
+      dispatch(clearBanks());
+      dispatch(clearVerifiedAccount());
+      setSelectedBank("");
+    }
+  }, [country, dispatch]);
 
-          if (response.data?.success && response.data?.data) {
-            setBanks(response.data.data);
-          } else {
-            toast.error("Failed to load banks");
-          }
-        } catch (error: any) {
-          toast.error(error?.response?.data?.message || "Failed to load banks");
-        } finally {
-          setLoadingBanks(false);
-        }
-      } else {
-        setBanks([]);
-        setSelectedBank("");
-        setAccountName("");
-        setAccountVerificationError("");
-      }
-    };
-
-    fetchBanks();
-  }, [country]);
-
-  // Verify bank account when both account number and bank are provided
+  // Verify bank account when both account number and bank are provided (debounced)
   useEffect(() => {
-    const verifyBankAccount = async () => {
-      // Only verify if country is NG, both account number and bank are provided
-      if (country === "NG" && accountNumber.trim() && selectedBank) {
-        setVerifyingAccount(true);
-        setAccountVerificationError("");
-        setAccountName("");
-
-        try {
-          const response = await axiosInstance.get(
-            "/api/v1/payment-mgt/verify-bank-account",
-            {
-              params: {
-                accountNumber: accountNumber.trim(),
-                bankCode: selectedBank,
-              },
-            },
-          );
-
-          if (response.data?.account_name) {
-            setAccountName(response.data.account_name);
-            setAccountVerificationError("");
-          } else {
-            setAccountVerificationError("Account not found");
-            setAccountName("");
-          }
-        } catch (error: any) {
-          setAccountVerificationError("Account not found");
-          setAccountName("");
-        } finally {
-          setVerifyingAccount(false);
-        }
-      } else {
-        // Reset when conditions are not met
-        setAccountName("");
-        setAccountVerificationError("");
-      }
-    };
-
-    // Debounce the verification to avoid too many API calls
-    const timeoutId = setTimeout(() => {
-      verifyBankAccount();
-    }, 500); // Wait 500ms after user stops typing/selecting
-
-    return () => clearTimeout(timeoutId);
-  }, [accountNumber, selectedBank, country]);
+    if (
+      country === "NG" &&
+      accountNumber.trim() &&
+      selectedBank
+    ) {
+      const timeoutId = setTimeout(() => {
+        dispatch(
+          verifyBankAccount({
+            accountNumber: accountNumber.trim(),
+            bankCode: selectedBank,
+          })
+        );
+      }, 500);
+      return () => clearTimeout(timeoutId);
+    } else {
+      dispatch(clearVerifiedAccount());
+    }
+  }, [accountNumber, selectedBank, country, dispatch]);
 
   const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedCode = e.target.value;
@@ -264,9 +233,7 @@ export default function FundWalletForm({
                 value={selectedBank}
                 onChange={(e) => {
                   setSelectedBank(e.target.value);
-                  // Reset verification when bank changes
-                  setAccountName("");
-                  setAccountVerificationError("");
+                  dispatch(clearVerifiedAccount());
                 }}
                 disabled={loadingBanks}
                 required
