@@ -10,7 +10,17 @@ import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "react-toastify";
 
-interface BillData {
+/** Form state: yearlyAmount can be string (empty input) or number */
+interface BillFormState {
+  estateId: string;
+  name: string;
+  description: string;
+  yearlyAmount: number | string;
+  id?: string;
+}
+
+/** Payload passed to onSubmit: yearlyAmount is always number */
+export interface BillSubmitData {
   estateId: string;
   name: string;
   description: string;
@@ -20,16 +30,16 @@ interface BillData {
 
 interface BillsFormProps {
   estateId: string;
-  initialData?: BillData | null;
-  onSubmit: (data: BillData) => void;
+  initialData?: BillSubmitData | null;
+  onSubmit: (data: BillSubmitData) => void | Promise<void>;
 }
 
 export default function BillsForm({ estateId, initialData, onSubmit }: BillsFormProps) {
-  const [formData, setFormData] = useState<BillData>({
+  const [formData, setFormData] = useState<BillFormState>({
     estateId,
     name: "",
     description: "",
-    yearlyAmount: 0,
+    yearlyAmount: "",
   });
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
@@ -63,13 +73,17 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
     fetchExistingBill();
   }, [dispatch, estateId, initialData]);
 
-  const handleChange = (field: keyof BillData, value: string | number) => {
+  const handleChange = (field: keyof BillFormState, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const payload: BillSubmitData = {
+      ...formData,
+      yearlyAmount: Number(formData.yearlyAmount) || 0,
+    };
+    onSubmit(payload);
   };
 
   return (

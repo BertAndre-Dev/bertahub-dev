@@ -146,19 +146,19 @@ export default function DashboardLayout({
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-sidebar-border">
+          <div className="flex items-center justify-between pl-6 border-b border-sidebar-border">
             <div
               className={`flex items-center ${!sidebarOpen && "justify-center w-full"}`}
             >
               <NextImage
                 src="/logo.svg"
                 alt="BertaHub"
-                width={50}
-                height={50}
+                width={100}
+                height={100}
               />
-              {sidebarOpen && (
+              {/* {sidebarOpen && (
                 <span className="font-heading font-bold text-lg">BertAhub</span>
-              )}
+              )} */}
             </div>
           </div>
 

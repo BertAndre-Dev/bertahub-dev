@@ -168,14 +168,19 @@ export default function EstateAdminWalletPage() {
       ).unwrap();
       const tx_ref = txRes?.data?.tx_ref || reference;
 
+      if (!estateId) {
+        toast.error("Estate ID is required for withdrawal.");
+        return;
+      }
       await dispatch(
         transferFunds({
+          estateId,
           amount,
           currency,
-          narration: description || `Withdrawal of ${currency} ${amount}`,
           bankCode,
           accountNumber,
-          reference: tx_ref,
+          narration: description || `Withdrawal of ${currency} ${amount}`,
+          tx_ref,
         }),
       ).unwrap();
 

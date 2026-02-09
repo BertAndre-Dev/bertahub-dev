@@ -38,12 +38,13 @@ interface PaymentPayload {
 }
 
 interface TransferPayload {
+  estateId: string;
   amount: number;
   currency: string;
-  narration: string;
   bankCode: string;
   accountNumber: string;
-  reference: string;
+  narration: string;
+  tx_ref: string;
 }
 
 
@@ -183,7 +184,7 @@ export const transferFunds = createAsyncThunk(
   async (data: TransferPayload, { rejectWithValue }) => {
     try {
       console.log("💸 Transferring funds:", data);
-      const res = await axiosInstance.post("/api/v1/payment-mgt/transfer", data);
+      const res = await axiosInstance.post("/api/v1/payment-mgt/estate-admin/transfer", data);
       return res.data;
     } catch (error: any) {
       console.error("❌ Transfer funds error:", error.response?.data || error.message);
