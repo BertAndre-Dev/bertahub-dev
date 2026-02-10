@@ -1,8 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 
-
-
 interface TransactionData {
   walletId: string;
   type: string;
@@ -47,6 +45,25 @@ interface TransferPayload {
   tx_ref: string;
 }
 
+// ✅ Generate transaction reference for withdrawals/payments
+export const generateTxRef = createAsyncThunk(
+  "estate-admin-transaction/generateTxRef",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        "/api/v1/payment-mgt/generate-tx-ref",
+        {},
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message:
+          error?.response?.data?.message ||
+          "Failed to generate transaction reference.",
+      });
+    }
+  },
+);
 
 export const createTransaction = createAsyncThunk(
   "estate-admin-transaction/createTransaction",

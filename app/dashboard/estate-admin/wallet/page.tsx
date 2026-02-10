@@ -13,7 +13,6 @@ import {
 } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
-  createTransaction,
   verifyTransaction,
   transferFunds,
 } from "@/redux/slice/estate-admin/transaction/transaction";
@@ -23,6 +22,8 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import type { EstateCreditItem } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt-slice";
+import { generateTxRef } from "@/redux/slice/estate-admin/payment/payment";
+
 
 // Extend the type to include all fields from API
 interface ExtendedEstateCreditItem extends EstateCreditItem {
@@ -59,6 +60,10 @@ export default function EstateAdminWalletPage() {
   const creditsData = estateCredits?.data ?? [];
   const creditsPagination = estateCredits?.pagination ?? null;
 
+  const { txRef, loading, error } = useSelector(
+    (state: RootState) => state.payment,
+  );
+
   // Fetch user, wallet, and estate credits on mount
   useEffect(() => {
     (async () => {
@@ -79,9 +84,9 @@ export default function EstateAdminWalletPage() {
         setEstateId(estateIdFromUser);
 
         const walletRes = await dispatch(getWallet(estateIdFromUser)).unwrap();
-        if (!walletRes?.data?.id) {
-          toast.warning("No wallet found for this estate.");
-        }
+        // if (!walletRes?.data?.id) {
+        //   toast.warning("No wallet found for this estate.");
+        // }
 
         await dispatch(
           getEstateCredits({
@@ -126,7 +131,7 @@ export default function EstateAdminWalletPage() {
       toast.success("Wallet created successfully.");
       setCreateWalletModalOpen(false);
       setCreateWalletAccountNumber("");
-      if (estateId) dispatch(getWallet(estateId));
+      // if (estateId) dispatch(getWallet(estateId));
     } catch (error: any) {
       toast.error(error?.message || "Failed to create wallet.");
     }
@@ -135,7 +140,6 @@ export default function EstateAdminWalletPage() {
   const handleOpenModal = () => setOpen((prev) => !prev);
 
   const handleWithdrawSubmit = async ({
-    userId,
     walletId,
     amount,
     description,
@@ -145,7 +149,6 @@ export default function EstateAdminWalletPage() {
     bankCode,
     accountNumber,
   }: {
-    userId: string;
     walletId: string;
     amount: number;
     description: string;
@@ -157,21 +160,26 @@ export default function EstateAdminWalletPage() {
   }) => {
     try {
       if (!bankCode || !accountNumber) {
-        toast.error(
-          "Bank code and account number are required for withdrawal.",
-        );
+        toast.error("Bank code and account number are required for withdrawal.");
         return;
       }
-      const reference = `withdraw_${userId}_${Date.now()}`;
-      const txRes = await dispatch(
-        createTransaction({ userId, walletId, amount, description, type }),
-      ).unwrap();
-      const tx_ref = txRes?.data?.tx_ref || reference;
 
       if (!estateId) {
         toast.error("Estate ID is required for withdrawal.");
         return;
       }
+
+      // ✅ 1. Generate tx_ref and WAIT for it
+      const txRefResponse = await dispatch(generateTxRef()).unwrap();
+
+      const tx_ref = txRefResponse?.tx_ref;
+
+      if (!tx_ref) {
+        toast.error("Failed to generate transaction reference.");
+        return;
+      }
+
+      // ✅ 2. Transfer funds using tx_ref
       await dispatch(
         transferFunds({
           estateId,
@@ -179,26 +187,31 @@ export default function EstateAdminWalletPage() {
           currency,
           bankCode,
           accountNumber,
+          tx_ref, // 🔥 important
           narration: description || `Withdrawal of ${currency} ${amount}`,
-          tx_ref,
-        }),
+        })
       ).unwrap();
 
       toast.success("Fund withdrawal initiated successfully!");
-      if (estateId) {
-        await dispatch(getWallet(estateId));
-        await dispatch(
-          getEstateCredits({ estateId, page: creditsPage, limit }),
-        );
-      }
+
+      // ✅ 3. Refresh wallet + credits
+      await dispatch(getWallet(estateId));
+      await dispatch(
+        getEstateCredits({ estateId, page: creditsPage, limit })
+      );
+
       setOpen(false);
     } catch (err: any) {
       const errorMessage =
-        err?.message || err?.payload?.message || "Failed to withdraw fund.";
+        err?.message ||
+        err?.payload?.message ||
+        "Failed to withdraw fund.";
+
       toast.error(errorMessage);
       throw err;
     }
   };
+
 
   // Verify transaction when redirected back from payment
   useEffect(() => {
@@ -256,12 +269,12 @@ export default function EstateAdminWalletPage() {
       render: (item: ExtendedEstateCreditItem) =>
         item.createdAt
           ? new Date(item.createdAt).toLocaleString("en-NG", {
-              year: "numeric",
-              month: "short",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
           : "—",
     },
     {
