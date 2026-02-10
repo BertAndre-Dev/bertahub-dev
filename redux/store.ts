@@ -19,6 +19,7 @@ import residentMeterSliceReducer from '@/redux/slice/resident/meter-mgt/meter-mg
 import superAdminMeterSliceReducer from '@/redux/slice/super-admin/super-admin-meter-mgt/super-admin-meter-slice';
 import visitorSliceReducer from '@/redux/slice/admin/visitor/visitor.slice';
 import residentVisitorSliceReducer from '@/redux/slice/resident/visitor/visitor-slice';
+import paymentSliceReducer from '@/redux/slice/estate-admin/payment/paymentSlice';
 
 
 const persistConfig = {
@@ -46,6 +47,7 @@ const persistedResidentMeterliceReducer = persistReducer(persistConfig, resident
 const persistedSuperAdmintMeterliceReducer = persistReducer(persistConfig, superAdminMeterSliceReducer);
 const persistedVisitorSliceReducer = persistReducer(persistConfig, visitorSliceReducer);
 const persistedResidentVisitorSliceReducer = persistReducer(persistConfig, residentVisitorSliceReducer);
+const persistedPaymentSliceReducer = persistReducer(persistConfig, paymentSliceReducer);
 
 
 export const store = configureStore({
@@ -68,6 +70,7 @@ export const store = configureStore({
         superAdminMeter: persistedSuperAdmintMeterliceReducer,
         visitor: persistedVisitorSliceReducer,
         residentVisitor: persistedResidentVisitorSliceReducer,
+        payment: persistedPaymentSliceReducer,
     },
 
     middleware: (getDefaultMiddleware) =>
