@@ -1,25 +1,31 @@
-import { FiHome, FiSettings, FiUsers, FiMapPin, FiCheckCircle } from "react-icons/fi";
+import {
+  FiHome,
+  FiSettings,
+  FiUsers,
+  FiMapPin,
+  FiCheckCircle,
+} from "react-icons/fi";
 import { BsBuildings } from "react-icons/bs";
 import { IoSpeedometerOutline } from "react-icons/io5";
 import { GrTransaction } from "react-icons/gr";
 import { LuReceipt } from "react-icons/lu";
 
 export const superAdminNav = [
-  {
-    label: "Dashboard",
-    icon: FiHome,
-    path: "/dashboard/super-admin/dashboard",
-  },
+  // {
+  //   label: "Dashboard",
+  //   icon: FiHome,
+  //   path: "/dashboard/super-admin/dashboard",
+  // },
   {
     label: "Estate Management",
     icon: BsBuildings,
-    path: "/dashboard/super-admin/estate",
+    path: "/dashboard/super-/estate",
   },
-//   {
-//     label: "Address Management",
-//     icon: BsBuildings,
-//     path: "/dashboard/super-admin/address",
-//   },
+  //   {
+  //     label: "Address Management",
+  //     icon: BsBuildings,
+  //     path: "/dashboard/super-admin/address",
+  //   },
   {
     label: "User Management",
     icon: FiUsers,
@@ -35,25 +41,25 @@ export const superAdminNav = [
     icon: IoSpeedometerOutline,
     path: "/dashboard/super-admin/meter",
   },
-//   {
-//     label: "Transactions",
-//     icon: GrTransaction,
-//     path: "/dashboard/super-admin/transactions",
-//   },
-//   {
-//     label: "Visitors Management",
-//     icon: FiUsers,
-//     path: "/dashboard/super-admin/visitors",
-//   },
+  //   {
+  //     label: "Transactions",
+  //     icon: GrTransaction,
+  //     path: "/dashboard/super-admin/transactions",
+  //   },
+  //   {
+  //     label: "Visitors Management",
+  //     icon: FiUsers,
+  //     path: "/dashboard/super-admin/visitors",
+  //   },
   {
     label: "Settings",
     icon: FiSettings,
-    path: "/dashboard/super-admin/settings",
+    path: "/dashboard/settings",
   },
 ];
 
 export const adminNav = [
-  { label: "Dashboard", icon: FiHome, path: "/dashboard/admin/dashboard" },
+  // { label: "Dashboard", icon: FiHome, path: "/dashboard/admin/dashboard" },
   {
     label: "Address Management",
     icon: FiMapPin,
@@ -75,7 +81,7 @@ export const adminNav = [
     icon: FiUsers,
     path: "/dashboard/admin/visitor",
   },
-  // { label: "Settings", icon: FiSettings, path: "/dashboard/admin/settings" },
+  { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
 ];
 
 export const securityNav = [
@@ -90,6 +96,7 @@ export const securityNav = [
     icon: FiCheckCircle,
     path: "/dashboard/security/verify-visitor",
   },
+  { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
 ];
 
 export const residentNav = [
@@ -114,15 +121,15 @@ export const residentNav = [
     icon: FiUsers,
     path: "/dashboard/resident/visitor",
   },
-  // { label: "Settings", icon: FiSettings, path: '/dashboard/resident/settings'  },
+  { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
 ];
 
 export const estateAdminNav = [
-  {
-    label: "Dashboard",
-    icon: FiHome,
-    path: "/dashboard/estate-admin/dashboard",
-  },
+  // {
+  //   label: "Dashboard",
+  //   icon: FiHome,
+  //   path: "/dashboard/estate-admin/dashboard",
+  // },
   {
     label: "Transactions",
     icon: GrTransaction,
@@ -133,4 +140,5 @@ export const estateAdminNav = [
     icon: LuReceipt,
     path: "/dashboard/estate-admin/wallet",
   },
+  { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
 ];

@@ -170,7 +170,7 @@ export default function DashboardLayout({
           {/* User Info */}
           <div className="border-t border-sidebar-border p-4">
             <button
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-sidebar-accent transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-sidebar-accent transition-colors overflow-x-scroll"
               onClick={handleSignOut}
             >
               <div className="w-8 h-8 bg-sidebar-primary rounded-full flex items-center justify-center text-white">
