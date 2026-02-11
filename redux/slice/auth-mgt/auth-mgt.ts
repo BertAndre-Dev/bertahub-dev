@@ -29,7 +29,8 @@ export const signIn = createAsyncThunk(
             const res = await axiosInstance.post('/api/v1/auth-mgt/sign-in', data);
             return res.data;
         } catch (error: any) {
-            return rejectWithValue(error.res?.data?.message);
+            const apiError = error.response?.data;
+            return rejectWithValue(apiError ?? error.message);
         }
     }
 );
