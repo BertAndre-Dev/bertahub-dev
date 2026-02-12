@@ -240,13 +240,13 @@ export default function SuperAdminUserPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold">User Management</h1>
           <p className="text-muted-foreground mt-1">View users by estate</p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           {/* ✅ Estate Dropdown */}
           <div className="w-64">
             <Select

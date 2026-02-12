@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { forgotPassword, resetPassword } from "@/redux/slice/auth-mgt/auth-mgt";
 import type { AppDispatch, RootState } from "@/redux/store";
 
-
 type ResetFormState = {
   email: string;
   resetToken: string;
@@ -133,9 +132,9 @@ export function ChangePasswordCard() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6 w-full md:w-3/4 lg:w-1/2 mx-auto">
+      <Card className="p-4 md:p-6 w-full md:w-3/4 lg:w-1/2 mx-auto">
         <h2 className="font-heading text-xl font-bold text-center mb-6">
-         Change Password
+          Change Password
         </h2>
         <div className="space-y-6">
           <div>
@@ -275,7 +274,6 @@ export function ChangePasswordCard() {
               </form>
             </div>
           )}
-
         </div>
       </Card>
     </div>

@@ -38,6 +38,26 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
 
+  // 🔹 Handle sidebar state based on screen size (collapsed on mobile, expanded on desktop)
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false); // Mini sidebar on mobile
+      } else {
+        setSidebarOpen(true); // Full sidebar on desktop
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    // Add event listener
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // 🔹 Load user from localStorage or redirect if missing
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -236,7 +256,7 @@ export default function DashboardLayout({
 
         {/* Page Content */}
         <Suspense fallback={<div>Loading...</div>}>
-          <div className="p-6">{children}</div>
+          <div className="p-4 md:p-6">{children}</div>
         </Suspense>
       </main>
     </div>
