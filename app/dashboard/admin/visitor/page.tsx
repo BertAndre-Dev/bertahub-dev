@@ -182,6 +182,16 @@ export default function AdminVisitorManagement() {
       },
     },
     {
+      header: "Verified By",
+      key: "verifiedBy",
+      render: (item: any) => {
+        if (!item.verifiedBy) {
+          return <span className="text-gray-500 text-xs">Not verified</span>;
+        }
+        return <div className="text-sm">{item.verifiedBy.firstName} {item.verifiedBy.lastName}</div>;
+      },
+    },
+    {
       header: "Status",
       key: "isVerified",
       render: (item: any) => (

@@ -34,6 +34,9 @@ export function GeneralSettingsCard() {
     const trimmed = typeof rawId === "string" ? rawId.trim() : "";
     return trimmed.length > 0 ? trimmed : "";
   });
+  const role = useSelector((state: RootState) =>
+    String(state.auth.user?.role || "").toLowerCase(),
+  );
   const { user, getStatus, updateStatus, error } = useSelector(
     (state: RootState) => state.userProfile,
   );
@@ -55,10 +58,12 @@ export function GeneralSettingsCard() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (userId) {
+    const canManageProfile =
+      role === "super admin" || role === "admin" || role === "resident";
+    if (userId && canManageProfile) {
       dispatch(getUserProfile(userId));
     }
-  }, [dispatch, userId]);
+  }, [dispatch, userId, role]);
 
   useEffect(() => {
     if (!user) return;
@@ -86,6 +91,13 @@ export function GeneralSettingsCard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
+
+    const canManageProfile =
+      role === "super admin" || role === "admin" || role === "resident";
+    if (!canManageProfile) {
+      setFormError("You don't have permission to update profile settings");
+      return;
+    }
 
     if (!userId) {
       setFormError("No signed-in user found");
@@ -140,6 +152,11 @@ export function GeneralSettingsCard() {
           {(formError || error) && (
             <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
               {formError || error}
+            </div>
+          )}
+          {!(role === "super admin" || role === "admin" || role === "resident") && (
+            <div className="p-3 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground">
+              You do not have permission to view or update profile settings.
             </div>
           )}
 
