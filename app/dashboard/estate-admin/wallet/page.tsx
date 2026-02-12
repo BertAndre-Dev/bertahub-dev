@@ -317,13 +317,13 @@ export default function EstateAdminWalletPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6 shadow-md">
+      <Card className="p-4 md:p-6 shadow-md">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">My Wallet</CardTitle>
         </CardHeader>
         <CardContent>
           {wallet ? (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row gap-5 md:gap-0 items-start md:items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Wallet Balance</p>
                 <p className="text-4xl font-bold mt-1">

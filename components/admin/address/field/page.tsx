@@ -181,7 +181,7 @@ export default function AddressField() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <h1 className="font-heading text-3xl font-bold">
           Address Field Management
         </h1>

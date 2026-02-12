@@ -141,7 +141,7 @@ export function GeneralSettingsCard() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6 w-full md:w-3/4 lg:w-2/3 mx-auto">
+      <Card className="p-4 md:p-6 w-full md:w-3/4 lg:w-2/3 mx-auto">
         <h2 className="font-heading text-xl font-bold text-center">
           Profile Information
         </h2>

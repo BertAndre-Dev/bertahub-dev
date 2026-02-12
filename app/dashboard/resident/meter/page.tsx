@@ -193,7 +193,7 @@ export default function ResidentMeter() {
         </CardHeader>
 
         <CardContent>
-          <div className="flex items-center justify-between">
+          <div className="flex  items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Meter Balance</p>
               <p className="text-4xl font-bold mt-1">
@@ -201,15 +201,15 @@ export default function ResidentMeter() {
               </p>
             </div>
 
-            <div className="flex items-center gap-x-5">
-              <Button onClick={handleOpenModal} size="lg" className="px-6">
+            <div className="flex flex-col md:flex-row items-center gap-5">
+              <Button onClick={handleOpenModal} size="lg" className="w-full md:w-auto px-6">
                 Buy Power
               </Button>
 
               <Button 
                 onClick={handleToggleMeter} 
                 size="lg" 
-                className="px-6 capitalize"
+                className="w-full md:w-auto px-6 capitalize"
                 variant={meter?.isActive ? "destructive" : "default"}
               >
                 {meter?.isActive ? "Disconnect Meter" : "Reconnect Meter"}
