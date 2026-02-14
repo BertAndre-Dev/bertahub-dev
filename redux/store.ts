@@ -21,6 +21,7 @@ import visitorSliceReducer from '@/redux/slice/admin/visitor/visitor.slice';
 import residentVisitorSliceReducer from '@/redux/slice/resident/visitor/visitor-slice';
 import paymentSliceReducer from '@/redux/slice/estate-admin/payment/paymentSlice';
 import userProfileSliceReducer from '@/redux/slice/resident/user-profile/user-profile-slice';
+import estateProfileSliceReducer from '@/redux/slice/estate-profile/estate-profile-slice';
 
 
 const persistConfig = {
@@ -50,6 +51,7 @@ const persistedVisitorSliceReducer = persistReducer(persistConfig, visitorSliceR
 const persistedResidentVisitorSliceReducer = persistReducer(persistConfig, residentVisitorSliceReducer);
 const persistedPaymentSliceReducer = persistReducer(persistConfig, paymentSliceReducer);
 const persistedUserProfileSliceReducer = persistReducer(persistConfig, userProfileSliceReducer);
+const persistedEstateProfileSliceReducer = persistReducer(persistConfig, estateProfileSliceReducer);
 
 
 export const store = configureStore({
@@ -74,6 +76,7 @@ export const store = configureStore({
         residentVisitor: persistedResidentVisitorSliceReducer,
         payment: persistedPaymentSliceReducer,
         userProfile: persistedUserProfileSliceReducer,
+        estateProfile: persistedEstateProfileSliceReducer,
     },
 
     middleware: (getDefaultMiddleware) =>
