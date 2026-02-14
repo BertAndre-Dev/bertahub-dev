@@ -57,13 +57,13 @@ export function GeneralSettingsCard() {
     dispatch(resetUserProfileState());
   }, [dispatch]);
 
-  useEffect(() => {
-    const canManageProfile =
-      role === "super admin" || role === "admin" || role === "resident";
-    if (userId && canManageProfile) {
-      dispatch(getUserProfile(userId));
-    }
-  }, [dispatch, userId, role]);
+  // useEffect(() => {
+  //   const canManageProfile =
+  //     role === "super admin" || role === "admin" || role === "resident";
+  //   if (userId && canManageProfile) {
+  //     dispatch(getUserProfile(userId));
+  //   }
+  // }, [dispatch, userId, role]);
 
   useEffect(() => {
     if (!user) return;
@@ -92,12 +92,12 @@ export function GeneralSettingsCard() {
     e.preventDefault();
     setFormError("");
 
-    const canManageProfile =
-      role === "super admin" || role === "admin" || role === "resident";
-    if (!canManageProfile) {
-      setFormError("You don't have permission to update profile settings");
-      return;
-    }
+    // const canManageProfile =
+    //   role === "super admin" || role === "admin" || role === "resident";
+    // if (!canManageProfile) {
+    //   setFormError("You don't have permission to update profile settings");
+    //   return;
+    // }
 
     if (!userId) {
       setFormError("No signed-in user found");

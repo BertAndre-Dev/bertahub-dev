@@ -2,11 +2,7 @@ import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'ax
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Use empty baseURL when proxying (same-origin) to avoid CORS after app moved to app.bertahub.com
-const BASE_URL =
-  process.env.NEXT_PUBLIC_USE_PROXY === "true"
-    ? ""
-    : process.env.NEXT_PUBLIC_API_BASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export const axiosInstance = axios.create({
   baseURL: BASE_URL || "",
