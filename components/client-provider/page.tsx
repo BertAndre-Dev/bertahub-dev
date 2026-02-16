@@ -26,6 +26,8 @@ export default function ClientProvider({ children }: { children: ReactNode }) {
     '/auth/login',
     '/auth/forgot-password',
     '/error',
+    '/privacy-notice',
+    '/cookie-policy',
   ];
 
   // Check if current path matches any excluded path
