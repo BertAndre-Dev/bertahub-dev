@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { Building2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function AuthLayout({
@@ -12,12 +12,15 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex-col justify-between p-12">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary-foreground rounded-lg flex items-center justify-center">
-            <Building2 className="w-6 h-6 text-primary cursor-pointer" />
-          </div>
-          <span className="font-heading font-bold text-2xl">EstateHub</span>
+      <div className="hidden lg:flex lg:w-1/2 bg-linear-to-br from-primary to-primary/80 text-primary-foreground flex-col justify-between p-12">
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logo.svg"
+            alt="BertAndre"
+            width={140}
+            height={48}
+            className="h-10 w-auto brightness-0 invert"
+          />
         </Link>
 
         <div className="space-y-6">
@@ -53,8 +56,19 @@ export default function AuthLayout({
       </div>
 
       {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-background">
-        <div className="w-full max-w-md">{children}</div>
+      <div className="w-full lg:w-1/2 flex flex-col lg:items-center lg:justify-center p-6 bg-background">
+        <Link href="/" className="mb-6 lg:hidden flex justify-center">
+          <Image
+            src="/logo.svg"
+            alt="BertAndre"
+            width={120}
+            height={40}
+            className="h-8 w-auto"
+          />
+        </Link>
+        <div className="flex-1 lg:flex-none flex items-center w-full max-w-md">
+          <div className="w-full">{children}</div>
+        </div>
       </div>
     </div>
   );

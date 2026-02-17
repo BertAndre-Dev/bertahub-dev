@@ -182,6 +182,16 @@ export default function AdminVisitorManagement() {
       },
     },
     {
+      header: "Verified By",
+      key: "verifiedBy",
+      render: (item: any) => {
+        if (!item.verifiedBy) {
+          return <span className="text-gray-500 text-xs">Not verified</span>;
+        }
+        return <div className="text-sm">{item.verifiedBy.firstName} {item.verifiedBy.lastName}</div>;
+      },
+    },
+    {
       header: "Status",
       key: "isVerified",
       render: (item: any) => (
@@ -237,7 +247,7 @@ export default function AdminVisitorManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <h1 className="font-heading text-3xl font-bold">Visitor Management</h1>
         <Button
           onClick={() => setAddVisitorOpen(true)}

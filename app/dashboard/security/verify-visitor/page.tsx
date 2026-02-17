@@ -41,7 +41,7 @@ export default function VerifyVisitorPage() {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 space-y-6">
+    <div className="max-w-xl mx-auto space-y-6">
       <h2 className="text-lg font-semibold">Verify Visitor</h2>
 
       <Label>Visitor Code</Label>

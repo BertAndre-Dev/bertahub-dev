@@ -70,7 +70,7 @@ export default function LoginPage() {
         } else if (role === "security") {
           router.push("/dashboard/security/view-visitor");
         } else if (role === "estate admin") {
-          router.push("/dashboard/estate-admin/dashboard");
+          router.push("/dashboard/estate-admin/transactions");
         } else {
           router.push("/dashboard/resident/bills");
         }
@@ -79,7 +79,10 @@ export default function LoginPage() {
         setError(res?.message || "Login failed. Please try again.");
       }
     } catch (err: any) {
-      const message = err?.message || "Something went wrong. Please try again.";
+      const message =
+        (err && typeof err === "object" && err.message) ||
+        (typeof err === "string" ? err : null) ||
+        "Something went wrong. Please try again.";
       setError(message);
       toast.error(message);
     }
