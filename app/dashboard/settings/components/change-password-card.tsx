@@ -166,7 +166,7 @@ export function ChangePasswordCard() {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 w-full md:w-auto"
+                className="w-full bg-primary hover:bg-primary/90 cursor-pointer"
                 disabled={forgotLoading || codeSent}
               >
                 {forgotLoading ? "Sending..." : "Send Reset Code"}

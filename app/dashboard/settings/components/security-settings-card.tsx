@@ -165,7 +165,7 @@ export function SecuritySettingsCard() {
               </div>
               <Button
                 type="submit"
-                className="bg-primary hover:bg-primary/90 w-full md:w-auto"
+                className="bg-primary hover:bg-primary/90 w-full cursor-pointer"
                 disabled={forgotLoading || codeSent}
               >
                 {forgotLoading ? "Sending..." : "Send Reset Code"}
