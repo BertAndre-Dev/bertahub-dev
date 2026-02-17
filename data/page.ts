@@ -59,7 +59,7 @@ export const superAdminNav = [
 ];
 
 export const adminNav = [
-  // { label: "Dashboard", icon: FiHome, path: "/dashboard/admin/dashboard" },
+  { label: "Dashboard", icon: FiHome, path: "/dashboard/admin/dashboard"},
   {
     label: "Address Management",
     icon: FiMapPin,
