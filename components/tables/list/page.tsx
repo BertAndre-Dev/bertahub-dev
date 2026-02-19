@@ -46,6 +46,25 @@ export default function Table<T extends { id?: string }>({
   const totalPages = paginationInfo
     ? Math.ceil(paginationInfo.total / paginationInfo.pageSize)
     : 1;
+  const MAX_VISIBLE_PAGES = 4;
+  const visiblePages = React.useMemo(() => {
+    if (!paginationInfo) return [];
+    if (totalPages <= 1) return [1];
+    if (totalPages <= MAX_VISIBLE_PAGES) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const halfWindow = Math.floor(MAX_VISIBLE_PAGES / 2); // 2 when MAX_VISIBLE_PAGES=4
+    let start = Math.max(1, paginationInfo.current - halfWindow);
+    let end = start + MAX_VISIBLE_PAGES - 1;
+
+    if (end > totalPages) {
+      end = totalPages;
+      start = Math.max(1, end - MAX_VISIBLE_PAGES + 1);
+    }
+
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [paginationInfo, totalPages]);
   const [searchValue, setSearchValue] = React.useState("");
 
   return (
@@ -133,7 +152,8 @@ export default function Table<T extends { id?: string }>({
               variant="outline"
               size="sm"
               onClick={() =>
-                onPageChange && onPageChange(paginationInfo.current - 1)
+                onPageChange &&
+                onPageChange(Math.max(1, paginationInfo.current - 1))
               }
               disabled={paginationInfo.current <= 1}
             >
@@ -141,27 +161,24 @@ export default function Table<T extends { id?: string }>({
             </Button>
 
             {/* Page Numbers */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-              (pageNum) => (
-                <Button
-                  key={pageNum}
-                  variant={
-                    pageNum === paginationInfo.current ? "default" : "outline"
-                  }
-                  size="sm"
-                  onClick={() => onPageChange && onPageChange(pageNum)}
-                >
-                  {pageNum}
-                </Button>
-              ),
-            )}
+            {visiblePages.map((pageNum) => (
+              <Button
+                key={pageNum}
+                variant={pageNum === paginationInfo.current ? "default" : "outline"}
+                size="sm"
+                onClick={() => onPageChange && onPageChange(pageNum)}
+              >
+                {pageNum}
+              </Button>
+            ))}
 
             {/* Next Button */}
             <Button
               variant="outline"
               size="sm"
               onClick={() =>
-                onPageChange && onPageChange(paginationInfo.current + 1)
+                onPageChange &&
+                onPageChange(Math.min(totalPages, paginationInfo.current + 1))
               }
               disabled={paginationInfo.current >= totalPages}
             >

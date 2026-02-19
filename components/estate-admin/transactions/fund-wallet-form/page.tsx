@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/redux/store";
-import { getBanks, verifyBankAccount } from "@/redux/slice/estate-admin/fund-wallet/fund-wallet";
+import {
+  getBanks,
+  verifyBankAccount,
+} from "@/redux/slice/estate-admin/fund-wallet/fund-wallet";
+import type { BankItem } from "@/redux/slice/estate-admin/fund-wallet/fund-wallet";
 import {
   clearBanks,
   clearVerifiedAccount,
 } from "@/redux/slice/estate-admin/fund-wallet/fund-wallet-slice";
+import { ChevronDown, Search } from "lucide-react";
 
 // Country/currency/payment data (you can fetch dynamically from your backend)
 const countries = [
@@ -68,11 +73,47 @@ export default function FundWalletForm({
   const [country, setCountry] = useState<string>("NG");
   const [submitting, setSubmitting] = useState(false);
   const [selectedBank, setSelectedBank] = useState<string>("");
+  const [bankDropdownOpen, setBankDropdownOpen] = useState(false);
+  const [bankSearchQuery, setBankSearchQuery] = useState("");
+  const bankDropdownRef = useRef<HTMLDivElement>(null);
+  const bankSearchInputRef = useRef<HTMLInputElement>(null);
 
   const loadingBanks = getBanksState === "isLoading";
+  const selectedBankName =
+    banks.find((b) => b.code === selectedBank)?.name ?? "";
+  const filteredBanks = bankSearchQuery.trim()
+    ? banks.filter((b) =>
+        b.name.toLowerCase().includes(bankSearchQuery.toLowerCase()),
+      )
+    : banks;
+
+  // Close bank dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        bankDropdownRef.current &&
+        !bankDropdownRef.current.contains(event.target as Node)
+      ) {
+        setBankDropdownOpen(false);
+      }
+    }
+    if (bankDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [bankDropdownOpen]);
+
+  // Focus search input when dropdown opens
+  useEffect(() => {
+    if (bankDropdownOpen) {
+      setBankSearchQuery("");
+      setTimeout(() => bankSearchInputRef.current?.focus(), 0);
+    }
+  }, [bankDropdownOpen]);
   const verifyingAccount = verifyBankAccountState === "isLoading";
   const accountVerificationError =
-    verifyBankAccountState === "failed" ? fundWalletError ?? "" : "";
+    verifyBankAccountState === "failed" ? (fundWalletError ?? "") : "";
 
   // Toast when getBanks fails
   useEffect(() => {
@@ -94,17 +135,13 @@ export default function FundWalletForm({
 
   // Verify bank account when both account number and bank are provided (debounced)
   useEffect(() => {
-    if (
-      country === "NG" &&
-      accountNumber.trim() &&
-      selectedBank
-    ) {
+    if (country === "NG" && accountNumber.trim() && selectedBank) {
       const timeoutId = setTimeout(() => {
         dispatch(
           verifyBankAccount({
             accountNumber: accountNumber.trim(),
             bankCode: selectedBank,
-          })
+          }),
         );
       }, 500);
       return () => clearTimeout(timeoutId);
@@ -226,25 +263,108 @@ export default function FundWalletForm({
 
           {country === "NG" && (
             <div>
-              <Label>Please select the bank linked to the account number you registered.</Label>
-              <select
-                title="Select Bank"
-                className="w-full border border-gray-300 rounded px-3 py-2"
-                value={selectedBank}
-                onChange={(e) => {
-                  setSelectedBank(e.target.value);
-                  dispatch(clearVerifiedAccount());
-                }}
-                disabled={loadingBanks}
-                required
-              >
-                <option value="">-- Select Bank --</option>
-                {banks.map((bank) => (
-                  <option key={bank.id} value={bank.code}>
-                    {bank.name}
-                  </option>
-                ))}
-              </select>
+              <Label>
+                Please select the bank linked to the account number you
+                registered.
+              </Label>
+              <div ref={bankDropdownRef} className="relative">
+                {bankDropdownOpen ? (
+                  <button
+                    type="button"
+                    title="Select Bank"
+                    className="w-full flex items-center justify-between gap-2 border border-input rounded-md bg-transparent px-3 py-2 text-left text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 min-h-9"
+                    onClick={() =>
+                      !loadingBanks && setBankDropdownOpen((o) => !o)
+                    }
+                    disabled={loadingBanks}
+                    aria-expanded="true"
+                    aria-haspopup="listbox"
+                  >
+                    <span
+                      className={selectedBank ? "" : "text-muted-foreground"}
+                    >
+                      {selectedBankName || "-- Select Bank --"}
+                    </span>
+                    <ChevronDown
+                      className="h-4 w-4 shrink-0 opacity-50"
+                      aria-hidden
+                    />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    title="Select Bank"
+                    className="w-full flex items-center justify-between gap-2 border border-input rounded-md bg-transparent px-3 py-2 text-left text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 min-h-9"
+                    onClick={() =>
+                      !loadingBanks && setBankDropdownOpen((o) => !o)
+                    }
+                    disabled={loadingBanks}
+                    aria-expanded="false"
+                    aria-haspopup="listbox"
+                  >
+                    <span
+                      className={selectedBank ? "" : "text-muted-foreground"}
+                    >
+                      {selectedBankName || "-- Select Bank --"}
+                    </span>
+                    <ChevronDown
+                      className="h-4 w-4 shrink-0 opacity-50"
+                      aria-hidden
+                    />
+                  </button>
+                )}
+                {bankDropdownOpen && (
+                  <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover shadow-md">
+                    <div className="p-2 border-b border-border">
+                      <div className="relative">
+                        <Search
+                          className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                          aria-hidden
+                        />
+                        <Input
+                          ref={bankSearchInputRef}
+                          type="text"
+                          placeholder="Search banks..."
+                          value={bankSearchQuery}
+                          onChange={(e) => setBankSearchQuery(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Escape") setBankDropdownOpen(false);
+                          }}
+                          className="pl-8 h-9"
+                          aria-label="Search banks"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      className="max-h-60 overflow-auto py-1"
+                      role="menu"
+                      aria-label="Banks"
+                    >
+                      {filteredBanks.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          No banks match your search.
+                        </div>
+                      ) : (
+                        filteredBanks.map((bank: BankItem) => (
+                          <button
+                            key={bank.id}
+                            type="button"
+                            role="menuitem"
+                            className="w-full cursor-pointer px-3 py-2 text-sm text-left hover:bg-accent focus:bg-accent outline-none rounded-none"
+                            onClick={() => {
+                              setSelectedBank(bank.code);
+                              dispatch(clearVerifiedAccount());
+                              setBankDropdownOpen(false);
+                            }}
+                          >
+                            {bank.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
               {loadingBanks && (
                 <p className="text-sm text-gray-500 mt-1">Loading banks...</p>
               )}

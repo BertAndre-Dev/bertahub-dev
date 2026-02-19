@@ -56,7 +56,8 @@ export default function ResidentMeter() {
 
         await dispatch(getMeterByAddress({ addressId: foundAddressId })).unwrap();
       } catch (error: any) {
-        toast.error("Failed to fetch meter");
+        const message = error?.message ?? "Failed to fetch meter";
+        toast.error(message);
       }
     })();
   }, [dispatch]);
@@ -80,7 +81,8 @@ export default function ResidentMeter() {
     try {
       await dispatch(getMeterByAddress({ addressId })).unwrap();
     } catch (error: any) {
-      toast.error("Failed to refresh meter");
+      const message = error?.message ?? "Failed to refresh meter";
+      toast.error(message);
     }
   };
 
