@@ -132,7 +132,8 @@ const residentMeterSlice = createSlice({
       })
       .addCase(getMeterByAddress.rejected, (state, action) => {
         state.getMeterByAddressState = "failed";
-        state.error = action.error.message || "Failed to fetch meter";
+        const apiMessage = (action.payload as { message?: string } | null)?.message;
+        state.error = apiMessage || action.error.message || "Failed to fetch meter";
       });
 
     // ✅ GET METER BY ADDRESS
