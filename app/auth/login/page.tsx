@@ -64,7 +64,7 @@ export default function LoginPage() {
         // ✅ Redirect based on role
         const role = user.role?.toLowerCase();
         if (role === "super admin") {
-          router.push("/dashboard/super-admin/dashboard");
+          router.push("/dashboard/super-admin/user");
         } else if (role === "admin") {
           router.push("/dashboard/admin/dashboard");
         } else if (role === "security") {
@@ -154,6 +154,22 @@ export default function LoginPage() {
           </Link>
         </div>
 
+        <p className="text-center text-xs text-muted-foreground pt-4">
+        <Link
+          href="/privacy-notice"
+          className="hover:text-foreground hover:underline"
+        >
+          Privacy Notice
+        </Link>
+        {" · "}
+        <Link
+          href="/cookie-policy"
+          className="hover:text-foreground hover:underline"
+        >
+          Cookie Policy
+        </Link>
+      </p>
+
         <Button
           type="submit"
           size="lg"
@@ -183,6 +199,8 @@ export default function LoginPage() {
           Create Account
         </Button>
       </Link>
+
+      
     </div>
   );
 }
