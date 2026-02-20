@@ -132,7 +132,7 @@ export function ChangePasswordCard() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-4 md:p-6 w-full md:w-3/4 lg:w-1/2 mx-auto">
+      <Card className="p-6 w-full md:w-3/4 lg:w-1/2 mx-auto">
         <h2 className="font-heading text-xl font-bold text-center mb-6">
           Change Password
         </h2>
@@ -166,7 +166,7 @@ export function ChangePasswordCard() {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 cursor-pointer"
+                className="bg-primary hover:bg-primary/90 w-full md:w-auto"
                 disabled={forgotLoading || codeSent}
               >
                 {forgotLoading ? "Sending..." : "Send Reset Code"}

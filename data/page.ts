@@ -19,7 +19,7 @@ export const superAdminNav = [
   {
     label: "Estate Management",
     icon: BsBuildings,
-    path: "/dashboard/super-admin/estate",
+    path: "/dashboard/super-/estate",
   },
   //   {
   //     label: "Address Management",
