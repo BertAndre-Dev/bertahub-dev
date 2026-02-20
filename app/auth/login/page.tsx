@@ -154,21 +154,21 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground pt-4">
-        <Link
-          href="/privacy-notice"
-          className="hover:text-foreground hover:underline"
-        >
-          Privacy Notice
-        </Link>
-        {" · "}
-        <Link
-          href="/cookie-policy"
-          className="hover:text-foreground hover:underline"
-        >
-          Cookie Policy
-        </Link>
-      </p>
+        <p className="text-center text-xs text-muted-foreground">
+          <Link
+            href="/privacy-notice"
+            className="hover:text-foreground hover:underline"
+          >
+            Privacy Notice
+          </Link>
+          {" · "}
+          <Link
+            href="/terms-and-conditions"
+            className="hover:text-foreground hover:underline"
+          >
+            Terms and Conditions
+          </Link>
+        </p>
 
         <Button
           type="submit"
@@ -199,8 +199,6 @@ export default function LoginPage() {
           Create Account
         </Button>
       </Link>
-
-      
     </div>
   );
 }
