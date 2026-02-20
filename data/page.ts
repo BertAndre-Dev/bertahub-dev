@@ -11,15 +11,15 @@ import { GrTransaction } from "react-icons/gr";
 import { LuReceipt } from "react-icons/lu";
 
 export const superAdminNav = [
-  {
-    label: "Dashboard",
-    icon: FiHome,
-    path: "/dashboard/super-admin/dashboard",
-  },
+  // {
+  //   label: "Dashboard",
+  //   icon: FiHome,
+  //   path: "/dashboard/super-admin/dashboard",
+  // },
   {
     label: "Estate Management",
     icon: BsBuildings,
-    path: "/dashboard/super-admin/estate",
+    path: "/dashboard/super-/estate",
   },
   //   {
   //     label: "Address Management",
