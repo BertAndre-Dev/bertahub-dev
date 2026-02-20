@@ -183,6 +183,22 @@ export default function LoginPage() {
           Create Account
         </Button>
       </Link>
+
+      <p className="text-center text-xs text-muted-foreground pt-4">
+        <Link
+          href="/privacy-notice"
+          className="hover:text-foreground hover:underline"
+        >
+          Privacy Notice
+        </Link>
+        {" · "}
+        <Link
+          href="/cookie-policy"
+          className="hover:text-foreground hover:underline"
+        >
+          Cookie Policy
+        </Link>
+      </p>
     </div>
   );
 }
