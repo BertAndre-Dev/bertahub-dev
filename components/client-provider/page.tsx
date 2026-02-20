@@ -28,6 +28,7 @@ export default function ClientProvider({ children }: { children: ReactNode }) {
     '/error',
     '/privacy-notice',
     '/cookie-policy',
+    '/terms-and-conditions',
   ];
 
   // Check if current path matches any excluded path
