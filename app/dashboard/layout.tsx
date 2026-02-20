@@ -21,6 +21,7 @@ import {
 } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import NextImage from "next/image"; // ✅ Renamed import to avoid conflict
+import Image from "next/image";
 
 export default function DashboardLayout({
   children,
@@ -188,22 +189,32 @@ export default function DashboardLayout({
           </nav>
 
           {/* User Info */}
-          <div className="border-t border-sidebar-border p-2 md:p-4">
+          <div className="bg-[#f2f2f2] border-t border-sidebar-border p-2 md:p-4">
             <button
               className="flex items-center gap-0 md:gap-3 w-full rounded-lg hover:bg-sidebar-accent transition-colors overflow-x-scroll"
               onClick={handleSignOut}
             >
-              <div className="w-8 h-8 bg-sidebar-primary rounded-full flex items-center justify-center text-white">
+              {/* <div className="w-8 h-8 bg-sidebar-primary rounded-full flex items-center justify-center text-white">
                 {user?.firstName?.[0] || "U"}
-              </div>
+              </div> */}
+<div className='bg-[#4E61E5]'>
+   <Image
+                src={user?.image || "/public/file.svg"}
+                alt="User image"
+                width={32}
+                height={32}
+              />
+
+</div>
               {sidebarOpen && (
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-medium">
+                  <p className="text-base font-semibold">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-xs text-sidebar-foreground/60">
+                  {/* <p className="text-xs text-sidebar-foreground/60">
                     {user?.email}
-                  </p>
+                  </p> */}
+                  <p className="text-base font-normal ">{user?.role}</p>
                 </div>
               )}
             </button>
@@ -238,7 +249,10 @@ export default function DashboardLayout({
                   className="bg-transparent outline-none text-sm w-48"
                 />
               </div>
-              <button title="Notifications" className="p-2 hover:bg-muted rounded-lg transition-colors relative">
+              <button
+                title="Notifications"
+                className="p-2 hover:bg-muted rounded-lg transition-colors relative"
+              >
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
               </button>

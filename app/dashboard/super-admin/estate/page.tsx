@@ -229,7 +229,7 @@ export default function EstatePage() {
         <div>
           <h1 className="font-heading text-3xl font-bold">Estate Management</h1>
           <p className="text-muted-foreground mt-1">
-            Overview of your estate properties, statistics and list
+            Overview of created estates.
           </p>
         </div>
 
@@ -252,7 +252,7 @@ export default function EstatePage() {
               label: "Total Estates",
               value: estates?.length || 0,
               icon: Building2,
-              color: "bg-blue-500/10",
+              color: "bg-[#4c4c4c]",
             },
             {
               label: "Active Estates",
