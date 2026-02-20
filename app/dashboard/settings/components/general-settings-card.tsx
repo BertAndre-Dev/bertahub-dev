@@ -57,16 +57,6 @@ export function GeneralSettingsCard() {
     dispatch(resetUserProfileState());
   }, [dispatch]);
 
-<<<<<<< HEAD
-=======
-  // useEffect(() => {
-  //   const canManageProfile =
-  //     role === "super admin" || role === "admin" || role === "resident";
-  //   if (userId && canManageProfile) {
-  //     dispatch(getUserProfile(userId));
-  //   }
-  // }, [dispatch, userId, role]);
->>>>>>> 85fa9b9 (fix axios config)
 
   useEffect(() => {
     if (!user) return;
@@ -95,15 +85,6 @@ export function GeneralSettingsCard() {
     e.preventDefault();
     setFormError("");
 
-<<<<<<< HEAD
-=======
-    // const canManageProfile =
-    //   role === "super admin" || role === "admin" || role === "resident";
-    // if (!canManageProfile) {
-    //   setFormError("You don't have permission to update profile settings");
-    //   return;
-    // }
->>>>>>> 85fa9b9 (fix axios config)
 
     if (!userId) {
       setFormError("No signed-in user found");
