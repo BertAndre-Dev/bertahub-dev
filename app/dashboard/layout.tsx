@@ -20,7 +20,7 @@ import {
   logoutLocally,
 } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-import NextImage from "next/image"; // ✅ Renamed import to avoid conflict
+import NextImage from "next/image";
 import Image from "next/image";
 
 export default function DashboardLayout({
@@ -43,19 +43,14 @@ export default function DashboardLayout({
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) {
-        setSidebarOpen(false); // Mini sidebar on mobile
+        setSidebarOpen(false);
       } else {
-        setSidebarOpen(true); // Full sidebar on desktop
+        setSidebarOpen(true);
       }
     };
 
-    // Set initial state
     handleResize();
-
-    // Add event listener
     window.addEventListener("resize", handleResize);
-
-    // Cleanup
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -125,9 +120,29 @@ export default function DashboardLayout({
             : role === "resident"
               ? residentNav
               : securityNav;
+
     return navItems.map((item, i) => {
       const Icon = item.icon;
-      const active = pathname.startsWith(item.path);
+      const active = item.path ? pathname.startsWith(item.path) : false;
+
+      // Render Logout as a button so it can trigger sign out logic
+      if (item.label === "Logout") {
+        return (
+          <button
+            key={i}
+            onClick={handleSignOut}
+            className={`flex items-center w-full gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-muted/50`}
+          >
+            <Icon className="w-4 h-4 text-[#D31510]" />
+            {sidebarOpen && (
+              <span className="text-[#D31510]">{item.label}</span>
+            )}
+          </button>
+        );
+      }
+
+      // ✅ Guard clause: skip rendering if path is undefined
+      if (!item.path) return null;
 
       return (
         <Link
@@ -177,44 +192,35 @@ export default function DashboardLayout({
                 width={100}
                 height={100}
               />
-              {/* {sidebarOpen && (
-                <span className="font-heading font-bold text-lg">BertAhub</span>
-              )} */}
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+          <nav className="flex-1 overflow-y-auto p-4 space-y-8">
             {renderNavItems()}
           </nav>
 
           {/* User Info */}
-          <div className="bg-[#f2f2f2] border-t border-sidebar-border p-2 md:p-4">
+          <div className="bg-[#f2f2f2] border-t border-sidebar-border m-4 rounded-lg px-2 py-4  ">
             <button
               className="flex items-center gap-0 md:gap-3 w-full rounded-lg hover:bg-sidebar-accent transition-colors overflow-x-scroll"
               onClick={handleSignOut}
             >
-              {/* <div className="w-8 h-8 bg-sidebar-primary rounded-full flex items-center justify-center text-white">
-                {user?.firstName?.[0] || "U"}
-              </div> */}
-<div className='bg-[#4E61E5]'>
-   <Image
-                src={user?.image || "/public/file.svg"}
-                alt="User image"
-                width={32}
-                height={32}
-              />
-
-</div>
+              <div className="bg-[#4E61E5] rounded-full overflow-hidden w-8 h-8 flex-shrink-0">
+                <Image
+                  src={user?.image || "/profile.svg"}
+                  alt="User image"
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover w-full h-full"
+                />
+              </div>
               {sidebarOpen && (
                 <div className="flex-1 text-left">
                   <p className="text-base font-semibold">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  {/* <p className="text-xs text-sidebar-foreground/60">
-                    {user?.email}
-                  </p> */}
-                  <p className="text-base font-normal ">{user?.role}</p>
+                  <p className="text-base font-normal">{user?.role}</p>
                 </div>
               )}
             </button>

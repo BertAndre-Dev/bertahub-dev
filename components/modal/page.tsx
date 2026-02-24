@@ -39,13 +39,13 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
         >
           <motion.div
             className="
-              bg-white 
-              w-full lg:w-[40%] 
+            bg-white 
+              w-full lg:w-[50%] 
               rounded-xl 
               shadow-xl 
               p-5 
               overflow-y-auto
-              max-h-[50vh] 
+              max-h-[70vh] 
               flex 
               flex-col
               relative
@@ -53,17 +53,20 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+            transition={{ type: "spring", stiffness: 100, damping: 20 }}
           >
             <button
               onClick={onClose}
               className="
                 absolute 
                 cursor-pointer
-                top-4 
+                top-6 
                 right-4 
+                bg-[#d0dff2] 
+                border 
+                border-black
                 p-1 
-                rounded-lg 
+                rounded-full 
                 hover:bg-gray-100 
                 transition-colors
                 focus:outline-none

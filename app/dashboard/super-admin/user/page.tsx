@@ -12,6 +12,9 @@ import {
   Power,
   PowerOff,
   Trash2,
+  User2,
+  UsersRound,
+  Search,
 } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import Select from "react-select";
@@ -243,18 +246,19 @@ export default function SuperAdminUserPage() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground mt-1">View users by estate</p>
+          <p className="text-muted-foreground mt-1">Manage Users</p>
         </div>
 
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           {/* ✅ Estate Dropdown */}
-          <div className="w-64">
+          <div className="w-48">
             <Select
               options={estateOptions}
-              placeholder="Select an estate..."
+              placeholder="Filter by estate"
               value={selectedEstate}
               onChange={(option) => setSelectedEstate(option)}
               isSearchable
+              className="rounded-full"
             />
           </div>
 
@@ -263,8 +267,61 @@ export default function SuperAdminUserPage() {
             className="flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            Invite User
+            Invite Admins
           </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {(() => {
+          const users = allSuperAdminUsers as SuperAdminUserData[];
+
+          const stats = [
+            {
+              label: "Total Residents",
+              value: users?.filter((e) => e.role === "resident")?.length || 0,
+              icon: User2,
+              color: "bg-[#D0DFF280]",
+            },
+            {
+              label: "Total Admins",
+              value: users?.filter((e) => e.role === "admin")?.length || 0,
+              icon: UsersRound,
+              color: "bg-[#FEE6D480]",
+            },
+          ];
+
+          return stats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={i} className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {stat.label}
+                    </p>
+                    <p className="font-heading text-2xl font-bold mt-2">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${stat.color}`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                </div>
+              </Card>
+            );
+          });
+        })()}
+      </div>
+
+      <div className="bg-white p-4 rounded-lg">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            placeholder="Search by users by name or email"
+            className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
         </div>
       </div>
 

@@ -12,6 +12,7 @@ import {
   Power,
   PowerOff,
   Trash2,
+  Search,
 } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import {
@@ -252,25 +253,25 @@ export default function EstatePage() {
               label: "Total Estates",
               value: estates?.length || 0,
               icon: Building2,
-              color: "bg-[#4c4c4c]",
+              color: "bg-[#D0DFF280]",
             },
             {
               label: "Active Estates",
               value: estates?.filter((e) => e.isActive)?.length || 0,
               icon: Home,
-              color: "bg-green-500/10",
+              color: "bg-[#CCE4DB80]",
             },
             {
               label: "Cities Covered",
               value: new Set(estates.map((e) => e.city)).size || 0,
               icon: Users,
-              color: "bg-purple-500/10",
+              color: "bg-[#FEE6D480]",
             },
             {
               label: "States",
               value: new Set(estates.map((e) => e.state)).size || 0,
               icon: TrendingUp,
-              color: "bg-orange-500/10",
+              color: "bg-[#CABDFF80]",
             },
           ];
 
@@ -295,6 +296,16 @@ export default function EstatePage() {
             );
           });
         })()}
+      </div>
+
+      <div className="bg-white p-4 rounded-lg">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            placeholder="Search by estate name, address, city etc..."
+            className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
       </div>
 
       {/* Estates Table */}

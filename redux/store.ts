@@ -17,6 +17,7 @@ import fundWalletSliceReducer from '@/redux/slice/estate-admin/fund-wallet/fund-
 import adminMeterSliceReducer from '@/redux/slice/admin/meter-mgt/meter-mgt-slice';
 import residentMeterSliceReducer from '@/redux/slice/resident/meter-mgt/meter-mgt-slice';
 import superAdminMeterSliceReducer from '@/redux/slice/super-admin/super-admin-meter-mgt/super-admin-meter-slice';
+import superAdminTransactionSliceReducer from '@/redux/slice/super-admin/super-admin-transactions-mgt/super-admin-transactions-slice';
 import visitorSliceReducer from '@/redux/slice/admin/visitor/visitor.slice';
 import residentVisitorSliceReducer from '@/redux/slice/resident/visitor/visitor-slice';
 import paymentSliceReducer from '@/redux/slice/estate-admin/payment/paymentSlice';
@@ -47,6 +48,7 @@ const persistedFundWalletSliceReducer = persistReducer(persistConfig, fundWallet
 const persistedAdminMeterliceReducer = persistReducer(persistConfig, adminMeterSliceReducer);
 const persistedResidentMeterliceReducer = persistReducer(persistConfig, residentMeterSliceReducer);
 const persistedSuperAdmintMeterliceReducer = persistReducer(persistConfig, superAdminMeterSliceReducer);
+const persistedSuperAdminTransactionSliceReducer = persistReducer(persistConfig, superAdminTransactionSliceReducer);
 const persistedVisitorSliceReducer = persistReducer(persistConfig, visitorSliceReducer);
 const persistedResidentVisitorSliceReducer = persistReducer(persistConfig, residentVisitorSliceReducer);
 const persistedPaymentSliceReducer = persistReducer(persistConfig, paymentSliceReducer);
@@ -72,6 +74,7 @@ export const store = configureStore({
         adminMeter: persistedAdminMeterliceReducer,
         residentMeter: persistedResidentMeterliceReducer,
         superAdminMeter: persistedSuperAdmintMeterliceReducer,
+        superAdminTransaction: persistedSuperAdminTransactionSliceReducer,
         visitor: persistedVisitorSliceReducer,
         residentVisitor: persistedResidentVisitorSliceReducer,
         payment: persistedPaymentSliceReducer,

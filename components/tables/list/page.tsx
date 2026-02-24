@@ -87,7 +87,7 @@ export default function Table<T extends { id?: string }>({
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 border-b border-border">
+          <thead className="bg-[#D9D9D9] border-b border-border">
             <tr>
               {columns.map((col) => (
                 <th
@@ -164,7 +164,9 @@ export default function Table<T extends { id?: string }>({
             {visiblePages.map((pageNum) => (
               <Button
                 key={pageNum}
-                variant={pageNum === paginationInfo.current ? "default" : "outline"}
+                variant={
+                  pageNum === paginationInfo.current ? "default" : "outline"
+                }
                 size="sm"
                 onClick={() => onPageChange && onPageChange(pageNum)}
               >

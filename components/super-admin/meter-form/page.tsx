@@ -108,7 +108,7 @@ const AssignMeterForm: React.FC<AssignMeterFormProps> = ({ close, refresh }) => 
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Meter Number Field */}
           <div>
             <Label>Meter Number</Label>
@@ -124,7 +124,7 @@ const AssignMeterForm: React.FC<AssignMeterFormProps> = ({ close, refresh }) => 
           </div>
           {/* Estate Dropdown */}
           <div className="space-y-2">
-            <Label>Estate</Label>
+            <Label>Assign to Estate</Label>
             {loading ? (
               <div className="border rounded-md px-3 py-2 text-sm text-gray-500 bg-gray-50">
                 Loading estates...

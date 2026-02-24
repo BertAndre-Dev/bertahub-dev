@@ -134,7 +134,7 @@ export function ChangePasswordCard() {
     <div className="space-y-6">
       <Card className="p-4 md:p-6 w-full md:w-3/4 lg:w-1/2 mx-auto">
         <h2 className="font-heading text-xl font-bold text-center mb-6">
-          Change Password
+          Security
         </h2>
         <div className="space-y-6">
           <div>

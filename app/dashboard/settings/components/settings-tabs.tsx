@@ -12,7 +12,7 @@ export function SettingsTabs({
   onTabChange,
 }: SettingsTabsProps) {
   return (
-    <div className="flex gap-2 border-b border-border overflow-x-auto">
+    <div className="flex gap-2 border-b border-border overflow-x-auto bg-white py-6">
       {tabs.map((tab) => (
         <button
           key={tab.id}

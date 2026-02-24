@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, Plus, Trash } from "lucide-react";
+import { Plus, Search, Trash } from "lucide-react";
 import {
   deleteMeter,
   getAllMeters,
@@ -16,6 +16,7 @@ import {
 } from "@/redux/slice/super-admin/super-admin-meter-mgt/super-admin-meter";
 import AssignMeterForm from "@/components/super-admin/meter-form/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
+import { IoSpeedometerOutline } from "react-icons/io5";
 
 interface AdminMeterData {
   id?: string;
@@ -190,6 +191,7 @@ export default function AdminMeterManagement() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-5 md:gap-0 items-start md:items-center justify-between">
         <h1 className="font-heading text-3xl font-bold">Meter Management</h1>
+        <p className="text-muted-foreground mt-1">Overview of meters</p>
         {/* Add Meter button can open a modal for adding meter if implemented */}
         <Button
           onClick={handleAssignMeter}
@@ -199,12 +201,69 @@ export default function AdminMeterManagement() {
         </Button>
       </div>
 
+      {/* stats cards */}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {(() => {
+          const meters = allSuperAdminMeters as AdminMeterData[];
+
+          const stats = [
+            {
+              label: "Total Estates",
+              value: meters?.length || 0,
+              icon: IoSpeedometerOutline,
+              color: "bg-[#D0DFF280]",
+            },
+            {
+              label: "Active Estates",
+              value:
+                meters?.filter((meter: AdminMeterData) => meter.isActive)
+                  ?.length || 0,
+              icon: IoSpeedometerOutline,
+              color: "bg-[#CCE4DB80]",
+            },
+          ];
+
+          return stats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={i} className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {stat.label}
+                    </p>
+                    <p className="font-heading text-2xl font-bold mt-2">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${stat.color}`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                </div>
+              </Card>
+            );
+          });
+        })()}
+      </div>
+
+      <div className="bg-white p-4 rounded-lg">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            placeholder="Search by meter number."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+      </div>
+
       <Card className="p-4">
         <Table
           columns={columns}
           data={allSuperAdminMeters}
           showPagination
-          enableSearch
           onSearch={(value) => setSearch(value)}
           paginationInfo={{
             total: pagination?.total || 0,

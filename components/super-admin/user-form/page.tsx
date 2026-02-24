@@ -143,9 +143,9 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
         required: true,
       },
       {
-        label: "Email",
+        label: "Email Address",
         name: "email",
-        placeholder: "user@example.com",
+        placeholder: "Enter email",
         required: true,
         type: "email",
       },
@@ -177,12 +177,12 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
     <Card className="max-w-lg mx-auto mt-6">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">
-          Invite User to Estate
+          Invite admins to Estate
         </CardTitle>
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {renderTextFields()}
 
           <div>
@@ -194,7 +194,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
               }
               onChange={(opt) => handleSelectChange("estateId", opt)}
               isLoading={loadingEstates}
-              placeholder="Select estate..."
+              placeholder="Select estate"
               isClearable
             />
           </div>
@@ -205,7 +205,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
               options={roleOptions}
               value={roleOptions.find((o) => o.value === formData.role) ?? null}
               onChange={(opt) => handleSelectChange("role", opt)}
-              placeholder="Select role..."
+              placeholder="Select role"
               isClearable
             />
           </div>

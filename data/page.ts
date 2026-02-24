@@ -4,6 +4,7 @@ import {
   FiUsers,
   FiMapPin,
   FiCheckCircle,
+  FiLogOut,
 } from "react-icons/fi";
 import { BsBuildings } from "react-icons/bs";
 import { IoSpeedometerOutline } from "react-icons/io5";
@@ -11,11 +12,11 @@ import { GrTransaction } from "react-icons/gr";
 import { LuReceipt } from "react-icons/lu";
 
 export const superAdminNav = [
-  // {
-  //   label: "Dashboard",
-  //   icon: FiHome,
-  //   path: "/dashboard/super-admin/dashboard",
-  // },
+  {
+    label: "Dashboard",
+    icon: FiHome,
+    path: "/dashboard/super-admin/dashboard",
+  },
   {
     label: "Estate Management",
     icon: BsBuildings,
@@ -41,11 +42,11 @@ export const superAdminNav = [
     icon: IoSpeedometerOutline,
     path: "/dashboard/super-admin/meter",
   },
-  //   {
-  //     label: "Transactions",
-  //     icon: GrTransaction,
-  //     path: "/dashboard/super-admin/transactions",
-  //   },
+  {
+    label: "Transactions",
+    icon: GrTransaction,
+    path: "/dashboard/super-admin/transactions",
+  },
   //   {
   //     label: "Visitors Management",
   //     icon: FiUsers,
@@ -56,15 +57,15 @@ export const superAdminNav = [
     icon: FiSettings,
     path: "/dashboard/settings",
   },
-  // {
-  //   label: "Logout"
-
-      
-  // }
+  {
+    label: "Logout",
+    icon: FiLogOut,
+    // path: "/auth/logout"
+  },
 ];
 
 export const adminNav = [
-  { label: "Dashboard", icon: FiHome, path: "/dashboard/admin/dashboard"},
+  { label: "Overview", icon: FiHome, path: "/dashboard/admin/overview" },
   {
     label: "Address Management",
     icon: FiMapPin,
@@ -87,14 +88,19 @@ export const adminNav = [
     path: "/dashboard/admin/visitor",
   },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
+  { label: "Logout", icon: FiLogOut },
 ];
 
 export const securityNav = [
-  { label: "Dashboard", icon: FiHome, path: "/dashboard/security/dashboard" },
   {
     label: "View Visitor",
     icon: FiUsers,
     path: "/dashboard/security/view-visitor",
+  },
+  {
+    label: "Activity Log",
+    icon: GrTransaction,
+    path: "/dashboard/security/activity-log",
   },
   {
     label: "Verify Visitor",
@@ -102,6 +108,7 @@ export const securityNav = [
     path: "/dashboard/security/verify-visitor",
   },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
+  { label: "Logout", icon: FiLogOut },
 ];
 
 export const residentNav = [
@@ -127,6 +134,7 @@ export const residentNav = [
     path: "/dashboard/resident/visitor",
   },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
+  { label: "Logout", icon: FiLogOut },
 ];
 
 export const estateAdminNav = [
@@ -146,4 +154,5 @@ export const estateAdminNav = [
     path: "/dashboard/estate-admin/wallet",
   },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
+  { label: "Logout", icon: FiLogOut },
 ];

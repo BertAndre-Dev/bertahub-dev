@@ -10,11 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AppDispatch, RootState } from "@/redux/store";
-import {
-  getUserProfile,
-  updateUserProfile,
-} from "@/redux/slice/resident/user-profile/user-profile";
-import { resetUserProfileState } from "@/redux/slice/resident/user-profile/user-profile-slice";
+import { resetUserProfileState, getUserProfile } from "@/redux/slice/resident/user-profile/user-profile-slice";
+import { updateUserProfile } from "@/redux/slice/settings/user-profile";
 
 type UserFormState = {
   firstName: string;
@@ -34,12 +31,11 @@ export function GeneralSettingsCard() {
     const trimmed = typeof rawId === "string" ? rawId.trim() : "";
     return trimmed.length > 0 ? trimmed : "";
   });
-  const role = useSelector((state: RootState) =>
-    String(state.auth.user?.role || "").toLowerCase(),
-  );
+ 
   const { user, getStatus, updateStatus, error } = useSelector(
     (state: RootState) => state.userProfile,
   );
+  
   const [formData, setFormData] = useState<UserFormState>({
     firstName: "",
     lastName: "",
@@ -57,13 +53,10 @@ export function GeneralSettingsCard() {
     dispatch(resetUserProfileState());
   }, [dispatch]);
 
-  // useEffect(() => {
-  //   const canManageProfile =
-  //     role === "super admin" || role === "admin" || role === "resident";
-  //   if (userId && canManageProfile) {
-  //     dispatch(getUserProfile(userId));
-  //   }
-  // }, [dispatch, userId, role]);
+  useEffect(() => {
+  if (!userId) return;
+  dispatch(getUserProfile(userId));
+}, [dispatch, userId]); 
 
   useEffect(() => {
     if (!user) return;
@@ -91,13 +84,6 @@ export function GeneralSettingsCard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
-
-    // const canManageProfile =
-    //   role === "super admin" || role === "admin" || role === "resident";
-    // if (!canManageProfile) {
-    //   setFormError("You don't have permission to update profile settings");
-    //   return;
-    // }
 
     if (!userId) {
       setFormError("No signed-in user found");
@@ -141,7 +127,7 @@ export function GeneralSettingsCard() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-4 md:p-6 w-full md:w-3/4 lg:w-2/3 mx-auto">
+      <Card className="pt-6 md:pt-8 px-8 md:px-16 pb-12 md:pb-18 w-full md:w-3/4 lg:w-2/3 mx-auto">
         <h2 className="font-heading text-xl font-bold text-center">
           Profile Information
         </h2>
@@ -154,11 +140,7 @@ export function GeneralSettingsCard() {
               {formError || error}
             </div>
           )}
-          {!(role === "super admin" || role === "admin" || role === "resident") && (
-            <div className="p-3 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground">
-              You do not have permission to view or update profile settings.
-            </div>
-          )}
+           
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -288,7 +270,7 @@ export function GeneralSettingsCard() {
 
           <Button
             type="submit"
-            className="bg-primary hover:bg-primary/90 w-full"
+            className="bg-primary hover:bg-primary/90 mt-8 w-full"
             disabled={isLoading}
           >
             <Save className="w-4 h-4 mr-2" />
