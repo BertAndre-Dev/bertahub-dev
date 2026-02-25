@@ -103,7 +103,7 @@ export default function FieldForm({
   return (
     <form onSubmit={handleSubmit}>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className="text-lg font-semibold pb-4 pt-8">
           {initialData?.id ? "Update Address Field" : "Create Address Field"}
         </CardTitle>
       </CardHeader>
@@ -112,14 +112,14 @@ export default function FieldForm({
         {loading ? (
           <p className="text-gray-500 italic">Loading field...</p>
         ) : (
-          <div className="border border-gray-200 p-4 rounded-lg space-y-4">
+          <div className="space-y-4">
             <div>
               <Label>Label</Label>
               <Input
                 type="text"
                 value={formData.label}
                 onChange={(e) => handleLabelChange(e.target.value)}
-                placeholder="e.g. Block Name, Street, Flat Number"
+                placeholder="Block Name, Street, Flat Number"
                 required
               />
             </div>

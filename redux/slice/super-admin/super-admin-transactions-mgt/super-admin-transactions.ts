@@ -73,3 +73,16 @@ export const getAllTransactionHistory = createAsyncThunk(
     }
   }
 );
+
+// Get single transaction by ID
+export const getTransactionById = createAsyncThunk(
+  "super-admin-transactions/getTransactionById",
+  async (transactionId: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get(`/api/v1/transaction-mgt/by-id/${transactionId}`);
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || { message: "Failed to fetch transaction" });
+    }
+  }
+);

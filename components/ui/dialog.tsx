@@ -12,6 +12,13 @@ interface DialogProps {
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
   const [isOpen, setIsOpen] = React.useState(open || false)
 
+  React.useEffect(() => {
+    // sync external `open` prop with internal state when provided
+    if (typeof open === "boolean") {
+      setIsOpen(open);
+    }
+  }, [open]);
+
   const handleToggle = (value: boolean) => {
     setIsOpen(value)
     onOpenChange?.(value)

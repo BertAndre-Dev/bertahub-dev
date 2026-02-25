@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Power, PowerOff, Trash2, Plus } from "lucide-react";
+import { Power, PowerOff, Trash2, Plus, UsersRound } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import {
   getAllUsersByEstate,
@@ -43,9 +43,7 @@ export default function AdminUserPage() {
 
   const [user, setUser] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(
-    null,
-  );
+  const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUserData | null>(null);
   const [search, setSearch] = useState("");
 
@@ -83,7 +81,6 @@ export default function AdminUserPage() {
     }
   };
 
-  // Fetch signed-in user + estate users
   useEffect(() => {
     (async () => {
       try {
@@ -103,7 +100,6 @@ export default function AdminUserPage() {
     })();
   }, [dispatch]);
 
-  // Refetch when estate or search changes
   useEffect(() => {
     if (selectedEstate?.value) {
       fetchAdminUsers(selectedEstate.value, 1, search);
@@ -238,7 +234,12 @@ export default function AdminUserPage() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground mt-1">View users by estate</p>
+          <p className="text-muted-foreground mt-1">
+            Welcome back! Here's is an overview on{" "}
+            <span className="text-[18px] font-bold underline uppercase text-black">
+              Doe Estate
+            </span>.
+          </p>
         </div>
 
         <Button
@@ -247,6 +248,44 @@ export default function AdminUserPage() {
         >
           <Plus className="w-4 h-4" /> Invite User
         </Button>
+      </div>
+
+      {/* Stats Card */}
+      <div className="grid grid-cols-1 gap-4">
+        {(() => {
+          const stats = [
+            {
+              label: "Total Residents",
+              value:
+                allAdminUsers?.filter(
+                  (u: AdminUserData) => u.role === "resident",
+                )?.length || 0,
+              icon: UsersRound,
+              color: "bg-[#FEE6D480]",
+            },
+          ];
+
+          return stats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={i} className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {stat.label}
+                    </p>
+                    <p className="font-heading text-2xl font-bold mt-2">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${stat.color}`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                </div>
+              </Card>
+            );
+          });
+        })()}
       </div>
 
       {/* Search */}

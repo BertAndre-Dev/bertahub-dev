@@ -4,7 +4,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createEntry, updateEntry } from "@/redux/slice/admin/address-mgt/entry/entry";
+import {
+  createEntry,
+  updateEntry,
+} from "@/redux/slice/admin/address-mgt/entry/entry";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { toast } from "react-toastify";
@@ -66,7 +69,9 @@ export default function EntryForm({
     try {
       if (initialData?.id) {
         // Update existing entry
-        await dispatch(updateEntry({ entryId: initialData.id, data: payload })).unwrap();
+        await dispatch(
+          updateEntry({ entryId: initialData.id, data: payload }),
+        ).unwrap();
         toast.success("Entry updated successfully!");
       } else {
         // Create new entry
@@ -74,7 +79,7 @@ export default function EntryForm({
         toast.success("Entry created successfully!");
       }
       onClose();
-      refresh(); 
+      refresh();
     } catch (err: any) {
       toast.error(err?.message || "Failed to save entry.");
     }
@@ -82,11 +87,13 @@ export default function EntryForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <h3 className="pt-8 pb-4 font-medium text-[24px]">Entries Field</h3>
       {fields.map((field) => (
         <div key={field.key} className="space-y-2">
           <Label htmlFor={field.key}>{field.label}</Label>
           <Input
             id={field.key}
+            placeholder={`Enter ${field.label.toLowerCase()}`}
             type="text"
             value={formData[field.key] || ""}
             onChange={(e) => handleChange(field.key, e.target.value)}
@@ -94,11 +101,14 @@ export default function EntryForm({
         </div>
       ))}
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onClose}>
+      <div className="w-full pb-6">
+        {/* <Button type="button" variant="outline" onClick={onClose}>
           Cancel
-        </Button>
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+        </Button> */}
+        <Button
+          type="submit"
+          className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white"
+        >
           {initialData ? "Update Entry" : "Create Entry"}
         </Button>
       </div>

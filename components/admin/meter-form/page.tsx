@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -13,12 +13,11 @@ import { getFieldByEstate } from "@/redux/slice/admin/address-mgt/fields/fields"
 import { getEntriesByField } from "@/redux/slice/admin/address-mgt/entry/entry";
 import { assignMeterToAddress } from "@/redux/slice/admin/meter-mgt/meter-mgt";
 
-
 // ---------- Types ----------
 type AssignMeterFormProps = {
   close: () => void;
   refresh: () => void;
-  meterNumber: string; 
+  meterNumber: string;
 };
 
 interface AssignMeterFormData {
@@ -33,7 +32,11 @@ interface SelectOption {
 }
 
 // ---------- Component ----------
-const AssignMeterForm: React.FC<AssignMeterFormProps> = ({ close, refresh, meterNumber }) => {
+const AssignMeterForm: React.FC<AssignMeterFormProps> = ({
+  close,
+  refresh,
+  meterNumber,
+}) => {
   const dispatch = useDispatch<AppDispatch>();
   const [formData, setFormData] = useState<AssignMeterFormData>({
     meterNumber: meterNumber || "",
@@ -68,7 +71,7 @@ const AssignMeterForm: React.FC<AssignMeterFormProps> = ({ close, refresh, meter
 
         const primaryFieldId = fields[0].id;
         const entryRes = await dispatch(
-          getEntriesByField({ fieldId: primaryFieldId, page: 1, limit: 200 })
+          getEntriesByField({ fieldId: primaryFieldId, page: 1, limit: 200 }),
         ).unwrap();
 
         const entries = entryRes?.data || [];
@@ -122,35 +125,37 @@ const AssignMeterForm: React.FC<AssignMeterFormProps> = ({ close, refresh, meter
 
   // ---------------- Render ----------------
   return (
-    <Card className="max-w-lg mx-auto mt-6">
+    <Card className="mt-12 mx-auto">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Assign Meter</CardTitle>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="border-0">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Address Dropdown */}
-            <div>
-                <Label>Address</Label>
+          <div>
+            <Label className="font-normal text-[20px]">Address</Label>
 
-                {loading ? (
-                    <div className="border rounded-md px-3 py-2 text-sm text-gray-500 bg-gray-50">
-                    Loading addresses...
-                    </div>
-                ) : (
-                    <Select
-                    options={[
-                      { value: "", label: "Select an address" }, // Placeholder option
-                      ...entryOptions,
-                    ]}
-                 
-                    value={formData.addressId}
-                    onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, addressId: e.target.value }))
-                    }
-                    />
-                )}
-            </div>
+            {loading ? (
+              <div className="px-3 py-2 text-sm bg-gray-50">
+                Loading addresses...
+              </div>
+            ) : (
+              <Select
+                options={[
+                  { value: "", label: "Select an address" }, // Placeholder option
+                  ...entryOptions,
+                ]}
+                value={formData.addressId}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    addressId: e.target.value,
+                  }))
+                }
+              />
+            )}
+          </div>
           {/* Submit Button */}
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Assigning..." : "Assign Meter"}

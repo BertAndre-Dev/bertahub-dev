@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit2, Trash2, Database, List } from "lucide-react";
+import { Plus, Edit2, Trash2, MapPin, MapPinHouse } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import { getFieldByEstate } from "@/redux/slice/admin/address-mgt/fields/fields";
 import {
@@ -196,6 +196,63 @@ export default function EntryPage() {
     },
   ];
 
+  //     {(() => {
+  //       // const address = allAddress as AddressData[];
+
+  //       const stats = [
+  //         {
+  //           label: "Total Estates",
+  //           // value: address?.length || 0,
+  //           value: "200",
+  //           icon: Building2,
+  //           color: "bg-[#D0DFF280]",
+  //         },
+  //         {
+  //           label: "Active Estates",
+  //           // value: address?.filter((e) => e.isActive)?.length || 0,
+  //           value: "200",
+  //           icon: Home,
+  //           color: "bg-[#CCE4DB80]",
+  //         },
+  //         {
+  //           label: "Cities Covered",
+  //           // value: new Set(address.map((e) => e.city)).size || 0,
+  //           value: "200",
+  //           icon: Users,
+  //           color: "bg-[#FEE6D480]",
+  //         },
+  //         {
+  //           label: "States",
+  //           // value: new Set(address.map((e) => e.state)).size || 0,
+  //           value: "200",
+  //           icon: TrendingUp,
+  //           color: "bg-[#CABDFF80]",
+  //         },
+  //       ];
+
+  //       return stats.map((stat, i) => {
+  //         const Icon = stat.icon;
+  //         return (
+  //           <Card key={i} className="p-6">
+  //             <div className="flex items-start justify-between">
+  //               <div>
+  //                 <p className="text-sm text-muted-foreground">
+  //                   {stat.label}
+  //                 </p>
+  //                 <p className="font-heading text-2xl font-bold mt-2">
+  //                   {stat.value}
+  //                 </p>
+  //               </div>
+  //               <div className={`p-3 rounded-lg ${stat.color}`}>
+  //                 <Icon className="w-6 h-6" />
+  //               </div>
+  //             </div>
+  //           </Card>
+  //         );
+  //       });
+  //     })()}
+  //   </div>
+
   // ✅ Stats Card Section
   const renderStats = () => {
     if (!fields.length || !stats) return null;
@@ -210,21 +267,22 @@ export default function EntryPage() {
       {
         label: "Total Entries",
         value: totalEntries,
-        icon: List,
-        color: "bg-gray-500/10",
+        icon: MapPin,
+        color: "#D0DFF280",
       },
+
       ...Object.entries(fieldStats).map(([key, value]) => {
-        let color = "bg-blue-500/10";
-        let Icon = Database;
+        let color = "#FEE6D480";
+        let Icon = MapPinHouse;
 
         switch (key.toLowerCase()) {
-          case "block":
-            color = "bg-indigo-500/10";
+          case "Block":
+            color = "#cce4db80";
             break;
-          case "unit":
-            color = "bg-green-500/10";
+          case "Unit":
+            color = "#CABDFF80";
             break;
-          case "flat":
+          case "Flat":
             color = "bg-orange-500/10";
             break;
         }
@@ -234,7 +292,7 @@ export default function EntryPage() {
     ];
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {statItems.map((stat, i) => {
           const Icon = stat.icon;
           return (

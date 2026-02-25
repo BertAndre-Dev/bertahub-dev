@@ -6,7 +6,10 @@ import { Card } from "@/components/ui/card";
 import Table from "@/components/tables/list/page";
 import { RootState, AppDispatch } from "@/redux/store";
 import { getAllTransactionHistory } from "@/redux/slice/super-admin/super-admin-transactions-mgt/super-admin-transactions";
+import { getTransactionById } from "@/redux/slice/super-admin/super-admin-transactions-mgt/super-admin-transactions";
+ 
 import { Search } from "lucide-react";
+import { TransactionDetailsDialog } from "@/components/super-admin/transaction-modal/page";
 
 const PAGE_SIZE = 10;
 
@@ -36,6 +39,16 @@ useEffect(() => {
       loading: s?.getAllTransactionHistoryState === "isLoading",
     };
   });
+
+  const { selectedTransaction, getTransactionState } = useSelector((state: RootState) => {
+    const s: any = state.superAdminTransaction;
+    return {
+      selectedTransaction: s?.selectedTransaction || null,
+      getTransactionState: s?.getTransactionState === "isLoading",
+    };
+  });
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
@@ -84,12 +97,22 @@ useEffect(() => {
       key: "action",
       header: "Action",
       render: (item: any) => (
-        <button className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-200 cursor-pointer">
-          View Details
-        </button>
-      ),
+          <button onClick={() => handleViewDetails(item._id || item.id)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-200 cursor-pointer">
+            View Details
+          </button>
+        ),
     } 
   ];
+
+    const handleViewDetails = async (transactionId?: string) => {
+      if (!transactionId) return;
+      try {
+        await dispatch(getTransactionById(transactionId)).unwrap();
+        setIsDialogOpen(true);
+      } catch (err) {
+        // handled by slice / toasts elsewhere
+      }
+    };
 
   return (
     <div className="space-y-6">
@@ -161,6 +184,12 @@ useEffect(() => {
           onPageChange={(page: number) => handlePageChange(page)}
         />
       </Card>
-    </div>
+      <TransactionDetailsDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        transaction={selectedTransaction}
+        loading={getTransactionState}
+      />
+          </div>
   );
 }

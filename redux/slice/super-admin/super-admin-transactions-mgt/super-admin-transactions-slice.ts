@@ -3,7 +3,9 @@ import {
   getAllTransactionHistory,
   TransactionData,
   TransactionPagination,
+  getTransactionById
 } from "./super-admin-transactions";
+// import { getTransactionById } from "./super-admin-transactions";
 
 export interface SuperAdminTransactionResponse {
   success: boolean;
@@ -19,14 +21,18 @@ export interface SuperAdminTransactionState {
     | "succeeded"
     | "failed";
   status: "idle" | "isLoading" | "succeeded" | "failed";
+  getTransactionState: "idle" | "isLoading" | "succeeded" | "failed";
+  selectedTransaction: any | null;
   allTransactionHistory: SuperAdminTransactionResponse | null;
   error: string | null;
 }
 
 const initialState: SuperAdminTransactionState = {
   getAllTransactionHistoryState: "idle",
+  getTransactionState: "idle",
   status: "idle",
   allTransactionHistory: null,
+  selectedTransaction: null,
   error: null,
 };
 
@@ -71,6 +77,23 @@ const superAdminTransactionSlice = createSlice({
         state.status = "failed";
         state.error =
           action.error.message || "Failed to fetch transactions";
+      });
+
+    // GET SINGLE TRANSACTION
+    builder
+      .addCase(getTransactionById.pending, (state) => {
+        state.getTransactionState = "isLoading";
+        state.status = "isLoading";
+      })
+      .addCase(getTransactionById.fulfilled, (state, action) => {
+        state.getTransactionState = "succeeded";
+        state.status = "succeeded";
+        state.selectedTransaction = action.payload?.data || null;
+      })
+      .addCase(getTransactionById.rejected, (state, action) => {
+        state.getTransactionState = "failed";
+        state.status = "failed";
+        state.error = action.error.message || "Failed to fetch transaction";
       });
   },
 });

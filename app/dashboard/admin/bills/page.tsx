@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Plus, Edit2, Trash2, ScrollText } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
 import BillsForm, {
@@ -198,8 +198,16 @@ export default function BillPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-3xl font-bold">Estate Bills</h1>
-
+        <div>
+          <h1 className="font-heading text-3xl font-bold">Bills Management</h1>
+          <p className="text-muted-foreground mt-1">
+            Welcome back! Here's is an overview on{" "}
+            <span className="text-[18px] font-bold underline uppercase text-black">
+              Doe Estate
+            </span>
+            .
+          </p>
+        </div>
         <Button
           onClick={() => handleOpenModal()}
           className="flex items-center gap-2"
@@ -207,6 +215,41 @@ export default function BillPage() {
           <Plus className="w-4 h-4" />
           Create Bill
         </Button>
+      </div>
+
+      {/* Stats Card */}
+      <div className="grid grid-cols-1 gap-4">
+        {(() => {
+          const stats = [
+            {
+              label: "Total Bills",
+              value: allBills?.length || 0,
+              icon: ScrollText,
+              color: "bg-[#D0DFF280]",
+            },
+          ];
+
+          return stats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={i} className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {stat.label}
+                    </p>
+                    <p className="font-heading text-2xl font-bold mt-2">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${stat.color}`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                </div>
+              </Card>
+            );
+          });
+        })()}
       </div>
 
       <Card className="p-4">

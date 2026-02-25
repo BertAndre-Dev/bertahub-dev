@@ -89,7 +89,7 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
   return (
     <form onSubmit={handleSubmit}>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className="text-lg pb-4 pt-8 font-semibold">
           {initialData?.id ? "Update Estate Bill" : "Create Estate Bill"}
         </CardTitle>
       </CardHeader>
@@ -98,9 +98,9 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
         {loading ? (
           <p className="text-gray-500 italic">Loading...</p>
         ) : (
-          <div className="border border-gray-200 p-4 rounded-lg space-y-4">
+          <div className="space-y-6">
             <div>
-              <Label>Name</Label>
+              <Label className="text-[20px] font-regular">Name</Label>
               <Input
                 type="text"
                 value={formData.name}
@@ -110,7 +110,7 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
             </div>
 
             <div>
-              <Label>Description</Label>
+              <Label className="text-[20px] font-regular">Description</Label>
               <Input
                 type="text"
                 value={formData.description}
