@@ -10,6 +10,7 @@ import { BsBuildings } from "react-icons/bs";
 import { IoSpeedometerOutline } from "react-icons/io5";
 import { GrTransaction } from "react-icons/gr";
 import { LuReceipt } from "react-icons/lu";
+import { LayoutDashboard, Wrench } from "lucide-react";
 
 export const superAdminNav = [
   {
@@ -87,11 +88,21 @@ export const adminNav = [
     icon: FiUsers,
     path: "/dashboard/admin/visitor",
   },
+  {
+    label: "Maintenance Requests",
+    icon: Wrench,
+    path: '/dashboard/admin/maintenance'
+  },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];
 
 export const securityNav = [
+  {
+    label: 'Visitor Management',
+    icon: LayoutDashboard, 
+    path: "/dashboard/security/visitor-management"
+  },
   {
     label: "View Visitor",
     icon: FiUsers,

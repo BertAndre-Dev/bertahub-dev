@@ -54,8 +54,8 @@ export default function ViewVisitorPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <h2 className="text-xl sm:text-2xl font-semibold">View Visitor</h2>
+    <div className="mx-auto bg-white rounded-lg p-6 space-y-6">
+      <h2 className="text-xl sm:text-2xl font-semibold">Visitor Verification</h2>
 
       <div className="space-y-2">
         <Label>Visitor Code</Label>
