@@ -4,6 +4,7 @@ import ViewVisitor from '@/app/dashboard/security/view-visitor/page'
 import { Card } from '@/components/ui/card'
 import { IdCard } from 'lucide-react'
 import ResidentDetails from '@/components/security/resident-detail'
+import ClockedCard from '@/components/security/clockinouttime'
 const page = () => {
   return (
     <div>
@@ -54,6 +55,8 @@ const page = () => {
         <ResidentDetails />
         
       </div>
+
+      <ClockedCard />
         
     </div>
   )

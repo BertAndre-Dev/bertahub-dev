@@ -10,7 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AppDispatch, RootState } from "@/redux/store";
-import { resetUserProfileState, getUserProfile } from "@/redux/slice/resident/user-profile/user-profile-slice";
+import { resetUserProfileState } from "@/redux/slice/resident/user-profile/user-profile-slice";
+import { getUserProfile } from "@/redux/slice/resident/user-profile/user-profile";
 import { updateUserProfile } from "@/redux/slice/settings/user-profile";
 
 type UserFormState = {

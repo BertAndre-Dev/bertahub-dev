@@ -1,155 +1,201 @@
-"use client"
+"use client";
 
-import React, { useMemo, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
+import React, { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { toast } from "react-toastify";
+import { RootState, AppDispatch } from "@/redux/store";
+import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import { getAllVisitors } from "@/redux/slice/security/visitor/visitor";
+import type { SecurityVisitorItem } from "@/redux/slice/security/visitor/visitor-slice";
+import Table from "@/components/tables/list/page";
 
-type Activity = {
-  residentName: string
-  visitorName: string
-  block: string
-  apartment: string
-  date: string
-  type: string
-  clockIn: string
-  clockOut: string
-  status: "Access Granted" | "Access Denied"
+function formatDate(dateString: string) {
+  const d = new Date(dateString);
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-const sampleData: Activity[] = Array.from({ length: 10 }).map((_, i) => ({
-  residentName: "John Doe",
-  visitorName: "John Doe",
-  block: "C",
-  apartment: "J4",
-  date: "12/02/2025",
-  type: i === 1 ? "Makeup" : "Delivery",
-  clockIn: "11 : 59 AM",
-  clockOut: "02 : 59 PM",
-  status: i === 1 ? "Access Denied" : "Access Granted",
-}))
+function getAddressDisplay(addressId: SecurityVisitorItem["addressId"]) {
+  if (!addressId?.data) return "—";
+  const parts = Object.values(addressId.data).filter(Boolean);
+  return parts.length ? parts.join(", ") : "—";
+}
 
 export default function ActivityLogPage() {
-  const [search, setSearch] = useState("")
-  const [typeFilter, setTypeFilter] = useState("all")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const dispatch = useDispatch<AppDispatch>();
+  const [estateId, setEstateId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const { allVisitors, loading } = useSelector((state: RootState) => {
+    const v = state.securityVisitor;
+    return {
+      allVisitors: v?.allVisitors ?? null,
+      loading: v?.getAllVisitorsStatus === "isLoading",
+    };
+  });
+
+  const list = useMemo(() => allVisitors?.data ?? [], [allVisitors?.data]);
+  const pagination = allVisitors?.pagination;
 
   const filtered = useMemo(() => {
-    return sampleData.filter((row) => {
-      const matchesSearch =
-        search.trim() === "" ||
-        [row.residentName, row.visitorName, row.apartment, row.block, row.type]
-          .join(" ")
-          .toLowerCase()
-          .includes(search.toLowerCase())
+    if (!search.trim()) return list;
+    const q = search.toLowerCase();
+    return list.filter((row: SecurityVisitorItem) => {
+      const resident = row.residentId
+        ? `${row.residentId.firstName} ${row.residentId.lastName}`.toLowerCase()
+        : "";
+      const visitor = `${row.firstName} ${row.lastName}`.toLowerCase();
+      const purpose = (row.purpose ?? "").toLowerCase();
+      const address = getAddressDisplay(row.addressId).toLowerCase();
+      return [resident, visitor, purpose, address].some((s) => s.includes(q));
+    });
+  }, [list, search]);
 
-      const matchesType = typeFilter === "all" || row.type === typeFilter
-      const matchesStatus = statusFilter === "all" || row.status === statusFilter
+  useEffect(() => {
+    (async () => {
+      try {
+        const userRes = await dispatch(getSignedInUser()).unwrap();
+        const foundEstateId =
+          userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
 
-      return matchesSearch && matchesType && matchesStatus
-    })
-  }, [search, typeFilter, statusFilter])
+        if (!foundEstateId) {
+          toast.warning("No estate found for this user");
+          return;
+        }
+
+        setEstateId(foundEstateId);
+        await dispatch(
+          getAllVisitors({ estateId: foundEstateId, page: 1, limit: 10 }),
+        ).unwrap();
+      } catch (error: any) {
+        toast.error(error?.message ?? "Failed to load visitors");
+      }
+    })();
+  }, [dispatch]);
+
+  const onPageChange = (page: number) => {
+    if (!estateId) return;
+    dispatch(
+      getAllVisitors({ estateId, page, limit: pagination?.limit ?? 10 }),
+    ).catch((err: any) => toast.error(err?.message ?? "Failed to load page"));
+  };
+
+  let cardDescription = "Loading...";
+  if (pagination) {
+    cardDescription = search.trim()
+      ? `${filtered.length} matching on this page`
+      : `${pagination.total} total entries`;
+  }
+
+  const columns = useMemo(
+    () => [
+      {
+        key: "residentName",
+        header: "Resident Name",
+        render: (row: SecurityVisitorItem) =>
+          row.residentId
+            ? `${row.residentId.firstName} ${row.residentId.lastName}`
+            : "—",
+      },
+      {
+        key: "visitorName",
+        header: "Visitor Name",
+        render: (row: SecurityVisitorItem) => `${row.firstName} ${row.lastName}`,
+      },
+      {
+        key: "address",
+        header: "Address",
+        render: (row: SecurityVisitorItem) => getAddressDisplay(row.addressId),
+      },
+      {
+        key: "createdAt",
+        header: "Date",
+        render: (row: SecurityVisitorItem) => formatDate(row.createdAt),
+      },
+      {
+        key: "purpose",
+        header: "Purpose",
+        render: (row: SecurityVisitorItem) => row.purpose ?? "—",
+      },
+      {
+        key: "isVerified",
+        header: "Status",
+        render: (row: SecurityVisitorItem) => (
+          <span
+            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+              row.isVerified
+                ? "bg-green-100 text-green-800"
+                : "bg-amber-100 text-amber-800"
+            }`}
+          >
+            {row.isVerified ? "Verified" : "Not verified"}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Activity Log</h1>
-        <p className="text-muted-foreground">Welcome back! Manage access control in <span className="font-semibold">DEMO ESTATE</span></p>
+        <p className="text-muted-foreground">
+          Welcome back! View all visitors and activity for your estate.
+        </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[1fr_auto] items-start">
-        <div className="flex gap-3 flex-wrap">
-          <div className="min-w-[180px]">
-            <Label>Filter by Date</Label>
-            <Input type="date" />
-          </div>
-
-          <div className="min-w-[180px]">
-            <Label>Filter by Type</Label>
-            <Select
-              options={[{ label: "All", value: "all" }, { label: "Delivery", value: "Delivery" }, { label: "Makeup", value: "Makeup" }]}
-              value={typeFilter}
-              onChange={(e: any) => setTypeFilter(e.target.value)}
-            />
-          </div>
-
-          <div className="min-w-[180px]">
-            <Label>Filter by Status</Label>
-            <Select
-              options={[{ label: "All", value: "all" }, { label: "Access Granted", value: "Access Granted" }, { label: "Access Denied", value: "Access Denied" }]}
-              value={statusFilter}
-              onChange={(e: any) => setStatusFilter(e.target.value)}
-            />
-          </div>
-
-          <div className="min-w-[220px]">
-            <Label>Search</Label>
-            <Input placeholder="Search resident, visitor, apartment..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <Button variant="outline">Export</Button>
-        </div>
-      </div>
+      <Card className="p-4">
+        <input
+          type="text"
+          placeholder="Search resident, visitor, purpose..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)} // ✅ search fixed
+          className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </Card>
 
       <Card className="overflow-hidden">
         <CardHeader>
-          <CardTitle>Activity Records</CardTitle>
-          <CardDescription className="text-sm">Showing {filtered.length} of {sampleData.length} entries</CardDescription>
+          <CardTitle>Visitor records</CardTitle>
+          <CardDescription className="text-sm">
+            {cardDescription}
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="p-0">
-          <div className="w-full overflow-auto">
-            <table className="w-full text-sm min-w-[900px]">
-              <thead className="bg-muted/20 border-b">
-                <tr>
-                  <th className="px-6 py-4 text-left font-semibold">Resident Name</th>
-                  <th className="px-6 py-4 text-left font-semibold">Visitor Name</th>
-                  <th className="px-6 py-4 text-left font-semibold">Block</th>
-                  <th className="px-6 py-4 text-left font-semibold">Apartment</th>
-                  <th className="px-6 py-4 text-left font-semibold">Date</th>
-                  <th className="px-6 py-4 text-left font-semibold">Type</th>
-                  <th className="px-6 py-4 text-left font-semibold">Clock In</th>
-                  <th className="px-6 py-4 text-left font-semibold">Clock Out</th>
-                  <th className="px-6 py-4 text-left font-semibold">Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filtered.map((row, idx) => (
-                  <tr key={idx} className="border-b hover:bg-muted/10">
-                    <td className="px-6 py-4">{row.residentName}</td>
-                    <td className="px-6 py-4">{row.visitorName}</td>
-                    <td className="px-6 py-4">{row.block}</td>
-                    <td className="px-6 py-4">{row.apartment}</td>
-                    <td className="px-6 py-4">{row.date}</td>
-                    <td className="px-6 py-4">{row.type}</td>
-                    <td className="px-6 py-4">{row.clockIn}</td>
-                    <td className="px-6 py-4">{row.clockOut}</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${row.status === "Access Granted" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-                        {row.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex items-center justify-between px-6 py-4 border-t">
-            <p className="text-sm text-muted-foreground">Showing {filtered.length} of {sampleData.length} entries</p>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">&lt;</Button>
-              <Button size="sm">1</Button>
-              <Button variant="outline" size="sm">&gt;</Button>
-            </div>
-          </div>
+          <Table<SecurityVisitorItem>
+            columns={columns}
+            data={filtered}
+            emptyMessage={
+              loading ? "Loading visitors..." : "No visitors found."
+            }
+            showPagination={!!pagination && pagination.totalPages > 1}
+            paginationInfo={
+              pagination
+                ? {
+                    total: pagination.total,
+                    current: pagination.page,
+                    pageSize: pagination.limit,
+                  }
+                : undefined
+            }
+            onPageChange={onPageChange}
+          />
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
