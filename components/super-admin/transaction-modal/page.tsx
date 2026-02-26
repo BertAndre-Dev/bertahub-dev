@@ -6,9 +6,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog" 
+} from "@/components/ui/dialog"
 import { Badge } from "@/components/badge/page"
-
+import { Button } from "@/components/ui/button"
+import { CheckCircle } from "lucide-react"
 
 interface Transaction {
   id?: string
@@ -26,6 +27,8 @@ interface TransactionDetailsDialogProps {
   onOpenChange: (open: boolean) => void
   transaction: Transaction | null
   loading?: boolean
+  onVerify?: (tx_ref: string) => void
+  verifyLoading?: boolean
 }
 
 export function TransactionDetailsDialog({
@@ -33,6 +36,8 @@ export function TransactionDetailsDialog({
   onOpenChange,
   transaction,
   loading = false,
+  onVerify,
+  verifyLoading = false,
 }: TransactionDetailsDialogProps) {
   const formatCurrency = (amount?: number) =>
     new Intl.NumberFormat("en-NG", {
@@ -114,6 +119,18 @@ export function TransactionDetailsDialog({
                 value={formatDate(transaction.createdAt)}
               />
             </div>
+            {onVerify && transaction.tx_ref && (
+              <div className="pt-4 border-t">
+                <Button
+                  onClick={() => onVerify(transaction.tx_ref!)}
+                  disabled={verifyLoading}
+                  className="w-full sm:w-auto flex items-center gap-2"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  {verifyLoading ? "Verifying..." : "Verify transaction"}
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="py-8 text-center text-sm text-muted-foreground">

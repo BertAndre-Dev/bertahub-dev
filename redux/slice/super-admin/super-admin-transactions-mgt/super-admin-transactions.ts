@@ -86,3 +86,20 @@ export const getTransactionById = createAsyncThunk(
     }
   }
 );
+
+// Verify transaction (POST /api/v1/transaction-mgt/verify?tx_ref=...)
+export const verifyTransaction = createAsyncThunk(
+  "super-admin-transactions/verifyTransaction",
+  async (tx_ref: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        `/api/v1/transaction-mgt/verify?tx_ref=${encodeURIComponent(tx_ref)}`
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to verify transaction" }
+      );
+    }
+  }
+);

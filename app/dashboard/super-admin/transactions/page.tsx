@@ -5,10 +5,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
 import Table from "@/components/tables/list/page";
 import { RootState, AppDispatch } from "@/redux/store";
-import { getAllTransactionHistory } from "@/redux/slice/super-admin/super-admin-transactions-mgt/super-admin-transactions";
-import { getTransactionById } from "@/redux/slice/super-admin/super-admin-transactions-mgt/super-admin-transactions";
+import {
+  getAllTransactionHistory,
+  getTransactionById,
+  verifyTransaction,
+} from "@/redux/slice/super-admin/super-admin-transactions-mgt/super-admin-transactions";
  
 import { Search } from "lucide-react";
+import { toast } from "react-toastify";
 import { TransactionDetailsDialog } from "@/components/super-admin/transaction-modal/page";
 
 const PAGE_SIZE = 10;
@@ -40,13 +44,16 @@ useEffect(() => {
     };
   });
 
-  const { selectedTransaction, getTransactionState } = useSelector((state: RootState) => {
-    const s: any = state.superAdminTransaction;
-    return {
-      selectedTransaction: s?.selectedTransaction || null,
-      getTransactionState: s?.getTransactionState === "isLoading",
-    };
-  });
+  const { selectedTransaction, getTransactionState, verifyTransactionState } = useSelector(
+    (state: RootState) => {
+      const s: any = state.superAdminTransaction;
+      return {
+        selectedTransaction: s?.selectedTransaction || null,
+        getTransactionState: s?.getTransactionState === "isLoading",
+        verifyTransactionState: s?.verifyTransactionState === "isLoading",
+      };
+    }
+  );
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -113,6 +120,30 @@ useEffect(() => {
         // handled by slice / toasts elsewhere
       }
     };
+
+  const handleVerifyTransaction = async (tx_ref: string) => {
+    if (!tx_ref) return;
+    try {
+      await dispatch(verifyTransaction(tx_ref)).unwrap();
+      toast.success("Transaction verified successfully.");
+      const id = selectedTransaction?._id || selectedTransaction?.id;
+      if (id) await dispatch(getTransactionById(id)).unwrap();
+      await dispatch(
+        getAllTransactionHistory({
+          page: currentPage,
+          limit: PAGE_SIZE,
+          type: typeFilter,
+          search: searchQuery,
+        })
+      ).unwrap();
+    } catch (err: any) {
+      toast.error(
+        (err?.payload as { message?: string })?.message ??
+          err?.message ??
+          "Failed to verify transaction"
+      );
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -189,6 +220,8 @@ useEffect(() => {
         onOpenChange={setIsDialogOpen}
         transaction={selectedTransaction}
         loading={getTransactionState}
+        onVerify={handleVerifyTransaction}
+        verifyLoading={verifyTransactionState}
       />
           </div>
   );

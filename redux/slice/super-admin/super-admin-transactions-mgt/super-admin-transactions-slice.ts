@@ -3,7 +3,8 @@ import {
   getAllTransactionHistory,
   TransactionData,
   TransactionPagination,
-  getTransactionById
+  getTransactionById,
+  verifyTransaction,
 } from "./super-admin-transactions";
 // import { getTransactionById } from "./super-admin-transactions";
 
@@ -22,6 +23,7 @@ export interface SuperAdminTransactionState {
     | "failed";
   status: "idle" | "isLoading" | "succeeded" | "failed";
   getTransactionState: "idle" | "isLoading" | "succeeded" | "failed";
+  verifyTransactionState: "idle" | "isLoading" | "succeeded" | "failed";
   selectedTransaction: any | null;
   allTransactionHistory: SuperAdminTransactionResponse | null;
   error: string | null;
@@ -30,6 +32,7 @@ export interface SuperAdminTransactionState {
 const initialState: SuperAdminTransactionState = {
   getAllTransactionHistoryState: "idle",
   getTransactionState: "idle",
+  verifyTransactionState: "idle",
   status: "idle",
   allTransactionHistory: null,
   selectedTransaction: null,
@@ -94,6 +97,26 @@ const superAdminTransactionSlice = createSlice({
         state.getTransactionState = "failed";
         state.status = "failed";
         state.error = action.error.message || "Failed to fetch transaction";
+      });
+
+    // VERIFY TRANSACTION
+    builder
+      .addCase(verifyTransaction.pending, (state) => {
+        state.verifyTransactionState = "isLoading";
+      })
+      .addCase(verifyTransaction.fulfilled, (state, action) => {
+        state.verifyTransactionState = "succeeded";
+        const updated = action.payload?.data;
+        if (updated && state.selectedTransaction) {
+          state.selectedTransaction = { ...state.selectedTransaction, ...updated };
+        }
+      })
+      .addCase(verifyTransaction.rejected, (state, action) => {
+        state.verifyTransactionState = "failed";
+        state.error =
+          (action.payload as { message?: string })?.message ||
+          action.error.message ||
+          "Failed to verify transaction";
       });
   },
 });

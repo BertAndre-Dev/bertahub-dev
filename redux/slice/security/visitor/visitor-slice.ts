@@ -63,7 +63,10 @@ const securityVisitorSlice = createSlice({
       })
       .addCase(getAllVisitors.rejected, (state, action) => {
         state.getAllVisitorsStatus = "failed";
-        state.error = action.payload?.message ?? action.error.message ?? "Failed to fetch visitors";
+        state.error =
+          (action.payload as { message?: string })?.message ??
+          action.error.message ??
+          "Failed to fetch visitors";
       });
   },
 });

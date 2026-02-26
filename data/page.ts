@@ -144,6 +144,11 @@ export const residentNav = [
     icon: FiUsers,
     path: "/dashboard/resident/visitor",
   },
+  {
+    label: "Maintenance",
+    icon: Wrench,
+    path: "/dashboard/resident/maintenance",
+  },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];
