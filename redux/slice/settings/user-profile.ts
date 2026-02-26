@@ -13,6 +13,9 @@ export type UpdateUserProfilePayload = {
     phoneNumber: string;
     role?: string;
     image?: string;
+    address?: string;
+    addressIds?: string[];
+    residentType: string;
   };
 };
 

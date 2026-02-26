@@ -23,6 +23,8 @@ interface AdminUserData {
   id?: string;
   firstName: string;
   lastName: string;
+  residentType: string;
+  createdAt: string;
   email: string;
   addressId: {
     id: string;
@@ -43,7 +45,9 @@ export default function AdminUserPage() {
 
   const [user, setUser] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(null);
+  const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(
+    null,
+  );
   const [selectedUser, setSelectedUser] = useState<AdminUserData | null>(null);
   const [search, setSearch] = useState("");
 
@@ -179,6 +183,18 @@ export default function AdminUserPage() {
   };
 
   const columns = [
+    {
+      key: "createdAt",
+      header: "Created At",
+      render: (item: AdminUserData) =>
+        item.createdAt
+          ? new Date(item.createdAt).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
+          : "-",
+    },
     { key: "firstName", header: "First Name" },
     { key: "lastName", header: "Last Name" },
     { key: "email", header: "Email" },
@@ -190,15 +206,18 @@ export default function AdminUserPage() {
       render: (item: AdminUserData) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            item.invitationStatus
+            item.invitationStatus === "completed"
               ? "bg-green-100 text-green-700"
               : "bg-red-100 text-red-700"
           }`}
         >
-          {item.invitationStatus ? "Completed" : "Not Completed"}
+          {item.invitationStatus === "completed"
+            ? "Completed"
+            : "Not Completed"}
         </span>
       ),
     },
+    { key: "residentType", header: "Resident Type" }, // ✅ add
     {
       key: "actions",
       header: "Actions",
@@ -238,7 +257,8 @@ export default function AdminUserPage() {
             Welcome back! Here's is an overview on{" "}
             <span className="text-[18px] font-bold underline uppercase text-black">
               Doe Estate
-            </span>.
+            </span>
+            .
           </p>
         </div>
 

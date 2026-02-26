@@ -12,6 +12,7 @@ export interface UserProfile {
   phoneNumber: string;
   address?: string;
   role?: string;
+  residentType?: string;
   image?: string;
   isActive?: boolean;
   createdAt?: string;

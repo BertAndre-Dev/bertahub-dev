@@ -23,6 +23,7 @@ type UserFormState = {
   dateOfBirth: string;
   gender: string;
   role: string;
+  residentType: string;
 };
 
 export function GeneralSettingsCard() {
@@ -46,6 +47,7 @@ export function GeneralSettingsCard() {
     dateOfBirth: "",
     gender: "",
     role: "",
+    residentType: "owner",
   });
   const [formError, setFormError] = useState("");
 
@@ -61,6 +63,7 @@ export function GeneralSettingsCard() {
 
   useEffect(() => {
     if (!user) return;
+    const u = user as UserFormState & { residentType?: string };
     setFormData({
       firstName: user.firstName || "",
       lastName: user.lastName || "",
@@ -70,6 +73,7 @@ export function GeneralSettingsCard() {
       dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split("T")[0] : "",
       gender: user.gender || "",
       role: user.role || "",
+      residentType: u.residentType || "owner",
     });
   }, [user]);
 
@@ -114,6 +118,7 @@ export function GeneralSettingsCard() {
             gender: formData.gender,
             phoneNumber: formData.phoneNumber,
             role: formData.role || undefined,
+            residentType: formData.residentType || "owner",
           },
         }),
       ).unwrap();
@@ -268,6 +273,26 @@ export function GeneralSettingsCard() {
               />
             </div>
           </div>
+
+          {(formData.role === "resident" || formData.role === "Resident") && (
+            <div>
+              <label className="text-sm font-medium" htmlFor="resident-type">
+                Resident Type
+              </label>
+              <select
+                id="resident-type"
+                value={formData.residentType}
+                onChange={(e) =>
+                  setFormData({ ...formData, residentType: e.target.value })
+                }
+                className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mt-2"
+                disabled={isLoading}
+              >
+                <option value="owner">Owner</option>
+                <option value="tenant">Tenant</option>
+              </select>
+            </div>
+          )}
 
           <Button
             type="submit"

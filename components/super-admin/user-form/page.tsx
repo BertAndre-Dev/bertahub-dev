@@ -22,7 +22,6 @@ interface InviteUserFormData {
   lastName: string;
   email: string;
   role: string;
-  addressId?: string;
 }
 
 // ✅ FIXED: Correct React.FC syntax
@@ -34,7 +33,6 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
     lastName: "",
     email: "",
     role: "",
-    addressId: "",
   });
 
   const [estates, setEstates] = useState<any[]>([]);
@@ -101,7 +99,6 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
       lastName: "",
       email: "",
       role: "",
-      addressId: "",
     });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,7 +112,12 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
 
     setSubmitting(true);
     try {
-      const res = await dispatch(iniviteUser(formData) as any).unwrap();
+      const payload = {
+        ...formData,
+        residentType: "owner",
+        addressIds: [] as string[],
+      };
+      const res = await dispatch(iniviteUser(payload) as any).unwrap();
       toast.success(res?.message || "User invited successfully");
       resetForm();
       close();

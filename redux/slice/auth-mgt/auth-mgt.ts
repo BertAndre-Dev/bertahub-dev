@@ -3,14 +3,15 @@ import axiosInstance from '@/utils/axiosInstance';
 
 
 
-interface InvitedUserData {
+export interface InvitedUserData {
     estateId: string;
     firstName: string;
     lastName: string;
-    addressId?: string;
-    role: string;
     email: string;
-};
+    role: string;
+    residentType: string;
+    addressIds: string[];
+}
 
 
 interface VerifyInvitedUserData {
@@ -120,10 +121,10 @@ export const signOut = createAsyncThunk(
 );
 
 
-// Invite user
+// Invite user (POST /api/v1/auth-mgt/invite-user)
 export const iniviteUser = createAsyncThunk(
     'auth-mgt/inviteUser',
-    async(data: InvitedUserData, { rejectWithValue }) => {
+    async (data: InvitedUserData, { rejectWithValue }) => {
         try {
             const res = await axiosInstance.post('/api/v1/auth-mgt/invite-user', data);
             return res.data;
