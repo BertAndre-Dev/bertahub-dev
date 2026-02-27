@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
 import { toast } from "react-toastify";
 import { cn } from "@/lib/utils";
-import type { ComplaintItem, CommentItem } from "@/redux/slice/admin/maintenance/complaints-slice";
+import type { ComplaintItem, CommentItem, ComplaintResident } from "@/redux/slice/admin/maintenance/complaints-slice";
 import {
   getCommentsByComplaint,
   createComment,
@@ -52,9 +52,16 @@ function getAddressDisplay(addressId?: ComplaintItem["addressId"]): string {
 }
 
 function getRequesterName(complaint: ComplaintItem): string {
-  const r = complaint.resident;
-  if (r?.firstName || r?.lastName) {
-    return [r.firstName, r.lastName].filter(Boolean).join(" ");
+  const r =
+    complaint.resident ??
+    (complaint.residentId &&
+    typeof complaint.residentId === "object" &&
+    "firstName" in complaint.residentId
+      ? (complaint.residentId as ComplaintResident)
+      : null);
+  if (r) {
+    const name = [r.firstName, r.lastName].filter(Boolean).join(" ").trim();
+    if (name) return name;
   }
   return "Requester";
 }
@@ -69,12 +76,13 @@ function getInitials(name: string): string {
 }
 
 interface MaintenanceRequestCardProps {
-  complaint: ComplaintItem;
-  estateName?: string;
-  isSelected?: boolean;
-  onSelect?: () => void;
+  readonly complaint: ComplaintItem;
+  readonly estateName?: string;
+  readonly isSelected?: boolean;
+  readonly onSelect?: () => void;
 }
 
+/** Only statuses allowed by API: pending, in progress, completed, blocked */
 const STATUS_OPTIONS = MAINTENANCE_STATUSES.filter((s) => s.value !== "all").map(
   (s) => ({ value: s.value, label: s.label })
 );
@@ -162,7 +170,7 @@ export function MaintenanceRequestCard({
               <div>
                 <p className="font-semibold text-foreground">{requesterName}</p>
                 <p className="text-sm text-muted-foreground">
-                  {locationLine !== "—" ? `• ${locationLine}` : "—"}
+                  {locationLine === "—" ? "—" : `• ${locationLine}`}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDate(complaint.createdAt)}
@@ -174,8 +182,11 @@ export function MaintenanceRequestCard({
             </span>
           </div>
 
+          {complaint.title && (
+            <p className="font-semibold text-foreground">{complaint.title}</p>
+          )}
           <p className="text-sm text-foreground whitespace-pre-wrap">
-            {complaint.description || complaint.title || "No description."}
+            {complaint.description || "No description."}
           </p>
 
           <div className="flex flex-wrap items-center gap-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -41,6 +41,13 @@ export function ResidentComplaintForm({
   const [addressId, setAddressId] = useState(
     addressOptions[0]?.value ?? ""
   );
+
+  useEffect(() => {
+    const first = addressOptions[0]?.value ?? "";
+    if (first && (!addressId || !addressOptions.some((o) => o.value === addressId))) {
+      setAddressId(first);
+    }
+  }, [addressOptions, addressId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

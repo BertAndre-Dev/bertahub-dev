@@ -147,9 +147,9 @@ export function ResidentComplaintCard({
               </span>
             </div>
 
-            {complaint.title && (
-              <p className="font-medium text-foreground mt-2">{complaint.title}</p>
-            )}
+            <p className="font-semibold text-foreground mt-2">
+              {complaint.title || "Maintenance request"}
+            </p>
             <p className="text-sm text-foreground whitespace-pre-wrap mt-1">
               {complaint.description || "No description."}
             </p>

@@ -26,7 +26,7 @@ export interface ComplaintItem {
   category?: string;
   status: string;
   priority?: string;
-  residentId?: string;
+  residentId?: string | ComplaintResident;
   estateId?: string;
   resident?: ComplaintResident;
   addressId?: ComplaintAddress | string;

@@ -2,15 +2,13 @@
 
 import { cn } from "@/lib/utils";
 
+/** API accepts: pending, in progress, completed, blocked */
 export const MAINTENANCE_STATUSES = [
   { value: "all", label: "All" },
+  { value: "pending", label: "Pending" },
   { value: "in progress", label: "In progress" },
-  { value: "in review", label: "In review" },
-  { value: "open", label: "Open" },
-  { value: "resolved", label: "Resolved" },
-  { value: "closed", label: "Closed" },
-  { value: "rejected", label: "Rejected" },
-  { value: "assigned", label: "Assigned" },
+  { value: "completed", label: "Completed" },
+  { value: "blocked", label: "Blocked" },
 ] as const;
 
 export type MaintenanceStatusValue =

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { Plus } from "lucide-react";
@@ -18,13 +18,44 @@ import {
 } from "@/components/resident/maintenance";
 import { RootState, AppDispatch } from "@/redux/store";
 
+/** Address from /api/v1/auth-mgt/me (addressIds array item) */
+export interface UserAddressItem {
+  id: string;
+  data?: Record<string, string>;
+}
+
+function formatAddressLabel(addr: UserAddressItem): string {
+  if (!addr.data || typeof addr.data !== "object") return addr.id;
+  const parts = Object.entries(addr.data)
+    .filter(([, v]) => v != null && String(v).trim() !== "")
+    .map(([k, v]) => {
+      const label = k.replaceAll(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
+      return `${label.trim()}: ${v}`;
+    });
+  return parts.length > 0 ? parts.join(", ") : addr.id;
+}
+
+function normalizeUserAddresses(raw: unknown): UserAddressItem[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    if (item != null && typeof item === "object" && "id" in item) {
+      const obj = item as { id: string; data?: Record<string, string> };
+      return { id: obj.id, data: obj.data };
+    }
+    if (typeof item === "string") return { id: item, data: undefined };
+    return { id: String(item), data: undefined };
+  });
+}
+
 export default function ResidentMaintenancePage() {
   const dispatch = useDispatch<AppDispatch>();
-  const [addressIds, setAddressIds] = useState<string[]>([]);
+  const [addresses, setAddresses] = useState<UserAddressItem[]>([]);
   const [estateId, setEstateId] = useState("");
   const [residentId, setResidentId] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const addressIds = useMemo(() => addresses.map((a) => a.id), [addresses]);
 
   const { complaints, loading, createComplaintStatus } = useSelector(
     (state: RootState) => {
@@ -51,7 +82,7 @@ export default function ResidentMaintenancePage() {
         const addrs = user.addressIds ?? (user.addressId ? [user.addressId] : []);
         setResidentId(id);
         setEstateId(eId);
-        setAddressIds(Array.isArray(addrs) ? addrs : []);
+        setAddresses(normalizeUserAddresses(addrs));
       } catch (err: any) {
         toast.error(err?.message ?? "Failed to load user.");
       }
@@ -97,10 +128,14 @@ export default function ResidentMaintenancePage() {
     }
   };
 
-  const addressOptions = addressIds.map((id, i) => ({
-    value: id,
-    label: addressIds.length > 1 ? `Address ${i + 1}` : "My address",
-  }));
+  const addressOptions = useMemo(
+    () =>
+      addresses.map((addr) => ({
+        value: addr.id,
+        label: formatAddressLabel(addr),
+      })),
+    [addresses]
+  );
 
   return (
     <div className="space-y-6">
@@ -115,7 +150,7 @@ export default function ResidentMaintenancePage() {
         </div>
         <Button
           onClick={() => setModalOpen(true)}
-          disabled={!residentId || !estateId || addressIds.length === 0}
+          disabled={!residentId || !estateId || addresses.length === 0}
           className="flex items-center gap-2 shrink-0"
         >
           <Plus className="w-4 h-4" />
@@ -123,7 +158,7 @@ export default function ResidentMaintenancePage() {
         </Button>
       </div>
 
-      {addressIds.length === 0 && !loading && (
+      {addresses.length === 0 && !loading && (
         <p className="text-muted-foreground py-8 text-center rounded-lg border border-border bg-muted/20">
           No address linked to your account. Contact your estate admin.
         </p>
@@ -135,7 +170,7 @@ export default function ResidentMaintenancePage() {
         </p>
       )}
 
-      {!loading && addressIds.length > 0 && complaints.length === 0 && (
+      {!loading && addresses.length > 0 && complaints.length === 0 && (
         <p className="text-muted-foreground py-8 text-center rounded-lg border border-border bg-muted/20">
           No maintenance requests yet. Use &quot;New request&quot; to submit one.
         </p>

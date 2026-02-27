@@ -1,109 +1,124 @@
 "use client";
 
 import { useState } from "react";
-import {
-  TrendingUp,
-  Users,
-  FileText,
-  DollarSign,
-  AlertCircle,
-  ArrowUpRight,
-  ArrowDownRight,
-} from "lucide-react";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { TrendingUp, Users, FileText, DollarSign } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import TransactionsChart from "@/components/charts/transactions-chart";
+import BillsOverview from "@/components/charts/bills-overview";
+import OccupancyDistribution from "@/components/charts/occupancy-distribution";
+import BillsBreakdownCard from "@/components/charts/bills-breakdown-card";
+import { VendingTrendChart } from "@/app/dashboard/super-admin/dashboard/components/vending-trend-chart";
 
-export default function AdminDashboard() {
-  const [selectedPeriod, setSelectedPeriod] = useState("month");
-
-  // Mock data for charts
-  const revenueData = [
-    { month: "Jan", revenue: 45000, expenses: 32000 },
-    { month: "Feb", revenue: 52000, expenses: 35000 },
-    { month: "Mar", revenue: 48000, expenses: 33000 },
-    { month: "Apr", revenue: 61000, expenses: 38000 },
-    { month: "May", revenue: 55000, expenses: 36000 },
-    { month: "Jun", revenue: 67000, expenses: 40000 },
-  ];
-
-  const billsData = [
-    { name: "Electricity", value: 35, fill: "#3b82f6" },
-    { name: "Water", value: 25, fill: "#10b981" },
-    { name: "Maintenance", value: 20, fill: "#f59e0b" },
-    { name: "Security", value: 20, fill: "#ef4444" },
-  ];
-
-  const occupancyData = [
-    { month: "Jan", occupied: 85, vacant: 15 },
-    { month: "Feb", occupied: 88, vacant: 12 },
-    { month: "Mar", occupied: 90, vacant: 10 },
-    { month: "Apr", occupied: 92, vacant: 8 },
-    { month: "May", occupied: 91, vacant: 9 },
-    { month: "Jun", occupied: 93, vacant: 7 },
-  ];
+export default function EstateAdminOverview() {
+  const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month" | "year">(
+    "month",
+  );
 
   const stats = [
     {
       title: "Total Revenue",
-      value: "$328,000",
-      change: "+12.5%",
-      trend: "up",
+      value: "N9,850,000",
+      change: "+5.2% this month",
+      trend: "up" as const,
       icon: DollarSign,
-      color: "bg-blue-500/10 text-blue-600",
+      color: "bg-[#D0DFF280] text-[#0150AC]",
     },
     {
-      title: "Active Users",
-      value: "1,248",
-      change: "+8.2%",
-      trend: "up",
+      title: "Units",
+      value: "125/550 Occupied",
+      change: "+5.2% this month",
+      trend: "up" as const,
       icon: Users,
-      color: "bg-green-500/10 text-green-600",
+      color: "bg-[#E6F4EA] text-[#007A4D]",
+    },
+    {
+      title: "Paid Bills",
+      value: "N650,000",
+      change: "+5.2% this month",
+      trend: "up" as const,
+      icon: FileText,
+      color: "bg-[#E6F4EA] text-[#007A4D]",
     },
     {
       title: "Pending Bills",
-      value: "42",
-      change: "-3.1%",
-      trend: "down",
+      value: "N25,000",
+      change: "+5.2% this month",
+      trend: "up" as const,
       icon: FileText,
-      color: "bg-orange-500/10 text-orange-600",
-    },
-    {
-      title: "Occupancy Rate",
-      value: "93%",
-      change: "+2.4%",
-      trend: "up",
-      icon: TrendingUp,
-      color: "bg-purple-500/10 text-purple-600",
+      color: "bg-[#FFF4E5] text-[#FF8A00]",
     },
   ];
+
+  const estateFilterOptions = [
+    { label: "Demo Estate", value: "demo" },
+    { label: "All estates", value: "all" },
+  ];
+
+  const revenueTrendData = [
+    { label: "JUL", value: 150000 },
+    { label: "AUG", value: 320000 },
+    { label: "SEP", value: 450000 },
+    { label: "OCT", value: 760000, highlighted: true },
+    { label: "NOV", value: 380000 },
+    { label: "DEC", value: 590000 },
+    { label: "JAN", value: 650000 },
+  ];
+
+  const transactionsData = [
+    { label: "JAN 1", value: 2800 },
+    { label: "JAN 2", value: 2300 },
+    { label: "JAN 3", value: 3100 },
+    { label: "JAN 4", value: 2600 },
+    { label: "JAN 5", value: 4200, highlighted: true },
+    { label: "JAN 6", value: 3600 },
+    { label: "JAN 7", value: 3900 },
+  ];
+
+  const powerUsageData = [
+    { powerKwh: 50, value: 0.8 },
+    { powerKwh: 100, value: 1.2 },
+    { powerKwh: 150, value: 0.6 },
+    { powerKwh: 200, value: 1 },
+    { powerKwh: 250, value: 1.4 },
+    { powerKwh: 300, value: 1.8 },
+  ];
+
+  const withdrawalsData = [
+    { powerKwh: 1, value: 0.25 },
+    { powerKwh: 2, value: 0.21 },
+    { powerKwh: 3, value: 0.18 },
+    { powerKwh: 4, value: 0.23 },
+    { powerKwh: 5, value: 0.25 },
+    { powerKwh: 6, value: 0.27 },
+  ];
+
+  const billsBreakdownData = [
+    { name: "Service Charge", value: 50000, amount: "N50,000" },
+    { name: "Wallet Topup", value: 42000, amount: "N42,000" },
+    { name: "Vending", value: 30000, amount: "N30,000" },
+    { name: "Others", value: 15000, amount: "N15,000" },
+  ];
+
+  const handleExport = () => {
+    // Wire up to export functionality when backend is ready
+  };
 
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold">Dashboard</h1>
+          <h1 className="font-heading text-3xl font-bold">Overview</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back! Here's your estate overview.
+            Welcome back! Here&apos;s an overview on{" "}
+            <span className="text-[18px] font-bold underline uppercase text-black">
+              Demo Estate.
+            </span>
           </p>
         </div>
         <div className="flex gap-2">
-          {["week", "month", "year"].map((period) => (
+          {(["week", "month", "year"] as const).map((period) => (
             <Button
               key={period}
               variant={selectedPeriod === period ? "default" : "outline"}
@@ -117,259 +132,115 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => {
+      {/* KPI cards */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+        {stats.map((stat) => {
           const Icon = stat.icon;
           const isPositive = stat.trend === "up";
           return (
-            <Card key={i} className="p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-lg ${stat.color}`}>
-                  <Icon className="w-6 h-6" />
+            <Card
+              key={stat.title}
+              className="flex flex-col gap-3 p-4 transition-shadow hover:shadow-md sm:p-5 md:p-6"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${stat.color}`}
+                >
+                  <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
                 <div
-                  className={`flex items-center gap-1 text-sm font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}
+                  className={`flex items-center gap-1 text-sm font-medium ${
+                    isPositive ? "text-[#007A4D]" : "text-red-600"
+                  }`}
                 >
-                  {isPositive ? (
-                    <ArrowUpRight className="w-4 h-4" />
-                  ) : (
-                    <ArrowDownRight className="w-4 h-4" />
-                  )}
-                  {stat.change}
+                  <span className="border border-current p-1 rounded-sm inline-flex">
+                    <TrendingUp
+                      className={`h-4 w-4 ${isPositive ? "" : "rotate-180"}`}
+                      aria-hidden
+                    />
+                  </span>
+                  <span>{stat.change}</span>
                 </div>
               </div>
-              <p className="text-muted-foreground text-sm mb-1">{stat.title}</p>
-              <p className="font-heading text-2xl font-bold">{stat.value}</p>
+              <div className="min-w-0">
+                <p className="text-muted-foreground text-sm">{stat.title}</p>
+                <p className="mt-1 truncate font-heading text-2xl font-bold tabular-nums md:text-3xl">
+                  {stat.value}
+                </p>
+              </div>
             </Card>
           );
         })}
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Chart */}
-        <Card className="lg:col-span-2 p-6">
-          <div className="mb-6">
-            <h2 className="font-heading text-xl font-bold">
-              Revenue vs Expenses
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Last 6 months comparison
-            </p>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis stroke="var(--muted-foreground)" />
-              <YAxis stroke="var(--muted-foreground)" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--background)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                }}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="revenue"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ fill: "#3b82f6" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="expenses"
-                stroke="#ef4444"
-                strokeWidth={2}
-                dot={{ fill: "#ef4444" }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Revenue trend */}
+      <TransactionsChart
+        title="Revenue Trend"
+        subtitle="This month's comparison"
+        data={revenueTrendData}
+        estateOptions={estateFilterOptions}
+        onExport={handleExport}
+        className="w-full"
+      />
+
+      {/* Bills + Occupancy / Power usage */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2 p-4 sm:p-5 md:p-6">
+          <BillsOverview
+            title="Bills"
+            subtitle="This month's comparison"
+            onExport={handleExport}
+          />
         </Card>
 
-        {/* Bills Distribution */}
-        <Card className="p-6">
-          <div className="mb-6">
-            <h2 className="font-heading text-xl font-bold">
-              Bills Distribution
-            </h2>
-            <p className="text-sm text-muted-foreground">Current month</p>
+        <Card className="p-4 sm:p-5 md:p-6">
+          <div className="mb-4 space-y-1">
+            <h2 className="font-heading text-xl font-bold">Power Usage</h2>
+            <p className="text-sm text-muted-foreground">
+              Total Usage: <span className="font-semibold">1500 kWh</span>
+            </p>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={billsData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {billsData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="mt-4 space-y-2">
-            {billsData.map((bill, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between text-sm"
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: bill.fill }}
-                  />
-                  <span className="text-muted-foreground">{bill.name}</span>
-                </div>
-                <span className="font-medium">{bill.value}%</span>
-              </div>
-            ))}
-          </div>
+          <VendingTrendChart data={powerUsageData} />
         </Card>
       </div>
 
-      {/* Occupancy Chart */}
-      <Card className="p-6">
-        <div className="mb-6">
-          <h2 className="font-heading text-xl font-bold">Occupancy Trend</h2>
-          <p className="text-sm text-muted-foreground">
-            Unit occupancy over the last 6 months
-          </p>
-        </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={occupancyData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis stroke="var(--muted-foreground)" />
-            <YAxis stroke="var(--muted-foreground)" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "var(--background)",
-                border: "1px solid var(--border)",
-                borderRadius: "8px",
-              }}
-            />
-            <Legend />
-            <Bar dataKey="occupied" stackId="a" fill="#10b981" />
-            <Bar dataKey="vacant" stackId="a" fill="#e5e7eb" />
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
+      {/* Transactions + Withdrawals */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <TransactionsChart
+          title="Transactions"
+          subtitle="Total Transactions N150,000,000"
+          data={transactionsData}
+          estateOptions={estateFilterOptions}
+          onExport={handleExport}
+        />
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Bills */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-heading text-xl font-bold">Recent Bills</h2>
-            <Button variant="ghost" size="sm">
-              View All
-            </Button>
+        <Card className="p-4 sm:p-5 md:p-6">
+          <div className="mb-4 space-y-1">
+            <h2 className="font-heading text-xl font-bold">Withdrawals</h2>
+            <p className="text-sm text-muted-foreground">
+              Total Withdrawals:{" "}
+              <span className="font-semibold">N150,000,000</span>
+            </p>
           </div>
-          <div className="space-y-4">
-            {[
-              {
-                name: "Electricity Bill",
-                amount: "$2,450",
-                status: "Paid",
-                date: "Jun 15",
-              },
-              {
-                name: "Water Bill",
-                amount: "$890",
-                status: "Pending",
-                date: "Jun 10",
-              },
-              {
-                name: "Maintenance",
-                amount: "$5,200",
-                status: "Paid",
-                date: "Jun 5",
-              },
-              {
-                name: "Security Services",
-                amount: "$3,100",
-                status: "Overdue",
-                date: "May 30",
-              },
-            ].map((bill, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div>
-                  <p className="font-medium text-sm">{bill.name}</p>
-                  <p className="text-xs text-muted-foreground">{bill.date}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-sm">{bill.amount}</p>
-                  <p
-                    className={`text-xs font-medium ${
-                      bill.status === "Paid"
-                        ? "text-green-600"
-                        : bill.status === "Pending"
-                          ? "text-orange-600"
-                          : "text-red-600"
-                    }`}
-                  >
-                    {bill.status}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <VendingTrendChart data={withdrawalsData} />
         </Card>
+      </div>
 
-        {/* Alerts */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-heading text-xl font-bold">
-              Alerts & Notifications
-            </h2>
-            <Button variant="ghost" size="sm">
-              Clear All
-            </Button>
+      {/* Bills donut & Occupancy distribution */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <BillsBreakdownCard data={billsBreakdownData} />
+        <Card className="p-4 sm:p-5 md:p-6">
+          <div className="mb-4 space-y-1">
+            <h2 className="font-heading text-xl font-bold">Occupancy</h2>
+            <p className="text-sm text-muted-foreground">
+              Distribution of occupied vs vacant units
+            </p>
           </div>
-          <div className="space-y-4">
-            {[
-              {
-                title: "Overdue Payment",
-                message: "Security bill from May 30 is overdue",
-                type: "error",
-              },
-              {
-                title: "New Resident",
-                message: "Unit 204 has a new resident - John Smith",
-                type: "info",
-              },
-              {
-                title: "Maintenance Alert",
-                message: "Elevator maintenance scheduled for Jun 25",
-                type: "warning",
-              },
-              {
-                title: "Payment Received",
-                message: "Payment of $2,450 received from Unit 101",
-                type: "success",
-              },
-            ].map((alert, i) => (
-              <div key={i} className="flex gap-3 p-3 bg-muted/30 rounded-lg">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{alert.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {alert.message}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <OccupancyDistribution
+            totalResidents={54765}
+            occupiedPercentage={64}
+            vacantPercentage={24}
+          />
         </Card>
       </div>
     </div>
