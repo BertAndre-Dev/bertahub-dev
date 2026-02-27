@@ -379,6 +379,16 @@ export default function TransactionPage() {
           onPageChange={handlePageChange}
           enableExport
           exportFileName="transactions"
+          onExportRequest={
+            userId
+              ? async () => {
+                  const res = await dispatch(
+                    getTransactionHistory({ userId, page: 1, limit: 50000 }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
         />
 
         <div className="flex justify-end items-center gap-2 mt-4">

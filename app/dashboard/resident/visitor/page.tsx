@@ -242,6 +242,20 @@ export default function VisitorPage() {
                     onPageChange={handlePageChange}
                     enableExport
                     exportFileName="visitors"
+                    onExportRequest={
+                        userId
+                            ? async () => {
+                                const res = await dispatch(
+                                    getVisitorsByResident({
+                                        residentId: userId,
+                                        page: 1,
+                                        limit: 50000,
+                                    }),
+                                ).unwrap();
+                                return res?.data ?? [];
+                            }
+                            : undefined
+                    }
                 />
             </Card>
 

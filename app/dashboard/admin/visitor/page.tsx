@@ -283,6 +283,20 @@ export default function AdminVisitorManagement() {
           onPageChange={handlePageChange}
           enableExport
           exportFileName="visitors"
+          onExportRequest={
+            estateId
+              ? async () => {
+                  const res = await dispatch(
+                    getVisitorsByEstate({
+                      estateId,
+                      page: 1,
+                      limit: 50000,
+                    }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
         />
       </Card>
     </div>

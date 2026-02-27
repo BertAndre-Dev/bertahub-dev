@@ -222,6 +222,16 @@ export default function BillPage() {
           }}
           enableExport
           exportFileName="bills"
+          onExportRequest={
+            estateId
+              ? async () => {
+                  const res = await dispatch(
+                    getBillsByEstate({ estateId, page: 1, limit: 50000 }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
         />
       </Card>
 

@@ -211,6 +211,20 @@ export default function AdminMeterManagement() {
           }}
           enableExport
           exportFileName="meters"
+          onExportRequest={
+            estateId
+              ? async () => {
+                  const res = await dispatch(
+                    getAllEstateMeter({
+                      estateId,
+                      page: 1,
+                      limit: 50000,
+                    }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
         />
       </Card>
 
