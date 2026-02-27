@@ -211,6 +211,8 @@ export default function AddressField() {
               .unwrap()
               .catch(() => toast.error("Failed to change page"));
           }}
+          enableExport
+          exportFileName="address-fields"
         />
       </Card>
 

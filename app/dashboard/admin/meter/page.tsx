@@ -209,6 +209,8 @@ export default function AdminMeterManagement() {
               .unwrap()
               .catch(() => toast.error("Failed to change page"));
           }}
+          enableExport
+          exportFileName="meters"
         />
       </Card>
 

@@ -2,12 +2,17 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 interface Column<T> {
   key: keyof T | string;
   header: string;
   render?: (item: T) => React.ReactNode;
   align?: "left" | "center" | "right";
+  /** Used for CSV export when value differs from display (e.g. formatted dates). Omit to use row[key]. */
+  exportValue?: (item: T) => string | number | null | undefined;
+  /** Include this column in export. Default true. Set false for action-only columns. */
+  exportable?: boolean;
 }
 
 interface PaginationInfo {
@@ -26,6 +31,20 @@ interface TableProps<T> {
   onPageChange?: (newPage: number) => void;
   enableSearch?: boolean;
   onSearch?: (value: string) => void;
+  /** Show an Export button that downloads table data as CSV. */
+  enableExport?: boolean;
+  /** Base name for the downloaded file (e.g. "transactions"). Default "export". */
+  exportFileName?: string;
+  /** Optional: return full dataset for export (e.g. fetch all pages). If not provided, current `data` is exported. */
+  onExportRequest?: () => Promise<T[]> | T[];
+}
+
+/** Escape a cell for CSV (quotes and commas). */
+function csvEscape(value: string | number): string {
+  const s = String(value ?? "");
+  if (s.includes('"') || s.includes(",") || s.includes("\n") || s.includes("\r"))
+    return `"${s.replaceAll('"', '""')}"`;
+  return s;
 }
 
 export default function Table<T extends { id?: string }>({
@@ -38,10 +57,47 @@ export default function Table<T extends { id?: string }>({
   onPageChange,
   enableSearch = false,
   onSearch,
+  enableExport = false,
+  exportFileName = "export",
+  onExportRequest,
 }: TableProps<T>) {
   if (!paginationInfo) {
     showPagination = false;
   }
+
+  const exportableColumns = columns.filter(
+    (col) => col.exportable !== false && col.key !== "actions",
+  );
+
+  const handleExport = React.useCallback(async () => {
+    const rows = (await Promise.resolve(onExportRequest?.() ?? data)) ?? data;
+    if (!rows?.length) return;
+    const headers = exportableColumns.map((col) => csvEscape(col.header));
+    const body = rows.map((item) =>
+      exportableColumns
+        .map((col) => {
+          const raw = col.exportValue
+            ? col.exportValue(item)
+            : (item as Record<string, unknown>)[col.key as string];
+          const value =
+            raw == null
+              ? ""
+              : typeof raw === "string" || typeof raw === "number"
+                ? raw
+                : String(raw);
+          return csvEscape(value);
+        })
+        .join(","),
+    );
+    const csv = [headers.join(","), ...body].join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${exportFileName.replace(/[^a-z0-9-_]/gi, "_")}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [data, onExportRequest, exportableColumns, exportFileName]);
 
   const totalPages = paginationInfo
     ? Math.ceil(paginationInfo.total / paginationInfo.pageSize)
@@ -69,19 +125,34 @@ export default function Table<T extends { id?: string }>({
 
   return (
     <div className="overflow-hidden border rounded-lg">
-      {enableSearch && (
-        <div className="p-4 border-b bg-muted/30">
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchValue}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSearchValue(value);
-              onSearch?.(value);
-            }}
-            className="h-9 w-64 rounded-md border border-border px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-          />
+      {(enableSearch || enableExport) && (
+        <div className="p-4 border-b bg-muted/30 flex flex-wrap items-center gap-3">
+          {enableSearch && (
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchValue}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchValue(value);
+                onSearch?.(value);
+              }}
+              className="h-9 w-64 rounded-md border border-border px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
+          {enableExport && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="cursor-pointer gap-2"
+              onClick={handleExport}
+              disabled={data.length === 0 && !onExportRequest}
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+          )}
         </div>
       )}
 

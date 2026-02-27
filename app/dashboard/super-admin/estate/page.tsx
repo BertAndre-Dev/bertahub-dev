@@ -317,6 +317,8 @@ export default function EstatePage() {
               }),
             )
           }
+          enableExport
+          exportFileName="estates"
         />
       </Card>
 

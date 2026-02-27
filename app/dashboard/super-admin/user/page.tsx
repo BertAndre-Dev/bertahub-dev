@@ -295,6 +295,8 @@ export default function SuperAdminUserPage() {
               .unwrap()
               .catch(() => toast.error("Failed to change page"));
           }}
+          enableExport
+          exportFileName="users"
         />
       </Card>
 

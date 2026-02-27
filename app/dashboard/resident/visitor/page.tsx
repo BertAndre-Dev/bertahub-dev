@@ -240,6 +240,8 @@ export default function VisitorPage() {
                         pageSize: Number(pagination?.limit) || 10,
                     }}
                     onPageChange={handlePageChange}
+                    enableExport
+                    exportFileName="visitors"
                 />
             </Card>
 

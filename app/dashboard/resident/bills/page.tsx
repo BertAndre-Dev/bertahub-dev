@@ -210,6 +210,8 @@ export default function BillPage() {
             current: Number(paidPagination?.page) || 1,
             pageSize: Number(paidPagination?.limit) || 10,
           }}
+          enableExport
+          exportFileName="paid-bills"
         />
       </Card>
 

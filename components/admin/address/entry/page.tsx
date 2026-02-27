@@ -314,6 +314,8 @@ export default function EntryPage() {
               })
               .catch(() => toast.error("Failed to change page"));
           }}
+          enableExport
+          exportFileName="address-entries"
         />
       </Card>
 

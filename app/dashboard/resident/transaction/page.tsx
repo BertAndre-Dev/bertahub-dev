@@ -377,6 +377,8 @@ export default function TransactionPage() {
             pageSize: pagination?.pageSize || limit,
           }}
           onPageChange={handlePageChange}
+          enableExport
+          exportFileName="transactions"
         />
 
         <div className="flex justify-end items-center gap-2 mt-4">

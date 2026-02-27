@@ -278,6 +278,8 @@ export default function AdminUserPage() {
             if (!selectedEstate?.value) return;
             fetchAdminUsers(selectedEstate.value, page, search);
           }}
+          enableExport
+          exportFileName="users"
         />
       </Card>
 

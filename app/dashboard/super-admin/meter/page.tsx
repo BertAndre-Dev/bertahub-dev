@@ -216,6 +216,8 @@ export default function AdminMeterManagement() {
               getAllMeters({ page, limit: Number(pagination?.pageSize) || 10 }),
             );
           }}
+          enableExport
+          exportFileName="meters"
         />
       </Card>
 

@@ -380,6 +380,8 @@ export default function TransactionPage() {
                 pageSize: pagination?.pageSize || limit,
               }}
               onPageChange={handlePageChange}
+              enableExport
+              exportFileName="transactions"
             />
             <div className="flex justify-end items-center gap-2 mt-4">
               <Button
@@ -413,6 +415,8 @@ export default function TransactionPage() {
                 pageSize: vendsPagination?.limit ?? limit,
               }}
               onPageChange={(p) => setVendsPage(p)}
+              enableExport
+              exportFileName="vends"
             />
             <div className="flex justify-end items-center gap-2 mt-4">
               <Button
@@ -451,6 +455,8 @@ export default function TransactionPage() {
                 pageSize: paidBillsPagination?.limit ?? limit,
               }}
               onPageChange={(p) => setPaidBillsPage(p)}
+              enableExport
+              exportFileName="paid-bills"
             />
             <div className="flex justify-end items-center gap-2 mt-4">
               <Button
