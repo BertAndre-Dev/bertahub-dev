@@ -237,6 +237,8 @@ export default function ResidentMeter() {
               pageSize: Number(pagination?.limit) || 10,
             }}
             onPageChange={handleVendPageChange}
+            enableExport
+            exportFileName="meter-vend-history"
           />
         </Card>
 

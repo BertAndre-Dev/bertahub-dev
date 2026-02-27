@@ -56,6 +56,11 @@ export const superAdminNav = [
     icon: FiSettings,
     path: "/dashboard/settings",
   },
+  // {
+  //   label: "Logout"
+
+      
+  // }
 ];
 
 export const adminNav = [

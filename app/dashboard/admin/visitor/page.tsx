@@ -281,6 +281,8 @@ export default function AdminVisitorManagement() {
             pageSize: pagination.limit,
           }}
           onPageChange={handlePageChange}
+          enableExport
+          exportFileName="visitors"
         />
       </Card>
     </div>

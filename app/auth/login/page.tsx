@@ -64,7 +64,7 @@ export default function LoginPage() {
         // ✅ Redirect based on role
         const role = user.role?.toLowerCase();
         if (role === "super admin") {
-          router.push("/dashboard/super-admin/user");
+          router.push("/dashboard/super-admin/dashboard");
         } else if (role === "admin") {
           router.push("/dashboard/admin/dashboard");
         } else if (role === "security") {

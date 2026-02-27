@@ -365,6 +365,8 @@ export default function EstateAdminWalletPage() {
             pageSize,
           }}
           onPageChange={setCreditsPage}
+          enableExport
+          exportFileName="estate-credits"
         />
         <div className="flex justify-end items-center gap-2 mt-4">
           <Button
