@@ -68,10 +68,13 @@ export default function Table<T extends { id?: string }>({
   const exportableColumns = columns.filter(
     (col) => col.exportable !== false && col.key !== "actions",
   );
+  const [exporting, setExporting] = React.useState(false);
 
   const handleExport = React.useCallback(async () => {
-    const rows = (await Promise.resolve(onExportRequest?.() ?? data)) ?? data;
-    if (!rows?.length) return;
+    try {
+      if (onExportRequest) setExporting(true);
+      const rows = (await Promise.resolve(onExportRequest?.() ?? data)) ?? data;
+      if (!rows?.length) return;
     const headers = exportableColumns.map((col) => csvEscape(col.header));
     const body = rows.map((item) =>
       exportableColumns
@@ -97,6 +100,9 @@ export default function Table<T extends { id?: string }>({
     a.download = `${exportFileName.replace(/[^a-z0-9-_]/gi, "_")}_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
   }, [data, onExportRequest, exportableColumns, exportFileName]);
 
   const totalPages = paginationInfo
@@ -147,10 +153,10 @@ export default function Table<T extends { id?: string }>({
               size="sm"
               className="cursor-pointer gap-2"
               onClick={handleExport}
-              disabled={data.length === 0 && !onExportRequest}
+              disabled={(data.length === 0 && !onExportRequest) || exporting}
             >
               <Download className="h-4 w-4" />
-              Export CSV
+              {exporting ? "Exporting…" : "Export CSV"}
             </Button>
           )}
         </div>

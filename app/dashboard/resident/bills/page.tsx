@@ -212,6 +212,16 @@ export default function BillPage() {
           }}
           enableExport
           exportFileName="paid-bills"
+          onExportRequest={
+            userId
+              ? async () => {
+                  const res = await dispatch(
+                    getResidentBills({ residentId: userId, page: 1, limit: 50000 }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
         />
       </Card>
 
