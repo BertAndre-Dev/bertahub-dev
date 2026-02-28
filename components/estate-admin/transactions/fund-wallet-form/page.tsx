@@ -31,6 +31,8 @@ interface FundWalletFormProps {
   userId: string;
   walletId: string;
   defaultAccountNumber?: string;
+  /** Max amount that can be withdrawn (e.g. estate wallet temporaryBalance). */
+  maxWithdrawableAmount?: number;
   onSubmit: (data: {
     userId: string;
     walletId: string;
@@ -49,6 +51,7 @@ export default function FundWalletForm({
   userId,
   walletId,
   defaultAccountNumber = "",
+  maxWithdrawableAmount,
   onSubmit,
   onClose,
 }: FundWalletFormProps) {
@@ -169,6 +172,16 @@ export default function FundWalletForm({
 
     if (!amount || amount <= 0) {
       toast.error("Please enter a valid amount.");
+      return;
+    }
+
+    if (
+      typeof maxWithdrawableAmount === "number" &&
+      amount > maxWithdrawableAmount
+    ) {
+      toast.error(
+        `Amount cannot exceed withdrawable balance (₦${maxWithdrawableAmount.toLocaleString()}).`,
+      );
       return;
     }
 

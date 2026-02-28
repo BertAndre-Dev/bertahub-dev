@@ -122,12 +122,14 @@ export const getEstateTransactionHistory = createAsyncThunk(
       limit = 10,
       type,
       paymentStatus,
+      search,
     }: {
       estateId: string;
       page?: number;
       limit?: number;
       type?: string;
       paymentStatus?: string;
+      search?: string;
     },
     { rejectWithValue }
   ) => {
@@ -140,6 +142,7 @@ export const getEstateTransactionHistory = createAsyncThunk(
 
       if (type) params.type = type;
       if (paymentStatus) params.paymentStatus = paymentStatus;
+      if (search?.trim()) params.search = search.trim();
 
       const res = await axiosInstance.get(
         `/api/v1/transaction-mgt/estate-history`,

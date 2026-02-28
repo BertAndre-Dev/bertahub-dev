@@ -1,11 +1,15 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type React from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Modal from "@/components/modal/page";
 import WithdrawFundForm from "@/components/estate-admin/transactions/fund-wallet-form/page";
+import EstateWalletOverviewCard, {
+  WalletFilterExportBar,
+} from "@/components/estate-admin/wallet-overview-card/page";
 import {
   createWallet,
   getWallet,
@@ -23,7 +27,6 @@ import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import type { EstateCreditItem } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt-slice";
 import { generateTxRef } from "@/redux/slice/estate-admin/payment/payment";
-
 
 // Extend the type to include all fields from API
 interface ExtendedEstateCreditItem extends EstateCreditItem {
@@ -96,10 +99,10 @@ export default function EstateAdminWalletPage() {
           }),
         ).unwrap();
       } catch (err: any) {
-        // Display the actual API error message
+        // When user does not have a wallet, do not show error toast
         const errorMessage =
           err?.message || err?.payload?.message || "Failed to load data.";
-        toast.error(errorMessage);
+        // toast.error(errorMessage);
       }
     })();
   }, [dispatch, limit]);
@@ -131,7 +134,7 @@ export default function EstateAdminWalletPage() {
       toast.success("Wallet created successfully.");
       setCreateWalletModalOpen(false);
       setCreateWalletAccountNumber("");
-      // if (estateId) dispatch(getWallet(estateId));
+      await dispatch(getWallet(estateId));
     } catch (error: any) {
       toast.error(error?.message || "Failed to create wallet.");
     }
@@ -160,7 +163,9 @@ export default function EstateAdminWalletPage() {
   }) => {
     try {
       if (!bankCode || !accountNumber) {
-        toast.error("Bank code and account number are required for withdrawal.");
+        toast.error(
+          "Bank code and account number are required for withdrawal.",
+        );
         return;
       }
 
@@ -189,29 +194,24 @@ export default function EstateAdminWalletPage() {
           accountNumber,
           tx_ref, // 🔥 important
           narration: description || `Withdrawal of ${currency} ${amount}`,
-        })
+        }),
       ).unwrap();
 
       toast.success("Fund withdrawal initiated successfully!");
 
       // ✅ 3. Refresh wallet + credits
       await dispatch(getWallet(estateId));
-      await dispatch(
-        getEstateCredits({ estateId, page: creditsPage, limit })
-      );
+      await dispatch(getEstateCredits({ estateId, page: creditsPage, limit }));
 
       setOpen(false);
     } catch (err: any) {
       const errorMessage =
-        err?.message ||
-        err?.payload?.message ||
-        "Failed to withdraw fund.";
+        err?.message || err?.payload?.message || "Failed to withdraw fund.";
 
       toast.error(errorMessage);
       throw err;
     }
   };
-
 
   // Verify transaction when redirected back from payment
   useEffect(() => {
@@ -262,25 +262,29 @@ export default function EstateAdminWalletPage() {
     return () => clearTimeout(timer);
   }, [dispatch, userId, estateId, creditsPage, limit]);
 
-  const creditsColumns = [
+  const creditsColumns: Array<{
+    key: string;
+    header: string;
+    render: (item: ExtendedEstateCreditItem) => React.ReactNode;
+  }> = [
     {
       key: "createdAt",
       header: "Date",
-      render: (item: ExtendedEstateCreditItem) =>
+      render: (item: ExtendedEstateCreditItem): React.ReactNode =>
         item.createdAt
           ? new Date(item.createdAt).toLocaleString("en-NG", {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+              year: "numeric",
+              month: "short",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "—",
     },
     {
       key: "amount",
       header: "Amount (₦)",
-      render: (item: ExtendedEstateCreditItem) =>
+      render: (item: ExtendedEstateCreditItem): React.ReactNode =>
         typeof item.amount === "number"
           ? Number(item.amount).toLocaleString()
           : "—",
@@ -288,20 +292,28 @@ export default function EstateAdminWalletPage() {
     {
       key: "serviceCharge",
       header: "Service Charge (₦)",
-      render: (item: ExtendedEstateCreditItem) =>
+      render: (item: ExtendedEstateCreditItem): React.ReactNode =>
         typeof item.serviceCharge === "number"
           ? Number(item.serviceCharge).toLocaleString()
           : "—",
     },
     {
+      key: "tx_ref",
+      header: "Transaction Reference",
+      render: (item: ExtendedEstateCreditItem): React.ReactNode =>
+        typeof item.tx_ref === "string" ? item.tx_ref : "—",
+    },
+    {
       key: "source",
       header: "Source",
-      render: (item: ExtendedEstateCreditItem) => item.source ?? "—",
+      render: (item: ExtendedEstateCreditItem): React.ReactNode =>
+        typeof item.source === "string" ? item.source : "—",
     },
     {
       key: "description",
       header: "Description",
-      render: (item: ExtendedEstateCreditItem) => item.description ?? "—",
+      render: (item: ExtendedEstateCreditItem): React.ReactNode =>
+        typeof item.description === "string" ? item.description : "—",
     },
   ];
 
@@ -317,39 +329,40 @@ export default function EstateAdminWalletPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-4 md:p-6 shadow-md">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">My Wallet</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {wallet ? (
-            <div className="flex flex-col md:flex-row gap-5 md:gap-0 items-start md:items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Wallet Balance</p>
-                <p className="text-4xl font-bold mt-1">
-                  ₦{wallet?.balance?.toLocaleString() ?? 0}
-                </p>
-              </div>
-              <Button onClick={handleOpenModal} size="lg" className="px-6">
-                Withdraw Fund
-              </Button>
-            </div>
-          ) : (
-            <Button
-              onClick={() => setCreateWalletModalOpen(true)}
-              disabled={createWalletState === "isLoading"}
-            >
-              {createWalletState === "isLoading"
-                ? "Creating wallet..."
-                : "Create Wallet"}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <div>
+        <h1 className="font-heading text-3xl font-bold">Wallet Management</h1>
+        <p className="text-muted-foreground mt-1">
+          Welcome back! Here's is an overview on{" "}
+          <span className="text-[18px] font-bold underline uppercase text-black">
+            Doe Estate
+          </span>
+          .
+        </p>
+      </div>
 
+      {/* Wallet overview (Figma: balances + bill stats + Withdraw Funds) */}
+      <EstateWalletOverviewCard
+        wallet={wallet}
+        billStats={
+          // Replace with API data when estate bill summary is available
+          { totalBills: 0, paidBills: 0, pendingBills: 0, serviceFee: 0 }
+        }
+        onWithdraw={handleOpenModal}
+        onCreateWallet={() => setCreateWalletModalOpen(true)}
+        createWalletLoading={createWalletState === "isLoading"}
+        filterExportSlot={
+          <WalletFilterExportBar
+            onFilterByRef={() => {}}
+            onFilterByStatus={() => {}}
+            onExport={() => {}}
+          />
+        }
+      />
+
+      {/* Estate Credits Table */}
       <Card className="p-4">
-        <h2 className="font-semibold mb-4">Estate Credits</h2>
-        <p className="text-sm text-muted-foreground mb-4">
+        <h2 className="font-semibold">Estate Credits</h2>
+        <p className="text-sm text-muted-foreground">
           Amounts credited to wallets in this estate.
         </p>
         <Table<ExtendedEstateCreditItem>
@@ -366,7 +379,7 @@ export default function EstateAdminWalletPage() {
           }}
           onPageChange={setCreditsPage}
         />
-        <div className="flex justify-end items-center gap-2 mt-4">
+        {/* <div className="flex justify-end items-center gap-2 mt-4">
           <Button
             disabled={pageNum <= 1}
             onClick={() => setCreditsPage((p) => p - 1)}
@@ -381,7 +394,7 @@ export default function EstateAdminWalletPage() {
           >
             Next
           </Button>
-        </div>
+        </div> */}
       </Card>
 
       <Modal visible={open} onClose={handleOpenModal}>
@@ -391,6 +404,7 @@ export default function EstateAdminWalletPage() {
               userId={userId}
               walletId={wallet.id ?? ""}
               defaultAccountNumber={wallet.accountNumber ?? ""}
+              maxWithdrawableAmount={wallet.temporaryBalance}
               onSubmit={handleWithdrawSubmit}
               onClose={handleOpenModal}
             />
@@ -407,7 +421,7 @@ export default function EstateAdminWalletPage() {
           setCreateWalletAccountNumber("");
         }}
       >
-        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto p-6">
+        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto mt-12 pb-8 px-6">
           <h2 className="text-lg font-semibold mb-4">Create Wallet</h2>
           <p className="text-sm text-muted-foreground mb-4">
             Your withdrawal will be sent to this account number. This

@@ -12,9 +12,11 @@ import {
 
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
+import { TrendingUp, ChevronDown, Calendar } from "lucide-react";
+import { Select } from "@/components/ui/select";
 
 interface TransactionData {
   walletId: string;
@@ -57,6 +59,14 @@ export default function TransactionPage() {
   } | null>(null);
   const [paidBillsPage, setPaidBillsPage] = useState(1);
   const [loadingPaidBills, setLoadingPaidBills] = useState(false);
+  const [search, setSearch] = useState("");
+  const [totalVends, setTotalVends] = useState<number>(0);
+  const [totalBills, setTotalBills] = useState<number>(0);
+  const [filterType, setFilterType] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [dateRangeLabel, setDateRangeLabel] = useState<string>("5th Jan - 30th Jan");
+  const [exportOpen, setExportOpen] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
   const transactions = useSelector(
     (state: RootState) =>
       (state as any).estateAdminTransaction?.allTransactions?.data || [],
@@ -102,13 +112,59 @@ export default function TransactionPage() {
             estateId: estateIdFromUser,
             page: 1,
             limit,
+            search: search || undefined,
+            type: filterType || undefined,
+            paymentStatus: filterStatus || undefined,
           }),
         );
+
+        // ✅ Fetch vends and paid bills totals for stats (limit 1 just to get pagination.total)
+        const [vendsRes, billsRes] = await Promise.all([
+          dispatch(
+            getEstateVends({
+              estateId: estateIdFromUser,
+              page: 1,
+              limit: 1,
+            }),
+          )
+            .unwrap()
+            .catch(() => ({ pagination: { total: 0 } })),
+          dispatch(
+            getEstatePaidBills({
+              estateId: estateIdFromUser,
+              page: 1,
+              limit: 1,
+            }),
+          )
+            .unwrap()
+            .catch(() => ({ pagination: { total: 0 } })),
+        ]);
+        setTotalVends(vendsRes?.pagination?.total ?? 0);
+        setTotalBills(billsRes?.pagination?.total ?? 0);
       } catch (err) {
         toast.error("Failed to load data.");
       }
     })();
   }, [dispatch, limit]);
+
+  // 🔹 Refetch transaction history when search or filters change (debounced for search)
+  useEffect(() => {
+    if (!estateId) return;
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      dispatch(
+        getEstateTransactionHistory({
+          estateId,
+          page: 1,
+          limit,
+          search: search.trim() || undefined,
+          type: filterType || undefined,
+          paymentStatus: filterStatus || undefined,
+        }),
+      );
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, filterType, filterStatus, estateId, dispatch, limit]);
 
   // 🔹 Fetch vends when tab is vends
   useEffect(() => {
@@ -155,9 +211,26 @@ export default function TransactionPage() {
     if (!estateId) return;
     setCurrentPage(newPage);
     await dispatch(
-      getEstateTransactionHistory({ estateId, page: newPage, limit }),
+      getEstateTransactionHistory({
+        estateId,
+        page: newPage,
+        limit,
+        search: search.trim() || undefined,
+        type: filterType || undefined,
+        paymentStatus: filterStatus || undefined,
+      }),
     );
   };
+
+  // Total transaction amount (sum of current page – replace with API summary when available)
+  const totalTransactionsAmount = transactions.reduce(
+    (sum: number, t: { amount?: number }) => sum + (Number(t?.amount) || 0),
+    0,
+  );
+  const totalTransactionsDisplay =
+    totalTransactionsAmount > 0
+      ? `₦${totalTransactionsAmount.toLocaleString()}`
+      : `₦0`;
 
   // 🔹 Automatically verify transaction when redirected back
   useEffect(() => {
@@ -241,6 +314,17 @@ export default function TransactionPage() {
           : "-",
     },
     {
+      key: "email",
+      header: "Email",
+      render: (item: any) => item.user?.email ?? "-",
+    },
+    {
+      key: "tx_ref",
+      header: "Transaction Reference",
+      render: (item: any) => item.tx_ref ?? "-",
+    },
+
+    {
       key: "type",
       header: "Type",
       render: (item: any) =>
@@ -287,6 +371,11 @@ export default function TransactionPage() {
           : "-",
     },
     {
+      key: "email",
+      header: "Email",
+      render: (item: any) => item.user?.email ?? "-",
+    },
+    {
       key: "meterNumber",
       header: "Meter",
       render: (item: any) => item.meterNumber ?? "-",
@@ -321,6 +410,26 @@ export default function TransactionPage() {
           : "-",
     },
     {
+      key: "email",
+      header: "Email",
+      render: (item: any) => item.user?.email ?? "-",
+    },
+    {
+      key: "frequency",
+      header: "Frequency",
+      render: (item: any) => item.frequency ?? "-",
+    },
+    {
+      key: "Start Date",
+      header: "Start Date",
+      render: (item: any) => item.startDate ?? "-",
+    },
+    {
+      key: "Next Due Date",
+      header: "Next Due Date",
+      render: (item: any) => item.nextDueDate ?? "-",
+    },
+    {
       key: "bill",
       header: "Bill",
       render: (item: any) => item.bill?.name ?? "-",
@@ -343,6 +452,139 @@ export default function TransactionPage() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="font-heading text-3xl font-bold">Transactions</h1>
+        <p className="text-muted-foreground mt-1">
+          Welcome back! Here's is an overview on{" "}
+          <span className="text-[18px] font-bold underline uppercase text-black">
+            Doe Estate
+          </span>
+          .
+        </p>
+      </div>
+
+      {/* Stats – Figma: Total Transactions (main) + Total Bills | Paid Bills | Pending Bills */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <Card className="p-6 lg:col-span-1">
+          <p className="text-sm text-muted-foreground">Total Transactions</p>
+          <p className="font-heading text-2xl md:text-3xl font-bold mt-2">
+            {totalTransactionsDisplay}
+          </p>
+          <div className="flex items-center gap-1 mt-2 text-sm font-medium text-green-600">
+            <TrendingUp className="w-4 h-4" />
+            <span>5.2% this month</span>
+          </div>
+        </Card>
+        <Card className="p-6">
+          <p className="text-sm text-muted-foreground">Total Bills</p>
+          <p className="font-heading text-2xl font-bold mt-2">
+            ₦{
+              paidBillsData.reduce((sum: number, item: any) => sum + item.amountPaid, 0)
+            }.toLocaleString()
+          </p>
+        </Card>
+        <Card className="p-6">
+          <p className="text-sm text-muted-foreground">Paid Bills</p>
+          <p className="font-heading text-2xl font-bold mt-2">
+            ₦{
+              paidBillsData.reduce((sum: number, item: any) => sum + item.amountPaid, 0)
+            }.toLocaleString()
+          </p>
+        </Card>
+        <Card className="p-6">
+          <p className="text-sm text-muted-foreground">Pending Bills</p>
+          <p className="font-heading text-2xl font-bold mt-2">
+            ₦{
+              paidBillsData.reduce((sum: number, item: any) => sum + item.amountPaid, 0)
+            }.toLocaleString()
+          </p>
+        </Card>
+      </div>
+
+      {/* Filter bar – Date range, Filter by Type, Filter by Status, Export (Figma) */}
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background text-sm font-medium text-foreground hover:bg-muted/50"
+          >
+            <Calendar className="w-4 h-4" />
+            <span>{dateRangeLabel}</span>
+            <ChevronDown className="w-4 h-4" />
+          </button>
+          <Select
+            options={[
+              { label: "Filter by Type", value: "" },
+              { label: "Credit", value: "credit" },
+              { label: "Debit", value: "debit" },
+            ]}
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="w-[180px]"
+          />
+          <Select
+            options={[
+              { label: "Filter by Status", value: "" },
+              { label: "Successful", value: "successful" },
+              { label: "Pending", value: "pending" },
+            ]}
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="w-[180px]"
+          />
+          <div className="relative ml-auto" ref={exportRef}>
+            <Button
+              variant="outline"
+              onClick={() => setExportOpen((o) => !o)}
+              className="gap-1"
+            >
+              Export
+              <ChevronDown className="w-4 h-4" />
+            </Button>
+            {exportOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  aria-hidden
+                  onClick={() => setExportOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-1 z-20 min-w-[120px] rounded-md border border-border bg-background py-1 shadow-md">
+                  <button
+                    type="button"
+                    className="block w-full px-4 py-2 text-left text-sm hover:bg-muted/50"
+                    onClick={() => {
+                      setExportOpen(false);
+                      toast.info("PDF export – wire to your export logic.");
+                    }}
+                  >
+                    PDF
+                  </button>
+                  <button
+                    type="button"
+                    className="block w-full px-4 py-2 text-left text-sm hover:bg-muted/50"
+                    onClick={() => {
+                      setExportOpen(false);
+                      toast.info("CSV export – wire to your export logic.");
+                    }}
+                  >
+                    CSV
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="mt-3">
+          <input
+            type="text"
+            placeholder="Search transactions by resident name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+      </Card>
+
       {/* Tabs: Transaction History | Estate Vends | Paid Bills */}
       <Card className="p-4">
         <div className="flex gap-2 border-b border-border overflow-x-auto mb-4">

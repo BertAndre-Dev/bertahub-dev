@@ -154,11 +154,11 @@ export const residentNav = [
 ];
 
 export const estateAdminNav = [
-  // {
-  //   label: "Dashboard",
-  //   icon: FiHome,
-  //   path: "/dashboard/estate-admin/dashboard",
-  // },
+  {
+    label: "Dashboard",
+    icon: FiHome,
+    path: "/dashboard/estate-admin/dashboard",
+  },
   {
     label: "Transactions",
     icon: GrTransaction,
