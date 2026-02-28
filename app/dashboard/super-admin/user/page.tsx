@@ -352,6 +352,22 @@ export default function SuperAdminUserPage() {
               .unwrap()
               .catch(() => toast.error("Failed to change page"));
           }}
+          enableExport
+          exportFileName="users"
+          onExportRequest={
+            selectedEstate?.value
+              ? async () => {
+                  const res = await dispatch(
+                    getAllUsersByEstate({
+                      estateId: selectedEstate.value,
+                      page: 1,
+                      limit: 50000,
+                    }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
         />
       </Card>
 

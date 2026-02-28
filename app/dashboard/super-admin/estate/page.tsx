@@ -328,6 +328,14 @@ export default function EstatePage() {
               }),
             )
           }
+          enableExport
+          exportFileName="estates"
+          onExportRequest={async () => {
+            const res = await dispatch(
+              getAllEstates({ page: 1, limit: 50000 }),
+            ).unwrap();
+            return res?.data ?? [];
+          }}
         />
       </Card>
 

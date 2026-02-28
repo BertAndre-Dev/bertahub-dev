@@ -210,6 +210,18 @@ export default function BillPage() {
             current: Number(paidPagination?.page) || 1,
             pageSize: Number(paidPagination?.limit) || 10,
           }}
+          enableExport
+          exportFileName="paid-bills"
+          onExportRequest={
+            userId
+              ? async () => {
+                  const res = await dispatch(
+                    getResidentBills({ residentId: userId, page: 1, limit: 50000 }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
         />
       </Card>
 

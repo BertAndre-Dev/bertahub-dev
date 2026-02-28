@@ -237,6 +237,22 @@ export default function ResidentMeter() {
               pageSize: Number(pagination?.limit) || 10,
             }}
             onPageChange={handleVendPageChange}
+            enableExport
+            exportFileName="meter-vend-history"
+            onExportRequest={
+              meter?.meterNumber
+                ? async () => {
+                    const res = await dispatch(
+                      getMeterVendHistory({
+                        meterNumber: meter.meterNumber,
+                        page: 1,
+                        limit: 50000,
+                      }),
+                    ).unwrap();
+                    return res?.data ?? [];
+                  }
+                : undefined
+            }
           />
         </Card>
 

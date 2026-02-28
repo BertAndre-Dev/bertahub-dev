@@ -57,9 +57,9 @@ export function GeneralSettingsCard() {
   }, [dispatch]);
 
   useEffect(() => {
-  if (!userId) return;
-  dispatch(getUserProfile(userId));
-}, [dispatch, userId]); 
+    if (!userId) return;
+    dispatch(getUserProfile(userId));
+  }, [dispatch, userId]);
 
   useEffect(() => {
     if (!user) return;
@@ -89,6 +89,7 @@ export function GeneralSettingsCard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
+
 
     if (!userId) {
       setFormError("No signed-in user found");

@@ -337,6 +337,23 @@ export default function AdminUserPage() {
             if (!selectedEstate?.value) return;
             fetchAdminUsers(selectedEstate.value, page, search);
           }}
+          enableExport
+          exportFileName="users"
+          onExportRequest={
+            selectedEstate?.value
+              ? async () => {
+                  const res = await dispatch(
+                    getAllUsersByEstate({
+                      estateId: selectedEstate.value,
+                      page: 1,
+                      limit: 50000,
+                      search,
+                    }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
         />
       </Card>
 

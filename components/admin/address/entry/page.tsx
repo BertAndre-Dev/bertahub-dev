@@ -372,6 +372,20 @@ export default function EntryPage() {
               })
               .catch(() => toast.error("Failed to change page"));
           }}
+          enableExport
+          exportFileName="address-entries"
+          onExportRequest={
+            fields[0]
+              ? async () => {
+                  const fieldId = fields[0]?.id || fields[0]?._id;
+                  if (!fieldId) return [];
+                  const res = await dispatch(
+                    getEntriesByField({ fieldId, page: 1, limit: 50000 }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
         />
       </Card>
 

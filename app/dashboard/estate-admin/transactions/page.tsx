@@ -611,6 +611,22 @@ export default function TransactionPage() {
                 pageSize: pagination?.pageSize || limit,
               }}
               onPageChange={handlePageChange}
+              enableExport
+              exportFileName="transactions"
+              onExportRequest={
+                estateId
+                  ? async () => {
+                      const res = await dispatch(
+                        getEstateTransactionHistory({
+                          estateId,
+                          page: 1,
+                          limit: 50000,
+                        }),
+                      ).unwrap();
+                      return res?.data ?? [];
+                    }
+                  : undefined
+              }
             />
             <div className="flex justify-end items-center gap-2 mt-4">
               <Button
@@ -644,6 +660,18 @@ export default function TransactionPage() {
                 pageSize: vendsPagination?.limit ?? limit,
               }}
               onPageChange={(p) => setVendsPage(p)}
+              enableExport
+              exportFileName="vends"
+              onExportRequest={
+                estateId
+                  ? async () => {
+                      const res = await dispatch(
+                        getEstateVends({ estateId, page: 1, limit: 50000 }),
+                      ).unwrap();
+                      return res?.data ?? [];
+                    }
+                  : undefined
+              }
             />
             <div className="flex justify-end items-center gap-2 mt-4">
               <Button
@@ -682,6 +710,18 @@ export default function TransactionPage() {
                 pageSize: paidBillsPagination?.limit ?? limit,
               }}
               onPageChange={(p) => setPaidBillsPage(p)}
+              enableExport
+              exportFileName="paid-bills"
+              onExportRequest={
+                estateId
+                  ? async () => {
+                      const res = await dispatch(
+                        getEstatePaidBills({ estateId, page: 1, limit: 50000 }),
+                      ).unwrap();
+                      return res?.data ?? [];
+                    }
+                  : undefined
+              }
             />
             <div className="flex justify-end items-center gap-2 mt-4">
               <Button

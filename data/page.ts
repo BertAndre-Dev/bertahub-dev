@@ -91,7 +91,7 @@ export const adminNav = [
   {
     label: "Maintenance Requests",
     icon: Wrench,
-    path: '/dashboard/admin/maintenance'
+    path: "/dashboard/admin/maintenance",
   },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
@@ -99,9 +99,9 @@ export const adminNav = [
 
 export const securityNav = [
   {
-    label: 'Visitor Management',
-    icon: LayoutDashboard, 
-    path: "/dashboard/security/visitor-management"
+    label: "Visitor Management",
+    icon: LayoutDashboard,
+    path: "/dashboard/security/visitor-management",
   },
   {
     label: "View Visitor",
@@ -123,7 +123,7 @@ export const securityNav = [
 ];
 
 export const residentNav = [
-  // { label: "Dashboard", icon: FiHome, path: '/dashboard/resident/dashboard' },
+  { label: "Dashboard", icon: FiHome, path: "/dashboard/resident/dashboard" },
   {
     label: "Bills Management",
     icon: LuReceipt,

@@ -378,6 +378,18 @@ export default function EstateAdminWalletPage() {
             pageSize,
           }}
           onPageChange={setCreditsPage}
+          enableExport
+          exportFileName="estate-credits"
+          onExportRequest={
+            estateId
+              ? async () => {
+                  const res = await dispatch(
+                    getEstateCredits({ estateId, page: 1, limit: 50000 }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
         />
         {/* <div className="flex justify-end items-center gap-2 mt-4">
           <Button
