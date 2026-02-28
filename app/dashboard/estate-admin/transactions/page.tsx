@@ -17,6 +17,7 @@ import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import { TrendingUp, ChevronDown, Calendar } from "lucide-react";
 import { Select } from "@/components/ui/select";
+import TransactionStatsBar from "@/components/estate-admin/transaction-statsbar/page";
 
 interface TransactionData {
   walletId: string;
@@ -64,7 +65,8 @@ export default function TransactionPage() {
   const [totalBills, setTotalBills] = useState<number>(0);
   const [filterType, setFilterType] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<string>("");
-  const [dateRangeLabel, setDateRangeLabel] = useState<string>("5th Jan - 30th Jan");
+  const [dateRangeLabel, setDateRangeLabel] =
+    useState<string>("5th Jan - 30th Jan");
   const [exportOpen, setExportOpen] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const transactions = useSelector(
@@ -221,6 +223,14 @@ export default function TransactionPage() {
       }),
     );
   };
+
+  // const totalBills = paidBillsData.reduce((sum: number, item: any) => sum + (item.amountPaid ?? 0), 0);
+  const paidBills = paidBillsData
+    .filter((item: any) => item.status === "paid")
+    .reduce((sum: number, item: any) => sum + (item.amountPaid ?? 0), 0);
+  const pendingBills = paidBillsData
+    .filter((item: any) => item.status !== "paid")
+    .reduce((sum: number, item: any) => sum + (item.amountPaid ?? 0), 0);
 
   // Total transaction amount (sum of current page – replace with API summary when available)
   const totalTransactionsAmount = transactions.reduce(
@@ -464,42 +474,21 @@ export default function TransactionPage() {
       </div>
 
       {/* Stats – Figma: Total Transactions (main) + Total Bills | Paid Bills | Pending Bills */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <Card className="p-6 lg:col-span-1">
-          <p className="text-sm text-muted-foreground">Total Transactions</p>
-          <p className="font-heading text-2xl md:text-3xl font-bold mt-2">
-            {totalTransactionsDisplay}
-          </p>
-          <div className="flex items-center gap-1 mt-2 text-sm font-medium text-green-600">
-            <TrendingUp className="w-4 h-4" />
-            <span>5.2% this month</span>
-          </div>
-        </Card>
-        <Card className="p-6">
-          <p className="text-sm text-muted-foreground">Total Bills</p>
-          <p className="font-heading text-2xl font-bold mt-2">
-            ₦{
-              paidBillsData.reduce((sum: number, item: any) => sum + item.amountPaid, 0)
-            }.toLocaleString()
-          </p>
-        </Card>
-        <Card className="p-6">
-          <p className="text-sm text-muted-foreground">Paid Bills</p>
-          <p className="font-heading text-2xl font-bold mt-2">
-            ₦{
-              paidBillsData.reduce((sum: number, item: any) => sum + item.amountPaid, 0)
-            }.toLocaleString()
-          </p>
-        </Card>
-        <Card className="p-6">
-          <p className="text-sm text-muted-foreground">Pending Bills</p>
-          <p className="font-heading text-2xl font-bold mt-2">
-            ₦{
-              paidBillsData.reduce((sum: number, item: any) => sum + item.amountPaid, 0)
-            }.toLocaleString()
-          </p>
-        </Card>
-      </div>
+      <TransactionStatsBar
+        primary={{
+          label: "Total Transactions",
+          value: totalTransactionsDisplay,
+          trend: "5.2% this month",
+        }}
+        stats={[
+          { label: "Total Bills", value: `₦${totalBills.toLocaleString()}` },
+          { label: "Paid Bills", value: `₦${paidBills.toLocaleString()}` },
+          {
+            label: "Pending Bills",
+            value: `₦${pendingBills.toLocaleString()}`,
+          },
+        ]}
+      />
 
       {/* Filter bar – Date range, Filter by Type, Filter by Status, Export (Figma) */}
       <Card className="p-4">
