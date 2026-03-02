@@ -15,18 +15,11 @@ interface BillsBreakdownPieProps {
 
 const DEFAULT_COLORS = ["#0052CC", "#F5A623", "#2ECC71", "#E74C3C"];
 
-export default function BillsBreakdownPie({ 
+export default function BillsBreakdownPie({
   data,
-  total = 150000000 
+  total = 0,
 }: BillsBreakdownPieProps) {
-  const defaultData = [
-    { name: "Service Charge", value: 50000, amount: "N50,000" },
-    { name: "Energy Vending", value: 150000, amount: "N150,000" },
-    { name: "Wallet Topup", value: 20000, amount: "N20,000" },
-    { name: "Others", value: 35, amount: "35%" },
-  ];
-
-  const chartData = data || defaultData;
+  const chartData = data?.length ? data : [];
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -43,6 +36,14 @@ export default function BillsBreakdownPie({
   const renderLabel = ({ name, amount }: any) => {
     return `${amount}`;
   };
+
+  if (chartData.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-[400px] text-muted-foreground text-sm">
+        No bills data to display
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center w-full h-full">
@@ -63,16 +64,12 @@ export default function BillsBreakdownPie({
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
-          
-          <Legend 
-            verticalAlign="bottom" 
+          <Legend
+            verticalAlign="bottom"
             height={36}
-            formatter={(value, entry) => { 
-              const item = chartData.find(d => d.name === value);
-              return `${value}`; 
-            }}
+            formatter={(value) => `${value}`}
           />
-                  </PieChart>
+        </PieChart>
       </ResponsiveContainer>
     </div>
   );

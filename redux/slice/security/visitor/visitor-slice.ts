@@ -15,6 +15,11 @@ export interface SecurityVisitorItem {
   createdAt: string;
   updatedAt: string;
   viewedBy?: { id: string; firstName: string; lastName: string };
+  verifiedBy?: { id: string; firstName: string; lastName: string };
+  /** When the visitor was checked in (if API returns it). */
+  checkedInAt?: string;
+  /** When the visitor was checked out (if API returns it). */
+  checkedOutAt?: string;
 }
 
 export interface SecurityAllVisitorsResponse {

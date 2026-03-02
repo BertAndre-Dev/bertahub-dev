@@ -26,6 +26,9 @@ import userProfileSliceReducer from '@/redux/slice/resident/user-profile/user-pr
 import estateProfileSliceReducer from '@/redux/slice/estate-profile/estate-profile-slice';
 import complaintsSliceReducer from '@/redux/slice/admin/maintenance/complaints-slice';
 import residentComplaintsSliceReducer from '@/redux/slice/resident/maintenance/resident-complaints-slice';
+import transactionAnalyticsSliceReducer from '@/redux/slice/estate-admin/transaction-analytics/transaction-analytics-slice';
+import billsAnalyticsSliceReducer from '@/redux/slice/estate-admin/bills-analytics/bills-analytics-slice';
+import superAdminBillsAnalyticsSliceReducer from '@/redux/slice/super-admin/super-admin-bills-analytics/super-admin-bills-analytics-slice';
 
 
 const persistConfig = {
@@ -89,6 +92,9 @@ export const store = configureStore({
         estateProfile: persistedEstateProfileSliceReducer,
         complaints: persistedComplaintsSliceReducer,
         residentComplaints: persistedResidentComplaintsSliceReducer,
+        estateAdminTransactionAnalytics: transactionAnalyticsSliceReducer,
+        estateAdminBillsAnalytics: billsAnalyticsSliceReducer,
+        superAdminBillsAnalytics: superAdminBillsAnalyticsSliceReducer,
     },
 
     middleware: (getDefaultMiddleware) =>

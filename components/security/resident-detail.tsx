@@ -1,6 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+
+export interface VisitorDetailsForResident {
+  residentId?: { id: string; firstName: string; lastName: string } | null;
+  addressId?: { id: string; data: Record<string, string> };
+  phone?: string;
+}
 
 interface ResidentDetailsProps {
   name?: string;
@@ -9,6 +15,8 @@ interface ResidentDetailsProps {
   phone?: string;
   avatarUrl?: string;
   onCall?: (phone: string) => void;
+  /** When provided, overrides name/block/apartment/phone from view-details API */
+  visitorDetails?: VisitorDetailsForResident | null;
 }
 
 function PhoneIcon({ className }: { className?: string }) {
@@ -25,14 +33,38 @@ function PhoneIcon({ className }: { className?: string }) {
 }
 
 export default function ResidentDetails({
-  name = "Jane Doe",
-  block = "Block A",
-  apartment = "Apartment J45",
-  phone = "0812345678",
+  name: nameProp = "-",
+  block: blockProp = "-",
+  apartment: apartmentProp = "-",
+  phone: phoneProp = "-",
   avatarUrl,
   onCall,
+  visitorDetails,
 }: ResidentDetailsProps) {
   const [calling, setCalling] = useState(false);
+
+  const { name, block, apartment, phone } = useMemo(() => {
+    if (visitorDetails) {
+      const residentName = visitorDetails.residentId
+        ? `${visitorDetails.residentId.firstName} ${visitorDetails.residentId.lastName}`.trim()
+        : nameProp;
+      const data = visitorDetails.addressId?.data ?? {};
+      const block = (data.block ?? data.Block ?? Object.values(data)[0]) ?? blockProp;
+      const apartment = (data.unit ?? data.Unit ?? data.apartment ?? data.Apartment ?? Object.values(data)[1]) ?? apartmentProp;
+      return {
+        name: residentName,
+        block,
+        apartment,
+        phone: visitorDetails.phone ?? phoneProp,
+      };
+    }
+    return {
+      name: nameProp,
+      block: blockProp,
+      apartment: apartmentProp,
+      phone: phoneProp,
+    };
+  }, [visitorDetails, nameProp, blockProp, apartmentProp, phoneProp]);
 
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1D4ED8&color=fff&size=128`;
 

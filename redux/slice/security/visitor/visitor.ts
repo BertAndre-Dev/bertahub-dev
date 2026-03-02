@@ -17,3 +17,20 @@ export const getAllVisitors = createAsyncThunk(
     }
   }
 );
+
+export const checkoutVisitor = createAsyncThunk(
+  "securityVisitor/checkoutVisitor",
+  async (
+    { visitorCode }: { visitorCode: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await axiosInstance.post("/api/v1/visitor-mgt/checkout", {
+        visitorCode,
+      });
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data);
+    }
+  }
+);

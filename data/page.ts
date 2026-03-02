@@ -103,21 +103,21 @@ export const securityNav = [
     icon: LayoutDashboard,
     path: "/dashboard/security/visitor-management",
   },
-  {
-    label: "View Visitor",
-    icon: FiUsers,
-    path: "/dashboard/security/view-visitor",
-  },
+  // {
+  //   label: "View Visitor",
+  //   icon: FiUsers,
+  //   path: "/dashboard/security/view-visitor",
+  // },
   {
     label: "Activity Log",
     icon: GrTransaction,
     path: "/dashboard/security/activity-log",
   },
-  {
-    label: "Verify Visitor",
-    icon: FiCheckCircle,
-    path: "/dashboard/security/verify-visitor",
-  },
+  // {
+  //   label: "Verify Visitor",
+  //   icon: FiCheckCircle,
+  //   path: "/dashboard/security/verify-visitor",
+  // },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];

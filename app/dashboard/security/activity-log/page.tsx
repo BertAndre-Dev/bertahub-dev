@@ -47,7 +47,15 @@ export default function ActivityLogPage() {
   });
 
   const list = useMemo(() => allVisitors?.data ?? [], [allVisitors?.data]);
-  const pagination = allVisitors?.pagination;
+  const rawPagination = allVisitors?.pagination;
+  const pagination = useMemo(() => {
+    if (!rawPagination) return undefined;
+    const total = rawPagination.total ?? list.length;
+    const limit = rawPagination.limit ?? 10;
+    const page = rawPagination.page ?? 1;
+    const totalPages = (rawPagination as { totalPages?: number }).totalPages ?? Math.ceil(Math.max(total, 1) / limit);
+    return { ...rawPagination, total, limit, page, totalPages };
+  }, [rawPagination, list.length]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return list;
@@ -102,6 +110,17 @@ export default function ActivityLogPage() {
   const columns = useMemo(
     () => [
       {
+        key: "createdAt",
+        header: "Date",
+        render: (row: SecurityVisitorItem) => formatDate(row.createdAt),
+      },
+      {
+        key: "visitorName",
+        header: "Visitor Name",
+        render: (row: SecurityVisitorItem) =>
+          `${row.firstName} ${row.lastName}`,
+      },
+      {
         key: "residentName",
         header: "Resident Name",
         render: (row: SecurityVisitorItem) =>
@@ -110,9 +129,9 @@ export default function ActivityLogPage() {
             : "—",
       },
       {
-        key: "visitorName",
-        header: "Visitor Name",
-        render: (row: SecurityVisitorItem) => `${row.firstName} ${row.lastName}`,
+        key: "phone",
+        header: "Phone",
+        render: (row: SecurityVisitorItem) => row.phone ?? "N/A",
       },
       {
         key: "address",
@@ -120,14 +139,24 @@ export default function ActivityLogPage() {
         render: (row: SecurityVisitorItem) => getAddressDisplay(row.addressId),
       },
       {
-        key: "createdAt",
-        header: "Date",
-        render: (row: SecurityVisitorItem) => formatDate(row.createdAt),
-      },
-      {
         key: "purpose",
         header: "Purpose",
-        render: (row: SecurityVisitorItem) => row.purpose ?? "—",
+        render: (row: SecurityVisitorItem) => row.purpose ?? "N/A",
+      },
+      {
+        key: "visitorCode",
+        header: "Visitor Code",
+        render: (row: SecurityVisitorItem) => row.visitorCode ?? "N/A",
+      },
+      {
+        key: "viewedBy",
+        header: "Viewed By",
+        render: (row: SecurityVisitorItem) => row.viewedBy?.firstName ?? "N/A",
+      },
+      {
+        key: "verifiedBy",
+        header: "Verified By",
+        render: (row: SecurityVisitorItem) => row.verifiedBy?.firstName ?? "N/A",
       },
       {
         key: "isVerified",
@@ -182,7 +211,7 @@ export default function ActivityLogPage() {
             emptyMessage={
               loading ? "Loading visitors..." : "No visitors found."
             }
-            showPagination={!!pagination && pagination.totalPages > 1}
+            showPagination={!!pagination && (pagination.total > pagination.limit || (pagination.totalPages ?? 1) > 1)}
             paginationInfo={
               pagination
                 ? {
