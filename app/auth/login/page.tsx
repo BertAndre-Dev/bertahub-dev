@@ -70,7 +70,7 @@ export default function LoginPage() {
         } else if (role === "security") {
           router.push("/dashboard/security/dashboard");
         } else if (role === "estate admin") {
-          router.push("/dashboard/estate-admin/transactions");
+          router.push("/dashboard/estate-admin/dashboard");
         } else {
           router.push("/dashboard/resident/bills");
         }

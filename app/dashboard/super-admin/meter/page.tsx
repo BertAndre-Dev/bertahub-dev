@@ -8,10 +8,11 @@ import { toast } from "react-toastify";
 import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, Search, Trash } from "lucide-react";
+import { Plus, Search, Trash, Eye } from "lucide-react";
 import {
   deleteMeter,
   getAllMeters,
+  getMeterByAddressId,
   removeEstateMeter,
 } from "@/redux/slice/super-admin/super-admin-meter-mgt/super-admin-meter";
 import AssignMeterForm from "@/components/super-admin/meter-form/page";
@@ -39,14 +40,18 @@ export default function AdminMeterManagement() {
   );
   const [assignMeter, setAssignMeter] = useState(false);
   const [search, setSearch] = useState("");
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsAddressId, setDetailsAddressId] = useState<string | null>(null);
 
-  const { allSuperAdminMeters, pagination, loading } = useSelector(
+  const { allSuperAdminMeters, pagination, loading, meterDetails, detailsLoading } = useSelector(
     (state: RootState) => {
       const superAdminMeter = state.superAdminMeter as any;
       return {
         allSuperAdminMeters: superAdminMeter?.allSuperAdminMeter?.data || [],
         pagination: superAdminMeter?.allSuperAdminMeter?.pagination || {},
         loading: superAdminMeter?.getAllMetersState === "isLoading",
+        meterDetails: superAdminMeter?.superAdminMeter ?? null,
+        detailsLoading: superAdminMeter?.getMeterByAddressIdState === "isLoading",
       };
     },
   );
@@ -115,6 +120,23 @@ export default function AdminMeterManagement() {
     }
   };
 
+  const handleViewDetails = (meter: AdminMeterData) => {
+    if (!meter.addressId) {
+      toast.warning("No address ID for this meter");
+      return;
+    }
+    setDetailsAddressId(meter.addressId);
+    setDetailsModalOpen(true);
+    dispatch(getMeterByAddressId(meter.addressId)).catch((err: any) => {
+      toast.error(err?.message ?? "Failed to load meter details");
+    });
+  };
+
+  const handleCloseDetailsModal = () => {
+    setDetailsModalOpen(false);
+    setDetailsAddressId(null);
+  };
+
   const handleDeleteMeter = async (meterId: string) => {
     if (!meterId) {
       toast.error("Meter ID is missing");
@@ -169,11 +191,16 @@ export default function AdminMeterManagement() {
       header: "Action",
       render: (item: AdminMeterData) => (
         <div className="flex items-center gap-2">
-          {/* <Button variant="destructive" size="sm" onClick={() => handleOpenRemoveModal(item)}>
-            <Trash className="w-4 h-4 text-white" />
-          </Button> */}
-
-          {/* Delete permanently */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="cursor-pointer gap-1"
+            onClick={() => handleViewDetails(item)}
+            title="View details"
+          >
+            <Eye className="w-4 h-4" />
+            View details
+          </Button>
           <Button
             variant="destructive"
             className="cursor-pointer"
@@ -311,6 +338,82 @@ export default function AdminMeterManagement() {
           <AssignMeterForm close={handleAssignMeter} refresh={handleRefresh} />
         </Modal>
       )}
+
+      {/* View details modal */}
+      <Modal visible={detailsModalOpen} onClose={handleCloseDetailsModal}>
+        <div className="space-y-4 p-4 min-w-[320px] max-w-lg">
+          <h2 className="text-lg font-semibold">Meter details</h2>
+          {detailsLoading ? (
+            <p className="text-muted-foreground py-6 text-center">Loading…</p>
+          ) : meterDetails ? (
+            <dl className="grid grid-cols-1 gap-3 text-sm">
+              <div>
+                <dt className="text-muted-foreground">Meter number</dt>
+                <dd className="font-medium">{meterDetails.meterNumber ?? "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Status</dt>
+                <dd>
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                      meterDetails.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {meterDetails.isActive ? "Active" : "Inactive"}
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Assigned</dt>
+                <dd>
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                      meterDetails.isAssigned ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {meterDetails.isAssigned ? "Yes" : "No"}
+                  </span>
+                </dd>
+              </div>
+              {meterDetails.lastCredit != null && (
+                <div>
+                  <dt className="text-muted-foreground">Last credit</dt>
+                  <dd className="font-medium">{meterDetails.lastCredit}</dd>
+                </div>
+              )}
+              {meterDetails.createdAt && (
+                <div>
+                  <dt className="text-muted-foreground">Created</dt>
+                  <dd className="font-medium">
+                    {new Date(meterDetails.createdAt).toLocaleString()}
+                  </dd>
+                </div>
+              )}
+              {meterDetails.vendorData && typeof meterDetails.vendorData === "object" && (
+                <>
+                  <div>
+                    <dt className="text-muted-foreground">Vendor</dt>
+                    <dd className="font-medium">{meterDetails.vendorData.name ?? "—"}</dd>
+                  </div>
+                  {meterDetails.vendorData.utilityName && (
+                    <div>
+                      <dt className="text-muted-foreground">Utility</dt>
+                      <dd className="font-medium">{meterDetails.vendorData.utilityName}</dd>
+                    </div>
+                  )}
+                </>
+              )}
+            </dl>
+          ) : detailsAddressId ? (
+            <p className="text-muted-foreground py-4">Could not load meter details.</p>
+          ) : null}
+          <div className="flex justify-end pt-2">
+            <Button variant="outline" onClick={handleCloseDetailsModal}>
+              Close
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

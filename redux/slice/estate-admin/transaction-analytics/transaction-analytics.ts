@@ -81,13 +81,20 @@ export interface TransactionAnalyticsResponse {
 export const getTransactionAnalyticsDashboard = createAsyncThunk(
   "estate-admin-transaction-analytics/getDashboard",
   async (
-    { estateId }: { estateId: string },
+    {
+      estateId,
+      startDate,
+      endDate,
+    }: { estateId: string; startDate?: string; endDate?: string },
     { rejectWithValue }
   ) => {
     try {
+      const params: Record<string, string> = { estateId };
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
       const res = await axiosInstance.get<TransactionAnalyticsResponse>(
         "/api/v1/analytics/transactions/dashboard",
-        { params: { estateId } }
+        { params }
       );
       return res.data;
     } catch (error: any) {

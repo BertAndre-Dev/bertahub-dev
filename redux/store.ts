@@ -28,6 +28,7 @@ import complaintsSliceReducer from '@/redux/slice/admin/maintenance/complaints-s
 import residentComplaintsSliceReducer from '@/redux/slice/resident/maintenance/resident-complaints-slice';
 import transactionAnalyticsSliceReducer from '@/redux/slice/estate-admin/transaction-analytics/transaction-analytics-slice';
 import billsAnalyticsSliceReducer from '@/redux/slice/estate-admin/bills-analytics/bills-analytics-slice';
+import meterAnalyticsSliceReducer from '@/redux/slice/estate-admin/meter-analytics/meter-analytics-slice';
 import superAdminBillsAnalyticsSliceReducer from '@/redux/slice/super-admin/super-admin-bills-analytics/super-admin-bills-analytics-slice';
 
 
@@ -94,6 +95,7 @@ export const store = configureStore({
         residentComplaints: persistedResidentComplaintsSliceReducer,
         estateAdminTransactionAnalytics: transactionAnalyticsSliceReducer,
         estateAdminBillsAnalytics: billsAnalyticsSliceReducer,
+        estateAdminMeterAnalytics: meterAnalyticsSliceReducer,
         superAdminBillsAnalytics: superAdminBillsAnalyticsSliceReducer,
     },
 

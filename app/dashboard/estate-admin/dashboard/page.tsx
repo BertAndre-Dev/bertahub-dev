@@ -5,14 +5,19 @@ import { useDispatch, useSelector } from "react-redux";
 import { TrendingUp, Users, FileText, DollarSign } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import TransactionsChart from "@/components/charts/transactions-chart";
 import BillsOverview from "@/components/charts/bills-overview";
 import OccupancyDistribution from "@/components/charts/occupancy-distribution";
 import BillsBreakdownCard from "@/components/charts/bills-breakdown-card";
+import MeterStatusPie from "@/components/charts/meter-status-pie";
+import MeterTrendChart from "@/components/charts/meter-trend-chart";
+import MeterCreditSummary from "@/components/charts/meter-credit-summary";
 import { VendingTrendChart } from "@/app/dashboard/super-admin/dashboard/components/vending-trend-chart";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { getTransactionAnalyticsDashboard } from "@/redux/slice/estate-admin/transaction-analytics/transaction-analytics";
 import { getBillsAnalyticsDashboard } from "@/redux/slice/estate-admin/bills-analytics/bills-analytics";
+import { getMeterAnalyticsDashboard } from "@/redux/slice/estate-admin/meter-analytics/meter-analytics";
 import type { ChargeBreakdownItem } from "@/redux/slice/estate-admin/transaction-analytics/transaction-analytics";
 import type { TopBillByCollection } from "@/redux/slice/estate-admin/bills-analytics/bills-analytics";
 import type { RootState, AppDispatch } from "@/redux/store";
@@ -20,16 +25,21 @@ import { toast } from "react-toastify";
 
 const formatNaira = (n: number) => `N${Number(n).toLocaleString()}`;
 
-/** Fallbacks when transaction analytics API returns no trend/breakdown (not from API). */
-const DEFAULT_TRANSACTION_CHART = [
-  { label: "JAN 1", value: 0 },
-  { label: "JAN 2", value: 0 },
-  { label: "JAN 3", value: 0 },
-  { label: "JAN 4", value: 0 },
-  { label: "JAN 5", value: 0 },
-  { label: "JAN 6", value: 0 },
-  { label: "JAN 7", value: 0 },
-];
+/** Returns start and end date (YYYY-MM-DD) for the given period (end = today). */
+function getDateRangeForPeriod(period: "week" | "month" | "year"): {
+  startDate: string;
+  endDate: string;
+} {
+  const end = new Date();
+  const start = new Date(end);
+  if (period === "week") start.setDate(start.getDate() - 7);
+  else if (period === "month") start.setDate(start.getDate() - 30);
+  else start.setFullYear(start.getFullYear() - 1);
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  };
+}
 
 /** Fallback when bills analytics API returns no topBillsByCollection (not from API). */
 const BILLS_CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
@@ -39,6 +49,12 @@ export default function EstateAdminOverview() {
   const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month" | "year">(
     "month",
   );
+  const [meterChartView, setMeterChartView] = useState<
+    "assignment" | "active" | "trend" | "credit"
+  >("assignment");
+  const [transactionChartView, setTransactionChartView] = useState<
+    "revenue" | "type" | "charge"
+  >("revenue");
   const [estateId, setEstateId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Demo Estate");
 
@@ -48,9 +64,14 @@ export default function EstateAdminOverview() {
   const billsAnalytics = useSelector(
     (state: RootState) => (state as any).estateAdminBillsAnalytics
   );
+  const meterAnalytics = useSelector(
+    (state: RootState) => (state as any).estateAdminMeterAnalytics
+  );
 
   const txDashboard = txAnalytics?.dashboard ?? null;
   const billsDashboard = billsAnalytics?.dashboard ?? null;
+  const meterDashboard = meterAnalytics?.dashboard ?? null;
+  const meterLoading = meterAnalytics?.status === "isLoading";
 
   useEffect(() => {
     (async () => {
@@ -70,15 +91,25 @@ export default function EstateAdminOverview() {
 
   useEffect(() => {
     if (!estateId) return;
-    dispatch(getTransactionAnalyticsDashboard({ estateId })).catch((err: any) =>
+    const { startDate, endDate } = getDateRangeForPeriod(selectedPeriod);
+    dispatch(
+      getTransactionAnalyticsDashboard({ estateId, startDate, endDate })
+    ).catch((err: any) =>
       toast.error(err?.message ?? "Failed to load transaction analytics.")
     );
-  }, [estateId, dispatch]);
+  }, [estateId, selectedPeriod, dispatch]);
 
   useEffect(() => {
     if (!estateId) return;
     dispatch(getBillsAnalyticsDashboard({ estateId })).catch((err: any) =>
       toast.error(err?.message ?? "Failed to load bills analytics.")
+    );
+  }, [estateId, dispatch]);
+
+  useEffect(() => {
+    if (!estateId) return;
+    dispatch(getMeterAnalyticsDashboard({ estateId })).catch((err: any) =>
+      toast.error(err?.message ?? "Failed to load meter analytics.")
     );
   }, [estateId, dispatch]);
 
@@ -128,44 +159,62 @@ export default function EstateAdminOverview() {
     [estateName, estateId]
   );
 
-  const revenueTrendData = useMemo(() => {
-    const trend = txDashboard?.trend;
-    if (Array.isArray(trend) && trend.length > 0) {
-      return trend.map((item: Record<string, unknown>, i: number) => {
-        const label = (item.period ?? item.label ?? item.month ?? `Period ${i + 1}`) as string;
-        const value = Number(item.amount ?? item.value ?? item.total ?? 0);
-        return { label, value, highlighted: i === trend.length - 1 };
-      });
-    }
-    const breakdown = txDashboard?.chargeAnalytics?.summary?.breakdown ?? [];
-    if (breakdown.length > 0) {
-      return breakdown.map((b: ChargeBreakdownItem, i: number) => ({
-        label: b.chargeType,
-        value: b.totalAmount,
-        highlighted: i === 0,
-      }));
-    }
-    return DEFAULT_TRANSACTION_CHART;
-  }, [txDashboard]);
+  const { startDate: periodStart, endDate: periodEnd } = useMemo(
+    () => getDateRangeForPeriod(selectedPeriod),
+    [selectedPeriod]
+  );
 
-  const transactionsData = useMemo(() => {
+  const filteredTrend = useMemo(() => {
+    const trend = txDashboard?.trend;
+    if (!Array.isArray(trend) || trend.length === 0) return [];
+    return trend
+      .filter((item: Record<string, unknown>) => {
+        const raw = item.period ?? item.date;
+        const p = typeof raw === "string" ? raw.slice(0, 10) : "";
+        if (!p) return false;
+        return p >= periodStart && p <= periodEnd;
+      })
+      .sort(
+        (a: Record<string, unknown>, b: Record<string, unknown>) => {
+          const sa = typeof a.period === "string" ? a.period : "";
+          const sb = typeof b.period === "string" ? b.period : "";
+          return sa.localeCompare(sb);
+        }
+      );
+  }, [txDashboard?.trend, periodStart, periodEnd]);
+
+  const revenueTrendData = useMemo(() => {
+    if (filteredTrend.length === 0) return [];
+    return filteredTrend.map((item: Record<string, unknown>, i: number) => {
+      const label = (item.period ?? item.label ?? item.month ?? `Period ${i + 1}`) as string;
+      const value = Number(
+        item.totalAmount ?? item.amount ?? item.value ?? item.total ?? 0
+      );
+      return { label: String(label).slice(0, 10), value, highlighted: i === filteredTrend.length - 1 };
+    });
+  }, [filteredTrend]);
+
+  const typeBreakdownData = useMemo(() => {
+    const amounts = txDashboard?.typeBreakdown?.amounts;
+    if (!amounts) return [];
+    const credit = Number(amounts.credit ?? 0);
+    const debit = Number(amounts.debit ?? 0);
+    if (credit === 0 && debit === 0) return [];
+    return [
+      { label: "Credit", value: credit, highlighted: true },
+      { label: "Debit", value: debit, highlighted: false },
+    ];
+  }, [txDashboard?.typeBreakdown?.amounts]);
+
+  const chargeBreakdownData = useMemo(() => {
     const breakdown = txDashboard?.chargeAnalytics?.summary?.breakdown ?? [];
-    if (breakdown.length > 0) {
-      return breakdown.map((b: ChargeBreakdownItem, i: number) => ({
-        label: b.chargeType.slice(0, 7),
-        value: b.totalAmount,
-        highlighted: i === 0,
-      }));
-    }
-    const typeAmounts = txDashboard?.typeBreakdown?.amounts;
-    if (typeAmounts) {
-      return [
-        { label: "Credit", value: typeAmounts.credit ?? 0, highlighted: true },
-        { label: "Debit", value: typeAmounts.debit ?? 0, highlighted: false },
-      ];
-    }
-    return DEFAULT_TRANSACTION_CHART;
-  }, [txDashboard]);
+    if (breakdown.length === 0) return [];
+    return breakdown.map((b: ChargeBreakdownItem, i: number) => ({
+      label: b.chargeType,
+      value: b.totalAmount,
+      highlighted: i === 0,
+    }));
+  }, [txDashboard?.chargeAnalytics?.summary?.breakdown]);
 
   const billsOverviewData = useMemo(() => {
     const topBills = billsDashboard?.topBillsByCollection ?? [];
@@ -203,6 +252,38 @@ export default function EstateAdminOverview() {
     ];
     return parts.join(" · ");
   }, [billsDashboard]);
+
+  /** Meter analytics: assignment status for pie */
+  const meterAssignmentPieData = useMemo(() => {
+    const a = meterDashboard?.assignmentStatus;
+    if (!a) return [];
+    return [
+      { name: "Assigned", value: a.assigned ?? 0, fill: "#10b981" },
+      { name: "Unassigned", value: a.unassigned ?? 0, fill: "#f59e0b" },
+    ];
+  }, [meterDashboard]);
+
+  /** Meter analytics: active status for pie */
+  const meterActivePieData = useMemo(() => {
+    const a = meterDashboard?.activeStatus;
+    if (!a) return [];
+    return [
+      { name: "Active", value: a.active ?? 0, fill: "#10b981" },
+      { name: "Inactive", value: a.inactive ?? 0, fill: "#ef4444" },
+    ];
+  }, [meterDashboard]);
+
+  /** Meter analytics: last-seen or reading trend for line chart */
+  const meterTrendData = useMemo(() => {
+    const trend = meterDashboard?.lastSeenTrend ?? meterDashboard?.readingTrend ?? [];
+    if (!Array.isArray(trend) || trend.length === 0) return [];
+    return trend.map((item: Record<string, unknown>, i: number) => {
+      const label =
+        (item.period ?? item.date ?? item.label ?? item.month ?? `Period ${i + 1}`) as string;
+      const value = Number(item.count ?? item.value ?? item.total ?? 0);
+      return { label: String(label).slice(0, 12), value };
+    });
+  }, [meterDashboard]);
 
   const powerUsageData = [
     { powerKwh: 50, value: 0.8 },
@@ -295,19 +376,71 @@ export default function EstateAdminOverview() {
         })}
       </div>
 
-      {/* Revenue trend */}
-      <TransactionsChart
-        title="Revenue Trend"
-        subtitle={
-          txDashboard?.chargeAnalytics?.summary
-            ? `Total charges: ${formatNaira(txDashboard.chargeAnalytics.summary.totalCharges)}`
-            : "This month's comparison"
-        }
-        data={revenueTrendData}
-        estateOptions={estateFilterOptions}
-        onExport={handleExport}
-        className="w-full"
-      />
+      {/* Transaction analytics: one chart with selector (like meter) */}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <label htmlFor="tx-chart-select" className="text-sm font-medium text-muted-foreground">
+            Chart to display
+          </label>
+          <Select
+            id="tx-chart-select"
+            options={[
+              { label: "Revenue trend", value: "revenue" },
+              { label: "Transaction type (Credit vs Debit)", value: "type" },
+              { label: "Charge breakdown", value: "charge" },
+            ]}
+            value={transactionChartView}
+            onChange={(e) =>
+              setTransactionChartView(e.target.value as "revenue" | "type" | "charge")
+            }
+            className="w-full max-w-xs"
+          />
+        </div>
+        <div className="min-h-[320px]">
+          {transactionChartView === "revenue" && (
+            <TransactionsChart
+              title="Revenue trend"
+              subtitle={
+                filteredTrend.length > 0
+                  ? `${filteredTrend.length} period(s) in selected range`
+                  : "No data for the selected period"
+              }
+              data={revenueTrendData}
+              estateOptions={estateFilterOptions}
+              onExport={handleExport}
+              className="w-full"
+            />
+          )}
+          {transactionChartView === "type" && (
+            <TransactionsChart
+              title="Transaction type"
+              subtitle={
+                txDashboard?.summary
+                  ? `Credits: ${txDashboard.summary.creditTransactions} · Debits: ${txDashboard.summary.debitTransactions}`
+                  : "Credit vs Debit amounts"
+              }
+              data={typeBreakdownData}
+              estateOptions={estateFilterOptions}
+              onExport={handleExport}
+              className="w-full"
+            />
+          )}
+          {transactionChartView === "charge" && (
+            <TransactionsChart
+              title="Charge breakdown"
+              subtitle={
+                txDashboard?.chargeAnalytics?.summary
+                  ? `Total charges: ${formatNaira(txDashboard.chargeAnalytics.summary.totalCharges)}`
+                  : "By charge type"
+              }
+              data={chargeBreakdownData}
+              estateOptions={estateFilterOptions}
+              onExport={handleExport}
+              className="w-full"
+            />
+          )}
+        </div>
+      </div>
 
       {/* Bills + Occupancy / Power usage */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -336,18 +469,8 @@ export default function EstateAdminOverview() {
       </div>
 
       {/* Transactions + Withdrawals */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <TransactionsChart
-          title="Transactions"
-          subtitle={
-            txDashboard?.summary
-              ? `Total: ${txDashboard.summary.totalTransactions} · Net: ${formatNaira(txDashboard.summary.netFlow)}`
-              : "Transaction breakdown"
-          }
-          data={transactionsData}
-          estateOptions={estateFilterOptions}
-          onExport={handleExport}
-        />
+      <div className="grid grid-cols-1 gap-6 ">
+       
 
         <Card className="p-4 sm:p-5 md:p-6">
           <div className="mb-4 space-y-1">
@@ -383,6 +506,67 @@ export default function EstateAdminOverview() {
             vacantPercentage={24}
           />
         </Card>
+      </div>
+
+      {/* Meter analytics: summary cards + one chart with selector */}
+      <div className="bg-white rounded-lg p-4">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <label htmlFor="meter-chart-select" className="text-sm font-medium text-muted-foreground">
+              Chart to display
+            </label>
+            <Select
+              id="meter-chart-select"
+              options={[
+                { label: "Assignment status (Assigned vs Unassigned)", value: "assignment" },
+                { label: "Active status (Active vs Inactive)", value: "active" },
+                { label: "Meter trend", value: "trend" },
+                { label: "Credit metrics", value: "credit" },
+              ]}
+              value={meterChartView}
+              onChange={(e) =>
+                setMeterChartView(e.target.value as "assignment" | "active" | "trend" | "credit")
+              }
+              className="w-full max-w-xs"
+            />
+          </div>
+          <div className="min-h-[280px]">
+            {meterChartView === "assignment" && (
+              <MeterStatusPie
+                title="Assignment status"
+                subtitle="Assigned vs unassigned meters"
+                data={meterAssignmentPieData}
+              />
+            )}
+            {meterChartView === "active" && (
+              <MeterStatusPie
+                title="Active status"
+                subtitle="Active vs inactive meters"
+                data={meterActivePieData}
+              />
+            )}
+            {meterChartView === "trend" && (
+              <MeterTrendChart
+                title="Meter trend"
+                subtitle={
+                  meterDashboard?.lastSeenTrend?.length
+                    ? "Last seen trend"
+                    : "Reading trend"
+                }
+                data={meterTrendData}
+                valueLabel="Count"
+              />
+            )}
+            {meterChartView === "credit" && (
+              <MeterCreditSummary
+                title="Credit metrics"
+                data={meterDashboard?.averageCreditMetrics ?? null}
+                loading={meterLoading}
+                formatValue={formatNaira}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

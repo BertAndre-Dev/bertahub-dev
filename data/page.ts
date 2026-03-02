@@ -3,7 +3,6 @@ import {
   FiSettings,
   FiUsers,
   FiMapPin,
-  FiCheckCircle,
   FiLogOut,
 } from "react-icons/fi";
 import { BsBuildings } from "react-icons/bs";
@@ -14,7 +13,7 @@ import { LayoutDashboard, Wrench } from "lucide-react";
 
 export const superAdminNav = [
   {
-    label: "Dashboard",
+    label: "Overview",
     icon: FiHome,
     path: "/dashboard/super-admin/dashboard",
   },
@@ -28,11 +27,11 @@ export const superAdminNav = [
   //     icon: BsBuildings,
   //     path: "/dashboard/super-admin/address",
   //   },
-  {
-    label: "User Management",
-    icon: FiUsers,
-    path: "/dashboard/super-admin/user",
-  },
+  // {
+  //   label: "User Management",
+  //   icon: FiUsers,
+  //   path: "/dashboard/super-admin/user",
+  // },
   // {
   //   label: "Bills Management",
   //   icon: LuReceipt,
@@ -123,7 +122,7 @@ export const securityNav = [
 ];
 
 export const residentNav = [
-  { label: "Dashboard", icon: FiHome, path: "/dashboard/resident/dashboard" },
+  { label: "Overview", icon: FiHome, path: "/dashboard/resident/dashboard" },
   {
     label: "Bills Management",
     icon: LuReceipt,
@@ -155,7 +154,7 @@ export const residentNav = [
 
 export const estateAdminNav = [
   {
-    label: "Dashboard",
+    label: "Overview",
     icon: FiHome,
     path: "/dashboard/estate-admin/dashboard",
   },

@@ -5,6 +5,7 @@ import {
     reAssignMeter,
     removeEstateMeter,
     getMeter,
+    getMeterByAddressId,
     deleteMeter
 } from './super-admin-meter';
 
@@ -58,6 +59,7 @@ export interface SuperAdminMeterState {
     reAssignMeterState: "idle" | "isLoading" | "succeeded" | "failed";
     removeEstateMeterState: "idle" | "isLoading" | "succeeded" | "failed";
     getMeterState: "idle" | "isLoading" | "succeeded" | "failed";
+    getMeterByAddressIdState: "idle" | "isLoading" | "succeeded" | "failed";
     deleteMeterState: "idle" | "isLoading" | "succeeded" | "failed";
     status: "idle" | "isLoading" | "succeeded" | "failed";
     superAdminMeter: SuperAdminMeterData | null;
@@ -72,6 +74,7 @@ const initialState: SuperAdminMeterState = {
     reAssignMeterState: "idle",
     removeEstateMeterState: "idle",
     getMeterState: "idle",
+    getMeterByAddressIdState: "idle",
     deleteMeterState: "idle",
     status: "idle",
     superAdminMeter: null,
@@ -212,6 +215,21 @@ const superAdminMeterSlice = createSlice({
             .addCase(getMeter.rejected, (state, action) => {
                 state.getMeterState = "failed";
                 state.error = action.error.message || "Failed to fetch meter";
+            });
+
+        // ✅ GET METER BY ADDRESS ID (View details)
+        builder
+            .addCase(getMeterByAddressId.pending, (state) => {
+                state.getMeterByAddressIdState = "isLoading";
+            })
+            .addCase(getMeterByAddressId.fulfilled, (state, action) => {
+                state.getMeterByAddressIdState = "succeeded";
+                state.superAdminMeter = action.payload?.data ?? null;
+            })
+            .addCase(getMeterByAddressId.rejected, (state, action) => {
+                state.getMeterByAddressIdState = "failed";
+                state.superAdminMeter = null;
+                state.error = (action.payload as any)?.message ?? action.error.message ?? "Failed to fetch meter details";
             });
 
 

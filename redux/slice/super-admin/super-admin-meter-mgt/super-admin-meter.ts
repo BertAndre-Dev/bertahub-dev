@@ -97,6 +97,19 @@ export const getMeter = createAsyncThunk(
     }
 );
 
+/** Get a single meter by its address ID (for View details). */
+export const getMeterByAddressId = createAsyncThunk(
+  "super-admin-meter/getMeterByAddressId",
+  async (addressId: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get(`/api/v1/meters/address/${addressId}`);
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue(error?.response?.data ?? { message: "Failed to fetch meter details" });
+    }
+  }
+);
+
 
 export const deleteMeter = createAsyncThunk(
   "super-admin-meter/deleteMeter",

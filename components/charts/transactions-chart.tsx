@@ -53,6 +53,24 @@ export default function TransactionsChart({
 
   const formatTooltip = (value: number) => `N${(value / 1000).toFixed(1)}K`
 
+  const hasData = Array.isArray(data) && data.some((d) => Number(d.value) > 0)
+
+  if (!hasData) {
+    return (
+      <Card className={cn("flex flex-col gap-4 p-4", className)}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-lg font-bold sm:text-xl">{title}</h2>
+            <p className="text-[#4C4C4C] text-sm">{subtitle}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center text-muted-foreground text-sm min-h-[320px]">
+          No data to display
+        </div>
+      </Card>
+    )
+  }
+
   return (
     <Card className={cn("flex flex-col gap-4 p-4", className)}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
