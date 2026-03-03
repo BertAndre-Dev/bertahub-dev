@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Modal from "@/components/modal/page";
 import FundWalletForm from "@/components/resident/wallet/fund-wallet/page";
+import CreateWalletModal from "@/components/resident/wallet/create-wallet-modal/page";
 
 import {
   createWallet,
@@ -39,8 +40,10 @@ interface TransactionData {
 export default function TransactionPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
+  const [createWalletModalOpen, setCreateWalletModalOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
+  const [residentType, setResidentType] = useState<string | null>(null);
   const [transId, setTransId] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
@@ -68,6 +71,7 @@ export default function TransactionPage() {
         const userRes = await dispatch(getSignedInUser()).unwrap();
         const id = userRes?.data?.id;
         const userEmail = userRes?.data?.email;
+        const rType = userRes?.data?.residentType ?? userRes?.data?.resident_type ?? null;
 
         if (!id) {
           toast.warning("No user found.");
@@ -76,6 +80,7 @@ export default function TransactionPage() {
 
         setUserId(id);
         setEmail(userEmail || "");
+        setResidentType(rType ?? null);
 
         // ✅ Fetch transactions (paginated)
         await dispatch(getTransactionHistory({ userId: id, page: 1, limit }));
@@ -98,8 +103,17 @@ export default function TransactionPage() {
     await dispatch(getTransactionHistory({ userId, page: newPage, limit }));
   };
 
-  // 🔹 Create Wallet
-  const handleCreateWallet = async () => {
+  // 🔹 Create Wallet: owners open modal for bank details; tenants create directly
+  const isOwner = residentType === "owner";
+  const handleCreateWalletClick = () => {
+    if (!userId) return;
+    if (isOwner) {
+      setCreateWalletModalOpen(true);
+    } else {
+      handleCreateWalletDirect();
+    }
+  };
+  const handleCreateWalletDirect = async () => {
     if (!userId) return;
     try {
       await dispatch(
@@ -107,9 +121,13 @@ export default function TransactionPage() {
       ).unwrap();
       toast.success("Wallet created successfully.");
       dispatch(getWallet(userId));
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to create wallet.");
+    } catch (error: unknown) {
+      const msg = (error as { message?: string })?.message || "Failed to create wallet.";
+      toast.error(msg);
     }
+  };
+  const handleCreateWalletSuccess = () => {
+    if (userId) dispatch(getWallet(userId));
   };
 
   const handleOpenModal = () => setOpen((prev) => !prev);
@@ -350,8 +368,11 @@ export default function TransactionPage() {
             </div>
           ) : (
             <Button
-              onClick={handleCreateWallet}
-              disabled={createWalletState === "isLoading"}
+              onClick={handleCreateWalletClick}
+              disabled={
+                createWalletState === "isLoading" ||
+                (isOwner && createWalletModalOpen)
+              }
             >
               {createWalletState === "isLoading"
                 ? "Creating wallet..."
@@ -420,6 +441,23 @@ export default function TransactionPage() {
             />
           ) : (
             <p className="text-center text-gray-500">Loading form...</p>
+          )}
+        </div>
+      </Modal>
+
+      <Modal
+        visible={createWalletModalOpen}
+        onClose={() => setCreateWalletModalOpen(false)}
+      >
+        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto">
+          {userId ? (
+            <CreateWalletModal
+              userId={userId}
+              onSuccess={handleCreateWalletSuccess}
+              onClose={() => setCreateWalletModalOpen(false)}
+            />
+          ) : (
+            <p className="text-center text-gray-500 p-6">Loading...</p>
           )}
         </div>
       </Modal>

@@ -30,6 +30,12 @@ import transactionAnalyticsSliceReducer from '@/redux/slice/estate-admin/transac
 import billsAnalyticsSliceReducer from '@/redux/slice/estate-admin/bills-analytics/bills-analytics-slice';
 import meterAnalyticsSliceReducer from '@/redux/slice/estate-admin/meter-analytics/meter-analytics-slice';
 import superAdminBillsAnalyticsSliceReducer from '@/redux/slice/super-admin/super-admin-bills-analytics/super-admin-bills-analytics-slice';
+import adminDashboardAnalyticsSliceReducer from '@/redux/slice/admin/dashboard-analytics/admin-dashboard-analytics-slice';
+import residentDashboardAnalyticsSliceReducer from '@/redux/slice/resident/dashboard-analytics/resident-dashboard-analytics-slice';
+import residentInviteTenantSliceReducer from '@/redux/slice/resident/invite-tenant/invite-tenant-slice';
+import residentAddressOptionsSliceReducer from '@/redux/slice/resident/address-options/resident-address-options-slice';
+import residentPaymentMgtSliceReducer from '@/redux/slice/resident/payment-mgt/payment-mgt-slice';
+import residentRentMgtSliceReducer from '@/redux/slice/resident/rent-mgt/rent-mgt-slice';
 
 
 const persistConfig = {
@@ -97,6 +103,12 @@ export const store = configureStore({
         estateAdminBillsAnalytics: billsAnalyticsSliceReducer,
         estateAdminMeterAnalytics: meterAnalyticsSliceReducer,
         superAdminBillsAnalytics: superAdminBillsAnalyticsSliceReducer,
+        adminDashboardAnalytics: adminDashboardAnalyticsSliceReducer,
+        residentDashboardAnalytics: residentDashboardAnalyticsSliceReducer,
+        residentInviteTenant: residentInviteTenantSliceReducer,
+        residentAddressOptions: residentAddressOptionsSliceReducer,
+        residentPaymentMgt: residentPaymentMgtSliceReducer,
+        residentRentMgt: residentRentMgtSliceReducer,
     },
 
     middleware: (getDefaultMiddleware) =>

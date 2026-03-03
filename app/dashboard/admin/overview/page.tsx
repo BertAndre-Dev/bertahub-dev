@@ -1,230 +1,343 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   TrendingUp,
   Users,
   FileText,
   DollarSign,
-  AlertCircle,
   ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import OccupancyDistribution from "@/components/charts/occupancy-distribution";
+import { Select } from "@/components/ui/select";
 import BillsOverview from "@/components/charts/bills-overview";
+import TransactionsChart from "@/components/charts/transactions-chart";
+import MeterStatusPie from "@/components/charts/meter-status-pie";
+import MeterTrendChart from "@/components/charts/meter-trend-chart";
+import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import {
+  getAdminBillsDashboard,
+  getAdminTransactionDashboard,
+  getAdminMeterDashboard,
+  type TopBillByCollection,
+  type AdminChargeBreakdownItem,
+} from "@/redux/slice/admin/dashboard-analytics/admin-dashboard-analytics";
+import type { RootState, AppDispatch } from "@/redux/store";
+import { toast } from "react-toastify";
+
+const formatNaira = (n: number) => `N${Number(n).toLocaleString()}`;
+const BILLS_CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 export default function AdminOverview() {
-  const [selectedPeriod, setSelectedPeriod] = useState("month");
+  const dispatch = useDispatch<AppDispatch>();
+  const [estateId, setEstateId] = useState<string | null>(null);
+  const [estateName, setEstateName] = useState("Estate");
+  const [chartView, setChartView] = useState<"bills" | "transactions" | "meter">("bills");
 
-  // Mock data for charts
-  const revenueData = [
-    { month: "Jan", revenue: 45000, expenses: 32000 },
-    { month: "Feb", revenue: 52000, expenses: 35000 },
-    { month: "Mar", revenue: 48000, expenses: 33000 },
-    { month: "Apr", revenue: 61000, expenses: 38000 },
-    { month: "May", revenue: 55000, expenses: 36000 },
-    { month: "Jun", revenue: 67000, expenses: 40000 },
-  ];
+  const adminDashboard = useSelector((state: RootState) => (state as any).adminDashboardAnalytics);
+  const bills = adminDashboard?.bills ?? null;
+  const transactions = adminDashboard?.transactions ?? null;
+  const meter = adminDashboard?.meter ?? null;
+  const loading =
+    adminDashboard?.billsStatus === "isLoading" ||
+    adminDashboard?.transactionsStatus === "isLoading" ||
+    adminDashboard?.meterStatus === "isLoading";
 
-  const billsData = [
-    { name: "Electricity", value: 35, fill: "#3b82f6" },
-    { name: "Water", value: 25, fill: "#10b981" },
-    { name: "Maintenance", value: 20, fill: "#f59e0b" },
-    { name: "Security", value: 20, fill: "#ef4444" },
-  ];
+  useEffect(() => {
+    (async () => {
+      try {
+        const userRes = await dispatch(getSignedInUser()).unwrap();
+        const id = userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
+        const name = userRes?.data?.estate?.name ?? userRes?.data?.estateName ?? "Estate";
+        if (id) {
+          setEstateId(id);
+          setEstateName(name);
+        }
+      } catch (err: unknown) {
+        const e = err as { message?: string };
+        toast.error(e?.message ?? "Failed to load user.");
+      }
+    })();
+  }, [dispatch]);
 
-  const occupancyData = [
-    { month: "Jan", occupied: 85, vacant: 15 },
-    { month: "Feb", occupied: 88, vacant: 12 },
-    { month: "Mar", occupied: 90, vacant: 10 },
-    { month: "Apr", occupied: 92, vacant: 8 },
-    { month: "May", occupied: 91, vacant: 9 },
-    { month: "Jun", occupied: 93, vacant: 7 },
-  ];
+  useEffect(() => {
+    if (!estateId) return;
+    dispatch(getAdminBillsDashboard({ estateId })).catch((err: unknown) => {
+      const e = err as { message?: string };
+      toast.error(e?.message ?? "Failed to load bills analytics.");
+    });
+    dispatch(getAdminTransactionDashboard({ estateId })).catch((err: unknown) => {
+      const e = err as { message?: string };
+      toast.error(e?.message ?? "Failed to load transaction analytics.");
+    });
+    dispatch(getAdminMeterDashboard({ estateId })).catch((err: unknown) => {
+      const e = err as { message?: string };
+      toast.error(e?.message ?? "Failed to load meter analytics.");
+    });
+  }, [estateId, dispatch]);
 
-  const stats = [
-    {
-      title: "Total Revenue",
-      value: "$328,000",
-      change: "+12.5%",
-      trend: "up",
-      icon: DollarSign,
-      color: "bg-blue-500/10 text-blue-600",
-    },
-    {
-      title: "Active Users",
-      value: "1,248",
-      change: "+8.2%",
-      trend: "up",
-      icon: Users,
-      color: "bg-green-500/10 text-green-600",
-    },
-    {
-      title: "Pending Bills",
-      value: "42",
-      change: "-3.1%",
-      trend: "down",
-      icon: FileText,
-      color: "bg-orange-500/10 text-orange-600",
-    },
-    {
-      title: "Occupancy Rate",
-      value: "93%",
-      change: "+2.4%",
-      trend: "up",
-      icon: TrendingUp,
-      color: "bg-purple-500/10 text-purple-600",
-    },
-  ];
+  const stats = useMemo(() => {
+    const payStats = bills?.paymentStatistics;
+    const txSummary = transactions?.summary;
+    const meterSummary = meter?.summary;
+    return [
+      {
+        title: "Bills collected",
+        value: payStats ? formatNaira(payStats.totalAmountCollected) : "N0",
+        change: payStats ? `${payStats.paidAssignments} paid` : "—",
+        trend: "up" as const,
+        icon: FileText,
+        color: "bg-[#E6F4EA] text-[#007A4D]",
+      },
+      {
+        title: "Transactions",
+        value: txSummary ? String(txSummary.totalTransactions) : "0",
+        change: txSummary ? `Net ${formatNaira(txSummary.netFlow)}` : "—",
+        trend: "up" as const,
+        icon: DollarSign,
+        color: "bg-[#D0DFF280] text-[#0150AC]",
+      },
+      {
+        title: "Meters",
+        value: meterSummary ? String(meterSummary.totalMeters) : "0",
+        change: meterSummary ? `${meterSummary.assignedMeters} assigned` : "—",
+        trend: "up" as const,
+        icon: TrendingUp,
+        color: "bg-[#FEE6D480] text-[#B45309]",
+      },
+      {
+        title: "Active bills",
+        value: bills?.summary ? String(bills.summary.activeBills) : "0",
+        change: bills?.summary ? `${bills.summary.suspendedBills} suspended` : "—",
+        trend: "up" as const,
+        icon: Users,
+        color: "bg-[#FFF4E5] text-[#FF8A00]",
+      },
+    ];
+  }, [bills, transactions, meter]);
+
+  const billsChartData = useMemo(() => {
+    const top = bills?.topBillsByCollection ?? [];
+    if (top.length === 0) return [];
+    return top.map((b: TopBillByCollection, i: number) => ({
+      name: b.name,
+      value: b.totalAmountCollected ?? b.totalAssignments ?? 0,
+      fill: BILLS_CHART_COLORS[i % BILLS_CHART_COLORS.length],
+    }));
+  }, [bills?.topBillsByCollection]);
+
+  const transactionTrendData = useMemo(() => {
+    const trend = transactions?.trend ?? [];
+    if (!Array.isArray(trend) || trend.length === 0) return [];
+    return trend.map((item: Record<string, unknown>, i: number) => {
+      const label = (item.period ?? item.label ?? `Period ${i + 1}`) as string;
+      const value = Number(item.totalAmount ?? item.amount ?? item.value ?? 0);
+      return { label: String(label).slice(0, 10), value, highlighted: i === trend.length - 1 };
+    });
+  }, [transactions?.trend]);
+
+  const transactionTypeData = useMemo(() => {
+    const amounts = transactions?.typeBreakdown?.amounts;
+    if (!amounts) return [];
+    const credit = Number(amounts.credit ?? 0);
+    const debit = Number(amounts.debit ?? 0);
+    if (credit === 0 && debit === 0) return [];
+    return [
+      { label: "Credit", value: credit, highlighted: true },
+      { label: "Debit", value: debit, highlighted: false },
+    ];
+  }, [transactions?.typeBreakdown?.amounts]);
+
+  const chargeBreakdownData = useMemo(() => {
+    const breakdown = transactions?.chargeAnalytics?.summary?.breakdown ?? [];
+    if (breakdown.length === 0) return [];
+    return breakdown.map((b: AdminChargeBreakdownItem, i: number) => ({
+      label: b.chargeType,
+      value: b.totalAmount,
+      highlighted: i === 0,
+    }));
+  }, [transactions?.chargeAnalytics?.summary?.breakdown]);
+
+  const meterAssignmentData = useMemo(() => {
+    const s = meter?.summary;
+    if (!s) return [];
+    return [
+      { name: "Assigned", value: s.assignedMeters ?? 0, fill: "#10b981" },
+      { name: "Unassigned", value: (s.totalMeters ?? 0) - (s.assignedMeters ?? 0), fill: "#f59e0b" },
+    ].filter((d) => d.value >= 0);
+  }, [meter?.summary]);
+
+  const meterTrendData = useMemo(() => {
+    const trend = meter?.lastSeenTrend ?? meter?.readingTrend ?? [];
+    if (!Array.isArray(trend) || trend.length === 0) return [];
+    return trend.map((item: Record<string, unknown>, i: number) => {
+      const label = (item.period ?? item.date ?? `Period ${i + 1}`) as string;
+      const value = Number(item.count ?? item.value ?? 0);
+      return { label: String(label).slice(0, 12), value };
+    });
+  }, [meter?.lastSeenTrend, meter?.readingTrend]);
+
+  const estateOptions = useMemo(
+    () => [{ label: estateName, value: estateId ?? "all" }],
+    [estateName, estateId]
+  );
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back! Here's is an overview on{" "}
+            Welcome back! Here&apos;s an overview on{" "}
             <span className="text-[18px] font-bold underline uppercase text-black">
-              Doe Estate
-            </span>.
+              {estateName}
+            </span>
+            {"."}
           </p>
-        </div>
-        <div className="flex gap-2">
-          {["week", "month", "year"].map((period) => (
-            <Button
-              key={period}
-              variant={selectedPeriod === period ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedPeriod(period)}
-              className="capitalize"
-            >
-              {period}
-            </Button>
-          ))}
         </div>
       </div>
 
-      {/* Stats Card Grid */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => {
+        {stats.map((stat) => {
           const Icon = stat.icon;
           const isPositive = stat.trend === "up";
           return (
-            <Card key={i} className="p-6 hover:shadow-md gap-3 transition-shadow">
-          
+            <Card key={stat.title} className="p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between gap-3">
                 <div className={`w-[50px] p-3 rounded-lg ${stat.color}`}>
                   <Icon className="w-6 h-6" />
                 </div>
-                
-      
-              <p className="text-muted- font-medium text-base mb-1">{stat.title}</p>
-              <p className="font-heading text-3xl font-bold">{stat.value}</p>
-              <div
-                  className={`flex items-center gap-1 text-sm font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}
+                <div
+                  className={`flex items-center gap-1 text-sm font-medium ${
+                    isPositive ? "text-green-600" : "text-red-600"
+                  }`}
                 >
-                  {isPositive ? (
-                    <ArrowUpRight className="w-4 h-4" />
-                  ) : (
-                    <ArrowDownRight className="w-4 h-4" />
-                  )}
-                  {stat.change} This month
+                  <ArrowUpRight className="w-4 h-4" />
+                  {stat.change}
                 </div>
+              </div>
+              <p className="text-muted-foreground font-medium text-base mb-1 mt-2">{stat.title}</p>
+              <p className="font-heading text-3xl font-bold">{stat.value}</p>
             </Card>
           );
         })}
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Chart */}
-        <Card className="lg:col-span-2 p-6">
-          <div className="mb-6">
-            <h2 className="font-heading text-xl font-bold">
-              Revenue vs Expenses
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Last 6 months comparison
-            </p>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis stroke="var(--muted-foreground)" />
-              <YAxis stroke="var(--muted-foreground)" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--background)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                }}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="revenue"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ fill: "#3b82f6" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="expenses"
-                stroke="#ef4444"
-                strokeWidth={2}
-                dot={{ fill: "#ef4444" }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-
-        {/* Occupancy Distribution */}
-        <Card className="p-6">
-          <div className="mb-6">
-            <h2 className="font-heading text-xl font-bold">
-              Occupancy Distribution
-            </h2>
-          </div>
-          <OccupancyDistribution
-            totalResidents={54765}
-            occupiedPercentage={64}
-            vacantPercentage={24}
+      {/* Chart selector + single chart area (Bills / Transactions / Meter) */}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <label htmlFor="admin-chart-select" className="text-sm font-medium text-muted-foreground">
+            Chart to display
+          </label>
+          <Select
+            id="admin-chart-select"
+            options={[
+              { label: "Bills overview", value: "bills" },
+              { label: "Transaction trend", value: "transactions" },
+              { label: "Meter / Vending", value: "meter" },
+            ]}
+            value={chartView}
+            onChange={(e) =>
+              setChartView(e.target.value as "bills" | "transactions" | "meter")
+            }
+            className="w-full max-w-xs"
           />
-        </Card>
+        </div>
+        <div className="min-h-[320px]">
+          {chartView === "bills" && (
+            <Card className="p-4">
+              {(() => {
+                const isLoading = loading && billsChartData.length === 0;
+                const isEmpty = !loading && billsChartData.length === 0;
+                if (isLoading)
+                  return (
+                    <p className="text-muted-foreground text-sm py-8 text-center">
+                      Loading bills...
+                    </p>
+                  );
+                if (isEmpty)
+                  return (
+                    <p className="text-muted-foreground text-sm py-8 text-center">
+                      No bills data to display
+                    </p>
+                  );
+                return (
+                <BillsOverview
+                  title="Bills"
+                  subtitle={
+                    bills?.paymentStatistics
+                      ? `Collected: ${formatNaira(bills.paymentStatistics.totalAmountCollected)} · Expected: ${formatNaira(bills.paymentStatistics.totalAmountExpected)}`
+                      : "Bills by collection"
+                  }
+                  data={billsChartData}
+                  onExport={() => {}}
+                />
+                );
+              })()}
+            </Card>
+          )}
+          {chartView === "transactions" && (
+            <>
+              <TransactionsChart
+                title="Transaction trend"
+                subtitle={
+                  transactions?.summary
+                    ? `Total: ${transactions.summary.totalTransactions} · Net: ${formatNaira(transactions.summary.netFlow)}`
+                    : "Transaction trend"
+                }
+                data={transactionTrendData}
+                estateOptions={estateOptions}
+                onExport={() => {}}
+                className="w-full"
+              />
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TransactionsChart
+                  title="Credit vs Debit"
+                  subtitle="Amounts by type"
+                  data={transactionTypeData}
+                  estateOptions={estateOptions}
+                  onExport={() => {}}
+                  className="w-full"
+                />
+                <TransactionsChart
+                  title="Charge breakdown"
+                  subtitle={
+                    transactions?.chargeAnalytics?.summary
+                      ? `Total charges: ${formatNaira(transactions.chargeAnalytics.summary.totalCharges)}`
+                      : "By charge type"
+                  }
+                  data={chargeBreakdownData}
+                  estateOptions={estateOptions}
+                  onExport={() => {}}
+                  className="w-full"
+                />
+              </div>
+            </>
+          )}
+          {chartView === "meter" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <MeterStatusPie
+                title="Meter assignment"
+                subtitle="Assigned vs unassigned"
+                data={meterAssignmentData}
+              />
+              <MeterTrendChart
+                title="Meter trend"
+                subtitle="Last seen / reading trend"
+                data={meterTrendData}
+                valueLabel="Count"
+              />
+              {!loading && meterAssignmentData.length === 0 && meterTrendData.length === 0 && (
+                <p className="text-muted-foreground text-sm col-span-2 py-8 text-center">
+                  No meter data to display
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Bills Overview */}
-      <Card className="p-6">
-        <BillsOverview
-          title="Bills Overview"
-          subtitle="This month's comparison"
-          data={[
-            { name: "Paid", value: 450, fill: "#10b981", label: "450" },
-            { name: "Pending", value: 285, fill: "#f97316", label: "50" },
-            { name: "Overdue", value: 180, fill: "#ef4444", label: "" },
-          ]}
-          period="month"
-          onPeriodChange={(period) => console.log("Period changed to:", period)}
-          onExport={() => console.log("Export clicked")}
-        />
-      </Card>
     </div>
   );
 }

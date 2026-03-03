@@ -124,6 +124,16 @@ export const securityNav = [
 export const residentNav = [
   { label: "Overview", icon: FiHome, path: "/dashboard/resident/dashboard" },
   {
+    label: "User Management", 
+    icon: FiUsers,
+    path: "/dashboard/resident/user",
+  },
+  {
+    label: "Rent Management",
+    icon: LuReceipt,
+    path: "/dashboard/resident/rent",
+  },
+  {
     label: "Bills Management",
     icon: LuReceipt,
     path: "/dashboard/resident/bills",

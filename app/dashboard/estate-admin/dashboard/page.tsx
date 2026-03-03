@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { TrendingUp, Users, FileText, DollarSign } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import TransactionsChart from "@/components/charts/transactions-chart";
 import BillsOverview from "@/components/charts/bills-overview";
@@ -25,29 +24,65 @@ import { toast } from "react-toastify";
 
 const formatNaira = (n: number) => `N${Number(n).toLocaleString()}`;
 
-/** Returns start and end date (YYYY-MM-DD) for the given period (end = today). */
-function getDateRangeForPeriod(period: "week" | "month" | "year"): {
-  startDate: string;
-  endDate: string;
-} {
-  const end = new Date();
-  const start = new Date(end);
-  if (period === "week") start.setDate(start.getDate() - 7);
-  else if (period === "month") start.setDate(start.getDate() - 30);
-  else start.setFullYear(start.getFullYear() - 1);
+/** Returns start and end date (YYYY-MM-DD) from transaction filter (day / month / year). */
+function getTransactionDateRange(
+  periodType: "day" | "month" | "year",
+  selectedDay: string,
+  selectedMonth: number,
+  selectedMonthYear: number,
+  selectedYear: number
+): { startDate: string; endDate: string } {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (periodType === "day") {
+    const d = selectedDay || new Date().toISOString().slice(0, 10);
+    return { startDate: d, endDate: d };
+  }
+  if (periodType === "month") {
+    const start = `${selectedMonthYear}-${pad(selectedMonth)}-01`;
+    const lastDay = new Date(selectedMonthYear, selectedMonth, 0).getDate();
+    const end = `${selectedMonthYear}-${pad(selectedMonth)}-${pad(lastDay)}`;
+    return { startDate: start, endDate: end };
+  }
   return {
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10),
+    startDate: `${selectedYear}-01-01`,
+    endDate: `${selectedYear}-12-31`,
   };
 }
+
+const MONTH_OPTIONS = [
+  { label: "January", value: "1" },
+  { label: "February", value: "2" },
+  { label: "March", value: "3" },
+  { label: "April", value: "4" },
+  { label: "May", value: "5" },
+  { label: "June", value: "6" },
+  { label: "July", value: "7" },
+  { label: "August", value: "8" },
+  { label: "September", value: "9" },
+  { label: "October", value: "10" },
+  { label: "November", value: "11" },
+  { label: "December", value: "12" },
+];
 
 /** Fallback when bills analytics API returns no topBillsByCollection (not from API). */
 const BILLS_CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 export default function EstateAdminOverview() {
   const dispatch = useDispatch<AppDispatch>();
-  const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month" | "year">(
-    "month",
+  const now = new Date();
+  const [transactionPeriodType, setTransactionPeriodType] = useState<
+    "day" | "month" | "year"
+  >("month");
+  const [transactionSelectedDay, setTransactionSelectedDay] = useState(
+    () => now.toISOString().slice(0, 10)
+  );
+  const [transactionSelectedMonth, setTransactionSelectedMonth] = useState(
+    now.getMonth() + 1
+  );
+  const [transactionSelectedMonthYear, setTransactionSelectedMonthYear] =
+    useState(now.getFullYear());
+  const [transactionSelectedYear, setTransactionSelectedYear] = useState(
+    now.getFullYear()
   );
   const [meterChartView, setMeterChartView] = useState<
     "assignment" | "active" | "trend" | "credit"
@@ -72,6 +107,7 @@ export default function EstateAdminOverview() {
   const billsDashboard = billsAnalytics?.dashboard ?? null;
   const meterDashboard = meterAnalytics?.dashboard ?? null;
   const meterLoading = meterAnalytics?.status === "isLoading";
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     (async () => {
@@ -91,13 +127,27 @@ export default function EstateAdminOverview() {
 
   useEffect(() => {
     if (!estateId) return;
-    const { startDate, endDate } = getDateRangeForPeriod(selectedPeriod);
+    const { startDate, endDate } = getTransactionDateRange(
+      transactionPeriodType,
+      transactionSelectedDay,
+      transactionSelectedMonth,
+      transactionSelectedMonthYear,
+      transactionSelectedYear
+    );
     dispatch(
       getTransactionAnalyticsDashboard({ estateId, startDate, endDate })
     ).catch((err: any) =>
       toast.error(err?.message ?? "Failed to load transaction analytics.")
     );
-  }, [estateId, selectedPeriod, dispatch]);
+  }, [
+    estateId,
+    transactionPeriodType,
+    transactionSelectedDay,
+    transactionSelectedMonth,
+    transactionSelectedMonthYear,
+    transactionSelectedYear,
+    dispatch,
+  ]);
 
   useEffect(() => {
     if (!estateId) return;
@@ -160,8 +210,21 @@ export default function EstateAdminOverview() {
   );
 
   const { startDate: periodStart, endDate: periodEnd } = useMemo(
-    () => getDateRangeForPeriod(selectedPeriod),
-    [selectedPeriod]
+    () =>
+      getTransactionDateRange(
+        transactionPeriodType,
+        transactionSelectedDay,
+        transactionSelectedMonth,
+        transactionSelectedMonthYear,
+        transactionSelectedYear
+      ),
+    [
+      transactionPeriodType,
+      transactionSelectedDay,
+      transactionSelectedMonth,
+      transactionSelectedMonthYear,
+      transactionSelectedYear,
+    ]
   );
 
   const filteredTrend = useMemo(() => {
@@ -320,18 +383,59 @@ export default function EstateAdminOverview() {
             </span>
           </p>
         </div>
-        <div className="flex gap-2">
-          {(["week", "month", "year"] as const).map((period) => (
-            <Button
-              key={period}
-              variant={selectedPeriod === period ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedPeriod(period)}
-              className="capitalize"
-            >
-              {period}
-            </Button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">Filter:</span>
+          <Select
+            options={[
+              { label: "Day", value: "day" },
+              { label: "Month", value: "month" },
+              { label: "Year", value: "year" },
+            ]}
+            value={transactionPeriodType}
+            onChange={(e) =>
+              setTransactionPeriodType(e.target.value as "day" | "month" | "year")
+            }
+            className="min-w-[100px]"
+          />
+          {transactionPeriodType === "day" && (
+            <input
+              type="date"
+              aria-label="Select day"
+              value={transactionSelectedDay}
+              onChange={(e) => setTransactionSelectedDay(e.target.value)}
+              className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+            />
+          )}
+          {transactionPeriodType === "month" && (
+            <>
+              <Select
+                options={MONTH_OPTIONS}
+                value={String(transactionSelectedMonth)}
+                onChange={(e) => setTransactionSelectedMonth(Number(e.target.value))}
+                className="min-w-[120px]"
+              />
+              <Select
+                options={[currentYear - 2, currentYear - 1, currentYear, currentYear + 1].map(
+                  (y) => ({ label: String(y), value: String(y) })
+                )}
+                value={String(transactionSelectedMonthYear)}
+                onChange={(e) =>
+                  setTransactionSelectedMonthYear(Number(e.target.value))
+                }
+                className="min-w-[90px]"
+              />
+            </>
+          )}
+          {transactionPeriodType === "year" && (
+            <Select
+              options={[currentYear - 2, currentYear - 1, currentYear, currentYear + 1].map(
+                (y) => ({ label: String(y), value: String(y) })
+              )}
+              value={String(transactionSelectedYear)}
+              onChange={(e) => setTransactionSelectedYear(Number(e.target.value))}
+              className="min-w-[90px]"
+            />
+          )}
         </div>
       </div>
 

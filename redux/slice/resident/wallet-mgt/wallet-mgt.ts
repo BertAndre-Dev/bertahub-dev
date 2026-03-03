@@ -2,12 +2,16 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 
 
-interface WalletData {
+export interface WalletData {
   userId: string;
   balance: number;
   lockedBalance: number;
+  /** Required for owner residentType */
+  residentType?: "owner" | "tenant";
+  ownerName?: string;
+  bankCode?: string;
+  bankSortCode?: string;
 }
-
 
 export const createWallet = createAsyncThunk(
   "wallet-mgt/createWallet",
@@ -15,9 +19,11 @@ export const createWallet = createAsyncThunk(
     try {
       const res = await axiosInstance.post("/api/v1/wallet-mgt", data);
       return res.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
-        message: error.res?.data?.message || "Wallet creation failed",
+        message:
+          err?.response?.data?.message || "Wallet creation failed",
       });
     }
   }
@@ -30,8 +36,9 @@ export const getWallet = createAsyncThunk(
       const res = await axiosInstance.get(`/api/v1/wallet-mgt/${userId}?userId=${userId}`);
       return res.data;
     } catch (error: any) {
+      const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
-        message: error.res?.data?.message || "Failed to fetch wallet",
+        message: err?.response?.data?.message || "Failed to fetch wallet",
       });
     }
   }

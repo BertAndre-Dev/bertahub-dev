@@ -71,6 +71,8 @@ export default function LoginPage() {
           router.push("/dashboard/security/dashboard");
         } else if (role === "estate admin") {
           router.push("/dashboard/estate-admin/dashboard");
+        } else if (role === "resident") {
+          router.push("/dashboard/resident/dashboard");
         } else {
           router.push("/dashboard/resident/bills");
         }
