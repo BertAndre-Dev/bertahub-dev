@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
+  getComplaintsDashboard,
   getComplaintsByEstate,
   getComplaintById,
   updateComplaintStatus,
@@ -64,25 +65,48 @@ export interface CommentsResponse {
 
 export type AsyncStatus = "idle" | "isLoading" | "succeeded" | "failed";
 
+export interface ComplaintsDashboardData {
+  summary?: { totalComplaints?: number };
+  statusBreakdown?: Record<string, number>;
+  categoryBreakdown?: Array<{ category: string; count: number }>;
+  pendingComplaints?: Array<{
+    _id: string;
+    title?: string;
+    description?: string;
+    category?: string;
+    status?: string;
+    createdAt?: string;
+    daysOpen?: number;
+    [key: string]: unknown;
+  }>;
+  oldestUnresolvedComplaints?: Array<{ _id: string; title?: string; category?: string; status?: string; createdAt?: string; daysOpen?: number }>;
+  resolutionRate?: { totalComplaints?: number; resolvedComplaints?: number; pendingComplaints?: number; resolutionRate?: number };
+  [key: string]: unknown;
+}
+
 export interface ComplaintsState {
+  getComplaintsDashboardStatus: AsyncStatus;
   getComplaintsByEstateStatus: AsyncStatus;
   getComplaintByIdStatus: AsyncStatus;
   updateComplaintStatusStatus: AsyncStatus;
   getCommentsByComplaintStatus: AsyncStatus;
   createCommentStatus: AsyncStatus;
   complaints: ComplaintsResponse | null;
+  complaintsDashboard: ComplaintsDashboardData | null;
   currentComplaint: ComplaintItem | null;
   commentsByComplaintId: Record<string, CommentItem[]>;
   error: string | null;
 }
 
 const initialState: ComplaintsState = {
+  getComplaintsDashboardStatus: "idle",
   getComplaintsByEstateStatus: "idle",
   getComplaintByIdStatus: "idle",
   updateComplaintStatusStatus: "idle",
   getCommentsByComplaintStatus: "idle",
   createCommentStatus: "idle",
   complaints: null,
+  complaintsDashboard: null,
   currentComplaint: null,
   commentsByComplaintId: {},
   error: null,
@@ -104,6 +128,40 @@ const complaintsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(getComplaintsDashboard.pending, (state) => {
+        state.getComplaintsDashboardStatus = "isLoading";
+        state.error = null;
+      })
+      .addCase(getComplaintsDashboard.fulfilled, (state, action) => {
+        state.getComplaintsDashboardStatus = "succeeded";
+        state.error = null;
+        const raw = action.payload?.data;
+        state.complaintsDashboard = raw ?? null;
+        const pending = raw?.pendingComplaints ?? [];
+        const normalized: ComplaintItem[] = pending.map((p: { _id: string; title?: string; description?: string; category?: string; status?: string; createdAt?: string; [key: string]: unknown }) => ({
+          id: p._id ?? (p as any).id,
+          title: p.title,
+          description: p.description ?? "",
+          category: p.category,
+          status: p.status ?? "pending",
+          createdAt: p.createdAt,
+        }));
+        state.complaints = {
+          success: true,
+          message: "",
+          data: normalized,
+          pagination: { total: normalized.length, page: 1, limit: normalized.length || 10, pages: 1 },
+        };
+      })
+      .addCase(getComplaintsDashboard.rejected, (state, action) => {
+        state.getComplaintsDashboardStatus = "failed";
+        state.complaintsDashboard = null;
+        state.error =
+          (action.payload as { message?: string })?.message ||
+          action.error.message ||
+          "Failed to fetch complaints dashboard";
+      })
+
       .addCase(getComplaintsByEstate.pending, (state) => {
         state.getComplaintsByEstateStatus = "isLoading";
         state.error = null;

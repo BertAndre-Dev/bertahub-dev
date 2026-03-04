@@ -1,35 +1,114 @@
 "use client";
 
-import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Modal from "@/components/modal/page";
+import Table from "@/components/tables/list/page";
 import InviteTenantForm from "@/components/resident/invite-tenant-form/page";
-import type { RootState } from "@/redux/store";
+import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import { getInvitedTenants } from "@/redux/slice/resident/invited-tenants/invited-tenants";
+import type { InvitedTenantItem } from "@/redux/slice/resident/invited-tenants/invited-tenants";
+import type { RootState, AppDispatch } from "@/redux/store";
+import { toast } from "react-toastify";
+
+const PAGE_SIZE = 10;
+
+function formatDate(val: string | undefined) {
+  if (!val) return "—";
+  try {
+    return new Date(val).toLocaleDateString();
+  } catch {
+    return val;
+  }
+}
 
 export default function ResidentUserPage() {
+  const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
+  const [estateId, setEstateId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const inviteTenantState = useSelector(
     (state: RootState) => (state as any).residentInviteTenant,
   );
   const inviteStatus = inviteTenantState?.status ?? "idle";
 
+  const { list: tenants, status: tenantsStatus, pagination } = useSelector(
+    (state: RootState) => {
+      const s = (state as any).residentInvitedTenants;
+      return {
+        list: (s?.list ?? []) as InvitedTenantItem[],
+        status: s?.status ?? "idle",
+        pagination: s?.pagination ?? null,
+      };
+    }
+  );
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const userRes = await dispatch(getSignedInUser()).unwrap();
+        const id = userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
+        if (!id) return;
+        setEstateId(id);
+        await dispatch(
+          getInvitedTenants({ estateId: id, page: 1, limit: PAGE_SIZE })
+        ).unwrap();
+      } catch {
+        toast.error("Failed to load tenants.");
+      }
+    })();
+  }, [dispatch]);
+
+  const handlePageChange = (newPage: number) => {
+    if (!estateId) return;
+    setCurrentPage(newPage);
+    dispatch(
+      getInvitedTenants({ estateId, page: newPage, limit: PAGE_SIZE })
+    ).catch(() => toast.error("Failed to load tenants."));
+  };
+
   const handleOpenModal = () => setOpen(true);
   const handleCloseModal = () => setOpen(false);
+
+  const columns = [
+    {
+      key: "name",
+      header: "Name",
+      render: (t: InvitedTenantItem) =>
+        [t.firstName, t.lastName].filter(Boolean).join(" ") || t.email || "—",
+    },
+    { key: "email", header: "Email", render: (t: InvitedTenantItem) => t.email ?? "—" },
+    {
+      key: "invitationStatus",
+      header: "Invitation Status",
+      render: (t: InvitedTenantItem) => t.invitationStatus ?? "—",
+    },
+    {
+      key: "createdAt",
+      header: "Created",
+      render: (t: InvitedTenantItem) => formatDate(t.createdAt),
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-3xl font-bold">Invite Tenant</h1>
+        <p className="text-muted-foreground mt-1">
+          As an owner, you can invite tenants to your unit(s). They will receive
+          an email to set up their account.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
         <Card className="p-6">
           <div className="flex items-start justify-between">
             <div>
+              <p className="text-sm text-muted-foreground">Invite a tenant</p>
               <p className="font-heading text-2xl font-bold mt-2">
                 Add tenants to your address(es)
               </p>
@@ -44,6 +123,38 @@ export default function ResidentUserPage() {
               Invite Tenant
             </Button>
           </div>
+        </Card>
+
+        <Card className="p-4">
+          <h2 className="font-heading text-lg font-semibold mb-4">Your tenants</h2>
+          <Table<InvitedTenantItem>
+            columns={columns}
+            data={tenants}
+            emptyMessage={
+              tenantsStatus === "isLoading"
+                ? "Loading tenants..."
+                : "You have not invited any tenants yet."
+            }
+            showPagination
+            paginationInfo={{
+              total: pagination?.total ?? 0,
+              current: pagination?.page ?? currentPage,
+              pageSize: pagination?.limit ?? PAGE_SIZE,
+            }}
+            onPageChange={handlePageChange}
+            enableExport
+            exportFileName="tenants"
+            onExportRequest={
+              estateId
+                ? async () => {
+                    const res = await dispatch(
+                      getInvitedTenants({ estateId, page: 1, limit: 50000 })
+                    ).unwrap();
+                    return (res?.data ?? []) as InvitedTenantItem[];
+                  }
+                : undefined
+            }
+          />
         </Card>
       </div>
 

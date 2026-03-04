@@ -11,18 +11,24 @@ import { Select } from "@/components/ui/select";
 import Modal from "@/components/modal/page";
 import Table from "@/components/tables/list/page";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-import {
-  getResidentEstateFields,
-  getResidentFieldEntries,
-} from "@/redux/slice/resident/address-options/resident-address-options";
+import { getInvitedTenants } from "@/redux/slice/resident/invited-tenants/invited-tenants";
+import type { InvitedTenantItem } from "@/redux/slice/resident/invited-tenants/invited-tenants";
 import {
   createRent,
   getOwnerRents,
   getRentById,
+  deleteRent,
+  updateRent,
+  activateRent,
+  suspendRent,
   type CreateRentPayload,
   type RentItem,
+  type UpdateRentPayload,
 } from "@/redux/slice/resident/rent-mgt/rent-mgt";
 import { clearCurrentRent } from "@/redux/slice/resident/rent-mgt/rent-mgt-slice";
+import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
+import SuspendRentModal from "@/components/resident/suspend-rent-modal/page";
+import { Eye, Pencil, PlayCircle, PauseCircle, Trash2 } from "lucide-react";
 import type { RootState, AppDispatch } from "@/redux/store";
 
 const PAGE_SIZE = 10;
@@ -53,7 +59,6 @@ function formatTenant(rent: RentItem) {
   if (!tenant) return "—";
   if (typeof tenant === "object") {
     const name = [tenant.firstName, tenant.lastName].filter(Boolean).join(" ");
-    // return name || tenant.email || tenant.id || "—";
     return name || tenant.email || tenant.id || "—";
   }
   return typeof tenant === "string" ? tenant : "—";
@@ -62,9 +67,12 @@ function formatTenant(rent: RentItem) {
 export default function ResidentRentPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editRentId, setEditRentId] = useState<string | null>(null);
   const [residentType, setResidentType] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewRentId, setViewRentId] = useState<string | null>(null);
+  const [suspendRentItem, setSuspendRentItem] = useState<RentItem | null>(null);
+  const [suspendSubmitting, setSuspendSubmitting] = useState(false);
 
   const {
     ownerRents,
@@ -85,15 +93,16 @@ export default function ResidentRentPage() {
     };
   });
 
-  const addressOptions = useSelector(
-    (state: RootState) => ((state as { residentAddressOptions?: { options: { label: string; value: string }[] } }).residentAddressOptions?.options) ?? []
-  );
-  const addressOptionsLoading = useSelector(
+  const { list: tenantList, status: tenantListStatus } = useSelector(
     (state: RootState) => {
-      const ro = (state as { residentAddressOptions?: { fieldsStatus?: string; entriesStatus?: string } }).residentAddressOptions;
-      return (ro?.fieldsStatus === "isLoading") || (ro?.entriesStatus === "isLoading");
-    }
+      const s = (state as any).residentInvitedTenants;
+      return {
+        list: (s?.list ?? []) as InvitedTenantItem[],
+        status: s?.status ?? "idle",
+      };
+    },
   );
+  const tenantListLoading = tenantListStatus === "isLoading";
 
   const list = ownerRents ?? [];
   const loading = getOwnerRentsStatus === "isLoading";
@@ -103,7 +112,8 @@ export default function ResidentRentPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const rType = userRes?.data?.residentType ?? userRes?.data?.resident_type ?? null;
+        const rType =
+          userRes?.data?.residentType ?? userRes?.data?.resident_type ?? null;
         setResidentType(rType ?? null);
         await dispatch(getOwnerRents({ page: 1, limit: PAGE_SIZE })).unwrap();
       } catch {
@@ -113,60 +123,212 @@ export default function ResidentRentPage() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (createModalOpen && isOwner && addressOptions.length === 0 && !addressOptionsLoading) {
+    if (createModalOpen && isOwner) {
       (async () => {
         try {
           const userRes = await dispatch(getSignedInUser()).unwrap();
-          const estateId = userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
+          const estateId =
+            userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
           if (!estateId) return;
-          const fieldRes = await dispatch(getResidentEstateFields(estateId)).unwrap();
-          const fields = (fieldRes as { data?: unknown[] })?.data ?? [];
-          const fieldList = Array.isArray(fields) ? fields : [];
-          const primaryFieldId = (fieldList[0] as { id?: string })?.id ?? "";
-          if (primaryFieldId) {
-            await dispatch(getResidentFieldEntries({ fieldId: primaryFieldId, page: 1, limit: 200 })).unwrap();
-          }
+          await dispatch(
+            getInvitedTenants({ estateId, page: 1, limit: 200 }),
+          ).unwrap();
         } catch {
-          toast.error("Failed to load address options.");
+          toast.error("Failed to load tenants.");
         }
       })();
     }
-  }, [createModalOpen, isOwner, addressOptions.length, addressOptionsLoading, dispatch]);
+  }, [createModalOpen, isOwner, dispatch]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     dispatch(getOwnerRents({ page: newPage, limit: PAGE_SIZE })).catch(() =>
-      toast.error("Failed to load rents.")
+      toast.error("Failed to load rents."),
     );
   };
 
   const handleViewRent = (id: string) => {
     setViewRentId(id);
-    dispatch(getRentById(id)).catch(() => toast.error("Failed to load rent details."));
+    dispatch(getRentById(id)).catch(() =>
+      toast.error("Failed to load rent details."),
+    );
   };
 
+  const refreshList = () => {
+    dispatch(getOwnerRents({ page: currentPage, limit: PAGE_SIZE })).catch(() =>
+      toast.error("Failed to refresh rents."),
+    );
+  };
+
+  const handleDeleteRent = (item: RentItem) => {
+    if (!item.id) return;
+    const tenantName = formatTenant(item);
+    confirmDeleteToast({
+      name: tenantName ? `rent for ${tenantName}` : "this rent record",
+      onConfirm: async () => {
+        await dispatch(deleteRent(item.id!)).unwrap();
+        toast.success("Rent deleted.");
+        refreshList();
+      },
+    });
+  };
+
+  const handleActivateRent = (item: RentItem) => {
+    if (!item.id) return;
+    dispatch(activateRent(item.id))
+      .unwrap()
+      .then(() => {
+        toast.success("Rent activated.");
+        refreshList();
+      })
+      .catch((err: { message?: string }) =>
+        toast.error(err?.message ?? "Failed to activate rent."),
+      );
+  };
+
+  const handleSuspendRent = (item: RentItem) => {
+    if (!item.id) return;
+    setSuspendRentItem(item);
+  };
+
+  const handleSuspendConfirm = async (reason: string) => {
+    if (!suspendRentItem?.id) return;
+    setSuspendSubmitting(true);
+    try {
+      await dispatch(
+        suspendRent({ rentId: suspendRentItem.id, reason }),
+      ).unwrap();
+      toast.success("Rent suspended.");
+      setSuspendRentItem(null);
+      refreshList();
+    } catch (err: unknown) {
+      toast.error(
+        (err as { message?: string })?.message ?? "Failed to suspend rent.",
+      );
+    } finally {
+      setSuspendSubmitting(false);
+    }
+  };
+
+  const statusLabel = (status?: string) =>
+    status === "suspended" ? "Suspended" : status === "active" ? "Active" : "—";
+
   const columns = [
-    { key: "addressId", header: "Address", render: (item: RentItem) => formatAddress(item) },
-    { key: "tenantId", header: "Tenant", render: (item: RentItem) => formatTenant(item) },
+    {
+      key: "createdAt",
+      header: "Created At",
+      render: (item: RentItem) => formatDate(item.createdAt),
+    },
+    {
+      key: "addressId",
+      header: "Address",
+      render: (item: RentItem) => formatAddress(item),
+    },
+    {
+      key: "tenantId",
+      header: "Tenant",
+      render: (item: RentItem) => formatTenant(item),
+    },
     {
       key: "amount",
       header: "Amount (₦)",
-      render: (item: RentItem) => (item.amount != null ? Number(item.amount).toLocaleString() : "—"),
+      render: (item: RentItem) =>
+        item.amount != null ? Number(item.amount).toLocaleString() : "—",
     },
-    { key: "startDate", header: "Start Date", render: (item: RentItem) => formatDate(item.startDate) },
-    { key: "endDate", header: "End Date", render: (item: RentItem) => formatDate(item.endDate) },
-    { key: "notes", header: "Notes", render: (item: RentItem) => (item.notes ?? "—").slice(0, 40) + (item.notes && item.notes.length > 40 ? "…" : "") },
+    {
+      key: "startDate",
+      header: "Start Date",
+      render: (item: RentItem) => formatDate(item.startDate),
+    },
+    {
+      key: "endDate",
+      header: "End Date",
+      render: (item: RentItem) => formatDate(item.endDate),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (item: RentItem) => (
+        <span
+          className={
+            item.status === "suspended" ? "text-amber-600" : "text-green-600"
+          }
+        >
+          {statusLabel(item.status)}
+        </span>
+      ),
+    },
+    {
+      key: "notes",
+      header: "Notes",
+      render: (item: RentItem) =>
+        (item.notes ?? "—").slice(0, 40) +
+        (item.notes && item.notes.length > 40 ? "…" : ""),
+    },
     ...(isOwner
       ? [
           {
             key: "actions",
-            header: "Action",
+            header: "Actions",
             exportable: false as const,
             render: (item: RentItem) =>
               item.id ? (
-                <Button size="sm" variant="outline" onClick={() => handleViewRent(item.id!)}>
-                  View
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleViewRent(item.id!)}
+                    title="View"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setEditRentId(item.id!)}
+                    title="Edit"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  {item.status !== "active" ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-green-600"
+                      onClick={() => handleActivateRent(item)}
+                      title="Activate"
+                    >
+                      <PlayCircle className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                  {item.status === "active" || !item.status ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-amber-600"
+                      onClick={() => handleSuspendRent(item)}
+                      title="Suspend"
+                    >
+                      <PauseCircle className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive"
+                    onClick={() => handleDeleteRent(item)}
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               ) : null,
           },
         ]
@@ -179,7 +341,9 @@ export default function ResidentRentPage() {
         <div>
           <h1 className="font-heading text-3xl font-bold">Rent Management</h1>
           <p className="text-muted-foreground mt-1">
-            {isOwner ? "Create and view rent records for your properties." : "View your rent records."}
+            {isOwner
+              ? "Create and view rent records for your properties."
+              : "View your rent records."}
           </p>
         </div>
         {isOwner && (
@@ -206,7 +370,9 @@ export default function ResidentRentPage() {
           onExportRequest={
             isOwner
               ? async () => {
-                  const res = await dispatch(getOwnerRents({ page: 1, limit: 50000 })).unwrap();
+                  const res = await dispatch(
+                    getOwnerRents({ page: 1, limit: 50000 }),
+                  ).unwrap();
                   return res?.data ?? [];
                 }
               : undefined
@@ -215,10 +381,13 @@ export default function ResidentRentPage() {
       </Card>
 
       {/* Create Rent Modal */}
-      <Modal visible={createModalOpen} onClose={() => setCreateModalOpen(false)}>
+      <Modal
+        visible={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+      >
         <CreateRentForm
-          addressOptions={addressOptions}
-          addressOptionsLoading={addressOptionsLoading}
+          tenantList={tenantList}
+          tenantListLoading={tenantListLoading}
           createLoading={createRentStatus === "isLoading"}
           onClose={() => setCreateModalOpen(false)}
           onSuccess={() => {
@@ -226,6 +395,20 @@ export default function ResidentRentPage() {
             dispatch(getOwnerRents({ page: currentPage, limit: PAGE_SIZE }));
           }}
         />
+      </Modal>
+
+      {/* Edit Rent Modal */}
+      <Modal visible={!!editRentId} onClose={() => setEditRentId(null)}>
+        {editRentId ? (
+          <UpdateRentForm
+            rent={list.find((r) => r.id === editRentId) ?? null}
+            onClose={() => setEditRentId(null)}
+            onSuccess={() => {
+              setEditRentId(null);
+              refreshList();
+            }}
+          />
+        ) : null}
       </Modal>
 
       {/* View Rent Detail Modal */}
@@ -245,21 +428,200 @@ export default function ResidentRentPage() {
           }}
         />
       </Modal>
+
+      {/* Suspend Rent Modal (reusable: tenant name + required reason) */}
+      <SuspendRentModal
+        visible={!!suspendRentItem}
+        onClose={() => setSuspendRentItem(null)}
+        tenantName={suspendRentItem ? formatTenant(suspendRentItem) : ""}
+        onConfirm={handleSuspendConfirm}
+        loading={suspendSubmitting}
+      />
     </div>
   );
 }
 
+function formatAddressFromData(data?: Record<string, string>): string {
+  if (!data) return "—";
+  const str = Object.entries(data)
+    .filter(([, v]) => v != null && String(v).trim() !== "")
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(", ");
+  return str || "—";
+}
+
+function isoToDateInput(iso?: string): string {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    return d.toISOString().slice(0, 10);
+  } catch {
+    return "";
+  }
+}
+
+interface UpdateRentFormProps {
+  readonly rent: RentItem | null;
+  readonly onClose: () => void;
+  readonly onSuccess: () => void;
+}
+
+function UpdateRentForm({ rent, onClose, onSuccess }: UpdateRentFormProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  const [submitting, setSubmitting] = useState(false);
+  const [amount, setAmount] = useState(rent?.amount ?? 0);
+  const [startDate, setStartDate] = useState(isoToDateInput(rent?.startDate));
+  const [endDate, setEndDate] = useState(isoToDateInput(rent?.endDate));
+  const [notes, setNotes] = useState(rent?.notes ?? "");
+
+  useEffect(() => {
+    if (rent) {
+      setAmount(rent.amount ?? 0);
+      setStartDate(isoToDateInput(rent.startDate));
+      setEndDate(isoToDateInput(rent.endDate));
+      setNotes(rent.notes ?? "");
+    }
+  }, [rent]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rent?.id) return;
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast.error("Please enter a valid amount.");
+      return;
+    }
+    if (!startDate?.trim()) {
+      toast.error("Please enter start date.");
+      return;
+    }
+    if (!endDate?.trim()) {
+      toast.error("Please enter end date.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const payload: UpdateRentPayload = {
+        id: rent.id,
+        amount: amt,
+        startDate: new Date(startDate + "T00:00:00Z").toISOString(),
+        endDate: new Date(endDate + "T00:00:00Z").toISOString(),
+        currency: "NGN",
+        notes: notes.trim() || undefined,
+      };
+      await dispatch(updateRent(payload)).unwrap();
+      toast.success("Rent updated.");
+      onSuccess();
+    } catch (err: unknown) {
+      const msg =
+        (err as { message?: string })?.message ?? "Failed to update rent.";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!rent) {
+    return (
+      <Card className="max-w-lg mx-auto p-6">
+        <p className="text-muted-foreground text-center">Rent not found.</p>
+        <Button className="mt-4 w-full" onClick={onClose}>
+          Close
+        </Button>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="max-w-lg mx-auto">
+      <div className="p-6">
+        <h2 className="font-heading text-xl font-bold mb-1">Edit Rent</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Update amount, dates, or notes. Tenant and address cannot be changed
+          here.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Address</Label>
+            <p className="text-sm mt-1 text-muted-foreground">
+              {formatAddress(rent)}
+            </p>
+          </div>
+          <div>
+            <Label>Tenant</Label>
+            <p className="text-sm mt-1 text-muted-foreground">
+              {formatTenant(rent)}
+            </p>
+          </div>
+          <div>
+            <Label htmlFor="edit-amount">Amount (₦)</Label>
+            <Input
+              id="edit-amount"
+              type="number"
+              min={1}
+              value={amount || ""}
+              onChange={(e) => setAmount(Number(e.target.value) || 0)}
+              className="mt-1"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="edit-startDate">Start Date</Label>
+            <Input
+              id="edit-startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="mt-1"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="edit-endDate">End Date</Label>
+            <Input
+              id="edit-endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="mt-1"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="edit-notes">Notes (optional)</Label>
+            <Input
+              id="edit-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. Monthly rent"
+              className="mt-1"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button type="submit" disabled={submitting} className="flex-1">
+              {submitting ? "Saving..." : "Save changes"}
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </div>
+    </Card>
+  );
+}
+
 interface CreateRentFormProps {
-  readonly addressOptions: { label: string; value: string }[];
-  readonly addressOptionsLoading: boolean;
+  readonly tenantList: InvitedTenantItem[];
+  readonly tenantListLoading: boolean;
   readonly createLoading: boolean;
   readonly onClose: () => void;
   readonly onSuccess: () => void;
 }
 
 function CreateRentForm({
-  addressOptions,
-  addressOptionsLoading,
+  tenantList,
+  tenantListLoading,
   createLoading,
   onClose,
   onSuccess,
@@ -274,14 +636,24 @@ function CreateRentForm({
     notes: "",
   });
 
+  const selectedTenant = tenantList.find((t) => t.id === form.tenantId);
+  const addressOptions = (selectedTenant?.addressIds ?? []).map((addr) => ({
+    label: formatAddressFromData(addr.data),
+    value: addr._id,
+  }));
+
+  const handleTenantChange = (tenantId: string) => {
+    setForm((p) => ({ ...p, tenantId, addressId: "" }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.addressId?.trim()) {
-      toast.error("Please select an address.");
+    if (!form.tenantId?.trim()) {
+      toast.error("Please select a tenant.");
       return;
     }
-    if (!form.tenantId?.trim()) {
-      toast.error("Please enter tenant ID.");
+    if (!form.addressId?.trim()) {
+      toast.error("Please select an address for this tenant.");
       return;
     }
     const amount = Number(form.amount);
@@ -300,52 +672,90 @@ function CreateRentForm({
     try {
       const payload: CreateRentPayload = {
         ...form,
-        startDate: form.startDate ? new Date(form.startDate + "T00:00:00Z").toISOString() : "",
-        endDate: form.endDate ? new Date(form.endDate + "T00:00:00Z").toISOString() : "",
+        startDate: form.startDate
+          ? new Date(form.startDate + "T00:00:00Z").toISOString()
+          : "",
+        endDate: form.endDate
+          ? new Date(form.endDate + "T00:00:00Z").toISOString()
+          : "",
       };
       await dispatch(createRent(payload)).unwrap();
       toast.success("Rent created successfully.");
       onSuccess();
     } catch (err: unknown) {
-      const msg = (err as { message?: string })?.message ?? "Failed to create rent.";
+      const msg =
+        (err as { message?: string })?.message ?? "Failed to create rent.";
       toast.error(msg);
     }
   };
+
+  const tenantSelectOptions = [
+    { label: "Select tenant...", value: "" },
+    ...tenantList.map((t) => ({
+      label:
+        [t.firstName, t.lastName].filter(Boolean).join(" ") || t.email || t.id,
+      value: t.id,
+    })),
+  ];
 
   return (
     <Card className="max-w-lg mx-auto">
       <div className="p-6">
         <h2 className="font-heading text-xl font-bold mb-1">Create Rent</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          Only owners can create rent records. Fill in the details below.
+          Only owners can create rent records. Select a tenant and their
+          address, then fill in the details.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="addressId">Address</Label>
+            <Label htmlFor="tenantId">Tenant</Label>
+            <Select
+              id="tenantId"
+              options={tenantSelectOptions}
+              value={form.tenantId}
+              onChange={(e) => handleTenantChange(e.target.value)}
+              className="mt-1 w-full"
+              required
+            />
+            {tenantListLoading && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Loading tenants...
+              </p>
+            )}
+            {form.tenantId && selectedTenant && (
+              <div className="mt-2 rounded-md border border-border bg-muted/20 p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-1">
+                  Addresses for this tenant
+                </p>
+                {addressOptions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No addresses on file.
+                  </p>
+                ) : (
+                  <ul className="text-sm space-y-1">
+                    {addressOptions.map((o) => (
+                      <li key={o.value}>{o.label}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="addressId">Address (for this tenant)</Label>
             <Select
               id="addressId"
               options={[
                 { label: "Select address...", value: "" },
-                ...addressOptions.map((o) => ({ label: o.label, value: o.value })),
+                ...addressOptions,
               ]}
               value={form.addressId}
-              onChange={(e) => setForm((p) => ({ ...p, addressId: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, addressId: e.target.value }))
+              }
               className="mt-1 w-full"
               required
-            />
-            {addressOptionsLoading && (
-              <p className="text-xs text-muted-foreground mt-1">Loading addresses...</p>
-            )}
-          </div>
-          <div>
-            <Label htmlFor="tenantId">Tenant ID</Label>
-            <Input
-              id="tenantId"
-              value={form.tenantId}
-              onChange={(e) => setForm((p) => ({ ...p, tenantId: e.target.value.trim() }))}
-              placeholder="e.g. 507f1f77bcf86cd799439012"
-              className="mt-1"
-              required
+              disabled={!form.tenantId || addressOptions.length === 0}
             />
           </div>
           <div>
@@ -355,7 +765,9 @@ function CreateRentForm({
               type="number"
               min={1}
               value={form.amount || ""}
-              onChange={(e) => setForm((p) => ({ ...p, amount: Number(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, amount: Number(e.target.value) || 0 }))
+              }
               placeholder="500000"
               className="mt-1"
               required
@@ -367,7 +779,9 @@ function CreateRentForm({
               id="startDate"
               type="date"
               value={form.startDate}
-              onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, startDate: e.target.value }))
+              }
               className="mt-1"
               required
             />
@@ -378,7 +792,9 @@ function CreateRentForm({
               id="endDate"
               type="date"
               value={form.endDate}
-              onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, endDate: e.target.value }))
+              }
               className="mt-1"
               required
             />
@@ -388,13 +804,19 @@ function CreateRentForm({
             <Input
               id="notes"
               value={form.notes ?? ""}
-              onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, notes: e.target.value }))
+              }
               placeholder="e.g. Monthly rent for apartment 301"
               className="mt-1"
             />
           </div>
           <div className="flex gap-2 pt-2">
-            <Button type="submit" disabled={addressOptionsLoading || createLoading} className="flex-1">
+            <Button
+              type="submit"
+              disabled={tenantListLoading || createLoading}
+              className="flex-1"
+            >
               {createLoading ? "Creating..." : "Create Rent"}
             </Button>
             <Button type="button" variant="outline" onClick={onClose}>
@@ -419,7 +841,9 @@ function ViewRentModal({
   if (loading) {
     return (
       <Card className="max-w-md mx-auto p-6">
-        <p className="text-muted-foreground text-center">Loading rent details...</p>
+        <p className="text-muted-foreground text-center">
+          Loading rent details...
+        </p>
       </Card>
     );
   }
@@ -427,7 +851,9 @@ function ViewRentModal({
     return (
       <Card className="max-w-md mx-auto p-6">
         <p className="text-muted-foreground text-center">Rent not found.</p>
-        <Button className="mt-4 w-full" onClick={onClose}>Close</Button>
+        <Button className="mt-4 w-full" onClick={onClose}>
+          Close
+        </Button>
       </Card>
     );
   }
@@ -440,18 +866,31 @@ function ViewRentModal({
         <div>
           <dt className="text-muted-foreground">Address</dt>
           <dd className="font-medium">
-            {addr?.data ? Object.entries(addr.data).map(([k, v]) => `${k}: ${v}`).join(", ") : (typeof rent.addressId === "string" ? rent.addressId : "—")}
+            {addr?.data
+              ? Object.entries(addr.data)
+                  .map(([k, v]) => `${k}: ${v}`)
+                  .join(", ")
+              : typeof rent.addressId === "string"
+                ? rent.addressId
+                : "—"}
           </dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Tenant</dt>
           <dd className="font-medium">
-            {tenant ? [tenant.firstName, tenant.lastName].filter(Boolean).join(" ") || tenant.email : (typeof rent.tenantId === "string" ? rent.tenantId : "—")}
+            {tenant
+              ? [tenant.firstName, tenant.lastName].filter(Boolean).join(" ") ||
+                tenant.email
+              : typeof rent.tenantId === "string"
+                ? rent.tenantId
+                : "—"}
           </dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Amount</dt>
-          <dd className="font-medium">₦{rent.amount != null ? Number(rent.amount).toLocaleString() : "—"}</dd>
+          <dd className="font-medium">
+            ₦{rent.amount != null ? Number(rent.amount).toLocaleString() : "—"}
+          </dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Start Date</dt>
@@ -468,7 +907,9 @@ function ViewRentModal({
           </div>
         )}
       </dl>
-      <Button className="mt-6 w-full" onClick={onClose}>Close</Button>
+      <Button className="mt-6 w-full" onClick={onClose}>
+        Close
+      </Button>
     </Card>
   );
 }

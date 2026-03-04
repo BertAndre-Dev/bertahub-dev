@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-import { getComplaintsByEstate } from "@/redux/slice/admin/maintenance/complaints";
+import { getComplaintsDashboard } from "@/redux/slice/admin/maintenance/complaints";
 import type { ComplaintItem } from "@/redux/slice/admin/maintenance/complaints-slice";
 import {
   StatusTabs,
@@ -29,7 +29,7 @@ export default function MaintenancePage() {
     const c = state.complaints as any;
     return {
       complaints: c?.complaints ?? null,
-      loading: c?.getComplaintsByEstateStatus === "isLoading",
+      loading: c?.getComplaintsDashboardStatus === "isLoading",
     };
   });
 
@@ -77,15 +77,10 @@ export default function MaintenancePage() {
 
   useEffect(() => {
     if (!estateId) return;
-    dispatch(
-      getComplaintsByEstate({
-        estateId,
-        page: 1,
-        limit: 20,
-        search: search.trim() || undefined,
-      }),
-    ).catch((err: any) => toast.error(err?.message ?? "Failed to load."));
-  }, [search, estateId, dispatch]);
+    dispatch(getComplaintsDashboard(estateId)).catch((err: any) =>
+      toast.error(err?.message ?? "Failed to load complaints.")
+    );
+  }, [estateId, dispatch]);
 
   return (
     <div className="space-y-6">

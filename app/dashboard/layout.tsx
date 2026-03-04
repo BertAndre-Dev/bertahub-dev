@@ -110,7 +110,7 @@ export default function DashboardLayout({
     if (!user) return null;
 
     const role = user?.role?.toLowerCase();
-    const navItems =
+    let navItems =
       role === "super admin"
         ? superAdminNav
         : role === "admin"
@@ -120,6 +120,11 @@ export default function DashboardLayout({
             : role === "resident"
               ? residentNav
               : securityNav;
+
+    // Rent Management only for residentType "owner"
+    if (role === "resident" && user?.residentType !== "owner") {
+      navItems = navItems.filter((item) => item.path !== "/dashboard/resident/rent");
+    }
 
     return navItems.map((item, i) => {
       const Icon = item.icon;

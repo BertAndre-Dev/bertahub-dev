@@ -189,7 +189,7 @@ export function MaintenanceRequestCard({
             {complaint.description || "No description."}
           </p>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between ">
             <span
               className={cn(
                 "inline-flex px-3 py-1 rounded-full text-xs font-medium border",

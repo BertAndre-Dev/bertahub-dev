@@ -3,6 +3,10 @@ import {
   createRent,
   getOwnerRents,
   getRentById,
+  deleteRent,
+  updateRent,
+  activateRent,
+  suspendRent,
   type RentItem,
   type PaginationMeta,
 } from "./rent-mgt";
@@ -104,6 +108,39 @@ const residentRentMgtSlice = createSlice({
           (action.payload as { message?: string })?.message ??
           action.error.message ??
           "Failed to fetch rent";
+      })
+      .addCase(deleteRent.fulfilled, (state, action) => {
+        const id = (action.payload as { deletedId?: string })?.deletedId;
+        if (id && state.ownerRents) {
+          state.ownerRents = state.ownerRents.filter((r) => r.id !== id);
+          if (state.pagination) state.pagination.total = Math.max(0, state.pagination.total - 1);
+        }
+        if (state.currentRent?.id === id) state.currentRent = null;
+      })
+      .addCase(updateRent.fulfilled, (state, action) => {
+        const updated = action.payload?.data;
+        if (updated?.id && state.ownerRents) {
+          const i = state.ownerRents.findIndex((r) => r.id === updated.id);
+          if (i !== -1) state.ownerRents[i] = { ...state.ownerRents[i], ...updated };
+        }
+        if (state.currentRent?.id === updated?.id)
+          state.currentRent = state.currentRent ? { ...state.currentRent, ...updated } : null;
+      })
+      .addCase(activateRent.fulfilled, (state, action) => {
+        const id = (action.payload as { rentId?: string })?.rentId;
+        if (id && state.ownerRents) {
+          const r = state.ownerRents.find((x) => x.id === id);
+          if (r) r.status = "active";
+        }
+        if (state.currentRent?.id === id) state.currentRent = state.currentRent ? { ...state.currentRent, status: "active" } : null;
+      })
+      .addCase(suspendRent.fulfilled, (state, action) => {
+        const id = (action.payload as { rentId?: string })?.rentId;
+        if (id && state.ownerRents) {
+          const r = state.ownerRents.find((x) => x.id === id);
+          if (r) r.status = "suspended";
+        }
+        if (state.currentRent?.id === id) state.currentRent = state.currentRent ? { ...state.currentRent, status: "suspended" } : null;
       });
   },
 });

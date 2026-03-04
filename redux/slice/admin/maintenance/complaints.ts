@@ -1,6 +1,22 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 
+/** GET /analytics/complaints/dashboard?estateId=... */
+export const getComplaintsDashboard = createAsyncThunk(
+  "complaints/getComplaintsDashboard",
+  async (estateId: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get(
+        "/analytics/complaints/dashboard",
+        { params: { estateId } }
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data);
+    }
+  }
+);
+
 export const getComplaintsByEstate = createAsyncThunk(
   "complaints/getComplaintsByEstate",
   async (
