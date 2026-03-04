@@ -9,6 +9,7 @@ export interface ResidentMarketplaceItem {
   productCategory?: string;
   productDescription?: string;
   status?: string;
+  isSuspended?: boolean;
   images?: string[];
   createdAt?: string;
   updatedAt?: string;

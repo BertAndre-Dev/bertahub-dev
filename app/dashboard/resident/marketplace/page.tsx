@@ -40,7 +40,12 @@ export default function ResidentMarketplacePage() {
   const listings = list ?? [];
 
   const filteredListings = useMemo(() => {
-    let result = listings.filter((item) => item.status !== "suspended");
+    const isActive = (item: ResidentMarketplaceItem) => {
+      if (item.isSuspended === true) return false;
+      const s = (item.status ?? "").toLowerCase();
+      return s !== "suspended";
+    };
+    let result = listings.filter(isActive);
     const q = search.trim().toLowerCase();
     if (q) {
       result = result.filter((item) => {
@@ -67,9 +72,9 @@ export default function ResidentMarketplacePage() {
   }, [listings, search, categoryFilter]);
 
   useEffect(() => {
-    dispatch(
-      getResidentMarketplaceList({ page: 1, limit: 100, status: "active" })
-    ).catch(() => toast.error("Failed to load marketplace."));
+    dispatch(getResidentMarketplaceList({ page: 1, limit: 100 })).catch(() =>
+      toast.error("Failed to load marketplace."),
+    );
   }, [dispatch]);
 
   return (

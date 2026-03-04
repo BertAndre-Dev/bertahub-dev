@@ -6,18 +6,28 @@ export interface WalletData {
   userId: string;
   balance: number;
   lockedBalance: number;
-  /** Required for owner residentType */
-  residentType?: "owner" | "tenant";
-  ownerName?: string;
+  /** Required for owner (bank-linked) wallet; optional for tenant. */
   bankCode?: string;
-  bankSortCode?: string;
+  /** Optional: account number when bankCode is provided. */
+  accountNumber?: string;
 }
 
 export const createWallet = createAsyncThunk(
   "wallet-mgt/createWallet",
   async (data: WalletData, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post("/api/v1/wallet-mgt", data);
+      const payload: Record<string, unknown> = {
+        userId: data.userId,
+        balance: data.balance,
+        lockedBalance: data.lockedBalance,
+      };
+      if (data.bankCode != null && data.bankCode !== "") {
+        payload.bankCode = data.bankCode;
+        if (data.accountNumber != null && data.accountNumber !== "") {
+          payload.accountNumber = data.accountNumber;
+        }
+      }
+      const res = await axiosInstance.post("/api/v1/wallet-mgt", payload);
       return res.data;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };

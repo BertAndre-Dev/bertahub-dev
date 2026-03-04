@@ -118,6 +118,13 @@ export default function CreateWalletModal({
     }
   }, [accountNumber, selectedBankCode, dispatch]);
 
+  // Auto-fill owner name from verified account when verification succeeds
+  useEffect(() => {
+    if (verifiedAccountName && verifiedAccountName.trim()) {
+      setOwnerName(verifiedAccountName.trim());
+    }
+  }, [verifiedAccountName]);
+
   useEffect(() => {
     if (getBanksState === "failed" && paymentError) {
       toast.error(paymentError);
@@ -126,26 +133,18 @@ export default function CreateWalletModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ownerName.trim()) {
-      toast.error("Please enter account owner name.");
+    if (!accountVerified) {
+      toast.error(
+        "Please wait for account verification or check account details.",
+      );
       return;
     }
     if (!selectedBankCode) {
       toast.error("Please select a bank.");
       return;
     }
-    if (!accountNumber.trim()) {
-      toast.error("Please enter account number.");
-      return;
-    }
-    if (accountNumber.trim().length < 10) {
-      toast.error("Account number must be at least 10 digits.");
-      return;
-    }
-    if (!accountVerified) {
-      toast.error(
-        "Please wait for account verification or check account details.",
-      );
+    if (!accountNumber.trim() || accountNumber.trim().length < 10) {
+      toast.error("Please enter a valid 10-digit account number.");
       return;
     }
 
@@ -156,10 +155,8 @@ export default function CreateWalletModal({
           userId,
           balance: 0,
           lockedBalance: 0,
-          residentType: "owner",
-          ownerName: ownerName.trim(),
           bankCode: selectedBankCode,
-          bankSortCode: selectedBankCode,
+          accountNumber: accountNumber.trim(),
         }),
       ).unwrap();
       toast.success("Wallet created successfully.");
@@ -301,10 +298,15 @@ export default function CreateWalletModal({
               type="text"
               value={ownerName}
               onChange={(e) => setOwnerName(e.target.value)}
-              placeholder="Full name as on bank account"
-              required
-              className="mt-1"
+              placeholder="Fills automatically when account is verified"
+              readOnly={!!verifiedAccountName}
+              className="mt-1 bg-muted/50 read-only:cursor-default"
             />
+            {accountVerified && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Verified account name (from bank).
+              </p>
+            )}
           </div>
 
           <div className="flex gap-2 pt-2">
