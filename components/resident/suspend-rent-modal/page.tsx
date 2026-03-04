@@ -13,6 +13,8 @@ export interface SuspendRentModalProps {
   readonly onConfirm: (reason: string) => void | Promise<void>;
   readonly confirmLabel?: string;
   readonly loading?: boolean;
+  /** Modal title. Default "Suspend Rent". */
+  readonly title?: string;
 }
 
 /**
@@ -26,6 +28,7 @@ export default function SuspendRentModal({
   onConfirm,
   confirmLabel = "Suspend",
   loading = false,
+  title = "Suspend Rent",
 }: SuspendRentModalProps) {
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -56,10 +59,10 @@ export default function SuspendRentModal({
   return (
     <Modal visible={visible} onClose={handleClose}>
       <div className="p-2 max-w-md mx-auto">
-        <h2 className="font-heading text-xl font-bold mb-1">Suspend Rent</h2>
+        <h2 className="font-heading text-xl font-bold mb-1">{title}</h2>
         <p className="text-sm text-muted-foreground mb-4">
           Are you sure you want to suspend{" "}
-          <strong>{tenantName || "this tenant"}</strong>? Please provide a reason.
+          <strong>{tenantName || "this item"}</strong>? Please provide a reason.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

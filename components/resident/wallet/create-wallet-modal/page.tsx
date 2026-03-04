@@ -56,13 +56,16 @@ export default function CreateWalletModal({
   const selectedBankName = selectedBank?.name ?? "";
   const filteredBanks = bankSearchQuery.trim()
     ? banks.filter((b) =>
-        b.name.toLowerCase().includes(bankSearchQuery.toLowerCase())
+        b.name.toLowerCase().includes(bankSearchQuery.toLowerCase()),
       )
     : banks;
   const verifyingAccount = verifyBankAccountState === "isLoading";
-  const accountVerified = verifyBankAccountState === "succeeded" && !!verifiedAccountName;
+  const accountVerified =
+    verifyBankAccountState === "succeeded" && !!verifiedAccountName;
   const accountError =
-    verifyBankAccountState === "failed" ? paymentError ?? "Account not found" : "";
+    verifyBankAccountState === "failed"
+      ? (paymentError ?? "Account not found")
+      : "";
 
   useEffect(() => {
     dispatch(getBanks(COUNTRY));
@@ -106,7 +109,7 @@ export default function CreateWalletModal({
           verifyBankAccount({
             accountNumber: accountNumber.trim(),
             bankCode: selectedBankCode,
-          })
+          }),
         );
       }, 500);
       return () => clearTimeout(timeoutId);
@@ -140,7 +143,9 @@ export default function CreateWalletModal({
       return;
     }
     if (!accountVerified) {
-      toast.error("Please wait for account verification or check account details.");
+      toast.error(
+        "Please wait for account verification or check account details.",
+      );
       return;
     }
 
@@ -155,7 +160,7 @@ export default function CreateWalletModal({
           ownerName: ownerName.trim(),
           bankCode: selectedBankCode,
           bankSortCode: selectedBankCode,
-        })
+        }),
       ).unwrap();
       toast.success("Wallet created successfully.");
       onSuccess();
@@ -181,19 +186,6 @@ export default function CreateWalletModal({
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="ownerName">Account owner name</Label>
-            <Input
-              id="ownerName"
-              type="text"
-              value={ownerName}
-              onChange={(e) => setOwnerName(e.target.value)}
-              placeholder="Full name as on bank account"
-              required
-              className="mt-1"
-            />
-          </div>
-
           <div>
             <Label>Bank name</Label>
             <div ref={bankDropdownRef} className="relative mt-1">
@@ -294,9 +286,25 @@ export default function CreateWalletModal({
                 Account name: {verifiedAccountName}
               </p>
             )}
-            {accountError && !verifyingAccount && accountNumber.trim().length >= 10 && selectedBankCode && (
-              <p className="text-sm text-red-600 mt-1">{accountError}</p>
-            )}
+            {accountError &&
+              !verifyingAccount &&
+              accountNumber.trim().length >= 10 &&
+              selectedBankCode && (
+                <p className="text-sm text-red-600 mt-1">{accountError}</p>
+              )}
+          </div>
+
+          <div>
+            <Label htmlFor="ownerName">Account owner name</Label>
+            <Input
+              id="ownerName"
+              type="text"
+              value={ownerName}
+              onChange={(e) => setOwnerName(e.target.value)}
+              placeholder="Full name as on bank account"
+              required
+              className="mt-1"
+            />
           </div>
 
           <div className="flex gap-2 pt-2">
