@@ -121,11 +121,6 @@ export default function DashboardLayout({
               ? residentNav
               : securityNav;
 
-    // Rent Management only for residentType "owner"
-    if (role === "resident" && user?.residentType !== "owner") {
-      navItems = navItems.filter((item) => item.path !== "/dashboard/resident/rent");
-    }
-
     return navItems.map((item, i) => {
       const Icon = item.icon;
       const active = item.path ? pathname.startsWith(item.path) : false;

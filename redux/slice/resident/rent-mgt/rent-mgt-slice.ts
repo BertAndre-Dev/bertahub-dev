@@ -2,11 +2,13 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   createRent,
   getOwnerRents,
+  getTenantRents,
   getRentById,
   deleteRent,
   updateRent,
   activateRent,
   suspendRent,
+  payRent,
   type RentItem,
   type PaginationMeta,
 } from "./rent-mgt";
@@ -16,9 +18,13 @@ type AsyncStatus = "idle" | "isLoading" | "succeeded" | "failed";
 export interface ResidentRentMgtState {
   createRentStatus: AsyncStatus;
   getOwnerRentsStatus: AsyncStatus;
+  getTenantRentsStatus: AsyncStatus;
   getRentByIdStatus: AsyncStatus;
+  payRentStatus: AsyncStatus;
   ownerRents: RentItem[] | null;
+  tenantRents: RentItem[] | null;
   pagination: PaginationMeta | null;
+  tenantPagination: PaginationMeta | null;
   currentRent: RentItem | null;
   error: string | null;
 }
@@ -26,9 +32,13 @@ export interface ResidentRentMgtState {
 const initialState: ResidentRentMgtState = {
   createRentStatus: "idle",
   getOwnerRentsStatus: "idle",
+  getTenantRentsStatus: "idle",
   getRentByIdStatus: "idle",
+  payRentStatus: "idle",
   ownerRents: null,
+  tenantRents: null,
   pagination: null,
+  tenantPagination: null,
   currentRent: null,
   error: null,
 };
@@ -44,9 +54,13 @@ const residentRentMgtSlice = createSlice({
     resetResidentRentMgt: (state) => {
       state.createRentStatus = "idle";
       state.getOwnerRentsStatus = "idle";
+      state.getTenantRentsStatus = "idle";
       state.getRentByIdStatus = "idle";
+      state.payRentStatus = "idle";
       state.ownerRents = null;
+      state.tenantRents = null;
       state.pagination = null;
+      state.tenantPagination = null;
       state.currentRent = null;
       state.error = null;
     },
@@ -88,6 +102,24 @@ const residentRentMgtSlice = createSlice({
         state.getOwnerRentsStatus = "failed";
         state.ownerRents = null;
         state.pagination = null;
+        state.error =
+          (action.payload as { message?: string })?.message ??
+          action.error.message ??
+          "Failed to fetch rents";
+      })
+      .addCase(getTenantRents.pending, (state) => {
+        state.getTenantRentsStatus = "isLoading";
+        state.error = null;
+      })
+      .addCase(getTenantRents.fulfilled, (state, action) => {
+        state.getTenantRentsStatus = "succeeded";
+        state.tenantRents = action.payload?.data ?? [];
+        state.tenantPagination = action.payload?.pagination ?? null;
+      })
+      .addCase(getTenantRents.rejected, (state, action) => {
+        state.getTenantRentsStatus = "failed";
+        state.tenantRents = null;
+        state.tenantPagination = null;
         state.error =
           (action.payload as { message?: string })?.message ??
           action.error.message ??
@@ -141,6 +173,33 @@ const residentRentMgtSlice = createSlice({
           if (r) r.status = "suspended";
         }
         if (state.currentRent?.id === id) state.currentRent = state.currentRent ? { ...state.currentRent, status: "suspended" } : null;
+      })
+      .addCase(payRent.pending, (state) => {
+        state.payRentStatus = "isLoading";
+        state.error = null;
+      })
+      .addCase(payRent.fulfilled, (state, action) => {
+        state.payRentStatus = "succeeded";
+        const updated = action.payload?.data;
+        if (updated?.id) {
+          if (state.ownerRents) {
+            const i = state.ownerRents.findIndex((r) => r.id === updated.id);
+            if (i !== -1) state.ownerRents[i] = { ...state.ownerRents[i], ...updated };
+          }
+          if (state.tenantRents) {
+            const j = state.tenantRents.findIndex((r) => r.id === updated.id);
+            if (j !== -1) state.tenantRents[j] = { ...state.tenantRents[j], ...updated };
+          }
+        }
+        if (state.currentRent?.id === updated?.id)
+          state.currentRent = state.currentRent ? { ...state.currentRent, ...updated } : null;
+      })
+      .addCase(payRent.rejected, (state, action) => {
+        state.payRentStatus = "failed";
+        state.error =
+          (action.payload as { message?: string })?.message ??
+          action.error.message ??
+          "Failed to pay rent";
       });
   },
 });

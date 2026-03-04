@@ -16,11 +16,13 @@ import type { InvitedTenantItem } from "@/redux/slice/resident/invited-tenants/i
 import {
   createRent,
   getOwnerRents,
+  getTenantRents,
   getRentById,
   deleteRent,
   updateRent,
   activateRent,
   suspendRent,
+  payRent,
   type CreateRentPayload,
   type RentItem,
   type UpdateRentPayload,
@@ -28,7 +30,8 @@ import {
 import { clearCurrentRent } from "@/redux/slice/resident/rent-mgt/rent-mgt-slice";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import SuspendRentModal from "@/components/resident/suspend-rent-modal/page";
-import { Eye, Pencil, PlayCircle, PauseCircle, Trash2 } from "lucide-react";
+import PayRentModal from "@/components/resident/pay-rent-modal/page";
+import { Eye, Pencil, PlayCircle, PauseCircle, Trash2, Banknote } from "lucide-react";
 import type { RootState, AppDispatch } from "@/redux/store";
 
 const PAGE_SIZE = 10;
@@ -73,21 +76,32 @@ export default function ResidentRentPage() {
   const [viewRentId, setViewRentId] = useState<string | null>(null);
   const [suspendRentItem, setSuspendRentItem] = useState<RentItem | null>(null);
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
+  const [payRentItem, setPayRentItem] = useState<RentItem | null>(null);
+  const [selectRentModalOpen, setSelectRentModalOpen] = useState(false);
+  const [walletId, setWalletId] = useState<string | null>(null);
 
   const {
     ownerRents,
+    tenantRents,
     pagination,
+    tenantPagination,
     createRentStatus,
     getOwnerRentsStatus,
+    getTenantRentsStatus,
+    payRentStatus,
     currentRent,
     getRentByIdStatus,
   } = useSelector((state: RootState) => {
     const s = (state as RootState).residentRentMgt;
     return {
       ownerRents: s?.ownerRents ?? null,
+      tenantRents: s?.tenantRents ?? null,
       pagination: s?.pagination ?? null,
+      tenantPagination: s?.tenantPagination ?? null,
       createRentStatus: s?.createRentStatus ?? "idle",
       getOwnerRentsStatus: s?.getOwnerRentsStatus ?? "idle",
+      getTenantRentsStatus: s?.getTenantRentsStatus ?? "idle",
+      payRentStatus: s?.payRentStatus ?? "idle",
       currentRent: s?.currentRent ?? null,
       getRentByIdStatus: s?.getRentByIdStatus ?? "idle",
     };
@@ -104,9 +118,11 @@ export default function ResidentRentPage() {
   );
   const tenantListLoading = tenantListStatus === "isLoading";
 
-  const list = ownerRents ?? [];
-  const loading = getOwnerRentsStatus === "isLoading";
   const isOwner = residentType === "owner";
+  const list = isOwner ? (ownerRents ?? []) : (tenantRents ?? []);
+  const loading = isOwner
+    ? getOwnerRentsStatus === "isLoading"
+    : getTenantRentsStatus === "isLoading";
 
   useEffect(() => {
     (async () => {
@@ -115,7 +131,14 @@ export default function ResidentRentPage() {
         const rType =
           userRes?.data?.residentType ?? userRes?.data?.resident_type ?? null;
         setResidentType(rType ?? null);
-        await dispatch(getOwnerRents({ page: 1, limit: PAGE_SIZE })).unwrap();
+        setWalletId(
+          userRes?.data?.walletId ?? userRes?.data?.wallet?.id ?? null
+        );
+        if (rType === "owner") {
+          await dispatch(getOwnerRents({ page: 1, limit: PAGE_SIZE })).unwrap();
+        } else {
+          await dispatch(getTenantRents({ page: 1, limit: PAGE_SIZE })).unwrap();
+        }
       } catch {
         toast.error("Failed to load user or rents.");
       }
@@ -142,7 +165,8 @@ export default function ResidentRentPage() {
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-    dispatch(getOwnerRents({ page: newPage, limit: PAGE_SIZE })).catch(() =>
+    const fetcher = isOwner ? getOwnerRents : getTenantRents;
+    dispatch(fetcher({ page: newPage, limit: PAGE_SIZE })).catch(() =>
       toast.error("Failed to load rents."),
     );
   };
@@ -155,7 +179,8 @@ export default function ResidentRentPage() {
   };
 
   const refreshList = () => {
-    dispatch(getOwnerRents({ page: currentPage, limit: PAGE_SIZE })).catch(() =>
+    const fetcher = isOwner ? getOwnerRents : getTenantRents;
+    dispatch(fetcher({ page: currentPage, limit: PAGE_SIZE })).catch(() =>
       toast.error("Failed to refresh rents."),
     );
   };
@@ -207,6 +232,47 @@ export default function ResidentRentPage() {
       );
     } finally {
       setSuspendSubmitting(false);
+    }
+  };
+
+  const rentsWithBalance = list.filter(
+    (r) =>
+      (r.status === "active" || !r.status) &&
+      (Number(r.amount ?? 0) - Number(r.amountPaid ?? 0) > 0),
+  );
+
+  const handlePayRentClick = () => {
+    if (rentsWithBalance.length === 0) {
+      toast.info("No rent with remaining balance to pay.");
+      return;
+    }
+    if (rentsWithBalance.length === 1) {
+      setPayRentItem(rentsWithBalance[0]);
+      return;
+    }
+    setSelectRentModalOpen(true);
+  };
+
+  const handleSelectRentPay = (item: RentItem) => {
+    setPayRentItem(item);
+    setSelectRentModalOpen(false);
+  };
+
+  const handlePayRentConfirm = async (payload: {
+    rentId: string;
+    amount: number;
+    paymentMethod: string;
+    reference: string;
+  }) => {
+    try {
+      await dispatch(payRent(payload)).unwrap();
+      toast.success("Rent payment successful.");
+      setPayRentItem(null);
+      refreshList();
+    } catch (err: unknown) {
+      toast.error(
+        (err as { message?: string })?.message ?? "Failed to pay rent.",
+      );
     }
   };
 
@@ -332,7 +398,28 @@ export default function ResidentRentPage() {
               ) : null,
           },
         ]
-      : []),
+      : [
+          {
+            key: "actions",
+            header: "Actions",
+            exportable: false as const,
+            render: (item: RentItem) =>
+              item.id ? (
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleViewRent(item.id!)}
+                    title="View"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : null,
+          },
+        ]),
   ];
 
   return (
@@ -346,12 +433,65 @@ export default function ResidentRentPage() {
               : "View your rent records."}
           </p>
         </div>
-        {isOwner && (
+        {isOwner ? (
           <Button onClick={() => setCreateModalOpen(true)} className="shrink-0">
             Create Rent
           </Button>
+        ) : (
+          <Button
+            onClick={handlePayRentClick}
+            className="shrink-0 flex items-center gap-2"
+            disabled={rentsWithBalance.length === 0}
+          >
+            <Banknote className="h-4 w-4" />
+            Pay Rent
+          </Button>
         )}
       </div>
+
+      {/* Select which rent to pay (when tenant has multiple) */}
+      <Modal
+        visible={selectRentModalOpen}
+        onClose={() => setSelectRentModalOpen(false)}
+      >
+        <div className="p-4 max-w-md">
+          <h2 className="font-heading text-xl font-bold mb-4">
+            Select rent to pay
+          </h2>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {rentsWithBalance.map((r) => {
+              const remaining =
+                Number(r.amount ?? 0) - Number(r.amountPaid ?? 0);
+              return (
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20"
+                >
+                  <div>
+                    <p className="font-medium">{formatAddress(r)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Remaining: ₦{remaining.toLocaleString()}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSelectRentPay(r)}
+                  >
+                    Pay
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+          <Button
+            variant="outline"
+            className="w-full mt-4"
+            onClick={() => setSelectRentModalOpen(false)}
+          >
+            Cancel
+          </Button>
+        </div>
+      </Modal>
 
       <Card className="p-4">
         <Table
@@ -360,9 +500,12 @@ export default function ResidentRentPage() {
           emptyMessage={loading ? "Loading rents..." : "No rent records found."}
           showPagination
           paginationInfo={{
-            total: pagination?.total ?? 0,
-            current: pagination?.currentPage ?? currentPage,
-            pageSize: pagination?.pageSize ?? PAGE_SIZE,
+            total: (isOwner ? pagination : tenantPagination)?.total ?? 0,
+            current:
+              (isOwner ? pagination : tenantPagination)?.currentPage ??
+              currentPage,
+            pageSize:
+              (isOwner ? pagination : tenantPagination)?.pageSize ?? PAGE_SIZE,
           }}
           onPageChange={handlePageChange}
           enableExport
@@ -375,7 +518,12 @@ export default function ResidentRentPage() {
                   ).unwrap();
                   return res?.data ?? [];
                 }
-              : undefined
+              : async () => {
+                  const res = await dispatch(
+                    getTenantRents({ page: 1, limit: 50000 }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
           }
         />
       </Card>
@@ -436,6 +584,15 @@ export default function ResidentRentPage() {
         tenantName={suspendRentItem ? formatTenant(suspendRentItem) : ""}
         onConfirm={handleSuspendConfirm}
         loading={suspendSubmitting}
+      />
+
+      <PayRentModal
+        visible={!!payRentItem}
+        onClose={() => setPayRentItem(null)}
+        rent={payRentItem}
+        walletId={walletId}
+        onConfirm={handlePayRentConfirm}
+        loading={payRentStatus === "isLoading"}
       />
     </div>
   );

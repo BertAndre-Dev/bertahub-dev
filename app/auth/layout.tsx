@@ -1,6 +1,5 @@
 "use client";
 
-import type React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,13 +9,16 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-linear-to-br from-primary to-primary/80 text-primary-foreground flex-col justify-between p-12">
+    <div className="min-h-screen flex font-sans">
+      {/* Left Side - Branding (Figma: solid dark blue #0A387E) */}
+      <div
+        className="hidden lg:flex lg:w-[40%] flex-col justify-between p-12 text-white"
+        style={{ backgroundColor: "#0150AC" }}
+      >
         <Link href="/" className="flex items-center">
           <Image
             src="/logo.svg"
-            alt="BertAndre"
+            alt="Berta Hub"
             width={140}
             height={48}
             className="h-10 w-auto brightness-0 invert"
@@ -25,42 +27,40 @@ export default function AuthLayout({
 
         <div className="space-y-6">
           <div>
-            <h1 className="font-heading text-4xl font-bold mb-4 text-balance">
-              Manage Your Estate with Confidence
+            <h1 className="text-4xl font-bold mb-4 text-balance">
+              Manage Your Estate With Confidence
             </h1>
             <p className="text-lg opacity-90">
-              Join thousands of estate managers and residents using EstateHub to
+              Join thousands of estate managers and residents using Berta hub to
               streamline operations and improve community living.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <ul className="space-y-4 list-none">
             {[
               "Real-time bill tracking and payments",
               "Centralized resident management",
               "Secure transaction handling",
             ].map((feature, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-primary-foreground" />
-                </div>
+              <li key={i} className="flex items-center gap-3">
+                <span className="w-2 h-2 rounded-full bg-white/80 shrink-0" />
                 <span>{feature}</span>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
 
         <p className="text-sm opacity-75">
-          © 2025 EstateHub. All rights reserved.
+          2025 Berta Hub. All rights reserved.
         </p>
       </div>
 
-      {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex flex-col lg:items-center lg:justify-center p-6 bg-background">
+      {/* Right Side - Auth Form (white background) */}
+      <div className="w-full lg:w-[60%] flex flex-col lg:items-center lg:justify-center p-6 bg-white">
         <Link href="/" className="mb-6 lg:hidden flex justify-center">
           <Image
             src="/logo.svg"
-            alt="BertAndre"
+            alt="Berta Hub"
             width={120}
             height={40}
             className="h-8 w-auto"

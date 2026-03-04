@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-albert-sans antialiased`}>
+      <body className="font-sans antialiased">
         <ClientProvider>{children}</ClientProvider>
         <CookieBanner />
         <Analytics />

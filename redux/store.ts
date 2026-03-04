@@ -37,6 +37,7 @@ import residentAddressOptionsSliceReducer from '@/redux/slice/resident/address-o
 import residentPaymentMgtSliceReducer from '@/redux/slice/resident/payment-mgt/payment-mgt-slice';
 import residentRentMgtSliceReducer from '@/redux/slice/resident/rent-mgt/rent-mgt-slice';
 import residentInvitedTenantsSliceReducer from '@/redux/slice/resident/invited-tenants/invited-tenants-slice';
+import adminAnnouncementsSliceReducer from '@/redux/slice/admin/announcements/announcements-slice';
 
 
 const persistConfig = {
@@ -111,6 +112,7 @@ export const store = configureStore({
         residentPaymentMgt: residentPaymentMgtSliceReducer,
         residentRentMgt: residentRentMgtSliceReducer,
         residentInvitedTenants: residentInvitedTenantsSliceReducer,
+        adminAnnouncements: adminAnnouncementsSliceReducer,
     },
 
     middleware: (getDefaultMiddleware) =>

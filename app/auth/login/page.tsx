@@ -93,10 +93,8 @@ export default function LoginPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="font-heading text-3xl font-bold">Welcome Back</h1>
-        <p className="text-muted-foreground">
-          Sign in to your BertaHub account
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
+        <p className="text-gray-600">Sign in to your Berta Hub Account</p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-4">
@@ -107,32 +105,32 @@ export default function LoginPage() {
         )}
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Email Address</label>
+          <label className="text-sm font-medium text-gray-900">Email Address</label>
           <Input
             name="email"
             type="email"
-            placeholder="admin@estate.com"
+            placeholder="Enter email address"
             value={formData.email}
             onChange={handleChange}
-            className="h-11"
+            className="h-11 border-gray-300"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Password</label>
+          <label className="text-sm font-medium text-gray-900">Password</label>
           <div className="relative">
             <Input
               name="password"
               type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
+              placeholder="Enter password"
               value={formData.password}
               onChange={handleChange}
-              className="h-11 pr-10"
+              className="h-11 pr-10 border-gray-300"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 transition-colors"
             >
               {showPassword ? (
                 <EyeOff className="w-4 h-4" />
@@ -144,63 +142,56 @@ export default function LoginPage() {
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" className="w-4 h-4 rounded border-border" />
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#0150AC]" />
             Remember me
           </label>
           <Link
             href="/auth/forgot-password"
-            className="text-sm text-primary hover:underline"
+            className="text-sm font-medium text-[#0150AC] hover:underline"
           >
-            Forgot password?
+            Forgot Password
           </Link>
         </div>
-
-        <p className="text-center text-xs text-muted-foreground">
-          <Link
-            href="/privacy-notice"
-            className="hover:text-foreground hover:underline"
-          >
-            Privacy Notice
-          </Link>
-          {" · "}
-          <Link
-            href="/terms-and-conditions"
-            className="hover:text-foreground hover:underline"
-          >
-            Terms and Conditions
-          </Link>
-        </p>
 
         <Button
           type="submit"
           size="lg"
-          className="w-full bg-primary hover:bg-primary/90 group"
+          className="w-full group text-white rounded-lg"
+          style={{ backgroundColor: "#0150AC" }}
           disabled={loading}
         >
-          {loading ? "Signing in..." : "Sign In"}
+          {loading ? "Signing in..." : "Sign in"}
           {!loading && (
             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
           )}
         </Button>
+
+        <p className="text-center text-sm text-gray-600">
+          Don&apos;t have an account?
+        </p>
+
+        <Link href="/auth/signup">
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full rounded-lg border-2 group"
+            style={{ borderColor: "#0150AC", color: "#0150AC" }}
+          >
+            Create Account
+            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </Link>
       </form>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-background text-muted-foreground">
-            Don't have an account?
-          </span>
-        </div>
-      </div>
-
-      <Link href="/auth/signup">
-        <Button variant="outline" size="lg" className="w-full bg-transparent">
-          Create Account
-        </Button>
-      </Link>
+      <p className="text-right text-xs">
+        <Link
+          href="/privacy-notice"
+          className="text-[#0150AC] hover:underline"
+        >
+          Privacy Policy
+        </Link>
+      </p>
     </div>
   );
 }

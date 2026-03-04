@@ -22,6 +22,7 @@ export interface RentItem {
   addressId?: string | { id?: string; data?: Record<string, unknown> };
   tenantId?: string | { id?: string; firstName?: string; lastName?: string; email?: string };
   amount?: number;
+  amountPaid?: number;
   startDate?: string;
   endDate?: string;
   notes?: string;
@@ -84,6 +85,55 @@ export const getOwnerRents = createAsyncThunk(
       const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
         message: err?.response?.data?.message ?? "Failed to fetch rents",
+      });
+    }
+  }
+);
+
+/** Params for listing tenant rents. GET /api/v1/rent/tenant/all */
+export interface GetTenantRentsParams {
+  page?: number;
+  limit?: number;
+}
+
+/** Get all rents for the authenticated tenant. GET /api/v1/rent/tenant/all */
+export const getTenantRents = createAsyncThunk(
+  "resident-rent-mgt/getTenantRents",
+  async (params: GetTenantRentsParams | undefined, { rejectWithValue }) => {
+    try {
+      const { page = 1, limit = 10 } = params ?? {};
+      const res = await axiosInstance.get<RentListResponse>(
+        "/api/v1/rent/tenant/all",
+        { params: { page, limit } }
+      );
+      return res.data;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue({
+        message: err?.response?.data?.message ?? "Failed to fetch rents",
+      });
+    }
+  }
+);
+
+/** Pay rent. POST /api/v1/rent/pay */
+export interface PayRentPayload {
+  rentId: string;
+  amount: number;
+  paymentMethod: string;
+  reference: string;
+}
+
+export const payRent = createAsyncThunk(
+  "resident-rent-mgt/payRent",
+  async (payload: PayRentPayload, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("/api/v1/rent/pay", payload);
+      return res.data;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue({
+        message: err?.response?.data?.message ?? "Failed to pay rent",
       });
     }
   }

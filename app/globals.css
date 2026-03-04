@@ -77,9 +77,9 @@
 
 @theme inline {
   --font-albert-sans: "Albert Sans", "Geist", "Geist Fallback";
-  --font-sans: "Manrope", "Geist", "Geist Fallback";
+  --font-sans: "Albert Sans", "Geist", "Geist Fallback";
   --font-mono: "Geist Mono", "Geist Mono Fallback";
-  --font-heading: "Varela Round", "Geist", "Geist Fallback";
+  --font-heading: "Albert Sans", "Geist", "Geist Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
