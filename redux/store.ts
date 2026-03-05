@@ -40,6 +40,7 @@ import residentInvitedTenantsSliceReducer from '@/redux/slice/resident/invited-t
 import adminAnnouncementsSliceReducer from '@/redux/slice/admin/announcements/announcements-slice';
 import superAdminMarketplaceSliceReducer from '@/redux/slice/super-admin/marketplace/marketplace-slice';
 import residentMarketplaceSliceReducer from '@/redux/slice/resident/marketplace/marketplace-slice';
+import residentAnnouncementsSliceReducer from '@/redux/slice/resident/announcements/announcements-slice';
 
 
 const persistConfig = {
@@ -117,6 +118,7 @@ export const store = configureStore({
         adminAnnouncements: adminAnnouncementsSliceReducer,
         superAdminMarketplace: superAdminMarketplaceSliceReducer,
         residentMarketplace: residentMarketplaceSliceReducer,
+        residentAnnouncements: residentAnnouncementsSliceReducer,
     },
 
     middleware: (getDefaultMiddleware) =>

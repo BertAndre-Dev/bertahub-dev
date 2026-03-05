@@ -173,6 +173,11 @@ export const residentNav = [
     icon: Store,
     path: "/dashboard/resident/marketplace",
   },
+  {
+    label: "Announcements",
+    icon: Bell,
+    path: "/dashboard/resident/announcements",
+  },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];

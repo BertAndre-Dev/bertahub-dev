@@ -3,11 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Megaphone, Calendar, Eye, Mail } from "lucide-react";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
   getAnnouncements,
+  getAnnouncementStats,
   createAnnouncement,
   updateAnnouncement,
   deleteAnnouncement,
@@ -15,83 +15,108 @@ import {
   type CreateAnnouncementPayload,
   type UpdateAnnouncementPayload,
 } from "@/redux/slice/admin/announcements/announcements";
-import AnnouncementCard from "@/components/admin/announcement-card/page";
-import AnnouncementFormModal from "@/components/admin/announcement-form-modal/page";
+import AnnouncementFormModal, {
+  type AnnouncementFormData,
+} from "@/components/admin/announcement-form-modal/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import type { RootState, AppDispatch } from "@/redux/store";
+import AnnouncementsPageHeader from "@/components/admin/announcements/announcements-page-header/page";
+import AnnouncementsStatsGrid from "@/components/admin/announcements/announcements-stats-grid/page";
+import AnnouncementsListSection from "@/components/admin/announcements/announcements-list-section/page";
 
 export default function AdminAnnouncementsPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [estateName, setEstateName] = useState("Estate");
+  const [estateId, setEstateId] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AnnouncementItem | null>(null);
 
-  const { list, getStatus, createStatus, updateStatus } = useSelector(
-    (state: RootState) => {
-      const s = (state as RootState).adminAnnouncements;
-      return {
-        list: s?.list ?? null,
-        getStatus: s?.getStatus ?? "idle",
-        createStatus: s?.createStatus ?? "idle",
-        updateStatus: s?.updateStatus ?? "idle",
-      };
-    }
-  );
+  const {
+    list,
+    stats,
+    getStatus,
+    getStatsStatus,
+    createStatus,
+    updateStatus,
+  } = useSelector((state: RootState) => {
+    const s = (state as RootState).adminAnnouncements;
+    return {
+      list: s?.list ?? null,
+      stats: s?.stats ?? null,
+      getStatus: s?.getStatus ?? "idle",
+      getStatsStatus: s?.getStatsStatus ?? "idle",
+      createStatus: s?.createStatus ?? "idle",
+      updateStatus: s?.updateStatus ?? "idle",
+    };
+  });
 
   useEffect(() => {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
+        const eId =
+          userRes?.data?.estateId ??
+          userRes?.data?.estate?.id ??
+          null;
         const name =
           userRes?.data?.estate?.name ??
           userRes?.data?.estateName ??
           "Estate";
+        setEstateId(eId);
         setEstateName(name);
+        if (eId) {
+          dispatch(getAnnouncements(eId)).catch((err: unknown) => {
+            const e = err as { message?: string };
+            toast.error(e?.message ?? "Failed to load announcements.");
+          });
+          dispatch(getAnnouncementStats(eId)).catch(() => {});
+        }
       } catch {
         // keep default
       }
     })();
   }, [dispatch]);
 
-  useEffect(() => {
-    dispatch(getAnnouncements()).catch((err: unknown) => {
-      const e = err as { message?: string };
-      toast.error(e?.message ?? "Failed to load announcements.");
-    });
-  }, [dispatch]);
-
-  const loading =
-    getStatus === "isLoading" ||
-    createStatus === "isLoading" ||
-    updateStatus === "isLoading";
   const announcements = list ?? [];
 
-  const handleCreate = async (data: {
-    title: string;
-    description: string;
-    sendTo: string;
-  }) => {
+  const handleCreate = async (data: AnnouncementFormData) => {
+    if (!estateId) {
+      toast.error("Estate not found.");
+      return;
+    }
     const payload: CreateAnnouncementPayload = {
+      estateId,
       title: data.title,
-      description: data.description,
-      sendTo: data.sendTo,
+      content: data.content,
+      description: data.description || undefined,
+      scheduledFor: data.scheduledFor || undefined,
+      category: data.category,
+      tags: data.tags,
+      isPinned: data.isPinned,
+      priority: data.priority,
     };
     await dispatch(createAnnouncement(payload)).unwrap();
     toast.success("Announcement created.");
     setAddModalOpen(false);
+    if (estateId) {
+      dispatch(getAnnouncements(estateId));
+      dispatch(getAnnouncementStats(estateId));
+    }
   };
 
-  const handleUpdate = async (data: {
-    title: string;
-    description: string;
-    sendTo: string;
-  }) => {
-    if (!editingItem?.id) return;
+  const handleUpdate = async (data: AnnouncementFormData) => {
+    if (!editingItem?.id || !estateId) return;
     const payload: UpdateAnnouncementPayload = {
+      estateId,
       id: editingItem.id,
       title: data.title,
-      description: data.description,
-      sendTo: data.sendTo,
+      content: data.content,
+      description: data.description || undefined,
+      scheduledFor: data.scheduledFor || undefined,
+      category: data.category,
+      tags: data.tags,
+      isPinned: data.isPinned,
+      priority: data.priority,
     };
     await dispatch(updateAnnouncement(payload)).unwrap();
     toast.success("Announcement updated.");
@@ -99,58 +124,47 @@ export default function AdminAnnouncementsPage() {
   };
 
   const handleDelete = (item: AnnouncementItem) => {
-    if (!item.id) return;
+    if (!item.id || !estateId) return;
     confirmDeleteToast({
       name: item.title ?? "this announcement",
       onConfirm: async () => {
-        await dispatch(deleteAnnouncement(item.id!)).unwrap();
+        await dispatch(deleteAnnouncement({ estateId, id: item.id! })).unwrap();
         toast.success("Announcement deleted.");
-        dispatch(getAnnouncements());
+        dispatch(getAnnouncements(estateId));
+        dispatch(getAnnouncementStats(estateId));
       },
     });
   };
 
+  const statsCards = [
+    { label: "Total", value: stats?.totalAnnouncements ?? 0, icon: Megaphone, color: "bg-[#D0DFF280]" },
+    { label: "Published", value: stats?.publishedCount ?? 0, icon: Eye, color: "bg-green-100" },
+    { label: "Scheduled", value: stats?.scheduledCount ?? 0, icon: Calendar, color: "bg-amber-100" },
+    { label: "Draft", value: stats?.draftCount ?? 0, icon: Megaphone, color: "bg-gray-100" },
+    { label: "Total views", value: stats?.totalViews ?? 0, icon: Eye, color: "bg-blue-100" },
+    { label: "Emails sent", value: stats?.totalEmailsSent ?? 0, icon: Mail, color: "bg-blue-100" },
+    { label: "Avg views/ann.", value: stats?.averageViewsPerAnnouncement ?? 0, icon: Eye, color: "bg-purple-100" },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">Announcements</h1>
-          <p className="text-muted-foreground mt-1">
-            Welcome back! Here&apos;s an overview on{" "}
-            <span className="text-[18px] font-bold underline uppercase text-black">
-              {estateName}
-            </span>
-            .
-          </p>
-        </div>
-        <Button
-          onClick={() => setAddModalOpen(true)}
-          className="shrink-0 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Announcement
-        </Button>
-      </div>
+      <AnnouncementsPageHeader
+        estateName={estateName}
+        onAddClick={() => setAddModalOpen(true)}
+        addDisabled={!estateId}
+      />
+
+      {getStatsStatus === "succeeded" && (
+        <AnnouncementsStatsGrid stats={statsCards} />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {getStatus === "isLoading" ? (
-          <p className="text-muted-foreground col-span-2 py-8 text-center">
-            Loading announcements...
-          </p>
-        ) : announcements.length === 0 ? (
-          <p className="text-muted-foreground col-span-2 py-8 text-center rounded-lg border border-border bg-muted/20">
-            No announcements yet. Create one to get started.
-          </p>
-        ) : (
-          announcements.map((item) => (
-            <AnnouncementCard
-              key={item.id}
-              announcement={item}
-              onEdit={setEditingItem}
-              onDelete={handleDelete}
-            />
-          ))
-        )}
+        <AnnouncementsListSection
+          loading={getStatus === "isLoading"}
+          announcements={announcements}
+          onEdit={setEditingItem}
+          onDelete={handleDelete}
+        />
       </div>
 
       <AnnouncementFormModal
