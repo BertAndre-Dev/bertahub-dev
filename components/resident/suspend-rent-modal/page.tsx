@@ -17,10 +17,6 @@ export interface SuspendRentModalProps {
   readonly title?: string;
 }
 
-/**
- * Reusable modal to confirm suspending a rent record.
- * Asks "Are you sure you want to suspend {tenantName}?" and requires a reason (API requirement).
- */
 export default function SuspendRentModal({
   visible,
   onClose,
@@ -84,14 +80,6 @@ export default function SuspendRentModal({
             )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
             <Button type="submit" disabled={loading}>
               {loading ? "Suspending…" : confirmLabel}
             </Button>

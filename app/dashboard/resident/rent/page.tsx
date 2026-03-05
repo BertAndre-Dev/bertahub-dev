@@ -31,7 +31,14 @@ import { clearCurrentRent } from "@/redux/slice/resident/rent-mgt/rent-mgt-slice
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import SuspendRentModal from "@/components/resident/suspend-rent-modal/page";
 import PayRentModal from "@/components/resident/pay-rent-modal/page";
-import { Eye, Pencil, PlayCircle, PauseCircle, Trash2, Banknote } from "lucide-react";
+import {
+  Eye,
+  Pencil,
+  PlayCircle,
+  PauseCircle,
+  Trash2,
+  Banknote,
+} from "lucide-react";
 import type { RootState, AppDispatch } from "@/redux/store";
 
 const PAGE_SIZE = 10;
@@ -132,12 +139,14 @@ export default function ResidentRentPage() {
           userRes?.data?.residentType ?? userRes?.data?.resident_type ?? null;
         setResidentType(rType ?? null);
         setWalletId(
-          userRes?.data?.walletId ?? userRes?.data?.wallet?.id ?? null
+          userRes?.data?.walletId ?? userRes?.data?.wallet?.id ?? null,
         );
         if (rType === "owner") {
           await dispatch(getOwnerRents({ page: 1, limit: PAGE_SIZE })).unwrap();
         } else {
-          await dispatch(getTenantRents({ page: 1, limit: PAGE_SIZE })).unwrap();
+          await dispatch(
+            getTenantRents({ page: 1, limit: PAGE_SIZE }),
+          ).unwrap();
         }
       } catch {
         toast.error("Failed to load user or rents.");
@@ -238,7 +247,7 @@ export default function ResidentRentPage() {
   const rentsWithBalance = list.filter(
     (r) =>
       (r.status === "active" || !r.status) &&
-      (Number(r.amount ?? 0) - Number(r.amountPaid ?? 0) > 0),
+      Number(r.amount ?? 0) - Number(r.amountPaid ?? 0) > 0,
   );
 
   const handlePayRentClick = () => {
@@ -473,23 +482,13 @@ export default function ResidentRentPage() {
                       Remaining: ₦{remaining.toLocaleString()}
                     </p>
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleSelectRentPay(r)}
-                  >
+                  <Button size="sm" onClick={() => handleSelectRentPay(r)}>
                     Pay
                   </Button>
                 </div>
               );
             })}
           </div>
-          <Button
-            variant="outline"
-            className="w-full mt-4"
-            onClick={() => setSelectRentModalOpen(false)}
-          >
-            Cancel
-          </Button>
         </div>
       </Modal>
 
@@ -682,9 +681,6 @@ function UpdateRentForm({ rent, onClose, onSuccess }: UpdateRentFormProps) {
     return (
       <Card className="max-w-lg mx-auto p-6">
         <p className="text-muted-foreground text-center">Rent not found.</p>
-        <Button className="mt-4 w-full" onClick={onClose}>
-          Close
-        </Button>
       </Card>
     );
   }
@@ -758,9 +754,6 @@ function UpdateRentForm({ rent, onClose, onSuccess }: UpdateRentFormProps) {
             <Button type="submit" disabled={submitting} className="flex-1">
               {submitting ? "Saving..." : "Save changes"}
             </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
           </div>
         </form>
       </div>
@@ -780,7 +773,6 @@ function CreateRentForm({
   tenantList,
   tenantListLoading,
   createLoading,
-  onClose,
   onSuccess,
 }: CreateRentFormProps) {
   const dispatch = useDispatch<AppDispatch>();
@@ -859,10 +851,6 @@ function CreateRentForm({
     <Card className="max-w-lg mx-auto">
       <div className="p-6">
         <h2 className="font-heading text-xl font-bold mb-1">Create Rent</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Only owners can create rent records. Select a tenant and their
-          address, then fill in the details.
-        </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="tenantId">Tenant</Label>
@@ -976,9 +964,6 @@ function CreateRentForm({
             >
               {createLoading ? "Creating..." : "Create Rent"}
             </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
           </div>
         </form>
       </div>
@@ -989,7 +974,6 @@ function CreateRentForm({
 function ViewRentModal({
   rent,
   loading,
-  onClose,
 }: Readonly<{
   rent: RentItem | null;
   loading: boolean;
@@ -1008,9 +992,6 @@ function ViewRentModal({
     return (
       <Card className="max-w-md mx-auto p-6">
         <p className="text-muted-foreground text-center">Rent not found.</p>
-        <Button className="mt-4 w-full" onClick={onClose}>
-          Close
-        </Button>
       </Card>
     );
   }
@@ -1064,9 +1045,6 @@ function ViewRentModal({
           </div>
         )}
       </dl>
-      <Button className="mt-6 w-full" onClick={onClose}>
-        Close
-      </Button>
     </Card>
   );
 }

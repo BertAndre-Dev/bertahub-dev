@@ -86,7 +86,8 @@ export default function PayRentModal({
       <div className="p-2 max-w-md mx-auto">
         <h2 className="font-heading text-xl font-bold mb-1">Pay Rent</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          Pay from your wallet. Remaining balance: ₦{remaining.toLocaleString()}.
+          Pay from your wallet. 
+          {/* Remaining balance: ₦{remaining.toLocaleString()}. */}
         </p>
         {!walletId ? (
           <p className="text-sm text-destructive">
@@ -117,14 +118,6 @@ export default function PayRentModal({
               )}
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? "Paying…" : "Pay Rent"}
               </Button>
