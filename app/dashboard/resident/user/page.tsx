@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ function formatDate(val: string | undefined) {
 }
 
 export default function ResidentUserPage() {
+  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
   const [estateId, setEstateId] = useState<string | null>(null);
@@ -51,6 +53,16 @@ export default function ResidentUserPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
+        const residentType = (userRes?.data?.residentType ?? "")
+          .toString()
+          .toLowerCase();
+
+        if (residentType === "tenant") {
+          toast.error("Only owners can access Tenant Management.");
+          router.replace("/dashboard/resident/dashboard");
+          return;
+        }
+
         const id = userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
         if (!id) return;
         setEstateId(id);
@@ -61,7 +73,7 @@ export default function ResidentUserPage() {
         toast.error("Failed to load tenants.");
       }
     })();
-  }, [dispatch]);
+  }, [dispatch, router]);
 
   const handlePageChange = (newPage: number) => {
     if (!estateId) return;

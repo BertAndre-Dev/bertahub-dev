@@ -1,5 +1,11 @@
 import axios, { type AxiosError } from "axios";
 import { getStoreState, dispatchToStore } from "@/utils/store-accessor";
+import {
+  clearCsrfToken,
+  ensureCsrfToken,
+  getCsrfToken,
+  updateCsrfFromResponseHeaders,
+} from "@/utils/csrf";
 
 // On the client, use a relative base URL so every request goes through the
 // Next.js rewrite proxy (/api/v1/* → https://bertahubdev.com/api/v1/*).
@@ -72,11 +78,39 @@ function getToken(): string | null {
 }
 
 // ─── Request interceptor ─────────────────────────────────────────────────────
-axiosInstance.interceptors.request.use((config) => {
+axiosInstance.interceptors.request.use(async (config) => {
   const token = getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  const method = (config.method ?? "get").toLowerCase();
+  const safeMethods = ["get", "head", "options"];
+  if (safeMethods.includes(method)) return config;
+
+  // Skip CSRF for auth endpoints (they don't require it)
+  const url = (config.url ?? "").toString();
+  const skipCsrfRoutes = [
+    "/auth-mgt/sign-in",
+    "/auth-mgt/sign-up",
+    "/auth-mgt/pin-login",
+    "/auth-mgt/verify-otp",
+    "/auth-mgt/resend-otp",
+    "/auth-mgt/forgot-password",
+    "/auth-mgt/reset-password",
+    "/auth-mgt/refresh-token",
+    "/auth-mgt/sign-out",
+    "/auth-mgt/csrf-token",
+  ];
+  if (skipCsrfRoutes.some((route) => url.includes(route))) return config;
+
+  // For state-changing requests, ensure CSRF token and attach it.
+  const currentCsrf = getCsrfToken();
+  const csrf = currentCsrf || (token ? await ensureCsrfToken(token) : "");
+  if (csrf) {
+    config.headers["X-CSRF-Token"] = csrf;
+  }
+
   return config;
 });
 
@@ -108,6 +142,8 @@ async function doRefresh(): Promise<string | null> {
       { withCredentials: true },
     );
 
+    updateCsrfFromResponseHeaders(res.headers);
+
     const newToken = res.data?.accessToken ?? null;
 
     if (newToken) {
@@ -132,6 +168,7 @@ async function doRefresh(): Promise<string | null> {
 
 async function clearSession() {
   console.warn("[auth] Refresh failed — logging out");
+  clearCsrfToken();
   try {
     const { logoutLocally } = await getAuthActions();
     dispatchToStore(logoutLocally());
@@ -149,8 +186,13 @@ async function clearSession() {
 
 // ─── Response interceptor ────────────────────────────────────────────────────
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    updateCsrfFromResponseHeaders(response.headers);
+    return response;
+  },
   async (error: AxiosError) => {
+    updateCsrfFromResponseHeaders(error.response?.headers);
+
     const originalRequest = error.config as typeof error.config & {
       _retry?: boolean;
     };

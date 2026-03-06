@@ -134,7 +134,7 @@ export const securityNav = [
 export const residentNav = [
   { label: "Overview", icon: FiHome, path: "/dashboard/resident/dashboard" },
   {
-    label: "User Management", 
+    label: "Tenant Management", 
     icon: FiUsers,
     path: "/dashboard/resident/user",
   },

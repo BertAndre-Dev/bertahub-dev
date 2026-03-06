@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '@/utils/axiosInstance';
+import { clearCsrfToken, fetchCsrfToken } from "@/utils/csrf";
 
 
 
@@ -28,6 +29,10 @@ export const signIn = createAsyncThunk(
     async (data: { email: string; password: string }, { rejectWithValue }) => {
         try {
             const res = await axiosInstance.post('/api/v1/auth-mgt/sign-in', data);
+            const accessToken = res.data?.accessToken as string | undefined;
+            if (accessToken) {
+              await fetchCsrfToken(accessToken);
+            }
             return res.data;
         } catch (error: any) {
             const apiError = error.response?.data;
@@ -113,6 +118,7 @@ export const signOut = createAsyncThunk(
     async (data: { email: string }, { rejectWithValue }) => {
         try {
             const res = await axiosInstance.post('/api/v1/auth-mgt/sign-out', data, { withCredentials: true});
+            clearCsrfToken();
             return res.data;
         } catch (error: any) {
             return rejectWithValue(error.res?.data?.message);

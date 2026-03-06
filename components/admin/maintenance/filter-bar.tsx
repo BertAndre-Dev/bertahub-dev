@@ -6,14 +6,6 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const PRIORITY_OPTIONS = [
-  { value: "", label: "Filter by Priority" },
-  { value: "critical", label: "Critical" },
-  { value: "high", label: "High" },
-  { value: "medium", label: "Medium" },
-  { value: "low", label: "Low" },
-];
-
 export const CATEGORY_OPTIONS = [
   { value: "", label: "Filter by Category" },
   { value: "ELECTRICITY ISSUE", label: "Electricity" },
@@ -21,6 +13,14 @@ export const CATEGORY_OPTIONS = [
   { value: "STRUCTURAL", label: "Structural" },
   { value: "SECURITY", label: "Security" },
   { value: "OTHER", label: "Other" },
+];
+
+export const PRIORITY_OPTIONS = [
+  { value: "", label: "Filter by Priority" },
+  { value: "critical", label: "Critical" },
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
 ];
 
 interface FilterBarProps {
@@ -45,12 +45,12 @@ export function FilterBar({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-end gap-4 p-4 rounded-lg border border-border bg-muted/20",
-        className
+        "flex items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/20",
+        className,
       )}
     >
-      <div className="flex items-center gap-2 min-w-[180px]">
-        <div className="relative flex-1">
+      <div className="flex gap-2 min-w-[360px]">
+        <div className="relative min-w-[180px]">
           <Select
             options={PRIORITY_OPTIONS}
             value={priority}
@@ -59,18 +59,18 @@ export function FilterBar({
           />
           <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         </div>
-      </div>
-      <div className="flex items-center gap-2 min-w-[180px]">
-        <div className="relative flex-1">
+
+        <div className="relative min-w-[180px]">
           <Select
             options={CATEGORY_OPTIONS}
             value={category}
             onChange={(e) => onCategoryChange(e.target.value)}
-            className="pr-8"
+            className="pr-8 appearance-none"
           />
           <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         </div>
       </div>
+
       <div className="flex-1 min-w-[200px] max-w-sm">
         <Label className="sr-only">Search by ticket number</Label>
         <Input

@@ -22,6 +22,7 @@ import {
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import NextImage from "next/image";
 import Image from "next/image";
+import { clearCsrfToken, ensureCsrfToken } from "@/utils/csrf";
 
 export default function DashboardLayout({
   children,
@@ -96,8 +97,18 @@ export default function DashboardLayout({
     }
   }, [dispatch, router, token]);
 
+  // 🔹 Ensure CSRF token exists for authenticated sessions (needed after refresh)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!token) return;
+    ensureCsrfToken(token).catch(() => {
+      // If this fails, state-changing requests will attempt to refresh it anyway.
+    });
+  }, [token]);
+
   // 🔹 Sign out handler
   const handleSignOut = () => {
+    clearCsrfToken();
     dispatch(logoutLocally());
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -120,6 +131,18 @@ export default function DashboardLayout({
             : role === "resident"
               ? residentNav
               : securityNav;
+
+    // Residents: hide Tenant Management for residentType=Tenant (owners only)
+    if (role === "resident") {
+      const residentType = (user?.residentType ?? "").toString().toLowerCase();
+      if (residentType === "tenant") {
+        navItems = navItems.filter(
+          (item) =>
+            item.label !== "Tenant Management" &&
+            !(item.path ? item.path.includes("/dashboard/resident/user") : false),
+        );
+      }
+    }
 
     return navItems.map((item, i) => {
       const Icon = item.icon;
@@ -204,7 +227,7 @@ export default function DashboardLayout({
           <div className="bg-[#f2f2f2] border-t border-sidebar-border m-4 rounded-lg px-2 py-4  ">
             <button
               className="flex items-center gap-0 md:gap-3 w-full rounded-lg hover:bg-sidebar-accent transition-colors overflow-x-scroll"
-              onClick={handleSignOut}
+              // onClick={handleSignOut}
             >
               <div className="bg-[#4E61E5] rounded-full overflow-hidden w-8 h-8 flex-shrink-0">
                 <Image
@@ -220,7 +243,13 @@ export default function DashboardLayout({
                   <p className="text-base font-semibold">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-base font-normal">{user?.role}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-base font-normal">
+                      {user?.role === "resident"
+                        ? user?.residentType || "Resident"
+                        : user?.role}
+                    </p>
+                  </div>
                 </div>
               )}
             </button>
