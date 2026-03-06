@@ -55,9 +55,9 @@ export default function LoginPage() {
         const user = res.data;
         const token = res.accessToken;
 
-        // ✅ Save user + token to localStorage
+        // ✅ Keep user in localStorage so getStoredUserEmail() can read it
+        // even before redux-persist has finished rehydrating on a hard reload.
         localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("token", token);
 
         toast.success(res.message || "Signed in successfully");
 

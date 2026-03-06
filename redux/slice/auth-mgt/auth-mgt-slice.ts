@@ -1,6 +1,6 @@
 'use client';
 
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
   signIn,
   signOut,
@@ -69,10 +69,18 @@ const authSlice = createSlice({
       state.token = parsed?.token ?? null;
     },
 
+    setToken: (state, action: PayloadAction<string>) => {
+      state.token = action.payload;
+    },
+
     logoutLocally: (state) => {
       state.user = null;
       state.token = null;
-      if (typeof window !== 'undefined') localStorage.removeItem('auth');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth');
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('accessToken');
+      }
     },
   },
 
@@ -151,5 +159,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { resetAuthState, logoutLocally, hydrateAuthFromStorage } = authSlice.actions;
+export const { resetAuthState, logoutLocally, hydrateAuthFromStorage, setToken } = authSlice.actions;
 export default authSlice.reducer;

@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+import { injectStore } from '@/utils/store-accessor';
 import authSliceReducer from '@/redux/slice/auth-mgt/auth-mgt-slice';
 import estateSliceReducer from '@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt-slice';
 import superAdminUserSliceReducer from '@/redux/slice/super-admin/super-admin-user/super-admin-user-slice';
@@ -133,3 +134,7 @@ export const store = configureStore({
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 export const persistor = persistStore(store);
+
+// Must be called AFTER store is created so the axios interceptors can
+// access state and dispatch without a circular import.
+injectStore(store);
