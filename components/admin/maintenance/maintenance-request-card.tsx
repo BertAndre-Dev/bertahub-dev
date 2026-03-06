@@ -178,7 +178,7 @@ export function MaintenanceRequestCard({
               </div>
             </div>
             <span className="text-sm font-medium text-muted-foreground shrink-0">
-              #{complaint.ticketNumber || complaint.id.slice(-8).toUpperCase()}
+              #{complaint.ticketNumber || String(complaint.id).slice(-8).toUpperCase()}
             </span>
           </div>
 

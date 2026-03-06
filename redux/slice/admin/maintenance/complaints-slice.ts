@@ -139,7 +139,7 @@ const complaintsSlice = createSlice({
         state.complaintsDashboard = raw ?? null;
         const pending = raw?.pendingComplaints ?? [];
         const normalized: ComplaintItem[] = pending.map((p: { _id: string; title?: string; description?: string; category?: string; status?: string; createdAt?: string; [key: string]: unknown }) => ({
-          id: p._id ?? (p as any).id,
+          id: String(p._id ?? (p as any).id ?? ""),
           title: p.title,
           description: p.description ?? "",
           category: p.category,

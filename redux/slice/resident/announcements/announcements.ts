@@ -37,7 +37,7 @@ export const getResidentAnnouncements = createAsyncThunk(
   async (estateId: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get<ResidentAnnouncementsListResponse>(
-        `/api/v1/estates/${estateId}/announcements`
+        `/api/v1/estates/announcements/${estateId}`
       );
       return res.data;
     } catch (error: unknown) {

@@ -48,7 +48,7 @@ export default function MaintenancePage() {
         (item.category || "").toLowerCase().includes(category.toLowerCase());
       const searchMatch =
         !search.trim() ||
-        (item.ticketNumber || item.id || "")
+        (item.ticketNumber || String(item.id ?? ""))
           .toLowerCase()
           .includes(search.toLowerCase()) ||
         (item.description || "").toLowerCase().includes(search.toLowerCase());
