@@ -11,18 +11,31 @@ import {
 } from "@/redux/slice/resident/maintenance/resident-complaints";
 import type { CreateComplaintPayload } from "@/redux/slice/resident/maintenance/resident-complaints";
 import { clearResidentComplaintsList } from "@/redux/slice/resident/maintenance/resident-complaints-slice";
-import { getResidentEstateFields, getResidentFieldEntries } from "@/redux/slice/resident/address-options/resident-address-options";
 import { ResidentComplaintCard } from "@/components/resident/maintenance/resident-complaint-card";
 import { ResidentComplaintForm } from "@/components/resident/maintenance/resident-complaint-form";
 import Modal from "@/components/modal/page";
 import { Plus, Wrench } from "lucide-react";
 import type { RootState, AppDispatch } from "@/redux/store";
+import { Input } from "@/components/ui/input";
+
+function buildAddressOptions(
+  addressIds: Array<{ id?: string; _id?: string; data?: Record<string, string> }> | undefined
+): { value: string; label: string }[] {
+  if (!Array.isArray(addressIds) || addressIds.length === 0) return [];
+  return addressIds.map((item) => {
+    const id = item.id ?? item._id ?? "";
+    const data = item.data ?? {};
+    const label = Object.values(data).filter(Boolean).join(", ") || id || "Address";
+    return { value: id, label };
+  }).filter((o) => o.value);
+}
 
 export default function ResidentMaintenancePage() {
   const dispatch = useDispatch<AppDispatch>();
   const [estateId, setEstateId] = useState<string | null>(null);
   const [residentId, setResidentId] = useState<string | null>(null);
-  const [firstFieldId, setFirstFieldId] = useState<string | null>(null);
+  const [residentType, setResidentType] = useState<string>("");
+  const [addressOptions, setAddressOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -39,45 +52,35 @@ export default function ResidentMaintenancePage() {
       createComplaintStatus: s?.createComplaintStatus ?? "idle",
     };
   });
-  const addressOptions = useSelector((state: RootState) => {
-    const s = state.residentAddressOptions as { options?: { value: string; label: string }[] };
-    return s?.options ?? [];
-  });
 
   useEffect(() => {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const data = userRes?.data ?? userRes;
+        const data = (userRes?.data ?? userRes) as {
+          estateId?: string;
+          estate?: { id?: string };
+          id?: string;
+          _id?: string;
+          residentType?: string;
+          addressIds?: Array<{ id?: string; _id?: string; data?: Record<string, string> }>;
+        };
         const eid = data?.estateId ?? data?.estate?.id ?? "";
         const rid = data?.id ?? data?._id ?? "";
+        const rType = (data?.residentType ?? "").toString().toLowerCase();
+        const options = buildAddressOptions(data?.addressIds);
         setEstateId(eid);
         setResidentId(rid);
+        setResidentType(rType);
+        setAddressOptions(options);
+        if (options.length > 0 && !selectedAddressId) {
+          setSelectedAddressId(options[0].value);
+        }
       } catch (err: unknown) {
         toast.error((err as { message?: string })?.message ?? "Failed to load user.");
       }
     })();
   }, [dispatch]);
-
-  useEffect(() => {
-    if (!estateId) return;
-    dispatch(getResidentEstateFields(estateId))
-      .unwrap()
-      .then((res: unknown) => {
-        const r = res as { data?: unknown[]; fields?: unknown[] };
-        const arr = Array.isArray(r?.data) ? r.data : Array.isArray(r?.fields) ? r.fields : [];
-        const first = arr[0] as { _id?: string; id?: string } | undefined;
-        const fid = first?._id ?? first?.id ?? null;
-        if (fid) setFirstFieldId(fid);
-      })
-      .catch(() => {});
-  }, [estateId, dispatch]);
-
-  useEffect(() => {
-    if (firstFieldId) {
-      dispatch(getResidentFieldEntries({ fieldId: firstFieldId }));
-    }
-  }, [firstFieldId, dispatch]);
 
   useEffect(() => {
     if (addressOptions.length > 0 && !selectedAddressId) {
@@ -129,9 +132,6 @@ export default function ResidentMaintenancePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold">Maintenance</h1>
-          <p className="text-muted-foreground mt-1">
-            View and manage your maintenance requests. Add a new request if something needs fixing.
-          </p>
         </div>
         {canCreate && (
           <Button
@@ -144,14 +144,14 @@ export default function ResidentMaintenancePage() {
         )}
       </div>
 
-      {addressOptions.length > 1 && (
+      {residentType === "owner" && addressOptions.length > 1 && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-muted-foreground">Address:</span>
           <select
             aria-label="Select address"
             value={selectedAddressId ?? ""}
             onChange={(e) => setSelectedAddressId(e.target.value || null)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="rounded-md border border-input bg-background px-3 py-2 text-sm min-w-[200px]"
           >
             {addressOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -164,7 +164,7 @@ export default function ResidentMaintenancePage() {
 
       {!selectedAddressId && addressOptions.length === 0 && !loading && (
         <p className="text-muted-foreground py-6 rounded-lg border border-border bg-muted/20 text-center">
-          No address linked to your account. Please contact your estate admin to add an address.
+          No address linked to your account. Your addresses come from your profile (GET /api/v1/auth-mgt/me). Please contact your estate admin if you need an address added.
         </p>
       )}
 

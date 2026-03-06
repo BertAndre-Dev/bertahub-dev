@@ -23,7 +23,8 @@ export interface ResidentComplaintItem {
   category?: string;
   status: string;
   priority?: string;
-  residentId?: string;
+  /** API may return string (id) or populated object with firstName, lastName, etc. */
+  residentId?: string | ResidentComplaintResident;
   estateId?: string;
   resident?: ResidentComplaintResident;
   addressId?: ResidentComplaintAddress | string;

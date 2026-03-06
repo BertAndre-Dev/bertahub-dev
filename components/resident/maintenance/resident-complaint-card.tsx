@@ -17,16 +17,18 @@ import {
 } from "@/redux/slice/resident/maintenance/resident-complaints";
 import type { AppDispatch, RootState } from "@/redux/store";
 
-const PRIORITY_STYLES: Record<string, string> = {
-  critical: "bg-red-500 text-white border-red-600",
-  high: "bg-orange-500 text-white border-orange-600",
-  medium: "bg-green-500 text-white border-green-600",
-  low: "bg-blue-500 text-white border-blue-600",
-};
+const STATUS_OPTIONS = [
+  { value: "pending", label: "Pending", bgColor: "#2196F3" },
+  { value: "in progress", label: "In progress", bgColor: "#FF9800" },
+  { value: "completed", label: "Completed", bgColor: "#4CAF50" },
+  { value: "blocked", label: "Blocked", bgColor: "#DC4440" },
+];
 
-function getPriorityStyle(priority?: string) {
-  const key = (priority || "low").toLowerCase();
-  return PRIORITY_STYLES[key] ?? PRIORITY_STYLES.low;
+function getStatusStyle(status?: string) {
+  const found = STATUS_OPTIONS.find(
+    (s) => s.value === (status || "").toLowerCase(),
+  );
+  return found?.bgColor ?? "#2196F3";
 }
 
 function formatDate(dateString?: string) {
@@ -41,7 +43,9 @@ function formatDate(dateString?: string) {
   });
 }
 
-function getAddressDisplay(addressId?: ResidentComplaintItem["addressId"]): string {
+function getAddressDisplay(
+  addressId?: ResidentComplaintItem["addressId"],
+): string {
   if (!addressId) return "—";
   if (typeof addressId === "object" && addressId?.data) {
     const parts = Object.values(addressId.data).filter(Boolean);
@@ -50,13 +54,19 @@ function getAddressDisplay(addressId?: ResidentComplaintItem["addressId"]): stri
   return "—";
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((s) => s[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+function getRequesterName(complaint: ResidentComplaintItem): string {
+  const r =
+    complaint.resident ??
+    (typeof complaint.residentId === "object" &&
+    complaint.residentId !== null &&
+    "firstName" in complaint.residentId
+      ? complaint.residentId
+      : null);
+  if (r && typeof r === "object") {
+    const name = [r.firstName, r.lastName].filter(Boolean).join(" ").trim();
+    if (name) return name;
+  }
+  return "Requester";
 }
 
 interface ResidentComplaintCardProps {
@@ -75,17 +85,24 @@ export function ResidentComplaintCard({
   const [submittingComment, setSubmittingComment] = useState(false);
 
   const userId = useSelector(
-    (state: RootState) => state.auth?.user?.id ?? state.auth?.user?._id ?? ""
+    (state: RootState) => state.auth?.user?.id ?? state.auth?.user?._id ?? "",
   );
-  const comments = (useSelector((state: RootState) => {
-    const s = state.residentComplaints as { commentsByComplaintId?: Record<string, ResidentCommentItem[]> };
+
+  const comments = useSelector((state: RootState) => {
+    const s = state.residentComplaints as {
+      commentsByComplaintId?: Record<string, ResidentCommentItem[]>;
+    };
     return s?.commentsByComplaintId?.[complaint.id] ?? [];
-  }) as ResidentCommentItem[]);
+  }) as ResidentCommentItem[];
 
   useEffect(() => {
     if (complaint.id) {
       dispatch(
-        getCommentsByComplaint({ complaintId: complaint.id, page: 1, limit: 50 })
+        getCommentsByComplaint({
+          complaintId: complaint.id,
+          page: 1,
+          limit: 50,
+        }),
       ).catch(() => {});
     }
   }, [complaint.id, dispatch]);
@@ -103,7 +120,7 @@ export function ResidentComplaintCard({
         complaintId: complaint.id,
         userId: String(userId),
         text,
-      })
+      }),
     )
       .unwrap()
       .then(() => {
@@ -111,19 +128,21 @@ export function ResidentComplaintCard({
         toast.success("Comment added");
       })
       .catch((err: unknown) =>
-        toast.error((err as { message?: string })?.message ?? "Failed to add comment")
+        toast.error(
+          (err as { message?: string })?.message ?? "Failed to add comment",
+        ),
       )
       .finally(() => setSubmittingComment(false));
   };
 
-  const location = getAddressDisplay(complaint.addressId);
+  // const location = getAddressDisplay(complaint.addressId);
   const ticketLabel = `#${complaint.ticketNumber || String(complaint.id).slice(-8).toUpperCase()}`;
 
   return (
     <Card
       className={cn(
         "overflow-hidden transition-shadow",
-        isExpanded && "ring-2 ring-primary"
+        isExpanded && "ring-2 ring-primary",
       )}
     >
       <CardContent className="p-0">
@@ -136,15 +155,24 @@ export function ResidentComplaintCard({
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  {location === "—" ? "—" : `• ${location}`}
+                  {getRequesterName(complaint)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDate(complaint.createdAt)}
                 </p>
               </div>
-              <span className="text-sm font-medium text-muted-foreground shrink-0">
-                {ticketLabel}
-              </span>
+
+              <div className="flex flex-col items-center justify-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground shrink-0">
+                  {ticketLabel}
+                </span>
+                <span
+                  className="text-xs font-medium text-white rounded-lg p-2"
+                  style={{ backgroundColor: getStatusStyle(complaint.status) }}
+                >
+                  {complaint.status || "—"}
+                </span>
+              </div>
             </div>
 
             <p className="font-semibold text-foreground mt-2">
@@ -153,21 +181,6 @@ export function ResidentComplaintCard({
             <p className="text-sm text-foreground whitespace-pre-wrap mt-1">
               {complaint.description || "No description."}
             </p>
-
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <span
-                className={cn(
-                  "inline-flex px-3 py-1 rounded-md text-xs font-medium border",
-                  getPriorityStyle(complaint.priority)
-                )}
-              >
-                {(complaint.priority || "Low").charAt(0).toUpperCase() +
-                  (complaint.priority || "low").slice(1)}
-              </span>
-              <span className="text-xs text-muted-foreground border rounded-full px-2 py-0.5">
-                {complaint.status || "—"}
-              </span>
-            </div>
           </button>
 
           {isExpanded && (
@@ -178,24 +191,15 @@ export function ResidentComplaintCard({
                     Comments
                   </p>
                   {comments.map((c) => (
-                    <div key={c.id} className="flex gap-2">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
-                        {c.user
-                          ? getInitials(
-                              [c.user.firstName, c.user.lastName]
-                                .filter(Boolean)
-                                .join(" ")
-                            )
-                          : "?"}
+                    <div
+                      key={c.id}
+                      className="flex p-2 rounded-lg shadow-sm border border-[#E0E0E0] gap-2"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs border border-[#A1BFE4] font-medium shrink-0">
+                        FM
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">
-                          {c.user
-                            ? [c.user.firstName, c.user.lastName]
-                                .filter(Boolean)
-                                .join(" ")
-                            : "User"}
-                        </p>
+                        <p className="text-sm font-medium">Facility Manager</p>
                         <p className="text-xs text-muted-foreground">
                           {formatDate(c.createdAt)}
                         </p>

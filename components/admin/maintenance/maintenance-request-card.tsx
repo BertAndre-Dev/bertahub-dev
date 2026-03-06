@@ -240,8 +240,8 @@ export function MaintenanceRequestCard({
                 Comments
               </p>
               {comments.map((c) => (
-                <div key={c.id} className="flex gap-2">
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+                    <div key={c.id} className="flex p-2 rounded-lg shadow-sm border border-[#E0E0E0] gap-2">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs border border-[#A1BFE4] font-medium shrink-0">
                     FM
                   </div>
                   <div className="flex-1 min-w-0">
@@ -259,7 +259,7 @@ export function MaintenanceRequestCard({
           {/* Comment form */}
           <form
             onSubmit={handleSubmitComment}
-            className="flex gap-2 pt-2 border-t border-border"
+            className="flex flex-row items-center justify-between gap-2 pt-2 border-t border-border"
             onClick={(e) => e.stopPropagation()}
           >
             <Input

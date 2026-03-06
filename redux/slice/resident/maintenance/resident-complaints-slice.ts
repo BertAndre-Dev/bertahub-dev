@@ -1,5 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
-import type { ResidentComplaintItem, ResidentCommentItem } from "./resident-complaints";
+import type {
+  ResidentComplaintItem,
+  ResidentComplaintResident,
+  ResidentCommentItem,
+} from "./resident-complaints";
 import {
   createComplaint,
   getComplaintsByAddress,
@@ -48,6 +52,21 @@ const initialState: ResidentComplaintsState = {
 
 function normalizeComplaint(p: Record<string, unknown>): ResidentComplaintItem {
   const id = String(p._id ?? p.id ?? "");
+  const rawResidentId = p.residentId;
+  const residentObj =
+    (p.resident as ResidentComplaintItem["resident"]) ??
+    (typeof rawResidentId === "object" &&
+    rawResidentId !== null &&
+    "firstName" in (rawResidentId as object)
+      ? (rawResidentId as ResidentComplaintItem["resident"])
+      : undefined);
+  const residentIdStr =
+    typeof rawResidentId === "string"
+      ? rawResidentId
+      : (rawResidentId as { id?: string; _id?: string } | undefined)?.id ??
+        (rawResidentId as { id?: string; _id?: string } | undefined)?._id ??
+        "";
+
   return {
     id,
     _id: id,
@@ -56,8 +75,8 @@ function normalizeComplaint(p: Record<string, unknown>): ResidentComplaintItem {
     category: p.category as string,
     status: (p.status as string) ?? "pending",
     priority: p.priority as string,
-    residentId: p.residentId as string,
-    resident: p.resident as ResidentComplaintItem["resident"],
+    residentId: residentObj ? residentIdStr || (residentObj as ResidentComplaintResident).id : residentIdStr,
+    resident: residentObj ?? undefined,
     addressId: p.addressId as ResidentComplaintItem["addressId"],
     estateId: p.estateId as string,
     ticketNumber: p.ticketNumber as string,
