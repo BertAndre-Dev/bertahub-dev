@@ -1,211 +1,224 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Modal from "@/components/modal/page";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
-  getComplaintsByAddresses,
+  getComplaintsByAddress,
   createComplaint,
 } from "@/redux/slice/resident/maintenance/resident-complaints";
-import type { ResidentComplaintItem } from "@/redux/slice/resident/maintenance/resident-complaints-slice";
-import {
-  ResidentComplaintForm,
-  ResidentComplaintCard,
-} from "@/components/resident/maintenance";
-import { RootState, AppDispatch } from "@/redux/store";
-
-/** Address from /api/v1/auth-mgt/me (addressIds array item) */
-export interface UserAddressItem {
-  id: string;
-  data?: Record<string, string>;
-}
-
-function formatAddressLabel(addr: UserAddressItem): string {
-  if (!addr.data || typeof addr.data !== "object") return addr.id;
-  const parts = Object.entries(addr.data)
-    .filter(([, v]) => v != null && String(v).trim() !== "")
-    .map(([k, v]) => {
-      const label = k.replaceAll(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
-      return `${label.trim()}: ${v}`;
-    });
-  return parts.length > 0 ? parts.join(", ") : addr.id;
-}
-
-function normalizeUserAddresses(raw: unknown): UserAddressItem[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.map((item) => {
-    if (item != null && typeof item === "object" && "id" in item) {
-      const obj = item as { id: string; data?: Record<string, string> };
-      return { id: obj.id, data: obj.data };
-    }
-    if (typeof item === "string") return { id: item, data: undefined };
-    return { id: String(item), data: undefined };
-  });
-}
+import type { CreateComplaintPayload } from "@/redux/slice/resident/maintenance/resident-complaints";
+import { clearResidentComplaintsList } from "@/redux/slice/resident/maintenance/resident-complaints-slice";
+import { getResidentEstateFields, getResidentFieldEntries } from "@/redux/slice/resident/address-options/resident-address-options";
+import { ResidentComplaintCard } from "@/components/resident/maintenance/resident-complaint-card";
+import { ResidentComplaintForm } from "@/components/resident/maintenance/resident-complaint-form";
+import Modal from "@/components/modal/page";
+import { Plus, Wrench } from "lucide-react";
+import type { RootState, AppDispatch } from "@/redux/store";
 
 export default function ResidentMaintenancePage() {
   const dispatch = useDispatch<AppDispatch>();
-  const [addresses, setAddresses] = useState<UserAddressItem[]>([]);
-  const [estateId, setEstateId] = useState("");
-  const [residentId, setResidentId] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
+  const [estateId, setEstateId] = useState<string | null>(null);
+  const [residentId, setResidentId] = useState<string | null>(null);
+  const [firstFieldId, setFirstFieldId] = useState<string | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const addressIds = useMemo(() => addresses.map((a) => a.id), [addresses]);
-
-  const { complaints, loading, createComplaintStatus } = useSelector(
-    (state: RootState) => {
-      const s = state.residentComplaints as any;
-      return {
-        complaints: s?.complaints?.data ?? [],
-        loading: s?.getComplaintsStatus === "isLoading",
-        createComplaintStatus: s?.createComplaintStatus === "isLoading",
-      };
-    }
-  );
+  const { list, loading, createComplaintStatus } = useSelector((state: RootState) => {
+    const s = state.residentComplaints as {
+      list: unknown[];
+      getComplaintsByAddressStatus?: string;
+      createComplaintStatus?: string;
+    };
+    return {
+      list: s?.list ?? [],
+      loading: s?.getComplaintsByAddressStatus === "isLoading",
+      createComplaintStatus: s?.createComplaintStatus ?? "idle",
+    };
+  });
+  const addressOptions = useSelector((state: RootState) => {
+    const s = state.residentAddressOptions as { options?: { value: string; label: string }[] };
+    return s?.options ?? [];
+  });
 
   useEffect(() => {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const user = userRes?.data;
-        if (!user) {
-          toast.warning("No signed in user found.");
-          return;
-        }
-        const id = user.id ?? user._id ?? "";
-        const eId = user.estateId ?? user.estate?.id ?? "";
-        const addrs = user.addressIds ?? (user.addressId ? [user.addressId] : []);
-        setResidentId(id);
-        setEstateId(eId);
-        setAddresses(normalizeUserAddresses(addrs));
-      } catch (err: any) {
-        toast.error(err?.message ?? "Failed to load user.");
+        const data = userRes?.data ?? userRes;
+        const eid = data?.estateId ?? data?.estate?.id ?? "";
+        const rid = data?.id ?? data?._id ?? "";
+        setEstateId(eid);
+        setResidentId(rid);
+      } catch (err: unknown) {
+        toast.error((err as { message?: string })?.message ?? "Failed to load user.");
       }
     })();
   }, [dispatch]);
 
   useEffect(() => {
-    if (addressIds.length === 0) return;
-    dispatch(
-      getComplaintsByAddresses({ addressIds, page: 1, limit: 50 })
-    ).catch((err: any) =>
-      toast.error(err?.message ?? "Failed to load requests.")
+    if (!estateId) return;
+    dispatch(getResidentEstateFields(estateId))
+      .unwrap()
+      .then((res: unknown) => {
+        const r = res as { data?: unknown[]; fields?: unknown[] };
+        const arr = Array.isArray(r?.data) ? r.data : Array.isArray(r?.fields) ? r.fields : [];
+        const first = arr[0] as { _id?: string; id?: string } | undefined;
+        const fid = first?._id ?? first?.id ?? null;
+        if (fid) setFirstFieldId(fid);
+      })
+      .catch(() => {});
+  }, [estateId, dispatch]);
+
+  useEffect(() => {
+    if (firstFieldId) {
+      dispatch(getResidentFieldEntries({ fieldId: firstFieldId }));
+    }
+  }, [firstFieldId, dispatch]);
+
+  useEffect(() => {
+    if (addressOptions.length > 0 && !selectedAddressId) {
+      setSelectedAddressId(addressOptions[0].value);
+    }
+  }, [addressOptions, selectedAddressId]);
+
+  useEffect(() => {
+    if (!selectedAddressId) return;
+    dispatch(getComplaintsByAddress({ addressId: selectedAddressId, page: 1, limit: 50 })).catch(
+      (err: unknown) =>
+        toast.error((err as { message?: string })?.message ?? "Failed to load requests.")
     );
-  }, [addressIds, dispatch]);
+  }, [selectedAddressId, dispatch]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearResidentComplaintsList());
+    };
+  }, [dispatch]);
 
   const handleCreateSubmit = async (
-    payload: Omit<
-      import("@/redux/slice/resident/maintenance/resident-complaints").CreateComplaintPayload,
-      "residentId" | "estateId"
-    >
+    payload: Omit<CreateComplaintPayload, "residentId" | "estateId">
   ) => {
-    if (!residentId || !estateId) {
-      toast.error("Missing user or estate.");
+    if (!estateId || !residentId) {
+      toast.error("Missing estate or user info.");
       return;
     }
-    try {
-      await dispatch(
-        createComplaint({
-          ...payload,
-          residentId,
-          estateId,
-          status: "pending",
-        })
-      ).unwrap();
-      toast.success("Maintenance request submitted.");
-      setModalOpen(false);
-    } catch (err: any) {
-      toast.error(
-        (err?.payload as { message?: string })?.message ??
-          err?.message ??
-          "Failed to submit."
-      );
+    await dispatch(
+      createComplaint({
+        ...payload,
+        residentId,
+        estateId,
+      })
+    ).unwrap();
+    toast.success("Maintenance request submitted.");
+    setCreateOpen(false);
+    if (selectedAddressId) {
+      dispatch(getComplaintsByAddress({ addressId: selectedAddressId, page: 1, limit: 50 }));
     }
   };
 
-  const addressOptions = useMemo(
-    () =>
-      addresses.map((addr) => ({
-        value: addr.id,
-        label: formatAddressLabel(addr),
-      })),
-    [addresses]
-  );
+  const expandableList = list as { id: string }[];
+  const hasAddressOptions = addressOptions.length > 0;
+  const canCreate = hasAddressOptions && estateId && residentId;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-heading text-3xl font-bold">
-            Maintenance requests
-          </h1>
+          <h1 className="font-heading text-3xl font-bold">Maintenance</h1>
           <p className="text-muted-foreground mt-1">
-            View and submit maintenance requests for your unit(s).
+            View and manage your maintenance requests. Add a new request if something needs fixing.
           </p>
         </div>
-        <Button
-          onClick={() => setModalOpen(true)}
-          disabled={!residentId || !estateId || addresses.length === 0}
-          className="flex items-center gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          New request
-        </Button>
+        {canCreate && (
+          <Button
+            onClick={() => setCreateOpen(true)}
+            className="shrink-0"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New request
+          </Button>
+        )}
       </div>
 
-      {addresses.length === 0 && !loading && (
-        <p className="text-muted-foreground py-8 text-center rounded-lg border border-border bg-muted/20">
-          No address linked to your account. Contact your estate admin.
+      {addressOptions.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">Address:</span>
+          <select
+            aria-label="Select address"
+            value={selectedAddressId ?? ""}
+            onChange={(e) => setSelectedAddressId(e.target.value || null)}
+            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            {addressOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {!selectedAddressId && addressOptions.length === 0 && !loading && (
+        <p className="text-muted-foreground py-6 rounded-lg border border-border bg-muted/20 text-center">
+          No address linked to your account. Please contact your estate admin to add an address.
         </p>
       )}
 
-      {loading && (
-        <p className="text-muted-foreground py-8 text-center">
-          Loading your requests...
-        </p>
+      {selectedAddressId && (
+        <>
+          {loading ? (
+            <p className="text-muted-foreground py-8 text-center">
+              Loading your requests...
+            </p>
+          ) : expandableList.length === 0 ? (
+            <div className="py-12 rounded-lg border border-border bg-muted/20 text-center space-y-2">
+              <Wrench className="w-12 h-12 mx-auto text-muted-foreground" />
+              <p className="text-muted-foreground">No maintenance requests yet.</p>
+              {canCreate && (
+                <Button variant="outline" onClick={() => setCreateOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create your first request
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {expandableList.map((complaint) => (
+                <ResidentComplaintCard
+                  key={complaint.id}
+                  complaint={complaint as Parameters<typeof ResidentComplaintCard>[0]["complaint"]}
+                  isExpanded={expandedId === complaint.id}
+                  onToggle={() =>
+                    setExpandedId((prev) => (prev === complaint.id ? null : complaint.id))
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
-      {!loading && addresses.length > 0 && complaints.length === 0 && (
-        <p className="text-muted-foreground py-8 text-center rounded-lg border border-border bg-muted/20">
-          No maintenance requests yet. Use &quot;New request&quot; to submit one.
-        </p>
-      )}
-
-      {!loading && complaints.length > 0 && (
-        <div className="space-y-4">
-          {(complaints as ResidentComplaintItem[]).map((c) => (
-            <ResidentComplaintCard
-              key={c.id}
-              complaint={c}
-              isExpanded={expandedId === c.id}
-              onToggle={() =>
-                setExpandedId((prev) => (prev === c.id ? null : c.id))
-              }
+      {createOpen && canCreate && (
+        <Modal visible={createOpen} onClose={() => setCreateOpen(false)}>
+          <div className="p-4">
+            <h2 className="font-heading text-xl font-semibold mb-4">
+              New maintenance request
+            </h2>
+            <ResidentComplaintForm
+              addressOptions={addressOptions}
+              estateId={estateId}
+              residentId={residentId}
+              onSubmit={handleCreateSubmit}
+              onCancel={() => setCreateOpen(false)}
+              loading={createComplaintStatus === "isLoading"}
             />
-          ))}
-        </div>
+          </div>
+        </Modal>
       )}
- 
-        <Modal visible={modalOpen} onClose={() => setModalOpen(false)}> 
-        <div className="p-4">
-          <h2 className="font-heading text-xl font-bold mb-4">
-            New maintenance request
-          </h2>
-          <ResidentComplaintForm
-            addressOptions={addressOptions}
-            estateId={estateId}
-            residentId={residentId}
-            onSubmit={handleCreateSubmit}
-            onCancel={() => setModalOpen(false)}
-            loading={createComplaintStatus}
-          />
-        </div>
-      </Modal>
     </div>
   );
 }

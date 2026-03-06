@@ -18,10 +18,10 @@ import {
 import type { AppDispatch, RootState } from "@/redux/store";
 
 const PRIORITY_STYLES: Record<string, string> = {
-  critical: "bg-red-100 text-red-800 border-red-200",
-  high: "bg-orange-100 text-orange-800 border-orange-200",
-  medium: "bg-amber-100 text-amber-800 border-amber-200",
-  low: "bg-blue-100 text-blue-800 border-blue-200",
+  critical: "bg-red-500 text-white border-red-600",
+  high: "bg-orange-500 text-white border-orange-600",
+  medium: "bg-green-500 text-white border-green-600",
+  low: "bg-blue-500 text-white border-blue-600",
 };
 
 function getPriorityStyle(priority?: string) {
@@ -78,7 +78,7 @@ export function ResidentComplaintCard({
     (state: RootState) => state.auth?.user?.id ?? state.auth?.user?._id ?? ""
   );
   const comments = (useSelector((state: RootState) => {
-    const s = state.residentComplaints as any;
+    const s = state.residentComplaints as { commentsByComplaintId?: Record<string, ResidentCommentItem[]> };
     return s?.commentsByComplaintId?.[complaint.id] ?? [];
   }) as ResidentCommentItem[]);
 
@@ -101,7 +101,7 @@ export function ResidentComplaintCard({
     dispatch(
       createComment({
         complaintId: complaint.id,
-        userId,
+        userId: String(userId),
         text,
       })
     )
@@ -110,14 +110,14 @@ export function ResidentComplaintCard({
         setCommentText("");
         toast.success("Comment added");
       })
-      .catch((err: any) =>
-        toast.error(err?.message ?? "Failed to add comment")
+      .catch((err: unknown) =>
+        toast.error((err as { message?: string })?.message ?? "Failed to add comment")
       )
       .finally(() => setSubmittingComment(false));
   };
 
   const location = getAddressDisplay(complaint.addressId);
-  const ticketLabel = `#${complaint.ticketNumber || complaint.id.slice(-8).toUpperCase()}`;
+  const ticketLabel = `#${complaint.ticketNumber || String(complaint.id).slice(-8).toUpperCase()}`;
 
   return (
     <Card
@@ -157,7 +157,7 @@ export function ResidentComplaintCard({
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <span
                 className={cn(
-                  "inline-flex px-3 py-1 rounded-full text-xs font-medium border",
+                  "inline-flex px-3 py-1 rounded-md text-xs font-medium border",
                   getPriorityStyle(complaint.priority)
                 )}
               >

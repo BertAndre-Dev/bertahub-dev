@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-import { getComplaintsDashboard } from "@/redux/slice/admin/maintenance/complaints";
+import { getComplaintsByEstate } from "@/redux/slice/admin/maintenance/complaints";
 import type { ComplaintItem } from "@/redux/slice/admin/maintenance/complaints-slice";
 import {
   StatusTabs,
@@ -12,10 +12,9 @@ import {
   MaintenanceRequestCard,
   type MaintenanceStatusValue,
 } from "@/components/admin/maintenance";
-
 import { RootState, AppDispatch } from "@/redux/store";
 
-export default function MaintenancePage() {
+export default function AdminMaintenancePage() {
   const dispatch = useDispatch<AppDispatch>();
   const [estateId, setEstateId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("");
@@ -26,14 +25,17 @@ export default function MaintenancePage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { complaints, loading } = useSelector((state: RootState) => {
-    const c = state.complaints as any;
+    const c = state.complaints as {
+      complaintsByEstate?: { data: ComplaintItem[] } | null;
+      getComplaintsByEstateStatus?: string;
+    };
     return {
-      complaints: c?.complaints ?? null,
-      loading: c?.getComplaintsDashboardStatus === "isLoading",
+      complaints: c?.complaintsByEstate?.data ?? [],
+      loading: c?.getComplaintsByEstateStatus === "isLoading",
     };
   });
 
-  const list = useMemo(() => complaints?.data ?? [], [complaints?.data]);
+  const list = useMemo(() => (Array.isArray(complaints) ? complaints : []), [complaints]);
 
   const filtered = useMemo(() => {
     return list.filter((item: ComplaintItem) => {
@@ -60,27 +62,31 @@ export default function MaintenancePage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const id = userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+        const rawEstateId = data?.estateId ?? (data?.estate as { id?: string; _id?: string } | undefined)?.id ?? (data?.estate as { id?: string; _id?: string } | undefined)?._id;
+        const id = typeof rawEstateId === "string" ? rawEstateId : (rawEstateId as { _id?: string; id?: string } | undefined)?._id ?? (rawEstateId as { _id?: string; id?: string } | undefined)?.id ?? "";
         const name =
-          userRes?.data?.estate?.name ?? userRes?.data?.estateName ?? "Estate";
+          (data?.estate as { name?: string } | undefined)?.name ?? (data?.estateName as string) ?? "Estate";
         if (!id) {
           toast.warning("No estate found for this user.");
           return;
         }
         setEstateId(id);
         setEstateName(name);
-      } catch (err: any) {
-        toast.error(err?.message ?? "Failed to load user.");
+      } catch (err: unknown) {
+        toast.error((err as { message?: string })?.message ?? "Failed to load user.");
       }
     })();
   }, [dispatch]);
 
   useEffect(() => {
-    if (!estateId) return;
-    dispatch(getComplaintsDashboard(estateId)).catch((err: any) =>
-      toast.error(err?.message ?? "Failed to load complaints.")
+    const id = typeof estateId === "string" ? estateId : (estateId as { _id?: string; id?: string } | null)?._id ?? (estateId as { _id?: string; id?: string } | null)?.id ?? "";
+    if (!id) return;
+    dispatch(getComplaintsByEstate({ estateId: id, page: 1, limit: 100, search: search.trim() || undefined })).catch(
+      (err: unknown) =>
+        toast.error((err as { message?: string })?.message ?? "Failed to load complaints.")
     );
-  }, [estateId, dispatch]);
+  }, [estateId, dispatch, search]);
 
   return (
     <div className="space-y-6">
@@ -98,10 +104,8 @@ export default function MaintenancePage() {
       <StatusTabs value={statusTab} onChange={setStatusTab} />
 
       <FilterBar
-        priority={priority}
         category={category}
         search={search}
-        onPriorityChange={setPriority}
         onCategoryChange={setCategory}
         onSearchChange={setSearch}
       />
@@ -124,11 +128,11 @@ export default function MaintenancePage() {
               isSelected={selectedId === complaint.id}
               onSelect={() =>
                 setSelectedId((prev) =>
-                  prev === complaint.id ? null : complaint.id,
+                  prev === complaint.id ? null : complaint.id
                 )
               }
             />
-          )) 
+          ))
         )}
       </div>
     </div>

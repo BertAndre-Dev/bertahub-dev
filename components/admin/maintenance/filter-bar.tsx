@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -24,20 +25,16 @@ export const PRIORITY_OPTIONS = [
 ];
 
 interface FilterBarProps {
-  readonly priority: string;
-  readonly category: string;
-  readonly search: string;
-  readonly onPriorityChange: (value: string) => void;
-  readonly onCategoryChange: (value: string) => void;
-  readonly onSearchChange: (value: string) => void;
-  readonly className?: string;
+  category: string;
+  search: string;
+  onCategoryChange: (value: string) => void;
+  onSearchChange: (value: string) => void;
+  className?: string;
 }
 
 export function FilterBar({
-  priority,
   category,
   search,
-  onPriorityChange,
   onCategoryChange,
   onSearchChange,
   className,
@@ -45,32 +42,19 @@ export function FilterBar({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/20",
+        "flex flex-wrap items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/20",
         className,
       )}
     >
-      <div className="flex gap-2 min-w-[360px]">
-        <div className="relative min-w-[180px]">
-          <Select
-            options={PRIORITY_OPTIONS}
-            value={priority}
-            onChange={(e) => onPriorityChange(e.target.value)}
-            className="pr-8 appearance-none"
-          />
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        </div>
-
-        <div className="relative min-w-[180px]">
-          <Select
-            options={CATEGORY_OPTIONS}
-            value={category}
-            onChange={(e) => onCategoryChange(e.target.value)}
-            className="pr-8 appearance-none"
-          />
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        </div>
-      </div>
-
+      <div className="relative min-w-[160px]">
+        <Select
+          options={CATEGORY_OPTIONS}
+          value={category}
+          onChange={(e) => onCategoryChange(e.target.value)}
+          className="pr-8 appearance-none w-full"
+        />
+        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+      </div>{" "}
       <div className="flex-1 min-w-[200px] max-w-sm">
         <Label className="sr-only">Search by ticket number</Label>
         <Input

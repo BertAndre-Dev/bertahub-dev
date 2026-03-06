@@ -38,9 +38,7 @@ export function ResidentComplaintForm({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
-  const [addressId, setAddressId] = useState(
-    addressOptions[0]?.value ?? ""
-  );
+  const [addressId, setAddressId] = useState(addressOptions[0]?.value ?? "");
 
   useEffect(() => {
     const first = addressOptions[0]?.value ?? "";
@@ -51,9 +49,7 @@ export function ResidentComplaintForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim() || !category || !addressId) {
-      return;
-    }
+    if (!title.trim() || !description.trim() || !category || !addressId) return;
     await onSubmit({
       title: title.trim(),
       description: description.trim(),
@@ -62,7 +58,7 @@ export function ResidentComplaintForm({
     });
   };
 
-  const valid = title.trim() && description.trim() && category && addressId;
+  const valid = Boolean(title.trim() && description.trim() && category && addressId);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,6 +105,9 @@ export function ResidentComplaintForm({
             className="mt-1 w-full"
           />
         </div>
+      )}
+      {addressOptions.length === 1 && (
+        <input type="hidden" name="addressId" value={addressId} />
       )}
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>

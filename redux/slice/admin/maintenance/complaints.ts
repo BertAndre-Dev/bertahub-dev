@@ -1,74 +1,106 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 
-/** GET /analytics/complaints/dashboard?estateId=... */
-export const getComplaintsDashboard = createAsyncThunk(
-  "complaints/getComplaintsDashboard",
-  async (estateId: string, { rejectWithValue }) => {
-    try {
-      const res = await axiosInstance.get(
-        "/analytics/complaints/dashboard",
-        { params: { estateId } }
-      );
-      return res.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data);
-    }
-  }
-);
+export interface ComplaintResident {
+  id?: string;
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
 
+export interface ComplaintAddress {
+  id?: string;
+  _id?: string;
+  data?: Record<string, string>;
+}
+
+export interface ComplaintItem {
+  id: string;
+  _id?: string;
+  title?: string;
+  description: string;
+  category?: string;
+  status: string;
+  priority?: string;
+  residentId?: string | ComplaintResident;
+  estateId?: string;
+  resident?: ComplaintResident;
+  addressId?: ComplaintAddress | string;
+  ticketNumber?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  image?: string;
+}
+
+export interface CommentItem {
+  id: string;
+  _id?: string;
+  complaintId: string;
+  userId: string;
+  text: string;
+  user?: { firstName?: string; lastName?: string };
+  createdAt?: string;
+  image?: string;
+}
+
+/** Normalize estateId so the API always receives a string (backend expects ObjectId string, not a populated object). */
+function normalizeEstateId(estateId: string | { _id?: string; id?: string } | undefined): string {
+  if (estateId == null) return "";
+  if (typeof estateId === "string") return estateId;
+  return (estateId as { _id?: string; id?: string })._id ?? (estateId as { _id?: string; id?: string }).id ?? "";
+}
+
+/** GET /api/v1/complaints/by-estate */
 export const getComplaintsByEstate = createAsyncThunk(
-  "complaints/getComplaintsByEstate",
+  "complaints/getByEstate",
   async (
     {
       estateId,
       page = 1,
       limit = 10,
       search,
-    }: {
-      estateId: string;
-      page?: number;
-      limit?: number;
-      search?: string;
-    },
+    }: { estateId: string | { _id?: string; id?: string }; page?: number; limit?: number; search?: string },
     { rejectWithValue }
   ) => {
     try {
-      const params = new URLSearchParams();
-      params.set("estateId", estateId);
-      params.set("page", String(page));
-      params.set("limit", String(limit));
-      if (search) params.set("search", search);
-      const res = await axiosInstance.get(
-        `/api/v1/complaints/by-estate?${params.toString()}`
-      );
+      const id = normalizeEstateId(estateId);
+      const params: Record<string, string | number> = { estateId: id, page, limit };
+      if (search?.trim()) params.search = search.trim();
+      const res = await axiosInstance.get("/api/v1/complaints/by-estate", {
+        params,
+      });
       return res.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(
+        err?.response?.data?.message ?? "Failed to fetch complaints"
+      );
     }
   }
 );
 
+/** GET /api/v1/complaints/:id */
 export const getComplaintById = createAsyncThunk(
-  "complaints/getComplaintById",
+  "complaints/getById",
   async (id: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get(`/api/v1/complaints/${id}`);
       return res.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(
+        err?.response?.data?.message ?? "Failed to fetch complaint"
+      );
     }
   }
 );
 
+/** PUT /api/v1/complaints/:id/update-status */
 export const updateComplaintStatus = createAsyncThunk(
-  "complaints/updateComplaintStatus",
+  "complaints/updateStatus",
   async (
-    {
-      id,
-      status,
-      notes,
-    }: { id: string; status: string; notes?: string },
+    { id, status, notes }: { id: string; status: string; notes?: string },
     { rejectWithValue }
   ) => {
     try {
@@ -77,33 +109,42 @@ export const updateComplaintStatus = createAsyncThunk(
         { status, notes }
       );
       return res.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(
+        err?.response?.data?.message ?? "Failed to update status"
+      );
     }
   }
 );
 
+/** GET /api/v1/comments/complaint/:complaintId */
 export const getCommentsByComplaint = createAsyncThunk(
   "complaints/getCommentsByComplaint",
   async (
     {
       complaintId,
       page = 1,
-      limit = 20,
+      limit = 50,
     }: { complaintId: string; page?: number; limit?: number },
     { rejectWithValue }
   ) => {
     try {
       const res = await axiosInstance.get(
-        `/api/v1/comments/complaint/${complaintId}?page=${page}&limit=${limit}`
+        `/api/v1/comments/complaint/${complaintId}`,
+        { params: { page, limit } }
       );
       return res.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(
+        err?.response?.data?.message ?? "Failed to fetch comments"
+      );
     }
   }
 );
 
+/** POST /api/v1/comments */
 export const createComment = createAsyncThunk(
   "complaints/createComment",
   async (
@@ -125,11 +166,14 @@ export const createComment = createAsyncThunk(
         complaintId,
         userId,
         text,
-        ...(image && { image }),
+        ...(image ? { image } : {}),
       });
       return res.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(
+        err?.response?.data?.message ?? "Failed to add comment"
+      );
     }
   }
 );

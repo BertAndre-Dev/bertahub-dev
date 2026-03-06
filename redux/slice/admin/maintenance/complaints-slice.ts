@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
+import type { ComplaintItem, CommentItem } from "./complaints";
 import {
-  getComplaintsDashboard,
   getComplaintsByEstate,
   getComplaintById,
   updateComplaintStatus,
@@ -8,119 +8,77 @@ import {
   createComment,
 } from "./complaints";
 
-export interface ComplaintResident {
-  id?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-}
-
-export interface ComplaintAddress {
-  id?: string;
-  data?: Record<string, string>;
-}
-
-export interface ComplaintItem {
-  id: string;
-  title?: string;
-  description: string;
-  category?: string;
-  status: string;
-  priority?: string;
-  residentId?: string | ComplaintResident;
-  estateId?: string;
-  resident?: ComplaintResident;
-  addressId?: ComplaintAddress | string;
-  ticketNumber?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface CommentItem {
-  id: string;
-  complaintId: string;
-  userId: string;
-  text: string;
-  user?: { firstName?: string; lastName?: string };
-  createdAt?: string;
-}
-
-export interface ComplaintsResponse {
-  success: boolean;
-  message: string;
-  data: ComplaintItem[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    pages?: number;
-  };
-}
-
-export interface CommentsResponse {
-  success?: boolean;
-  data?: CommentItem[];
-  pagination?: { total: number; page: number; limit: number; pages?: number };
-}
+export type { ComplaintItem, CommentItem };
 
 export type AsyncStatus = "idle" | "isLoading" | "succeeded" | "failed";
 
-export interface ComplaintsDashboardData {
-  summary?: { totalComplaints?: number };
-  statusBreakdown?: Record<string, number>;
-  categoryBreakdown?: Array<{ category: string; count: number }>;
-  pendingComplaints?: Array<{
-    _id: string;
-    title?: string;
-    description?: string;
-    category?: string;
-    status?: string;
-    createdAt?: string;
-    daysOpen?: number;
-    [key: string]: unknown;
-  }>;
-  oldestUnresolvedComplaints?: Array<{ _id: string; title?: string; category?: string; status?: string; createdAt?: string; daysOpen?: number }>;
-  resolutionRate?: { totalComplaints?: number; resolvedComplaints?: number; pendingComplaints?: number; resolutionRate?: number };
-  [key: string]: unknown;
-}
-
-export interface ComplaintsState {
-  getComplaintsDashboardStatus: AsyncStatus;
+interface ComplaintsState {
   getComplaintsByEstateStatus: AsyncStatus;
   getComplaintByIdStatus: AsyncStatus;
   updateComplaintStatusStatus: AsyncStatus;
   getCommentsByComplaintStatus: AsyncStatus;
   createCommentStatus: AsyncStatus;
-  complaints: ComplaintsResponse | null;
-  complaintsDashboard: ComplaintsDashboardData | null;
+  complaintsByEstate: {
+    data: ComplaintItem[];
+    pagination?: { total: number; page: number; limit: number; pages?: number };
+  } | null;
   currentComplaint: ComplaintItem | null;
   commentsByComplaintId: Record<string, CommentItem[]>;
   error: string | null;
 }
 
 const initialState: ComplaintsState = {
-  getComplaintsDashboardStatus: "idle",
   getComplaintsByEstateStatus: "idle",
   getComplaintByIdStatus: "idle",
   updateComplaintStatusStatus: "idle",
   getCommentsByComplaintStatus: "idle",
   createCommentStatus: "idle",
-  complaints: null,
-  complaintsDashboard: null,
+  complaintsByEstate: null,
   currentComplaint: null,
   commentsByComplaintId: {},
   error: null,
 };
 
+function normalizeComplaint(p: Record<string, unknown>): ComplaintItem {
+  const id = String(p._id ?? p.id ?? "");
+  return {
+    id,
+    _id: id,
+    title: p.title as string,
+    description: (p.description as string) ?? "",
+    category: p.category as string,
+    status: (p.status as string) ?? "pending",
+    priority: p.priority as string,
+    residentId: p.residentId as ComplaintItem["residentId"],
+    resident: p.resident as ComplaintItem["resident"],
+    addressId: p.addressId as ComplaintItem["addressId"],
+    estateId: p.estateId as string,
+    ticketNumber: p.ticketNumber as string,
+    createdAt: p.createdAt as string,
+    updatedAt: p.updatedAt as string,
+    image: p.image as string,
+  };
+}
+
+function normalizeComment(c: Record<string, unknown>): CommentItem {
+  const id = String(c._id ?? c.id ?? "");
+  return {
+    id,
+    _id: id,
+    complaintId: String(c.complaintId ?? ""),
+    userId: String(c.userId ?? ""),
+    text: (c.text as string) ?? "",
+    user: c.user as CommentItem["user"],
+    createdAt: c.createdAt as string,
+  };
+}
+
 const complaintsSlice = createSlice({
   name: "complaints",
   initialState,
   reducers: {
-    resetComplaintsState: (state) => {
+    clearComplaintsError: (state) => {
       state.error = null;
-      state.getComplaintsByEstateStatus = "idle";
-      state.updateComplaintStatusStatus = "idle";
-      state.createCommentStatus = "idle";
     },
     clearCommentsForComplaint: (state, action: { payload: string }) => {
       delete state.commentsByComplaintId[action.payload];
@@ -128,64 +86,34 @@ const complaintsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getComplaintsDashboard.pending, (state) => {
-        state.getComplaintsDashboardStatus = "isLoading";
-        state.error = null;
-      })
-      .addCase(getComplaintsDashboard.fulfilled, (state, action) => {
-        state.getComplaintsDashboardStatus = "succeeded";
-        state.error = null;
-        const raw = action.payload?.data;
-        state.complaintsDashboard = raw ?? null;
-        const pending = raw?.pendingComplaints ?? [];
-        const normalized: ComplaintItem[] = pending.map((p: { _id: string; title?: string; description?: string; category?: string; status?: string; createdAt?: string; [key: string]: unknown }) => ({
-          id: String(p._id ?? (p as any).id ?? ""),
-          title: p.title,
-          description: p.description ?? "",
-          category: p.category,
-          status: p.status ?? "pending",
-          createdAt: p.createdAt,
-        }));
-        state.complaints = {
-          success: true,
-          message: "",
-          data: normalized,
-          pagination: { total: normalized.length, page: 1, limit: normalized.length || 10, pages: 1 },
-        };
-      })
-      .addCase(getComplaintsDashboard.rejected, (state, action) => {
-        state.getComplaintsDashboardStatus = "failed";
-        state.complaintsDashboard = null;
-        state.error =
-          (action.payload as { message?: string })?.message ||
-          action.error.message ||
-          "Failed to fetch complaints dashboard";
-      })
-
       .addCase(getComplaintsByEstate.pending, (state) => {
         state.getComplaintsByEstateStatus = "isLoading";
         state.error = null;
       })
       .addCase(getComplaintsByEstate.fulfilled, (state, action) => {
         state.getComplaintsByEstateStatus = "succeeded";
-        state.complaints = {
-          success: action.payload?.success ?? true,
-          message: action.payload?.message ?? "",
-          data: action.payload?.data ?? [],
-          pagination: action.payload?.pagination ?? {
-            total: 0,
-            page: 1,
-            limit: 10,
-            pages: 1,
-          },
+        state.error = null;
+        const pl = action.payload as Record<string, unknown> | undefined;
+        const dataBlock = pl?.data as unknown[] | { items?: unknown[] } | undefined;
+        const raw = Array.isArray(dataBlock)
+          ? dataBlock
+          : Array.isArray((dataBlock as { items?: unknown[] })?.items)
+            ? (dataBlock as { items: unknown[] }).items
+            : [];
+        const list = Array.isArray(raw) ? raw : [];
+        const pagination =
+          (pl?.pagination as { total: number; page: number; limit: number; pages?: number } | undefined) ??
+          (pl?.data as { pagination?: { total: number; page: number; limit: number; pages?: number } } | undefined)?.pagination ??
+          { total: list.length, page: 1, limit: list.length || 10, pages: 1 };
+        state.complaintsByEstate = {
+          data: list.map((p) => normalizeComplaint(p as Record<string, unknown>)),
+          pagination,
         };
       })
       .addCase(getComplaintsByEstate.rejected, (state, action) => {
         state.getComplaintsByEstateStatus = "failed";
-        state.error =
-          (action.payload as { message?: string })?.message ||
-          action.error.message ||
-          "Failed to fetch complaints";
+        state.complaintsByEstate = null;
+        state.error = (action.payload as string) ?? "Failed to fetch complaints";
       })
 
       .addCase(getComplaintById.pending, (state) => {
@@ -193,14 +121,12 @@ const complaintsSlice = createSlice({
       })
       .addCase(getComplaintById.fulfilled, (state, action) => {
         state.getComplaintByIdStatus = "succeeded";
-        state.currentComplaint = action.payload?.data ?? null;
+        const d = action.payload?.data ?? action.payload;
+        state.currentComplaint = d ? normalizeComplaint(d as Record<string, unknown>) : null;
       })
       .addCase(getComplaintById.rejected, (state, action) => {
         state.getComplaintByIdStatus = "failed";
-        state.error =
-          (action.payload as { message?: string })?.message ||
-          action.error.message ||
-          "Failed to fetch complaint";
+        state.error = (action.payload as string) ?? "Failed to fetch complaint";
       })
 
       .addCase(updateComplaintStatus.pending, (state) => {
@@ -208,19 +134,17 @@ const complaintsSlice = createSlice({
       })
       .addCase(updateComplaintStatus.fulfilled, (state, action) => {
         state.updateComplaintStatusStatus = "succeeded";
-        const updated = action.payload?.data;
-        if (updated?.id && state.complaints?.data) {
-          state.complaints.data = state.complaints.data.map((c) =>
-            c.id === updated.id ? { ...c, ...updated } : c
+        const updated = action.payload?.data ?? action.payload;
+        if (updated?.id && state.complaintsByEstate?.data) {
+          const id = String(updated.id ?? updated._id ?? "");
+          state.complaintsByEstate.data = state.complaintsByEstate.data.map(
+            (c) => (c.id === id ? { ...c, ...normalizeComplaint(updated as Record<string, unknown>) } : c)
           );
         }
       })
       .addCase(updateComplaintStatus.rejected, (state, action) => {
         state.updateComplaintStatusStatus = "failed";
-        state.error =
-          (action.payload as { message?: string })?.message ||
-          action.error.message ||
-          "Failed to update status";
+        state.error = (action.payload as string) ?? "Failed to update status";
       })
 
       .addCase(getCommentsByComplaint.pending, (state) => {
@@ -229,8 +153,11 @@ const complaintsSlice = createSlice({
       .addCase(getCommentsByComplaint.fulfilled, (state, action) => {
         state.getCommentsByComplaintStatus = "succeeded";
         const complaintId = action.meta.arg.complaintId;
-        const list = action.payload?.data ?? [];
-        state.commentsByComplaintId[complaintId] = list;
+        const raw = action.payload?.data ?? action.payload ?? [];
+        const list = Array.isArray(raw) ? raw : [];
+        state.commentsByComplaintId[complaintId] = list.map((c: Record<string, unknown>) =>
+          normalizeComment(c)
+        );
       })
       .addCase(getCommentsByComplaint.rejected, (state) => {
         state.getCommentsByComplaintStatus = "failed";
@@ -241,23 +168,23 @@ const complaintsSlice = createSlice({
       })
       .addCase(createComment.fulfilled, (state, action) => {
         state.createCommentStatus = "succeeded";
-        const newComment = action.payload?.data;
+        const newComment = action.payload?.data ?? action.payload;
         const complaintId = action.meta.arg.complaintId;
         if (newComment && complaintId) {
           const list = state.commentsByComplaintId[complaintId] ?? [];
-          state.commentsByComplaintId[complaintId] = [...list, newComment];
+          state.commentsByComplaintId[complaintId] = [
+            ...list,
+            normalizeComment(newComment as Record<string, unknown>),
+          ];
         }
       })
       .addCase(createComment.rejected, (state, action) => {
         state.createCommentStatus = "failed";
-        state.error =
-          (action.payload as { message?: string })?.message ||
-          action.error.message ||
-          "Failed to add comment";
+        state.error = (action.payload as string) ?? "Failed to add comment";
       });
   },
 });
 
-export const { resetComplaintsState, clearCommentsForComplaint } =
+export const { clearComplaintsError, clearCommentsForComplaint } =
   complaintsSlice.actions;
 export default complaintsSlice.reducer;
