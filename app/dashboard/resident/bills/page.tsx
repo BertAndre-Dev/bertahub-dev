@@ -7,13 +7,13 @@ import { Plus } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
 import BillsForm from "@/components/resident/bill-form/page";
+import SwitchAddress from "@/components/resident/switch-address/page";
 import {
   getBillsByEstate,
   getResidentBills,
-  payBill,
-  getBill,
 } from "@/redux/slice/resident/bill-mgt/bills-mgt";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import { normalizeAddresses, type AddressOption } from "@/lib/address";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
@@ -43,23 +43,30 @@ export default function BillPage() {
   // signed in user meta
   const [userId, setUserId] = useState<string>("");
   const [estateId, setEstateId] = useState<string>("");
+  const [addressOptions, setAddressOptions] = useState<AddressOption[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
-  // fetch user, payable bills (estate), and resident paid bills
+  // fetch user, addresses, payable bills (estate), and resident paid bills
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const user = userRes?.data;
+        const user = userRes?.data as Record<string, unknown> | undefined;
         if (!user) {
           toast.warning("No signed in user found");
           setLoading(false);
           return;
         }
-        const uId = user.id || "";
-        const eId = user.estateId || user.estate?.id || ""; // try common shapes
+        const uId = (user.id ?? user._id ?? "") as string;
+        const eId = (user.estateId ?? (user.estate as { id?: string })?.id ?? "") as string;
+        const addresses = normalizeAddresses(user);
+        const firstId = addresses.length > 0 ? addresses[0].id : null;
+
         setUserId(uId);
         setEstateId(eId);
+        setAddressOptions(addresses);
+        setSelectedAddressId((prev) => prev ?? firstId);
 
         if (!eId) {
           toast.warning("The signed-in user does not have an estate assigned.");
@@ -160,6 +167,12 @@ export default function BillPage() {
           How to Pay
         </Button>
       </div>
+
+      <SwitchAddress
+        addresses={addressOptions}
+        value={selectedAddressId}
+        onChange={setSelectedAddressId}
+      />
 
       {/* Payable bills - cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

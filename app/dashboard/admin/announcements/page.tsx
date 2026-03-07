@@ -89,11 +89,12 @@ export default function AdminAnnouncementsPage() {
       title: data.title,
       content: data.content,
       description: data.description || undefined,
-      scheduledFor: data.scheduledFor || undefined,
+      scheduledFor: data.sendNow ? undefined : (data.scheduledFor || undefined),
       category: data.category,
       tags: data.tags,
       isPinned: data.isPinned,
       priority: data.priority,
+      sendNow: data.sendNow,
     };
     await dispatch(createAnnouncement(payload)).unwrap();
     toast.success("Announcement created.");
@@ -112,11 +113,12 @@ export default function AdminAnnouncementsPage() {
       title: data.title,
       content: data.content,
       description: data.description || undefined,
-      scheduledFor: data.scheduledFor || undefined,
+      scheduledFor: data.sendNow ? undefined : (data.scheduledFor || undefined),
       category: data.category,
       tags: data.tags,
       isPinned: data.isPinned,
       priority: data.priority,
+      sendNow: data.sendNow,
     };
     await dispatch(updateAnnouncement(payload)).unwrap();
     toast.success("Announcement updated.");

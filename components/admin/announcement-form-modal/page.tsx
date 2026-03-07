@@ -17,6 +17,7 @@ export interface AnnouncementFormData {
   tags: string[];
   isPinned: boolean;
   priority: string;
+  sendNow: boolean;
 }
 
 export interface AnnouncementFormModalProps {
@@ -55,6 +56,9 @@ function formatDateTimeLocal(iso?: string): string {
   }
 }
 
+// "send_now" | "schedule"
+type SendMode = "send_now" | "schedule";
+
 export default function AnnouncementFormModal({
   visible,
   onClose,
@@ -72,6 +76,7 @@ export default function AnnouncementFormModal({
   const [formTagsStr, setFormTagsStr] = useState("");
   const [formIsPinned, setFormIsPinned] = useState(false);
   const [formPriority, setFormPriority] = useState("low");
+  const [sendMode, setSendMode] = useState<SendMode>("send_now");
 
   useEffect(() => {
     if (visible) {
@@ -83,13 +88,24 @@ export default function AnnouncementFormModal({
       setFormTagsStr((initialData?.tags ?? []).join(", "));
       setFormIsPinned(initialData?.isPinned ?? false);
       setFormPriority(initialData?.priority ?? "low");
+      // If editing an existing scheduled announcement, default to schedule mode
+      setSendMode(initialData?.scheduledFor ? "schedule" : "send_now");
     }
   }, [visible, initialData]);
+
+  const handleSendModeChange = (mode: SendMode) => {
+    setSendMode(mode);
+    // Clear scheduled date when switching to send now
+    if (mode === "send_now") setFormScheduledFor("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const t = formTitle.trim();
     if (!t) return;
+    if (sendMode === "schedule" && !formScheduledFor.trim()) {
+      return;
+    }
     const tags = formTagsStr
       .split(",")
       .map((s) => s.trim())
@@ -99,13 +115,15 @@ export default function AnnouncementFormModal({
         title: t,
         content: formContent.trim(),
         description: formDescription.trim(),
-        scheduledFor: formScheduledFor.trim()
-          ? new Date(formScheduledFor).toISOString()
-          : "",
+        scheduledFor:
+          sendMode === "schedule" && formScheduledFor.trim()
+            ? new Date(formScheduledFor).toISOString()
+            : "",
         category: formCategory,
         tags,
         isPinned: formIsPinned,
         priority: formPriority,
+        sendNow: sendMode === "send_now",
       });
       onClose();
     } catch {
@@ -115,7 +133,7 @@ export default function AnnouncementFormModal({
 
   return (
     <Modal visible={visible} onClose={onClose}>
-      <div className="p-2 max-w-lg mx-auto max-h-[85vh] overflow-y-auto">
+      <div className="p-2 max-w-lg mx-auto max-h-[85vh]">
         <h2 className="font-heading text-xl font-bold mb-4">{title}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -130,6 +148,7 @@ export default function AnnouncementFormModal({
               required
             />
           </div>
+
           <div>
             <Label htmlFor="announcement-content">Content</Label>
             <textarea
@@ -143,8 +162,9 @@ export default function AnnouncementFormModal({
               required
             />
           </div>
+
           <div>
-            <Label htmlFor="announcement-description">Description (optional)</Label>
+            <Label htmlFor="announcement-description">Description</Label>
             <Input
               id="announcement-description"
               value={formDescription}
@@ -154,17 +174,7 @@ export default function AnnouncementFormModal({
               disabled={loading}
             />
           </div>
-          <div>
-            <Label htmlFor="announcement-scheduled">Scheduled for (optional)</Label>
-            <Input
-              id="announcement-scheduled"
-              type="datetime-local"
-              value={formScheduledFor}
-              onChange={(e) => setFormScheduledFor(e.target.value)}
-              className="mt-1"
-              disabled={loading}
-            />
-          </div>
+
           <div>
             <Label htmlFor="announcement-category">Category</Label>
             <Select
@@ -176,8 +186,9 @@ export default function AnnouncementFormModal({
               className="mt-1"
             />
           </div>
+
           <div>
-            <Label htmlFor="announcement-tags">Tags (comma-separated)</Label>
+            <Label htmlFor="announcement-tags">Tags</Label>
             <Input
               id="announcement-tags"
               value={formTagsStr}
@@ -187,6 +198,7 @@ export default function AnnouncementFormModal({
               disabled={loading}
             />
           </div>
+
           <div>
             <Label htmlFor="announcement-priority">Priority</Label>
             <Select
@@ -198,6 +210,61 @@ export default function AnnouncementFormModal({
               className="mt-1"
             />
           </div>
+
+          {/* Send mode — only one can be checked at a time */}
+          <div className="space-y-3 rounded-md border border-border p-3 bg-muted/20">
+            <p className="text-sm font-medium text-foreground">When to send</p>
+
+            {/* Send now */}
+            <div className="flex items-center gap-2">
+              <input
+                title="Send now"
+                id="send-now"
+                type="checkbox"
+                checked={sendMode === "send_now"}
+                onChange={() => handleSendModeChange("send_now")}
+                disabled={loading}
+                className="rounded border-input"
+              />
+              <Label htmlFor="send-now" className="cursor-pointer">
+                Send now
+              </Label>
+            </div>
+
+            {/* Schedule */}
+            <div className="flex items-center gap-2">
+              <input
+                title="Schedule for later"
+                id="send-schedule"
+                type="checkbox"
+                checked={sendMode === "schedule"}
+                onChange={() => handleSendModeChange("schedule")}
+                disabled={loading}
+                className="rounded border-input"
+              />
+              <Label htmlFor="send-schedule" className="cursor-pointer">
+                Schedule for later
+              </Label>
+            </div>
+
+            {/* Date/time input — only shown when schedule is ticked */}
+            {sendMode === "schedule" && (
+              <div className="pt-1">
+                <Label htmlFor="announcement-scheduled">Date &amp; time</Label>
+                <Input
+                  id="announcement-scheduled"
+                  type="datetime-local"
+                  value={formScheduledFor}
+                  onChange={(e) => setFormScheduledFor(e.target.value)}
+                  className="mt-1"
+                  disabled={loading}
+                  required
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Pin */}
           <div className="flex items-center gap-2">
             <input
               id="announcement-pinned"
@@ -213,6 +280,7 @@ export default function AnnouncementFormModal({
               Pin this announcement
             </Label>
           </div>
+
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Sending…" : submitLabel}
           </Button>

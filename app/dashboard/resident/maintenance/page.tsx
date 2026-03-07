@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
@@ -16,26 +16,14 @@ import { ResidentComplaintForm } from "@/components/resident/maintenance/residen
 import Modal from "@/components/modal/page";
 import { Plus, Wrench } from "lucide-react";
 import type { RootState, AppDispatch } from "@/redux/store";
-import { Input } from "@/components/ui/input";
-
-function buildAddressOptions(
-  addressIds: Array<{ id?: string; _id?: string; data?: Record<string, string> }> | undefined
-): { value: string; label: string }[] {
-  if (!Array.isArray(addressIds) || addressIds.length === 0) return [];
-  return addressIds.map((item) => {
-    const id = item.id ?? item._id ?? "";
-    const data = item.data ?? {};
-    const label = Object.values(data).filter(Boolean).join(", ") || id || "Address";
-    return { value: id, label };
-  }).filter((o) => o.value);
-}
+import { normalizeAddresses, formatAddressLabel, type AddressOption } from "@/lib/address";
+import SwitchAddress from "@/components/resident/switch-address/page";
 
 export default function ResidentMaintenancePage() {
   const dispatch = useDispatch<AppDispatch>();
   const [estateId, setEstateId] = useState<string | null>(null);
   const [residentId, setResidentId] = useState<string | null>(null);
-  const [residentType, setResidentType] = useState<string>("");
-  const [addressOptions, setAddressOptions] = useState<{ value: string; label: string }[]>([]);
+  const [addressOptions, setAddressOptions] = useState<AddressOption[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -57,36 +45,20 @@ export default function ResidentMaintenancePage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const data = (userRes?.data ?? userRes) as {
-          estateId?: string;
-          estate?: { id?: string };
-          id?: string;
-          _id?: string;
-          residentType?: string;
-          addressIds?: Array<{ id?: string; _id?: string; data?: Record<string, string> }>;
-        };
-        const eid = data?.estateId ?? data?.estate?.id ?? "";
-        const rid = data?.id ?? data?._id ?? "";
-        const rType = (data?.residentType ?? "").toString().toLowerCase();
-        const options = buildAddressOptions(data?.addressIds);
+        const data = (userRes?.data ?? userRes) as Record<string, unknown>;
+        const eid = (data?.estateId ?? (data?.estate as { id?: string })?.id ?? "") as string;
+        const rid = (data?.id ?? data?._id ?? "") as string;
+        const addresses = normalizeAddresses(data);
+        const firstId = addresses.length > 0 ? addresses[0].id : null;
         setEstateId(eid);
         setResidentId(rid);
-        setResidentType(rType);
-        setAddressOptions(options);
-        if (options.length > 0 && !selectedAddressId) {
-          setSelectedAddressId(options[0].value);
-        }
+        setAddressOptions(addresses);
+        setSelectedAddressId((prev) => prev ?? firstId);
       } catch (err: unknown) {
         toast.error((err as { message?: string })?.message ?? "Failed to load user.");
       }
     })();
   }, [dispatch]);
-
-  useEffect(() => {
-    if (addressOptions.length > 0 && !selectedAddressId) {
-      setSelectedAddressId(addressOptions[0].value);
-    }
-  }, [addressOptions, selectedAddressId]);
 
   useEffect(() => {
     if (!selectedAddressId) return;
@@ -127,6 +99,16 @@ export default function ResidentMaintenancePage() {
   const hasAddressOptions = addressOptions.length > 0;
   const canCreate = hasAddressOptions && estateId && residentId;
 
+  // ResidentComplaintForm expects { value, label }[]
+  const addressSelectOptions = useMemo(
+    () =>
+      addressOptions.map((a) => ({
+        value: a.id,
+        label: formatAddressLabel(a),
+      })),
+    [addressOptions],
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -144,23 +126,11 @@ export default function ResidentMaintenancePage() {
         )}
       </div>
 
-      {residentType === "owner" && addressOptions.length > 1 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground">Address:</span>
-          <select
-            aria-label="Select address"
-            value={selectedAddressId ?? ""}
-            onChange={(e) => setSelectedAddressId(e.target.value || null)}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm min-w-[200px]"
-          >
-            {addressOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      <SwitchAddress
+        addresses={addressOptions}
+        value={selectedAddressId}
+        onChange={setSelectedAddressId}
+      />
 
       {!selectedAddressId && addressOptions.length === 0 && !loading && (
         <p className="text-muted-foreground py-6 rounded-lg border border-border bg-muted/20 text-center">
@@ -209,7 +179,7 @@ export default function ResidentMaintenancePage() {
               New maintenance request
             </h2>
             <ResidentComplaintForm
-              addressOptions={addressOptions}
+              addressOptions={addressSelectOptions}
               estateId={estateId}
               residentId={residentId}
               onSubmit={handleCreateSubmit}

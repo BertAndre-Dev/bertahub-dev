@@ -35,6 +35,8 @@ export interface CreateAnnouncementPayload {
   tags?: string[];
   isPinned?: boolean;
   priority?: string;
+  /** When true, send immediately; schedule field is ignored. */
+  sendNow?: boolean;
 }
 
 export interface UpdateAnnouncementPayload {
@@ -48,6 +50,7 @@ export interface UpdateAnnouncementPayload {
   tags?: string[];
   isPinned?: boolean;
   priority?: string;
+  sendNow?: boolean;
 }
 
 export interface AnnouncementsListResponse {
@@ -80,16 +83,17 @@ export const getAnnouncements = createAsyncThunk(
     try {
       const res = await axiosInstance.get<AnnouncementsListResponse>(
         "/api/v1/estates/announcements",
-        { params: { estateId } }
+        // { params: { estateId } },
       );
       return res.data;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
-        message: err?.response?.data?.message ?? "Failed to fetch announcements",
+        message:
+          err?.response?.data?.message ?? "Failed to fetch announcements",
       });
     }
-  }
+  },
 );
 
 /** Get announcement stats. GET /api/v1/estates/:estateId/announcements/stats/overview */
@@ -98,7 +102,7 @@ export const getAnnouncementStats = createAsyncThunk(
   async (estateId: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get<AnnouncementStatsResponse>(
-        `/api/v1/estates/${estateId}/announcements/stats/overview`
+        `/api/v1/estates/${estateId}/announcements/stats/overview`,
       );
       return res.data;
     } catch (error: unknown) {
@@ -107,7 +111,7 @@ export const getAnnouncementStats = createAsyncThunk(
         message: err?.response?.data?.message ?? "Failed to fetch stats",
       });
     }
-  }
+  },
 );
 
 /** Create announcement. POST /api/v1/estates/announcements */
@@ -117,16 +121,17 @@ export const createAnnouncement = createAsyncThunk(
     try {
       const res = await axiosInstance.post(
         "/api/v1/estates/announcements",
-        payload
+        payload,
       );
       return res.data;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
-        message: err?.response?.data?.message ?? "Failed to create announcement",
+        message:
+          err?.response?.data?.message ?? "Failed to create announcement",
       });
     }
-  }
+  },
 );
 
 /** Get one announcement. GET /api/v1/estates/:estateId/announcements/:id */
@@ -134,11 +139,11 @@ export const getAnnouncementById = createAsyncThunk(
   "admin-announcements/getAnnouncementById",
   async (
     { estateId, id }: { estateId: string; id: string },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const res = await axiosInstance.get(
-        `/api/v1/estates/${estateId}/announcements/${id}`
+        `/api/v1/estates/${estateId}/announcements/${id}`,
       );
       return res.data;
     } catch (error: unknown) {
@@ -147,7 +152,7 @@ export const getAnnouncementById = createAsyncThunk(
         message: err?.response?.data?.message ?? "Failed to fetch announcement",
       });
     }
-  }
+  },
 );
 
 /** Update announcement. PUT /api/v1/estates/:estateId/announcements/:id (allowed within 1 hour) */
@@ -158,16 +163,17 @@ export const updateAnnouncement = createAsyncThunk(
       const { estateId, id, ...body } = payload;
       const res = await axiosInstance.put(
         `/api/v1/estates/${estateId}/announcements/${id}`,
-        body
+        body,
       );
       return res.data;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
-        message: err?.response?.data?.message ?? "Failed to update announcement",
+        message:
+          err?.response?.data?.message ?? "Failed to update announcement",
       });
     }
-  }
+  },
 );
 
 /** Delete announcement. DELETE /api/v1/estates/:estateId/announcements/:id */
@@ -175,18 +181,19 @@ export const deleteAnnouncement = createAsyncThunk(
   "admin-announcements/deleteAnnouncement",
   async (
     { estateId, id }: { estateId: string; id: string },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const res = await axiosInstance.delete(
-        `/api/v1/estates/${estateId}/announcements/${id}`
+        `/api/v1/estates/${estateId}/announcements/${id}`,
       );
       return { ...res.data, deletedId: id };
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
-        message: err?.response?.data?.message ?? "Failed to delete announcement",
+        message:
+          err?.response?.data?.message ?? "Failed to delete announcement",
       });
     }
-  }
+  },
 );
