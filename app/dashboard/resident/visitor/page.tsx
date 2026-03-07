@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
 import VisitorForm from "@/components/resident/visitor-form/page";
+import SwitchAddress from "@/components/resident/switch-address/page";
 import {
     getVisitorsByResident,
     getVisitorById,
 } from "@/redux/slice/resident/visitor/visitor";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import { normalizeAddresses, toAddressIdString, type AddressOption } from "@/lib/address";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
@@ -46,7 +48,8 @@ export default function VisitorPage() {
     // User meta
     const [userId, setUserId] = useState<string>("");
     const [estateId, setEstateId] = useState<string>("");
-    const [addressId, setAddressId] = useState<string>("");
+    const [addressOptions, setAddressOptions] = useState<AddressOption[]>([]);
+    const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
     // Fetch user and visitors
     useEffect(() => {
@@ -54,20 +57,22 @@ export default function VisitorPage() {
             setLoading(true);
             try {
                 const userRes = await dispatch(getSignedInUser()).unwrap();
-                const user = userRes?.data;
+                const user = userRes?.data as Record<string, unknown> | undefined;
                 if (!user) {
                     toast.warning("No signed in user found");
                     setLoading(false);
                     return;
                 }
 
-                const uId = user.id || "";
-                const eId = user.estateId || user.estate?.id || "";
-                const aId = user.addressId || "";
+                const uId = (user.id ?? user._id ?? "") as string;
+                const eId = (user.estateId ?? (user.estate as { id?: string })?.id ?? "") as string;
+                const addresses = normalizeAddresses(user);
+                const firstId = addresses.length > 0 ? addresses[0].id : null;
 
                 setUserId(uId);
                 setEstateId(eId);
-                setAddressId(aId);
+                setAddressOptions(addresses);
+                setSelectedAddressId((prev) => prev ?? firstId);
 
                 if (!uId) {
                     toast.warning("No user ID found");
@@ -145,6 +150,27 @@ export default function VisitorPage() {
             toast.error(err?.message || "Failed to fetch visitors");
         }
     };
+
+    // When owner has multiple addresses, show only visitors for the selected address
+    const displayedVisitors = useMemo(() => {
+        if (addressOptions.length <= 1 || !selectedAddressId) return visitors;
+        return visitors.filter((v) => toAddressIdString(v.addressId) === selectedAddressId);
+    }, [visitors, addressOptions.length, selectedAddressId]);
+
+    // For form: pass addressId as string or { id, data: { block, unit } } to match VisitorFormProps
+    const selectedAddressForForm = useMemo((): string | { id: string; data: { block: string; unit: string } } => {
+        if (!selectedAddressId) return "";
+        const opt = addressOptions.find((a) => a.id === selectedAddressId);
+        if (!opt) return selectedAddressId;
+        const d = opt.data ?? {};
+        return {
+            id: opt.id,
+            data: {
+                block: d.block ?? "",
+                unit: d.unit ?? d.flat ?? "",
+            },
+        };
+    }, [addressOptions, selectedAddressId]);
 
     // Table columns
     const columns = [
@@ -226,16 +252,22 @@ export default function VisitorPage() {
                 </Button>
             </div>
 
+            <SwitchAddress
+                addresses={addressOptions}
+                value={selectedAddressId}
+                onChange={setSelectedAddressId}
+            />
+
             {/* Visitors table */}
             <Card className="p-4">
                 <h2 className="font-semibold mb-4">My Visitors</h2>
                 <Table
                     columns={columns}
-                    data={visitors || []}
+                    data={displayedVisitors || []}
                     emptyMessage={loading ? "Loading visitors..." : "You haven't created any visitors yet."}
                     showPagination
                     paginationInfo={{
-                        total: pagination?.total || visitors.length || 0,
+                        total: addressOptions.length > 1 ? displayedVisitors.length : (pagination?.total || visitors.length || 0),
                         current: Number(pagination?.page) || 1,
                         pageSize: Number(pagination?.limit) || 10,
                     }}
@@ -266,7 +298,7 @@ export default function VisitorPage() {
                         visitorId={mode === "edit" ? selectedVisitorId : undefined}
                         residentId={userId}
                         estateId={estateId}
-                        addressId={addressId}
+                        addressId={selectedAddressForForm ?? ""}
                         onSubmitSuccess={refreshVisitors}
                         onClose={handleCloseModal}
                     />

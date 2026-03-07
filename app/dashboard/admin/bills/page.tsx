@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit2, Trash2, ScrollText } from "lucide-react";
+import { Plus, Edit2, Trash2, ScrollText, Power, PowerOff } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
 import BillsForm, {
@@ -23,6 +23,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
+import SuspendRentModal from "@/components/resident/suspend-rent-modal/page";
 
 interface BillData {
   id?: string;
@@ -38,6 +39,8 @@ export default function BillPage() {
   const [selectedBill, setSelectedBill] = useState<BillData | null>(null);
   const [estateId, setEstateId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const [suspendBillItem, setSuspendBillItem] = useState<BillData | null>(null);
+  const [suspendSubmitting, setSuspendSubmitting] = useState(false);
 
   const { allBills, pagination, loading } = useSelector((state: RootState) => {
     const billState = state.adminBill as any;
@@ -84,18 +87,33 @@ export default function BillPage() {
     setOpen(false);
   };
 
-  const handleStatusToggle = async (bill: BillData) => {
-    if (!bill.id || !estateId) return;
+  const openSuspendModal = (bill: BillData) => {
+    if (!bill.id || !bill.isActive) return;
+    setSuspendBillItem(bill);
+  };
 
+  const handleSuspendConfirm = async (_reason: string) => {
+    if (!suspendBillItem?.id || !estateId) return;
+    setSuspendSubmitting(true);
     try {
-      if (bill.isActive) {
-        await dispatch(suspendBill(bill.id)).unwrap();
-        toast.info(`${bill.name} suspended.`);
-      } else {
-        await dispatch(activateBill(bill.id)).unwrap();
-        toast.success(`${bill.name} activated.`);
-      }
+      await dispatch(suspendBill(suspendBillItem.id)).unwrap();
+      toast.info(`${suspendBillItem.name} suspended.`);
+      setSuspendBillItem(null);
+      await dispatch(
+        getBillsByEstate({ estateId, page: 1, limit: 10 }),
+      ).unwrap();
+    } catch (err: any) {
+      toast.error(err?.message);
+    } finally {
+      setSuspendSubmitting(false);
+    }
+  };
 
+  const handleActivateBill = async (bill: BillData) => {
+    if (!bill.id || !estateId) return;
+    try {
+      await dispatch(activateBill(bill.id)).unwrap();
+      toast.success(`${bill.name} activated.`);
       await dispatch(
         getBillsByEstate({ estateId, page: 1, limit: 10 }),
       ).unwrap();
@@ -172,16 +190,27 @@ export default function BillPage() {
           >
             <Edit2 className="w-4 h-4 text-blue-600" />
           </Button>
-          <Button
-            className="cursor-pointer"
-            variant="ghost"
-            size="sm"
-            onClick={() => handleStatusToggle(item)}
-          >
-            <span className="text-yellow-600 text-sm">
-              {item.isActive ? "Suspend" : "Activate"}
-            </span>
-          </Button>
+          {item.isActive ? (
+            <Button
+              className="cursor-pointer"
+              variant="ghost"
+              size="sm"
+              onClick={() => openSuspendModal(item)}
+              title="Suspend bill"
+            >
+              <PowerOff className="w-4 h-4 text-red-600" />
+            </Button>
+          ) : (
+            <Button
+              className="cursor-pointer"
+              variant="ghost"
+              size="sm"
+              onClick={() => handleActivateBill(item)}
+              title="Activate bill"
+            >
+              <Power className="w-4 h-4 text-green-600" />
+            </Button>
+          )}
           <Button
             className="cursor-pointer"
             variant="ghost"
@@ -287,6 +316,16 @@ export default function BillPage() {
           />
         </Modal>
       )}
+
+      <SuspendRentModal
+        visible={!!suspendBillItem}
+        onClose={() => setSuspendBillItem(null)}
+        tenantName={suspendBillItem?.name ?? "this bill"}
+        title="Suspend bill"
+        confirmLabel="Suspend"
+        onConfirm={handleSuspendConfirm}
+        loading={suspendSubmitting}
+      />
     </div>
   );
 }

@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import Modal from "@/components/modal/page";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import InviteUserForm from "@/components/admin/user-form/page";
+import SuspendRentModal from "@/components/resident/suspend-rent-modal/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 
 interface AdminUserData {
@@ -50,6 +51,8 @@ export default function AdminUserPage() {
   );
   const [selectedUser, setSelectedUser] = useState<AdminUserData | null>(null);
   const [search, setSearch] = useState("");
+  const [suspendUserItem, setSuspendUserItem] = useState<AdminUserData | null>(null);
+  const [suspendSubmitting, setSuspendSubmitting] = useState(false);
 
   const { allAdminUsers, pagination, loading } = useSelector(
     (state: RootState) => {
@@ -120,23 +123,38 @@ export default function AdminUserPage() {
     setSelectedUser(null);
   };
 
-  const handleToggleStatus = async (user: AdminUserData) => {
-    if (!user.id) return;
+  const openSuspendModal = (user: AdminUserData) => {
+    if (!user.id || !user.isActive) return;
+    setSuspendUserItem(user);
+  };
 
+  const handleSuspendConfirm = async (_reason: string) => {
+    if (!suspendUserItem?.id) return;
+    setSuspendSubmitting(true);
     try {
-      if (user.isActive) {
-        await dispatch(suspendUser(user.id)).unwrap();
-        toast.info(`${user.firstName} has been suspended.`);
-      } else {
-        await dispatch(activateUser(user.id)).unwrap();
-        toast.success(`${user.firstName} has been activated.`);
-      }
-
+      await dispatch(suspendUser(suspendUserItem.id)).unwrap();
+      toast.info(`${suspendUserItem.firstName} has been suspended.`);
+      setSuspendUserItem(null);
       if (selectedEstate?.value) {
         fetchAdminUsers(selectedEstate.value, 1, search);
       }
     } catch (err: any) {
-      toast.error(err?.message || "Failed to update user status.");
+      toast.error(err?.message || "Failed to suspend user.");
+    } finally {
+      setSuspendSubmitting(false);
+    }
+  };
+
+  const handleActivateUser = async (user: AdminUserData) => {
+    if (!user.id) return;
+    try {
+      await dispatch(activateUser(user.id)).unwrap();
+      toast.success(`${user.firstName} has been activated.`);
+      if (selectedEstate?.value) {
+        fetchAdminUsers(selectedEstate.value, 1, search);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to activate user.");
     }
   };
 
@@ -223,17 +241,25 @@ export default function AdminUserPage() {
       header: "Actions",
       render: (item: AdminUserData) => (
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleToggleStatus(item)}
-          >
-            {item.isActive ? (
+          {item.isActive ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openSuspendModal(item)}
+              title="Suspend user"
+            >
               <PowerOff className="w-4 h-4 text-red-600" />
-            ) : (
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleActivateUser(item)}
+              title="Activate user"
+            >
               <Power className="w-4 h-4 text-green-600" />
-            )}
-          </Button>
+            </Button>
+          )}
 
           <Button
             variant="ghost"
@@ -357,7 +383,7 @@ export default function AdminUserPage() {
         />
       </Card>
 
-      {/* Modal */}
+      {/* Invite user modal */}
       {open && (
         <Modal visible={open} onClose={handleCloseModal}>
           <InviteUserForm
@@ -366,6 +392,21 @@ export default function AdminUserPage() {
           />
         </Modal>
       )}
+
+      <SuspendRentModal
+        visible={!!suspendUserItem}
+        onClose={() => setSuspendUserItem(null)}
+        tenantName={
+          suspendUserItem
+            ? `${suspendUserItem.firstName} ${suspendUserItem.lastName}`.trim() ||
+              suspendUserItem.email
+            : ""
+        }
+        title="Suspend user"
+        confirmLabel="Suspend"
+        onConfirm={handleSuspendConfirm}
+        loading={suspendSubmitting}
+      />
     </div>
   );
 }

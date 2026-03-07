@@ -10,16 +10,17 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getMeterByAddress, reconnectMeter, disconnectMeter, getMeterVendHistory } from "@/redux/slice/resident/meter-mgt/meter-mgt";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import { normalizeAddresses } from "@/lib/address";
+import SwitchAddress from "@/components/resident/switch-address/page";
 import VendPower from "@/components/resident/vend-power/page";
 import Table from "@/components/tables/list/page";
 import type { EnergyListItem } from "@/redux/slice/resident/meter-mgt/meter-mgt-slice";
 
-
-
 export default function ResidentMeter() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
-  const [addressId, setAddressId] = useState<string | null>(null);
+  const [addressOptions, setAddressOptions] = useState<{ id: string; data?: Record<string, string> }[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [walletId, setWalletId] = useState<string | null>(null);
   const { meterVendHistory, pagination, loading } = useSelector((state: RootState) => {
     const vendState = state.residentMeter as any
@@ -34,33 +35,44 @@ export default function ResidentMeter() {
 
   const meter = useSelector((state: RootState) => state.residentMeter.residentMeter);
 
+  // Load user and normalize addresses (addressIds for owners, addressId for tenants)
   useEffect(() => {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const rawAddressId = userRes?.data?.addressId;
-        // API may return addressId as object { id: string, data?: ... } or as string
-        const foundAddressId: string | null =
-          typeof rawAddressId === "string"
-            ? rawAddressId
-            : rawAddressId?.id ?? null;
         const foundWalletId: string | null = userRes?.data?.walletId ?? null;
+        setWalletId(foundWalletId);
 
-        if (!foundAddressId) {
-          toast.warning("No address attached to this meter.");
+        const addresses = normalizeAddresses(userRes?.data ?? {});
+        if (addresses.length === 0) {
+          toast.warning("No address attached to your account.");
           return;
         }
 
-        setAddressId(foundAddressId);
-        setWalletId(foundWalletId);
+        setAddressOptions(addresses);
+        setSelectedAddressId((prev) => {
+          const firstId = addresses[0].id;
+          return prev ?? firstId;
+        });
+      } catch (error: any) {
+        const message = error?.message ?? "Failed to load user";
+        toast.error(message);
+      }
+    })();
+  }, [dispatch]);
 
-        await dispatch(getMeterByAddress({ addressId: foundAddressId })).unwrap();
+  // Fetch meter when selected address changes
+  useEffect(() => {
+    if (!selectedAddressId) return;
+    (async () => {
+      try {
+        await dispatch(getMeterByAddress({ addressId: selectedAddressId })).unwrap();
       } catch (error: any) {
         const message = error?.message ?? "Failed to fetch meter";
         toast.error(message);
       }
     })();
-  }, [dispatch]);
+  }, [dispatch, selectedAddressId]);
 
 
   useEffect(() => {
@@ -77,19 +89,21 @@ export default function ResidentMeter() {
 
 
   const handleRefresh = async () => {
-    if (!addressId) return;
+    if (!selectedAddressId) return;
     try {
-      await dispatch(getMeterByAddress({ addressId })).unwrap();
+      await dispatch(getMeterByAddress({ addressId: selectedAddressId })).unwrap();
     } catch (error: any) {
       const message = error?.message ?? "Failed to refresh meter";
       toast.error(message);
     }
   };
 
+  const handleAddressChange = (addressId: string) => setSelectedAddressId(addressId);
+
   const handleOpenModal = () => setOpen((prev) => !prev);
 
   const handleToggleMeter = async () => {
-    if (!meter || !addressId) return;
+    if (!meter || !selectedAddressId) return;
 
     try {
       if (meter.isActive) {
@@ -189,6 +203,12 @@ export default function ResidentMeter() {
 
   return (
     <div className="space-y-6">
+      <SwitchAddress
+        addresses={addressOptions}
+        value={selectedAddressId}
+        onChange={handleAddressChange}
+      />
+
       <Card className="p-6 shadow-md">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">My Meter</CardTitle>
@@ -256,7 +276,7 @@ export default function ResidentMeter() {
           />
         </Card>
 
-      {open && meter && walletId && addressId && (
+      {open && meter && walletId && selectedAddressId && (
         <Modal visible={open} onClose={handleOpenModal}>
           <VendPower
             walletId={walletId}

@@ -10,7 +10,6 @@ import {
   getTransactionById,
   verifyTransaction,
 } from "@/redux/slice/super-admin/super-admin-transactions-mgt/super-admin-transactions";
- 
 import { Search } from "lucide-react";
 import { toast } from "react-toastify";
 import { TransactionDetailsDialog } from "@/components/super-admin/transaction-modal/page";
@@ -24,36 +23,43 @@ export default function SuperAdminTransactionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [grandTotal, setGrandTotal] = useState(0);
 
-// Fetch all data once just for the grand total
-useEffect(() => {
-  dispatch(getAllTransactionHistory({ page: 1, limit: 99999, type: "", search: "" }))
-    .unwrap()
-    .then((res: any) => {
-      const allData = res?.data || [];
-      const total = allData.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
-      setGrandTotal(total);
-    })
-    .catch(() => {});
-}, []); // ← empty array means this only runs once on mount
+  // Fetch all data once just for the grand total
+  useEffect(() => {
+    dispatch(
+      getAllTransactionHistory({ page: 1, limit: 99999, type: "", search: "" }),
+    )
+      .unwrap()
+      .then((res: any) => {
+        const allData = res?.data || [];
+        const total = allData.reduce(
+          (sum: number, t: any) => sum + (t.amount || 0),
+          0,
+        );
+        setGrandTotal(total);
+      })
+      .catch(() => {});
+  }, []); // ← empty array means this only runs once on mount
 
   const { allTransactionHistory, loading } = useSelector((state: RootState) => {
     const s: any = state.superAdminTransaction;
     return {
-      allTransactionHistory: s?.allTransactionHistory || { data: [], pagination: { total: 0, page: 1, limit: PAGE_SIZE, pages: 1 } },
+      allTransactionHistory: s?.allTransactionHistory || {
+        data: [],
+        pagination: { total: 0, page: 1, limit: PAGE_SIZE, pages: 1 },
+      },
       loading: s?.getAllTransactionHistoryState === "isLoading",
     };
   });
 
-  const { selectedTransaction, getTransactionState, verifyTransactionState } = useSelector(
-    (state: RootState) => {
+  const { selectedTransaction, getTransactionState, verifyTransactionState } =
+    useSelector((state: RootState) => {
       const s: any = state.superAdminTransaction;
       return {
         selectedTransaction: s?.selectedTransaction || null,
         getTransactionState: s?.getTransactionState === "isLoading",
         verifyTransactionState: s?.verifyTransactionState === "isLoading",
       };
-    }
-  );
+    });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -61,7 +67,12 @@ useEffect(() => {
     const fetch = async () => {
       try {
         await dispatch(
-          getAllTransactionHistory({ page: currentPage, limit: PAGE_SIZE, type: typeFilter, search: searchQuery })
+          getAllTransactionHistory({
+            page: currentPage,
+            limit: PAGE_SIZE,
+            type: typeFilter,
+            search: searchQuery,
+          }),
         ).unwrap();
       } catch (err) {
         // handled by slice / toasts elsewhere
@@ -72,54 +83,72 @@ useEffect(() => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-  }; 
+  };
 
   const columns = [
-    { key: "createdAt", header: "Date", render: (item: any) => new Date(item.createdAt).toLocaleDateString() },
+    {
+      key: "createdAt",
+      header: "Date",
+      render: (item: any) => new Date(item.createdAt).toLocaleDateString(),
+    },
     {
       key: "residentEstate",
       header: "Resident / Estate",
       render: (item: any) => (
         <div>
-          <div>{item.user ? `${item.user.firstName || ""} ${item.user.lastName || ""}`.trim() : "-"}</div>
-          <div className="text-muted-foreground text-sm">{item.estate?.name || "-"}</div>
+          <div>
+            {item.user
+              ? `${item.user.firstName || ""} ${item.user.lastName || ""}`.trim()
+              : "-"}
+          </div>
+          <div className="text-muted-foreground text-sm">
+            {item.estate?.name || "-"}
+          </div>
         </div>
       ),
     },
- {
-  key: "description",
-  header: "Description",
-  render: (item: any) => (
-    <p className="max-w-[220px] break-words whitespace-normal">{item.description || "-"}</p>
-  )
-},
+    {
+      key: "description",
+      header: "Description",
+      render: (item: any) => (
+        <p className="max-w-[220px] break-words whitespace-normal">
+          {item.description || "-"}
+        </p>
+      ),
+    },
     { key: "type", header: "Type", render: (item: any) => item.type },
     {
       key: "amount",
       header: "Amount",
       render: (item: any) =>
-        new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(item.amount || 0),
+        new Intl.NumberFormat("en-NG", {
+          style: "currency",
+          currency: "NGN",
+        }).format(item.amount || 0),
     },
     {
       key: "action",
       header: "Action",
       render: (item: any) => (
-          <button onClick={() => handleViewDetails(item._id || item.id)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-200 cursor-pointer">
-            View Details
-          </button>
-        ),
-    } 
+        <button
+          onClick={() => handleViewDetails(item._id || item.id)}
+          className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-200 cursor-pointer"
+        >
+          View Details
+        </button>
+      ),
+    },
   ];
 
-    const handleViewDetails = async (transactionId?: string) => {
-      if (!transactionId) return;
-      try {
-        await dispatch(getTransactionById(transactionId)).unwrap();
-        setIsDialogOpen(true);
-      } catch (err) {
-        // handled by slice / toasts elsewhere
-      }
-    };
+  const handleViewDetails = async (transactionId?: string) => {
+    if (!transactionId) return;
+    try {
+      await dispatch(getTransactionById(transactionId)).unwrap();
+      setIsDialogOpen(true);
+    } catch (err) {
+      // handled by slice / toasts elsewhere
+    }
+  };
 
   const handleVerifyTransaction = async (tx_ref: string) => {
     if (!tx_ref) return;
@@ -134,13 +163,13 @@ useEffect(() => {
           limit: PAGE_SIZE,
           type: typeFilter,
           search: searchQuery,
-        })
+        }),
       ).unwrap();
     } catch (err: any) {
       toast.error(
         (err?.payload as { message?: string })?.message ??
           err?.message ??
-          "Failed to verify transaction"
+          "Failed to verify transaction",
       );
     }
   };
@@ -155,10 +184,15 @@ useEffect(() => {
       <div className="grid grid-cols-1 gap-4">
         <Card className="p-6 bg-white">
           <div className="flex flex-col space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Total Transactions</p> 
+            <p className="text-sm font-medium text-muted-foreground">
+              Total Transactions
+            </p>
             <p className="text-3xl font-bold">
-  {new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(grandTotal)}
-</p>
+              {new Intl.NumberFormat("en-NG", {
+                style: "currency",
+                currency: "NGN",
+              }).format(grandTotal)}
+            </p>
           </div>
         </Card>
       </div>
@@ -210,7 +244,8 @@ useEffect(() => {
           paginationInfo={{
             total: allTransactionHistory?.pagination?.total || 0,
             current: Number(allTransactionHistory?.pagination?.page) || 1,
-            pageSize: Number(allTransactionHistory?.pagination?.limit) || PAGE_SIZE,
+            pageSize:
+              Number(allTransactionHistory?.pagination?.limit) || PAGE_SIZE,
           }}
           onPageChange={(page: number) => handlePageChange(page)}
         />
@@ -223,6 +258,6 @@ useEffect(() => {
         onVerify={handleVerifyTransaction}
         verifyLoading={verifyTransactionState}
       />
-          </div>
+    </div>
   );
 }

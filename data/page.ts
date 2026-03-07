@@ -97,11 +97,11 @@ export const adminNav = [
     icon: Wrench,
     path: "/dashboard/admin/maintenance",
   },
-  // {
-  //   label: "Announcements",
-  //   icon: Bell,
-  //   path: "/dashboard/admin/announcements",
-  // },
+  {
+    label: "Announcements",
+    icon: Bell,
+    path: "/dashboard/admin/announcements",
+  },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];
@@ -173,11 +173,11 @@ export const residentNav = [
     icon: Store,
     path: "/dashboard/resident/marketplace",
   },
-  // {
-  //   label: "Announcements",
-  //   icon: Bell,
-  //   path: "/dashboard/resident/announcements",
-  // },
+  {
+    label: "Announcements",
+    icon: Bell,
+    path: "/dashboard/resident/announcements",
+  },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];

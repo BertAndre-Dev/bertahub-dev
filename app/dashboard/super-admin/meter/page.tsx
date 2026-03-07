@@ -19,6 +19,9 @@ import AssignMeterForm from "@/components/super-admin/meter-form/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import { IoSpeedometerOutline } from "react-icons/io5";
 
+/** addressId from list API can be a string or populated object with id */
+type AddressIdInput = string | { id: string; data?: Record<string, unknown> };
+
 interface AdminMeterData {
   id?: string;
   meterNumber: string;
@@ -28,8 +31,15 @@ interface AdminMeterData {
   lastCredit?: number;
   createdAt?: string;
   updatedAt?: string;
-  addressId: string;
+  addressId: AddressIdInput;
   vendorData?: any;
+}
+
+function toAddressIdString(addressId: AddressIdInput | null | undefined): string | null {
+  if (addressId == null) return null;
+  if (typeof addressId === "string") return addressId;
+  if (typeof addressId === "object" && addressId?.id) return addressId.id;
+  return null;
 }
 
 export default function AdminMeterManagement() {
@@ -121,13 +131,14 @@ export default function AdminMeterManagement() {
   };
 
   const handleViewDetails = (meter: AdminMeterData) => {
-    if (!meter.addressId) {
+    const addressIdStr = toAddressIdString(meter.addressId);
+    if (!addressIdStr) {
       toast.warning("No address ID for this meter");
       return;
     }
-    setDetailsAddressId(meter.addressId);
+    setDetailsAddressId(addressIdStr);
     setDetailsModalOpen(true);
-    dispatch(getMeterByAddressId(meter.addressId)).catch((err: any) => {
+    dispatch(getMeterByAddressId(addressIdStr)).catch((err: any) => {
       toast.error(err?.message ?? "Failed to load meter details");
     });
   };
@@ -407,11 +418,6 @@ export default function AdminMeterManagement() {
           ) : detailsAddressId ? (
             <p className="text-muted-foreground py-4">Could not load meter details.</p>
           ) : null}
-          <div className="flex justify-end pt-2">
-            <Button variant="outline" onClick={handleCloseDetailsModal}>
-              Close
-            </Button>
-          </div>
         </div>
       </Modal>
     </div>

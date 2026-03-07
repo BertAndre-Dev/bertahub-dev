@@ -73,13 +73,14 @@ export interface AnnouncementStatsResponse {
   message?: string;
 }
 
-/** List announcements. GET /api/v1/estates/:estateId/announcements */
+/** List announcements. GET /api/v1/estates/announcements?estateId=... */
 export const getAnnouncements = createAsyncThunk(
   "admin-announcements/getAnnouncements",
   async (estateId: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get<AnnouncementsListResponse>(
-        `/api/v1/estates/${estateId}/announcements`
+        "/api/v1/estates/announcements",
+        { params: { estateId } }
       );
       return res.data;
     } catch (error: unknown) {

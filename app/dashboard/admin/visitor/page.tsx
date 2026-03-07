@@ -28,6 +28,11 @@ export default function AdminVisitorManagement() {
   const [estateId, setEstateId] = useState<string | null>(null);
   const [addVisitorOpen, setAddVisitorOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [verifyModalVisitor, setVerifyModalVisitor] = useState<{
+    visitorCode: string;
+    firstName?: string;
+    lastName?: string;
+  } | null>(null);
 
   const { visitors, pagination, loading } = useSelector((state: RootState) => {
     const visitorState = state.visitor;
@@ -97,11 +102,23 @@ export default function AdminVisitorManagement() {
     }
   };
 
-  const handleVerify = async (visitorCode: string) => {
-    try {
-      const res = await dispatch(verifyVisitor({ visitorCode })).unwrap();
-      toast.success(res.message);
+  const openVerifyModal = (item: any) => {
+    if (item.isVerified) return;
+    setVerifyModalVisitor({
+      visitorCode: item.visitorCode,
+      firstName: item.firstName,
+      lastName: item.lastName,
+    });
+  };
 
+  const handleVerifyConfirm = async () => {
+    if (!verifyModalVisitor?.visitorCode) return;
+    try {
+      const res = await dispatch(
+        verifyVisitor({ visitorCode: verifyModalVisitor.visitorCode }),
+      ).unwrap();
+      toast.success(res.message);
+      setVerifyModalVisitor(null);
       if (estateId) {
         await dispatch(
           getVisitorsByEstate({
@@ -251,14 +268,16 @@ export default function AdminVisitorManagement() {
           );
         }
         return (
-          <button
-            onClick={() => handleVerify(item.visitorCode)}
-            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openVerifyModal(item)}
+            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
             title="Verify visitor"
           >
             <ShieldCheck className="w-5 h-5" />
             <span className="text-xs">Verify</span>
-          </button>
+          </Button>
         );
       },
     },
@@ -357,6 +376,42 @@ export default function AdminVisitorManagement() {
             onClose={() => setAddVisitorOpen(false)}
           />
         )}
+      </Modal>
+
+      {/* Verify visitor confirmation modal */}
+      <Modal
+        visible={!!verifyModalVisitor}
+        onClose={() => setVerifyModalVisitor(null)}
+      >
+        <div className="p-4 space-y-4">
+          <h2 className="font-heading text-xl font-bold">Verify visitor</h2>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to verify{" "}
+            <strong>
+              {verifyModalVisitor
+                ? `${verifyModalVisitor.firstName ?? ""} ${verifyModalVisitor.lastName ?? ""}`.trim() ||
+                  verifyModalVisitor.visitorCode
+                : "this visitor"}
+            </strong>
+            ?
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setVerifyModalVisitor(null)}
+              className="cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleVerifyConfirm}
+              className="cursor-pointer gap-1"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Verify
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       <Card className="p-4">
