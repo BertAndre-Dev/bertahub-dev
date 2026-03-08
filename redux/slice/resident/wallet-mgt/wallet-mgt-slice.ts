@@ -4,12 +4,18 @@ import {
     getWallet
 } from './wallet-mgt';
 
-interface WalletData {
+export interface WalletData {
     id?: string;
     userId: string;
     balance: number;
-    temporaryBalance: number;
+    temporaryBalance?: number;
     lockedBalance: number;
+    /** Available balance (API: availableBalance) */
+    availableBalance?: number;
+    /** Withdrawable balance (API: withdrawableBalance) */
+    withdrawableBalance?: number;
+    accountNumber?: string;
+    bankCode?: string;
     createdAt?: string;
     updatedAt?: string;
 }

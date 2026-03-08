@@ -16,13 +16,17 @@ import {
   initializePayment,
   verifyTransaction,
   getTransactionHistory,
+  generateTxRef,
+  transferFundsResident,
 } from "@/redux/slice/resident/transaction/transaction";
+import WithdrawFundForm from "@/components/estate-admin/transactions/fund-wallet-form/page";
 
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
+import type { WalletData } from "@/redux/slice/resident/wallet-mgt/wallet-mgt-slice";
 
 interface TransactionData {
   walletId: string;
@@ -37,9 +41,12 @@ interface TransactionData {
   updatedAt?: string;
 }
 
+const formatNaira = (value: number) => `₦${(value ?? 0).toLocaleString()}`;
+
 export default function TransactionPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [createWalletModalOpen, setCreateWalletModalOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
@@ -54,7 +61,7 @@ export default function TransactionPage() {
   const pagination = useSelector(
     (state: RootState) => state.residentTransaction.allTransactions?.pagination,
   );
-  const wallet = useSelector((state: RootState) => state.wallet.wallet);
+  const wallet = useSelector((state: RootState) => state.wallet.wallet) as WalletData | null;
   const createWalletState = useSelector(
     (state: RootState) => state.wallet.createWalletState,
   );
@@ -131,6 +138,60 @@ export default function TransactionPage() {
   };
 
   const handleOpenModal = () => setOpen((prev) => !prev);
+  const handleOpenWithdrawModal = () => setWithdrawModalOpen(true);
+  const handleCloseWithdrawModal = () => setWithdrawModalOpen(false);
+
+  // Withdraw (owner only): generate tx_ref then call resident transfer
+  const handleWithdrawSubmit = async ({
+    walletId,
+    amount,
+    description,
+    type,
+    currency,
+    country,
+    bankCode,
+    accountNumber,
+  }: {
+    walletId: string;
+    amount: number;
+    description: string;
+    type: "debit";
+    currency: string;
+    country: string;
+    bankCode?: string;
+    accountNumber?: string;
+  }) => {
+    if (!userId) return;
+    if (!bankCode || !accountNumber) {
+      toast.error("Bank code and account number are required for withdrawal.");
+      return;
+    }
+    try {
+      const txRefRes = await dispatch(generateTxRef()).unwrap();
+      const tx_ref = txRefRes?.tx_ref;
+      if (!tx_ref) {
+        toast.error("Failed to generate transaction reference.");
+        return;
+      }
+      await dispatch(
+        transferFundsResident({
+          userId,
+          amount,
+          currency,
+          bankCode,
+          accountNumber,
+          narration: description || `Withdrawal of ${currency} ${amount}`,
+          tx_ref,
+        }),
+      ).unwrap();
+      toast.success("Fund withdrawal initiated successfully!");
+      await dispatch(getWallet(userId));
+      setWithdrawModalOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message ?? err?.payload?.message ?? "Failed to withdraw funds.");
+      throw err;
+    }
+  };
 
   // 🔹 Continue payment for not-paid transaction
   const handleContinuePayment = async (item: {
@@ -354,17 +415,59 @@ export default function TransactionPage() {
 
         <CardContent>
           {wallet ? (
-            <div className="flex flex-col md:flex-row gap-5 md:gap-0 items-start md:items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Wallet Balance</p>
-                <p className="text-4xl font-bold mt-1">
-                  ₦{wallet?.balance?.toLocaleString() ?? 0}
-                </p>
-              </div>
+            <div className="space-y-4">
+              {/* Owner: show available + withdrawable like estate admin */}
+              {isOwner ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col justify-center items-center w-full min-h-[120px] border border-[#CCCCCC] rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">
+                      Available Wallet Balance
+                    </p>
+                    <p className="text-2xl md:text-3xl font-bold mt-1">
+                      {formatNaira(wallet?.availableBalance ?? wallet?.balance ?? 0)}
+                    </p>
+                  </div>
+                  <div className="flex flex-col justify-center items-center w-full min-h-[120px] border border-[#CCCCCC] rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      Withdrawable Wallet Balance
+                      <span
+                        className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs cursor-help"
+                        title="You can only withdraw from this balance."
+                      >
+                        i
+                      </span>
+                    </p>
+                    <p className="text-2xl md:text-3xl font-bold mt-1 text-primary">
+                      {formatNaira(wallet?.withdrawableBalance ?? 0)}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col md:flex-row gap-5 md:gap-0 items-start md:items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Wallet Balance</p>
+                    <p className="text-4xl font-bold mt-1">
+                      {formatNaira(wallet?.balance ?? 0)}
+                    </p>
+                  </div>
+                </div>
+              )}
 
-              <Button onClick={handleOpenModal} size="lg" className="px-6">
-                Fund Wallet
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button onClick={handleOpenModal} size="lg" className="px-6">
+                  Fund Wallet
+                </Button>
+                {isOwner && (
+                  <Button
+                    onClick={handleOpenWithdrawModal}
+                    size="lg"
+                    variant="outline"
+                    className="px-6"
+                  >
+                    Withdraw
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <Button
@@ -441,6 +544,24 @@ export default function TransactionPage() {
             />
           ) : (
             <p className="text-center text-gray-500">Loading form...</p>
+          )}
+        </div>
+      </Modal>
+
+      {/* Withdraw modal (owner only) */}
+      <Modal visible={withdrawModalOpen} onClose={handleCloseWithdrawModal}>
+        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto">
+          {userId && wallet ? (
+            <WithdrawFundForm
+              userId={userId}
+              walletId={wallet.id ?? ""}
+              defaultAccountNumber={wallet?.accountNumber ?? ""}
+              maxWithdrawableAmount={wallet?.withdrawableBalance ?? 0}
+              onSubmit={handleWithdrawSubmit}
+              onClose={handleCloseWithdrawModal}
+            />
+          ) : (
+            <p className="text-center text-gray-500 p-6">Loading...</p>
           )}
         </div>
       </Modal>

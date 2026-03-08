@@ -32,11 +32,11 @@ export const superAdminNav = [
   //     icon: BsBuildings,
   //     path: "/dashboard/super-admin/address",
   //   },
-  // {
-  //   label: "User Management",
-  //   icon: FiUsers,
-  //   path: "/dashboard/super-admin/user",
-  // },
+  {
+    label: "User Management",
+    icon: FiUsers,
+    path: "/dashboard/super-admin/user",
+  },
   // {
   //   label: "Bills Management",
   //   icon: LuReceipt,

@@ -141,3 +141,52 @@ export const verifyTransaction = createAsyncThunk(
     }
   }
 );
+
+/** Generate tx_ref for resident withdrawal (same API as estate admin). */
+export const generateTxRef = createAsyncThunk(
+  "resident-transaction/generateTxRef",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        "/api/v1/payment-mgt/generate-tx-ref",
+        {},
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message:
+          error?.response?.data?.message ||
+          "Failed to generate transaction reference.",
+      });
+    }
+  },
+);
+
+/** Resident (owner) wallet withdrawal. */
+export interface ResidentTransferPayload {
+  userId: string;
+  amount: number;
+  currency: string;
+  bankCode: string;
+  accountNumber: string;
+  narration: string;
+  tx_ref: string;
+}
+
+export const transferFundsResident = createAsyncThunk(
+  "resident-transaction/transferFundsResident",
+  async (data: ResidentTransferPayload, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        "/api/v1/payment-mgt/resident/transfer",
+        data,
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message:
+          error?.response?.data?.message ?? "Failed to withdraw funds.",
+      });
+    }
+  },
+);
