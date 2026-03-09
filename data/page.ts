@@ -154,7 +154,7 @@ export const residentNav = [
     path: "/dashboard/resident/meter",
   },
   {
-    label: "Transactions",
+    label: "Wallet",
     icon: GrTransaction,
     path: "/dashboard/resident/transaction",
   },

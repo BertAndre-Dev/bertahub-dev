@@ -2,11 +2,14 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
     activateBill,
     createBill,
+    createBillForAddress,
+    getBillsForAddress,
     deleteBill,
     suspendBill,
     updateBill,
     getBill,
-    getBillsByEstate
+    getBillsByEstate,
+    type BillsForAddressItem,
 } from './bills';
 
 
@@ -40,14 +43,23 @@ export interface AllBillsResponse {
 export interface BillState {
     activateBillState: "idle" | "isLoading" | "succeeded" | "failed";
     createBillState: "idle" | "isLoading" | "succeeded" | "failed";
+    createBillForAddressState: "idle" | "isLoading" | "succeeded" | "failed";
     deleteBillState: "idle" | "isLoading" | "succeeded" | "failed";
     suspendBillState: "idle" | "isLoading" | "succeeded" | "failed";
     updateBillState: "idle" | "isLoading" | "succeeded" | "failed";
     getBillState: "idle" | "isLoading" | "succeeded" | "failed";
     getBillsByEstateState: "idle" | "isLoading" | "succeeded" | "failed";
+    getBillsForAddressState: "idle" | "isLoading" | "succeeded" | "failed";
     status: "idle" | "isLoading" | "succeeded" | "failed";
     bill: BillData | null;
     allBills: AllBillsResponse | null;
+    assignedBills: BillsForAddressItem[];
+    assignedBillsPagination: {
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    } | null;
     error: string | null;
 }
 
@@ -55,14 +67,18 @@ export interface BillState {
 const initialState: BillState = {
     activateBillState: "idle",
     createBillState: "idle",
+    createBillForAddressState: "idle",
     deleteBillState: "idle",
     suspendBillState: "idle",
     updateBillState: "idle",
     getBillState: "idle",
     getBillsByEstateState: "idle",
+    getBillsForAddressState: "idle",
     status: "idle",
     bill: null,
     allBills: null,
+    assignedBills: [],
+    assignedBillsPagination: null,
     error: null,
 };
 
@@ -104,6 +120,28 @@ const billSlice = createSlice({
                 state.getBillsByEstateState = "failed";
                 state.status = "failed";
                 state.error = action.error.message || "Failed to fetch bills for estate";
+            });
+
+        // ✅ GET BILLS FOR ADDRESS
+        builder
+            .addCase(getBillsForAddress.pending, (state) => {
+                state.getBillsForAddressState = "isLoading";
+            })
+            .addCase(getBillsForAddress.fulfilled, (state, action) => {
+                state.getBillsForAddressState = "succeeded";
+                state.assignedBills = Array.isArray(action.payload?.data)
+                    ? (action.payload.data as BillsForAddressItem[])
+                    : [];
+                state.assignedBillsPagination = action.payload?.pagination ?? null;
+            })
+            .addCase(getBillsForAddress.rejected, (state, action) => {
+                state.getBillsForAddressState = "failed";
+                state.assignedBills = [];
+                state.assignedBillsPagination = null;
+                state.error =
+                    (action.payload as { message?: string })?.message ||
+                    action.error.message ||
+                    "Failed to fetch bills for address";
             });
 
 
@@ -153,6 +191,22 @@ const billSlice = createSlice({
                 state.createBillState = "failed";
                 state.error =
                     action.error.message || "Failed to create estate bill";
+            });
+
+        // ✅ CREATE BILL FOR ADDRESS
+        builder
+            .addCase(createBillForAddress.pending, (state) => {
+                state.createBillForAddressState = "isLoading";
+            })
+            .addCase(createBillForAddress.fulfilled, (state) => {
+                state.createBillForAddressState = "succeeded";
+            })
+            .addCase(createBillForAddress.rejected, (state, action) => {
+                state.createBillForAddressState = "failed";
+                state.error =
+                    (action.payload as { message?: string })?.message ||
+                    action.error.message ||
+                    "Failed to create bill for address";
             });
 
 
