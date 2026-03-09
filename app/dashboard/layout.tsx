@@ -263,7 +263,7 @@ export default function DashboardLayout({
       >
         {/* Topbar */}
         <header className="sticky top-0 bg-background border-b border-border z-30">
-          <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center justify-between px-6 py-8">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 hover:bg-muted rounded-lg transition-colors"

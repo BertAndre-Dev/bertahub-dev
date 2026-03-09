@@ -41,7 +41,7 @@ export default function CreateRentForm({
   const selectedTenant = tenantList.find((t) => t.id === form.tenantId);
   const addressOptions = (selectedTenant?.addressIds ?? []).map((addr) => ({
     label: formatAddressFromData(addr.data),
-    value: addr._id,
+    value: addr.id,
   }));
 
   const handleTenantChange = (tenantId: string) => {

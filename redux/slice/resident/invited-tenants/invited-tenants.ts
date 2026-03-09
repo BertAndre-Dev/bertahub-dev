@@ -2,7 +2,8 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 
 export interface InvitedTenantAddress {
-  _id: string;
+  /** Address entry id from address-mgt (API uses `id`) */
+  id: string;
   data?: Record<string, string>;
 }
 

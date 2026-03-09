@@ -51,7 +51,7 @@ export default function EstateWalletOverviewCard({
             <>
               {/* Top: Available balance | Withdrawable balance */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col justify-center items-center w-full md:w-[380px] xl:w-[580px] h-[150px] border border-[#CCCCCC] rounded-lg p-4">
+                <div className="flex flex-col justify-center items-center w-full h-[150px] border border-[#CCCCCC] rounded-lg p-4">
                   <p className="text-sm text-muted-foreground">
                     Available Wallet Balance
                   </p>
@@ -59,7 +59,7 @@ export default function EstateWalletOverviewCard({
                     {formatNaira(wallet.availableBalance ?? 0)}
                   </p>
                 </div>
-                <div className="flex flex-col justify-center items-center w-full md:w-[580px] h-[150px] border border-[#CCCCCC] rounded-lg p-4">
+                <div className="flex flex-col justify-center items-center w-full h-[150px] border border-[#CCCCCC] rounded-lg p-4">
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     Withdrawable Wallet Balance
                     <span
