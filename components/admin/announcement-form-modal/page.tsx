@@ -175,7 +175,7 @@ export default function AnnouncementFormModal({
             </div>
           </div>
 
-          <div>
+          {/* <div>
             <Label htmlFor="announcement-description">Description</Label>
             <Input
               id="announcement-description"
@@ -185,7 +185,7 @@ export default function AnnouncementFormModal({
               className="mt-1"
               disabled={loading}
             />
-          </div>
+          </div> */}
 
           <div>
             <Label htmlFor="announcement-category">Category</Label>
@@ -293,7 +293,7 @@ export default function AnnouncementFormModal({
             </Label>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full mb-8" disabled={loading}>
             {loading ? "Sending…" : submitLabel}
           </Button>
         </form>
