@@ -8,6 +8,7 @@ import type { AnnouncementItem } from "@/redux/slice/admin/announcements/announc
 
 export interface AnnouncementCardProps {
   readonly announcement: AnnouncementItem;
+  readonly onView?: (item: AnnouncementItem) => void;
   readonly onEdit: (item: AnnouncementItem) => void;
   readonly onDelete: (item: AnnouncementItem) => void;
   readonly canEdit: boolean;
@@ -43,6 +44,7 @@ function formatAnnouncementDate(dateStr?: string) {
 
 export default function AnnouncementCard({
   announcement,
+  onView,
   onEdit,
   onDelete,
   canEdit,
@@ -56,8 +58,29 @@ export default function AnnouncementCard({
   const category = announcement.category ?? "—";
   const priority = announcement.priority ?? "—";
 
+  const handleCardClick = () => onView?.(announcement);
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit(announcement);
+  };
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(announcement);
+  };
+
   return (
-    <Card className="p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow relative">
+    <Card
+      className="p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow relative cursor-pointer"
+      onClick={handleCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
+    >
       <div className="absolute top-4 right-4 flex items-center gap-1">
         {canEdit && (
           <Button
@@ -65,7 +88,7 @@ export default function AnnouncementCard({
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-            onClick={() => onEdit(announcement)}
+            onClick={handleEditClick}
             title="Edit (within 1 hour of creation)"
           >
             <Pencil className="h-4 w-4" />
@@ -76,13 +99,13 @@ export default function AnnouncementCard({
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-destructive hover:bg-destructive/10"
-          onClick={() => onDelete(announcement)}
+            onClick={handleDeleteClick}
           title="Delete"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-      <div className="flex gap-3 pr-20">
+      <div className="flex gap-3 pr-8">
         <div className="p-2 rounded-lg bg-[#D0DFF280] shrink-0 h-fit">
           <Bell className="w-5 h-5 text-[#0150AC]" />
         </div>
@@ -101,9 +124,12 @@ export default function AnnouncementCard({
           <h3 className="font-heading font-bold text-black uppercase tracking-tight mt-1">
             {title || "Untitled"}
           </h3>
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-4">
-            {content || "No content."}
-          </p>
+          <div
+            className="text-sm text-muted-foreground mt-2 line-clamp-4 prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1"
+            dangerouslySetInnerHTML={{
+              __html: content || "<span>No content.</span>",
+            }}
+          />
           <p className="text-xs text-muted-foreground mt-3">
             {formatAnnouncementDate(date)}
           </p>

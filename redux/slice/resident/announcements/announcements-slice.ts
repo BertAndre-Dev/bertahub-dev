@@ -10,7 +10,7 @@ type AsyncStatus = "idle" | "isLoading" | "succeeded" | "failed";
 export interface ResidentAnnouncementsState {
   list: ResidentAnnouncementItem[] | null;
   current: ResidentAnnouncementItem | null;
-  pagination: { total: number; skip: number; limit: number } | null;
+  pagination: { total: number; page: number; limit: number; pages: number } | null;
   getListStatus: AsyncStatus;
   getByIdStatus: AsyncStatus;
   error: string | null;

@@ -8,6 +8,7 @@ import AnnouncementCard, {
 export interface AnnouncementsListSectionProps {
   loading: boolean;
   announcements: AnnouncementItem[];
+  onView?: (item: AnnouncementItem) => void;
   onEdit: (item: AnnouncementItem) => void;
   onDelete: (item: AnnouncementItem) => void;
 }
@@ -15,6 +16,7 @@ export interface AnnouncementsListSectionProps {
 export default function AnnouncementsListSection({
   loading,
   announcements,
+  onView,
   onEdit,
   onDelete,
 }: AnnouncementsListSectionProps) {
@@ -38,6 +40,7 @@ export default function AnnouncementsListSection({
         <AnnouncementCard
           key={item.id}
           announcement={item}
+          onView={onView}
           onEdit={onEdit}
           onDelete={onDelete}
           canEdit={canEditWithinOneHour(item.createdAt)}

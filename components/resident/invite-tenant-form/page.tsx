@@ -35,12 +35,10 @@ export default function InviteTenantForm({ close }: InviteTenantFormProps) {
   });
   const [submitLoading, setSubmitLoading] = useState(false);
 
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  const { ownerAddresses, ownerAddressesStatus, error } = useSelector((state: RootState) => {
+  const { ownerAddresses, ownerAddressesStatus } = useSelector((state: RootState) => {
     const s = (state as {
       residentAddressOptions?: {
-        ownerAddresses: Array<{ _id: string; addressIds?: Array<{ id: string; data?: Record<string, string> }> }>;
+        ownerAddresses: Array<{ id: string; data?: Record<string, string> }>;
         ownerAddressesStatus: string;
         error: string | null;
       };
@@ -48,15 +46,12 @@ export default function InviteTenantForm({ close }: InviteTenantFormProps) {
     return {
       ownerAddresses: s?.ownerAddresses ?? [],
       ownerAddressesStatus: s?.ownerAddressesStatus ?? "idle",
-      error: s?.error ?? null,
     };
   });
 
   const entryOptions = (() => {
-    if (!currentUserId || !ownerAddresses.length) return [];
-    const owner = ownerAddresses.find((o) => o._id === currentUserId);
-    const ids = owner?.addressIds ?? [];
-    return ids.map((item) => {
+    if (!ownerAddresses.length) return [];
+    return ownerAddresses.map((item) => {
       const d = item.data ?? {};
       const label = Object.entries(d)
         .map(([k, v]) => `${k}: ${v}`)
@@ -72,16 +67,14 @@ export default function InviteTenantForm({ close }: InviteTenantFormProps) {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
         const estateId = userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
-        const userId = (userRes?.data as { id?: string; _id?: string })?.id ?? (userRes?.data as { id?: string; _id?: string })?._id ?? "";
         if (!estateId) {
           toast.error("No estate linked to your account.");
           return;
         }
-        setCurrentUserId(userId || null);
         setFormData((prev) => ({ ...prev, estateId }));
 
         await dispatch(
-          getOwnerAddressesByEstate({ estateId, page: 1, limit: 200 })
+          getOwnerAddressesByEstate({ estateId, page: 1, limit: 200 }),
         ).unwrap();
       } catch {
         toast.error("Failed to load address options.");

@@ -52,18 +52,7 @@ export interface OwnerAddressItem {
   data?: Record<string, string>;
 }
 
-/** Owner item from GET /api/v1/address-mgt/owner/:estateId */
-export interface OwnerAddressesOwner {
-  _id: string;
-  addressIds?: OwnerAddressItem[];
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  estateId?: string;
-  [key: string]: unknown;
-}
-
-/** Fetch all addresses assigned to owners in an estate (resident invite-tenant flow). */
+/** Fetch addresses assigned to OWNER residents in an estate. */
 export const getOwnerAddressesByEstate = createAsyncThunk(
   "resident-address-options/getOwnerAddressesByEstate",
   async (
@@ -75,7 +64,10 @@ export const getOwnerAddressesByEstate = createAsyncThunk(
         `/api/v1/address-mgt/owner/${estateId}`,
         { params: { page, limit } }
       );
-      const data = res.data?.data ?? (res.data as { data?: OwnerAddressesOwner[] })?.data ?? [];
+      const data =
+        res.data?.data ??
+        (res.data as { data?: OwnerAddressItem[] })?.data ??
+        [];
       return Array.isArray(data) ? data : [];
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } }; message?: string };

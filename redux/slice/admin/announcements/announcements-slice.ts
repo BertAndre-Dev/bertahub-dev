@@ -22,7 +22,7 @@ export interface AnnouncementStats {
 
 export interface AdminAnnouncementsState {
   list: AnnouncementItem[] | null;
-  pagination: { total: number; skip: number; limit: number } | null;
+  pagination: { total: number; page: number; limit: number; pages: number } | null;
   stats: AnnouncementStats | null;
   getStatus: AsyncStatus;
   getStatsStatus: AsyncStatus;

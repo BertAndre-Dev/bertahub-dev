@@ -1,12 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import "react-quill-new/dist/quill.snow.css";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Modal from "@/components/modal/page";
 import { Select } from "@/components/ui/select";
 import type { AnnouncementItem } from "@/redux/slice/admin/announcements/announcements";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 export interface AnnouncementFormData {
   title: string;
@@ -151,16 +155,24 @@ export default function AnnouncementFormModal({
 
           <div>
             <Label htmlFor="announcement-content">Content</Label>
-            <textarea
-              id="announcement-content"
-              value={formContent}
-              onChange={(e) => setFormContent(e.target.value)}
-              placeholder="Main announcement body"
-              rows={4}
-              className="mt-1 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              disabled={loading}
-              required
-            />
+            <div className="mt-1 [&_.ql-container]:min-h-[120px] [&_.ql-editor]:min-h-[120px]">
+              <ReactQuill
+                id="announcement-content"
+                theme="snow"
+                value={formContent}
+                onChange={(value) => setFormContent(value ?? "")}
+                placeholder="Main announcement body (bold, italics, etc.)"
+                readOnly={loading}
+                modules={{
+                  toolbar: [
+                    ["bold", "italic", "underline", "strike"],
+                    [{ list: "ordered" }, { list: "bullet" }],
+                    ["clean"],
+                  ],
+                }}
+                className="rounded-md border border-input bg-background"
+              />
+            </div>
           </div>
 
           <div>

@@ -4,14 +4,14 @@ import {
   getResidentFieldEntries,
   getOwnerAddressesByEstate,
   type AddressOptionItem,
-  type OwnerAddressesOwner,
+  type OwnerAddressItem,
 } from "./resident-address-options";
 
 export interface ResidentAddressOptionsState {
   /** Options for address dropdown (label, value = entry id) */
   options: AddressOptionItem[];
-  /** Owner list from GET /address-mgt/owner/:estateId (used for invite-tenant) */
-  ownerAddresses: OwnerAddressesOwner[];
+  /** Owner addresses from GET /address-mgt/owner/:estateId (used for invite-tenant) */
+  ownerAddresses: OwnerAddressItem[];
   fieldsStatus: "idle" | "isLoading" | "succeeded" | "failed";
   entriesStatus: "idle" | "isLoading" | "succeeded" | "failed";
   ownerAddressesStatus: "idle" | "isLoading" | "succeeded" | "failed";

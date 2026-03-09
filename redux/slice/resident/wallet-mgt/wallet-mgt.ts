@@ -12,6 +12,11 @@ export interface WalletData {
   accountNumber?: string;
 }
 
+export interface TransferToBalancePayload {
+  amount: number;
+  description?: string;
+}
+
 export const createWallet = createAsyncThunk(
   "wallet-mgt/createWallet",
   async (data: WalletData, { rejectWithValue }) => {
@@ -52,4 +57,25 @@ export const getWallet = createAsyncThunk(
       });
     }
   }
+);
+
+/** OWNER only: move withdrawableBalance -> main balance */
+export const transferToBalance = createAsyncThunk(
+  "wallet-mgt/transferToBalance",
+  async (data: TransferToBalancePayload, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        "/api/v1/wallet-mgt/transfer-to-balance",
+        data,
+      );
+      return res.data;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue({
+        message:
+          err?.response?.data?.message ||
+          "Failed to transfer funds to main balance",
+      });
+    }
+  },
 );

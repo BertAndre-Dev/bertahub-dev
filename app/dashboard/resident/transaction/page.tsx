@@ -2,13 +2,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Modal from "@/components/modal/page";
-import FundWalletForm from "@/components/resident/wallet/fund-wallet/page";
-import CreateWalletModal from "@/components/resident/wallet/create-wallet-modal/page";
+import FundWalletModal from "@/components/resident/transaction/fund-wallet-modal/page";
+import WithdrawModal from "@/components/resident/transaction/withdraw-modal/page";
+import TransferToBalanceModal from "@/components/resident/transaction/transfer-to-balance-modal/page";
+import CreateWalletModalWrapper from "@/components/resident/transaction/create-wallet-modal-wrapper/page";
 
 import {
   createWallet,
   getWallet,
+  transferToBalance,
 } from "@/redux/slice/resident/wallet-mgt/wallet-mgt";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
@@ -19,8 +21,6 @@ import {
   generateTxRef,
   transferFundsResident,
 } from "@/redux/slice/resident/transaction/transaction";
-import WithdrawFundForm from "@/components/estate-admin/transactions/fund-wallet-form/page";
-
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
@@ -47,6 +47,9 @@ export default function TransactionPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
+  const [transferToBalanceModalOpen, setTransferToBalanceModalOpen] =
+    useState(false);
+  const [transferToBalanceLoading, setTransferToBalanceLoading] = useState(false);
   const [createWalletModalOpen, setCreateWalletModalOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
@@ -140,6 +143,12 @@ export default function TransactionPage() {
   const handleOpenModal = () => setOpen((prev) => !prev);
   const handleOpenWithdrawModal = () => setWithdrawModalOpen(true);
   const handleCloseWithdrawModal = () => setWithdrawModalOpen(false);
+  const handleOpenTransferToBalanceModal = () =>
+    setTransferToBalanceModalOpen(true);
+  const handleCloseTransferToBalanceModal = () => {
+    setTransferToBalanceModalOpen(false);
+    setTransferToBalanceLoading(false);
+  };
 
   // Withdraw (owner only): generate tx_ref then call resident transfer
   const handleWithdrawSubmit = async ({
@@ -190,6 +199,47 @@ export default function TransactionPage() {
     } catch (err: any) {
       toast.error(err?.message ?? err?.payload?.message ?? "Failed to withdraw funds.");
       throw err;
+    }
+  };
+
+  const handleTransferToMainBalance = async (payload: {
+    amount: number;
+    description?: string;
+  }) => {
+    if (!userId) return;
+    if (!isOwner) {
+      toast.error("Only owner accounts can transfer to main balance.");
+      return;
+    }
+    const amount = Number(payload.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Enter a valid amount.");
+      return;
+    }
+    const max = Number(wallet?.withdrawableBalance ?? 0);
+    if (amount > max) {
+      toast.error("Amount exceeds your withdrawable balance.");
+      return;
+    }
+
+    try {
+      setTransferToBalanceLoading(true);
+      await dispatch(
+        transferToBalance({
+          amount,
+          description: payload.description || undefined,
+        }),
+      ).unwrap();
+      toast.success("Funds transferred to main balance.");
+      await dispatch(getWallet(userId));
+      handleCloseTransferToBalanceModal();
+    } catch (err: any) {
+      toast.error(
+        err?.message ??
+          err?.payload?.message ??
+          "Failed to transfer funds to main balance.",
+      );
+      setTransferToBalanceLoading(false);
     }
   };
 
@@ -418,7 +468,21 @@ export default function TransactionPage() {
             <div className="space-y-4">
               {/* Owner: show available + withdrawable like estate admin */}
               {isOwner ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex flex-col justify-center items-center w-full min-h-[120px] border border-[#CCCCCC] rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      Total Wallet Balance
+                      <span
+                        className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs cursor-help"
+                        title="You can only withdraw from this balance."
+                      >
+                        i
+                      </span>
+                    </p>
+                    <p className="text-2xl md:text-3xl font-bold mt-1 text-primary">
+                      {formatNaira(wallet?.balance ?? 0)}
+                    </p>
+                  </div>
                   <div className="flex flex-col justify-center items-center w-full min-h-[120px] border border-[#CCCCCC] rounded-lg p-4">
                     <p className="text-sm text-muted-foreground">
                       Available Wallet Balance
@@ -453,19 +517,34 @@ export default function TransactionPage() {
                 </div>
               )}
 
-              <div className="flex flex-wrap items-center gap-2">
-                <Button onClick={handleOpenModal} size="lg" className="px-6">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                <Button onClick={handleOpenModal} size="lg" className="px-6 w-full md:w-1/3">
                   Fund Wallet
                 </Button>
                 {isOwner && (
-                  <Button
-                    onClick={handleOpenWithdrawModal}
-                    size="lg"
-                    variant="outline"
-                    className="px-6"
-                  >
-                    Withdraw
-                  </Button>
+                  <>
+                    <Button
+                      onClick={handleOpenWithdrawModal}
+                      size="lg"
+                      variant="outline"
+                      className="px-6 w-full md:w-1/3"
+                    >
+                      Withdraw
+                    </Button>
+                    <Button
+                      onClick={handleOpenTransferToBalanceModal}
+                      size="lg"
+                      variant="secondary"
+                      className="px-6 w-full md:w-1/3"
+                      title={
+                        (wallet?.withdrawableBalance ?? 0) <= 0
+                          ? "No withdrawable balance to transfer"
+                          : "Move withdrawable balance to your main balance"
+                      }
+                    >
+                      Transfer to Balance
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -533,55 +612,38 @@ export default function TransactionPage() {
         </div>
       </Card>
 
-      <Modal visible={open} onClose={handleOpenModal}>
-        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto">
-          {userId && wallet ? (
-            <FundWalletForm
-              userId={userId}
-              walletId={wallet.id ?? ""}
-              onSubmit={handleFundWallet}
-              onClose={handleOpenModal}
-            />
-          ) : (
-            <p className="text-center text-gray-500">Loading form...</p>
-          )}
-        </div>
-      </Modal>
+      <FundWalletModal
+        visible={open}
+        onClose={handleOpenModal}
+        userId={userId}
+        walletId={wallet?.id ?? null}
+        onSubmit={handleFundWallet}
+      />
 
-      {/* Withdraw modal (owner only) */}
-      <Modal visible={withdrawModalOpen} onClose={handleCloseWithdrawModal}>
-        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto">
-          {userId && wallet ? (
-            <WithdrawFundForm
-              userId={userId}
-              walletId={wallet.id ?? ""}
-              defaultAccountNumber={wallet?.accountNumber ?? ""}
-              maxWithdrawableAmount={wallet?.withdrawableBalance ?? 0}
-              onSubmit={handleWithdrawSubmit}
-              onClose={handleCloseWithdrawModal}
-            />
-          ) : (
-            <p className="text-center text-gray-500 p-6">Loading...</p>
-          )}
-        </div>
-      </Modal>
+      <WithdrawModal
+        visible={withdrawModalOpen}
+        onClose={handleCloseWithdrawModal}
+        userId={userId}
+        walletId={wallet?.id ?? null}
+        defaultAccountNumber={wallet?.accountNumber ?? ""}
+        maxWithdrawableAmount={wallet?.withdrawableBalance ?? 0}
+        onSubmit={handleWithdrawSubmit}
+      />
 
-      <Modal
+      <TransferToBalanceModal
+        visible={transferToBalanceModalOpen}
+        onClose={handleCloseTransferToBalanceModal}
+        withdrawableBalance={wallet?.withdrawableBalance ?? 0}
+        submitting={transferToBalanceLoading}
+        onSubmit={handleTransferToMainBalance}
+      />
+
+      <CreateWalletModalWrapper
         visible={createWalletModalOpen}
         onClose={() => setCreateWalletModalOpen(false)}
-      >
-        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto">
-          {userId ? (
-            <CreateWalletModal
-              userId={userId}
-              onSuccess={handleCreateWalletSuccess}
-              onClose={() => setCreateWalletModalOpen(false)}
-            />
-          ) : (
-            <p className="text-center text-gray-500 p-6">Loading...</p>
-          )}
-        </div>
-      </Modal>
+        userId={userId}
+        onSuccess={handleCreateWalletSuccess}
+      />
     </div>
   );
 }

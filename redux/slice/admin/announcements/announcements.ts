@@ -57,7 +57,7 @@ export interface AnnouncementsListResponse {
   success?: boolean;
   data?: {
     items: AnnouncementItem[];
-    pagination: { total: number; skip: number; limit: number };
+    pagination: { total: number; page: number; limit: number; pages: number };
   };
   message?: string;
 }
@@ -76,14 +76,18 @@ export interface AnnouncementStatsResponse {
   message?: string;
 }
 
-/** List announcements. GET /api/v1/estates/announcements?estateId=... */
+/** List announcements. GET /api/v1/estates/announcements?estateId=...&page=...&limit=...&status=... */
 export const getAnnouncements = createAsyncThunk(
   "admin-announcements/getAnnouncements",
-  async (estateId: string, { rejectWithValue }) => {
+  async (
+    params: { estateId: string; page?: number; limit?: number; status?: string },
+    { rejectWithValue }
+  ) => {
     try {
+      const { estateId, page = 1, limit = 20, status } = params;
       const res = await axiosInstance.get<AnnouncementsListResponse>(
         "/api/v1/estates/announcements",
-        // { params: { estateId } },
+        { params: { estateId, page, limit, ...(status ? { status } : {}) } },
       );
       return res.data;
     } catch (error: unknown) {
@@ -134,16 +138,13 @@ export const createAnnouncement = createAsyncThunk(
   },
 );
 
-/** Get one announcement. GET /api/v1/estates/:estateId/announcements/:id */
+/** Get one announcement. GET /api/v1/estates/announcements/:id (admin & resident) */
 export const getAnnouncementById = createAsyncThunk(
   "admin-announcements/getAnnouncementById",
-  async (
-    { estateId, id }: { estateId: string; id: string },
-    { rejectWithValue },
-  ) => {
+  async (id: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get(
-        `/api/v1/estates/${estateId}/announcements/${id}`,
+        `/api/v1/estates/announcements/${id}`,
       );
       return res.data;
     } catch (error: unknown) {
@@ -155,14 +156,15 @@ export const getAnnouncementById = createAsyncThunk(
   },
 );
 
-/** Update announcement. PUT /api/v1/estates/:estateId/announcements/:id (allowed within 1 hour) */
+/** Update announcement. PUT /api/v1/estates/announcements/:id (allowed when &lt; 1 hour since posted) */
 export const updateAnnouncement = createAsyncThunk(
   "admin-announcements/updateAnnouncement",
   async (payload: UpdateAnnouncementPayload, { rejectWithValue }) => {
     try {
-      const { estateId, id, ...body } = payload;
+      const { id, ...body } = payload;
+      if (!id) throw new Error("Announcement id is required");
       const res = await axiosInstance.put(
-        `/api/v1/estates/${estateId}/announcements/${id}`,
+        `/api/v1/estates/announcements/${id}`,
         body,
       );
       return res.data;
@@ -176,7 +178,7 @@ export const updateAnnouncement = createAsyncThunk(
   },
 );
 
-/** Delete announcement. DELETE /api/v1/estates/:estateId/announcements/:id */
+/** Delete announcement. DELETE /api/v1/estates/announcements/:id */
 export const deleteAnnouncement = createAsyncThunk(
   "admin-announcements/deleteAnnouncement",
   async (
@@ -185,7 +187,7 @@ export const deleteAnnouncement = createAsyncThunk(
   ) => {
     try {
       const res = await axiosInstance.delete(
-        `/api/v1/estates/${estateId}/announcements/${id}`,
+        `/api/v1/estates/announcements/${id}`,
       );
       return { ...res.data, deletedId: id };
     } catch (error: unknown) {

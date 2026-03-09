@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 
 export interface WalletOverviewWallet {
   balance?: number;
+  availableBalance?: number;
   temporaryBalance?: number;
   withdrawableBalance?: number;
   accountNumber?: string;
@@ -50,12 +51,12 @@ export default function EstateWalletOverviewCard({
             <>
               {/* Top: Available balance | Withdrawable balance */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col justify-center items-center w-full md:w-[580px] h-[150px] border border-[#CCCCCC] rounded-lg p-4">
+                <div className="flex flex-col justify-center items-center w-full md:w-[380px] xl:w-[580px] h-[150px] border border-[#CCCCCC] rounded-lg p-4">
                   <p className="text-sm text-muted-foreground">
                     Available Wallet Balance
                   </p>
                   <p className="text-3xl md:text-4xl font-bold mt-1">
-                    {formatNaira(wallet.balance ?? 0)}
+                    {formatNaira(wallet.availableBalance ?? 0)}
                   </p>
                 </div>
                 <div className="flex flex-col justify-center items-center w-full md:w-[580px] h-[150px] border border-[#CCCCCC] rounded-lg p-4">

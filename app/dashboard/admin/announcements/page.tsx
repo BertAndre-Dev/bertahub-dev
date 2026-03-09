@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { Megaphone, Calendar, Eye, Mail } from "lucide-react";
+import { Megaphone, Calendar, Eye, Mail, Pencil } from "lucide-react";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
   getAnnouncements,
@@ -18,11 +18,30 @@ import {
 import AnnouncementFormModal, {
   type AnnouncementFormData,
 } from "@/components/admin/announcement-form-modal/page";
+import { canEditWithinOneHour } from "@/components/admin/announcement-card/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import type { RootState, AppDispatch } from "@/redux/store";
 import AnnouncementsPageHeader from "@/components/admin/announcements/announcements-page-header/page";
 import AnnouncementsStatsGrid from "@/components/admin/announcements/announcements-stats-grid/page";
 import AnnouncementsListSection from "@/components/admin/announcements/announcements-list-section/page";
+import Modal from "@/components/modal/page";
+import { Button } from "@/components/ui/button";
+
+function formatAnnouncementDate(dateStr?: string) {
+  if (!dateStr) return "—";
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return dateStr;
+  }
+}
 
 export default function AdminAnnouncementsPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -30,6 +49,7 @@ export default function AdminAnnouncementsPage() {
   const [estateId, setEstateId] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AnnouncementItem | null>(null);
+  const [viewingItem, setViewingItem] = useState<AnnouncementItem | null>(null);
 
   const {
     list,
@@ -65,7 +85,7 @@ export default function AdminAnnouncementsPage() {
         setEstateId(eId);
         setEstateName(name);
         if (eId) {
-          dispatch(getAnnouncements(eId)).catch((err: unknown) => {
+          dispatch(getAnnouncements({ estateId: eId })).catch((err: unknown) => {
             const e = err as { message?: string };
             toast.error(e?.message ?? "Failed to load announcements.");
           });
@@ -100,7 +120,7 @@ export default function AdminAnnouncementsPage() {
     toast.success("Announcement created.");
     setAddModalOpen(false);
     if (estateId) {
-      dispatch(getAnnouncements(estateId));
+      dispatch(getAnnouncements({ estateId }));
       dispatch(getAnnouncementStats(estateId));
     }
   };
@@ -132,7 +152,7 @@ export default function AdminAnnouncementsPage() {
       onConfirm: async () => {
         await dispatch(deleteAnnouncement({ estateId, id: item.id! })).unwrap();
         toast.success("Announcement deleted.");
-        dispatch(getAnnouncements(estateId));
+        dispatch(getAnnouncements({ estateId }));
         dispatch(getAnnouncementStats(estateId));
       },
     });
@@ -164,6 +184,7 @@ export default function AdminAnnouncementsPage() {
         <AnnouncementsListSection
           loading={getStatus === "isLoading"}
           announcements={announcements}
+          onView={setViewingItem}
           onEdit={setEditingItem}
           onDelete={handleDelete}
         />
@@ -187,6 +208,54 @@ export default function AdminAnnouncementsPage() {
         title="Edit Announcement"
         loading={updateStatus === "isLoading"}
       />
+
+      <Modal
+        visible={!!viewingItem}
+        onClose={() => setViewingItem(null)}
+      >
+        {viewingItem && (
+          <div className="pr-8">
+            <h2 className="font-heading font-bold text-lg text-foreground mb-2">
+              {viewingItem.title || "Untitled"}
+            </h2>
+            <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground mb-3">
+              <span>{formatAnnouncementDate(viewingItem.scheduledFor ?? viewingItem.createdAt ?? viewingItem.updatedAt)}</span>
+              <span>·</span>
+              <span className="uppercase">{viewingItem.category ?? "—"}</span>
+              <span>·</span>
+              <span>Priority: {viewingItem.priority ?? "—"}</span>
+              {viewingItem.isPinned && (
+                <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                  Pinned
+                </span>
+              )}
+            </div>
+            <div
+              className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 text-foreground"
+              dangerouslySetInnerHTML={{
+                __html: viewingItem.content ?? viewingItem.description ?? "<span>No content.</span>",
+              }}
+            />
+            <div className="flex gap-2 mt-6">
+              <Button variant="outline" onClick={() => setViewingItem(null)}>
+                Close
+              </Button>
+              {canEditWithinOneHour(viewingItem.createdAt) && (
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    setEditingItem(viewingItem);
+                    setViewingItem(null);
+                  }}
+                >
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

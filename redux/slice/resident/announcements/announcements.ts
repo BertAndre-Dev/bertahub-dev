@@ -26,18 +26,23 @@ export interface ResidentAnnouncementsListResponse {
   success?: boolean;
   data?: {
     items: ResidentAnnouncementItem[];
-    pagination: { total: number; skip: number; limit: number };
+    pagination: { total: number; page: number; limit: number; pages: number };
   };
   message?: string;
 }
 
-/** GET /api/v1/estates/:estateId/announcements - list for resident (read-only) */
+/** GET /api/v1/estates/announcements?estateId=...&page=...&limit=... - list for resident (read-only) */
 export const getResidentAnnouncements = createAsyncThunk(
   "resident-announcements/getList",
-  async (estateId: string, { rejectWithValue }) => {
+  async (
+    params: { estateId: string; page?: number; limit?: number },
+    { rejectWithValue }
+  ) => {
     try {
+      const { estateId, page = 1, limit = 20 } = params;
       const res = await axiosInstance.get<ResidentAnnouncementsListResponse>(
-        `/api/v1/estates/announcements/${estateId}`
+        "/api/v1/estates/announcements",
+        { params: { estateId, page, limit } },
       );
       return res.data;
     } catch (error: unknown) {
@@ -49,16 +54,13 @@ export const getResidentAnnouncements = createAsyncThunk(
   }
 );
 
-/** GET /api/v1/estates/:estateId/announcements/:id - get one for resident */
+/** GET /api/v1/estates/announcements/:id - get one (admin & resident) */
 export const getResidentAnnouncementById = createAsyncThunk(
   "resident-announcements/getById",
-  async (
-    { estateId, id }: { estateId: string; id: string },
-    { rejectWithValue }
-  ) => {
+  async (id: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get(
-        `/api/v1/estates/${estateId}/announcements/${id}`
+        `/api/v1/estates/announcements/${id}`,
       );
       return res.data;
     } catch (error: unknown) {
