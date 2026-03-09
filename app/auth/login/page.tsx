@@ -64,7 +64,7 @@ export default function LoginPage() {
         // ✅ Redirect based on role
         const role = user.role?.toLowerCase();
         if (role === "super admin") {
-          router.push("/dashboard/super-admin/dashboard");
+          router.push("/dashboard/super-admin/user");
         } else if (role === "admin") {
           router.push("/dashboard/admin/overview");
         } else if (role === "security") {
@@ -153,6 +153,22 @@ export default function LoginPage() {
             Forgot Password
           </Link>
         </div>
+
+        <p className="text-center text-xs text-muted-foreground">
+          <Link
+            href="/privacy-notice"
+            className="hover:text-foreground hover:underline"
+          >
+            Privacy Notice
+          </Link>
+          {" · "}
+          <Link
+            href="/terms-and-conditions"
+            className="hover:text-foreground hover:underline"
+          >
+            Terms and Conditions
+          </Link>
+        </p>
 
         <Button
           type="submit"

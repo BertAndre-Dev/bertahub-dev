@@ -18,8 +18,8 @@ const BASE_URL =
     : (process.env.NEXT_PUBLIC_API_BASE_URL || "");
 
 export const axiosInstance = axios.create({
-  baseURL: BASE_URL,
-  withCredentials: true, // sends the refreshToken HTTP-only cookie automatically
+  baseURL: BASE_URL || "",
+  withCredentials: true,
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",

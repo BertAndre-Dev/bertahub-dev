@@ -241,9 +241,7 @@ export default function Table<T extends { id?: string }>({
             {visiblePages.map((pageNum) => (
               <Button
                 key={pageNum}
-                variant={
-                  pageNum === paginationInfo.current ? "default" : "outline"
-                }
+                variant={pageNum === paginationInfo.current ? "default" : "outline"}
                 size="sm"
                 onClick={() => onPageChange && onPageChange(pageNum)}
               >
