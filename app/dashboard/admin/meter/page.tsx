@@ -47,6 +47,7 @@ export default function AdminMeterManagement() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
   const [estateId, setEstateId] = useState<string | null>(null);
+  const [estateName, setEstateName] = useState("Estate");
   const [selectedMeter, setSelectedMeter] = useState<AdminMeterData | null>(
     null,
   );
@@ -70,17 +71,34 @@ export default function AdminMeterManagement() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const foundEstateId = userRes?.data?.estateId;
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+        const foundEstateId = data?.estateId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
+        const estateIdValue =
+          typeof foundEstateId === "string"
+            ? foundEstateId
+            : foundEstateId?._id || foundEstateId?.id || "";
 
-        if (!foundEstateId) {
+        const estateFromId =
+          (foundEstateId as { name?: string } | undefined)?.name ?? "";
+        const estateFromObj =
+          (data?.estate as { name?: string } | undefined)?.name ?? "";
+        const fallbackEstateName = (data?.estateName as string) ?? "";
+        const name =
+          estateFromId || estateFromObj || fallbackEstateName || "Estate";
+        setEstateName(name);
+
+        if (!estateIdValue) {
           toast.warning("No estate found for this user");
           return;
         }
 
-        setEstateId(foundEstateId);
+        setEstateId(estateIdValue);
         await dispatch(
           getAllEstateMeter({
-            estateId: foundEstateId,
+            estateId: estateIdValue,
             page: 1,
             limit: 10,
             search: search || undefined,
@@ -217,7 +235,7 @@ export default function AdminMeterManagement() {
         <p className="text-muted-foreground mt-1">
           Welcome back! Here's is an overview on{" "}
           <span className="text-[18px] font-bold underline uppercase text-black">
-            Doe Estate
+            {estateName}
           </span>
           .
         </p>
@@ -264,7 +282,7 @@ export default function AdminMeterManagement() {
           type="text"
           placeholder="Search by meter number"
           value={search}
-          onChange={(e) => setSearch(e.target.value)} // ✅ search fixed
+          onChange={(e) => setSearch(e.target.value)}
           className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </Card>

@@ -74,22 +74,36 @@ export default function AdminAnnouncementsPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const eId =
-          userRes?.data?.estateId ??
-          userRes?.data?.estate?.id ??
-          null;
-        const name =
-          userRes?.data?.estate?.name ??
-          userRes?.data?.estateName ??
-          "Estate";
-        setEstateId(eId);
-        setEstateName(name);
-        if (eId) {
-          dispatch(getAnnouncements({ estateId: eId })).catch((err: unknown) => {
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+
+        const rawEstateId = data?.estateId as
+          | string
+          | { id?: string; _id?: string; name?: string }
+          | undefined;
+        const normalizedEstateId =
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id || rawEstateId?.id || null;
+
+        const nameFromEstateId =
+          (rawEstateId as { name?: string } | undefined)?.name ?? "";
+        const nameFromEstateObj =
+          (data?.estate as { name?: string } | undefined)?.name ?? "";
+        const fallbackEstateName = (data?.estateName as string) ?? "";
+        const estateNameFinal =
+          nameFromEstateId || nameFromEstateObj || fallbackEstateName || "Estate";
+
+        setEstateId(normalizedEstateId);
+        setEstateName(estateNameFinal);
+
+        if (normalizedEstateId) {
+          dispatch(
+            getAnnouncements({ estateId: normalizedEstateId }),
+          ).catch((err: unknown) => {
             const e = err as { message?: string };
             toast.error(e?.message ?? "Failed to load announcements.");
           });
-          dispatch(getAnnouncementStats(eId)).catch(() => {});
+          dispatch(getAnnouncementStats(normalizedEstateId)).catch(() => {});
         }
       } catch {
         // keep default

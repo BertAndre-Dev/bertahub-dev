@@ -42,6 +42,7 @@ export default function EstateAdminWalletPage() {
     useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [estateId, setEstateId] = useState<string | null>(null);
+  const [estateName, setEstateName] = useState("Estate");
   const [creditsPage, setCreditsPage] = useState(1);
   const [limit] = useState(10);
 
@@ -72,10 +73,23 @@ export default function EstateAdminWalletPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const user = userRes?.data ?? null;
+        const user = userRes?.data ?? (userRes as Record<string, unknown>) ?? null;
         const id = user?.id || user?._id || null;
+        const rawEstateId =
+          (user?.estateId as string | { id?: string; _id?: string }) || null;
         const estateIdFromUser =
-          user?.estateId || user?.estate?._id || user?.estate?.id || null;
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id || rawEstateId?.id || null;
+
+        const estateFromId =
+          (user?.estateId as { name?: string } | undefined)?.name ?? "";
+        const estateFromObj =
+          (user?.estate as { name?: string } | undefined)?.name ?? "";
+        const fallbackEstateName = (user?.estateName as string) ?? "";
+        const name =
+          estateFromId || estateFromObj || fallbackEstateName || "Estate";
+        setEstateName(name);
 
         // `userId` is only needed for withdrawal; don't block credits fetch on it.
         if (id) setUserId(id);
@@ -334,7 +348,7 @@ export default function EstateAdminWalletPage() {
         <p className="text-muted-foreground mt-1">
           Welcome back! Here's is an overview on{" "}
           <span className="text-[18px] font-bold underline uppercase text-black">
-            Doe Estate
+            {estateName}
           </span>
           .
         </p>

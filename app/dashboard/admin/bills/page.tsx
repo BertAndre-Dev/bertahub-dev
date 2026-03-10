@@ -44,6 +44,7 @@ interface BillData {
 
 export default function BillPage() {
   const dispatch = useDispatch<AppDispatch>();
+  const [estateName, setEstateName] = useState("Estate");
   const [selectedBill, setSelectedBill] = useState<BillData | null>(null);
   const [estateId, setEstateId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -80,7 +81,24 @@ export default function BillPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const foundEstateId = userRes?.data?.estateId;
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+        const rawEstateId = data?.estateId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
+        const foundEstateId =
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id || rawEstateId?.id || "";
+
+        const estateFromId =
+          (data?.estateId as { name?: string } | undefined)?.name ?? "";
+        const estateFromObj =
+          (data?.estate as { name?: string } | undefined)?.name ?? "";
+        const fallbackEstateName = (data?.estateName as string) ?? "";
+        const name =
+          estateFromId || estateFromObj || fallbackEstateName || "Estate";
+        setEstateName(name);
 
         if (!foundEstateId) {
           toast.warning("No estate found for this user.");
@@ -333,17 +351,6 @@ export default function BillPage() {
           >
             <Trash2 className="w-4 h-4 text-red-600" />
           </Button>
-          {item.isActive && (
-            <Button
-              className="cursor-pointer"
-              variant="ghost"
-              size="sm"
-              onClick={() => openAssignModal(item)}
-              title="Assign bill to address"
-            >
-              <ScrollText className="w-4 h-4 text-indigo-600" />
-            </Button>
-          )}
         </div>
       ),
     },
@@ -376,7 +383,7 @@ export default function BillPage() {
           <p className="text-muted-foreground mt-1">
             Welcome back! Here's is an overview on{" "}
             <span className="text-[18px] font-bold underline uppercase text-black">
-              Doe Estate
+              {estateName}
             </span>
             .
           </p>
@@ -409,7 +416,7 @@ export default function BillPage() {
       </div>
 
       {/* Stats Card */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {(() => {
           const stats = [
             {
@@ -418,6 +425,12 @@ export default function BillPage() {
               icon: ScrollText,
               color: "bg-[#D0DFF280]",
             },
+            {
+              label: "Total Assigned Bills",
+              value: assignedBills?.length || 0,
+              icon: ScrollText,
+              color: "bg-[#D0DFF280]",
+            }
           ];
 
           return stats.map((stat, i) => {
@@ -513,68 +526,6 @@ export default function BillPage() {
         {/* Assigned Bills Tab */}
         {activeTab === "assign" && (
           <div className="space-y-4">
-            {/* <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-              <div className="space-y-1 w-full sm:w-80">
-                <Label htmlFor="assignAddress">Address</Label>
-                <select
-                  id="assignAddress"
-                  aria-label="Select address for assigned bills"
-                  className="w-full border border-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0150AC]"
-                  value={assignAddressId}
-                  onChange={async (e) => {
-                    const addrId = e.target.value;
-                    setAssignAddressId(addrId);
-                    if (!addrId || !estateId) return;
-                    try {
-                      await dispatch(
-                        getBillsForAddress({
-                          addressId: addrId,
-                          estateId,
-                          page: 1,
-                          limit: 10,
-                        }),
-                      ).unwrap();
-                    } catch {
-                      toast.error("Failed to load assigned bills for address.");
-                    }
-                  }}
-                  disabled={assignAddressLoading || assignAddressOptions.length === 0}
-                >
-                  <option value="">Select address...</option>
-                  {assignAddressOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                {assignAddressLoading && (
-                  <p className="text-xs text-muted-foreground">Loading addresses...</p>
-                )}
-                {!assignAddressLoading && assignAddressOptions.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    No addresses configured for this estate.
-                  </p>
-                )}
-              </div>
-
-              <Button
-                variant="outline"
-                className="flex items-center gap-2"
-                onClick={() => {
-                  if (!allBills?.length) {
-                    toast.info("No bills available. Create a bill first.");
-                    return;
-                  }
-                  const firstActive =
-                    allBills.find((b: BillData) => b.isActive) ?? allBills[0];
-                  openAssignModal(firstActive);
-                }}
-              >
-                <ScrollText className="w-4 h-4" />
-                Assign Bill
-              </Button>
-            </div> */}
-
             <Table
               columns={[
                 {

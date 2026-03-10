@@ -151,7 +151,7 @@ export default function Table<T extends { id?: string }>({
               type="button"
               variant="outline"
               size="sm"
-              className="cursor-pointer gap-2"
+              className="cursor-pointer gap-2 flex-end"
               onClick={handleExport}
               disabled={(data.length === 0 && !onExportRequest) || exporting}
             >

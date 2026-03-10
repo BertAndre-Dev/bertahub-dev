@@ -45,12 +45,14 @@ export default function AdminUserPage() {
   const dispatch = useDispatch<AppDispatch>();
 
   const [user, setUser] = useState<any>(null);
+  const [estateName, setEstateName] = useState("Estate");
   const [open, setOpen] = useState(false);
   const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(
     null,
   );
   const [selectedUser, setSelectedUser] = useState<AdminUserData | null>(null);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [suspendUserItem, setSuspendUserItem] = useState<AdminUserData | null>(null);
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
 
@@ -83,6 +85,7 @@ export default function AdminUserPage() {
           search: searchTerm,
         }),
       ).unwrap();
+      setCurrentPage(page);
     } catch {
       toast.error("Failed to fetch users.");
     }
@@ -92,9 +95,27 @@ export default function AdminUserPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        setUser(userRes.data);
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+        setUser(data);
 
-        const estateId = userRes?.data?.estateId;
+        const rawEstateId = data?.estateId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
+        const estateId =
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id || rawEstateId?.id || "";
+
+        const estateFromId =
+          (data?.estateId as { name?: string } | undefined)?.name ?? "";
+        const estateFromObj =
+          (data?.estate as { name?: string } | undefined)?.name ?? "";
+        const fallbackEstateName = (data?.estateName as string) ?? "";
+        const name =
+          estateFromId || estateFromObj || fallbackEstateName || "Estate";
+        setEstateName(name);
+
         if (estateId) {
           setSelectedEstate({ label: "My Estate", value: estateId });
           await fetchAdminUsers(estateId, 1, "");
@@ -282,7 +303,7 @@ export default function AdminUserPage() {
           <p className="text-muted-foreground mt-1">
             Welcome back! Here's is an overview on{" "}
             <span className="text-[18px] font-bold underline uppercase text-black">
-              Doe Estate
+              {estateName}
             </span>
             .
           </p>
@@ -356,7 +377,7 @@ export default function AdminUserPage() {
           showPagination={true}
           paginationInfo={{
             total: pagination?.total || 0,
-            current: Number(pagination?.currentPage) || 1,
+            current: currentPage,
             pageSize: Number(pagination?.pageSize) || 10,
           }}
           onPageChange={(page) => {

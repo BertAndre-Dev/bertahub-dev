@@ -164,10 +164,9 @@ export function MaintenanceRequestCard({
   };
 
   const requesterName = getRequesterName(complaint);
-  const location = getAddressDisplay(complaint.addressId);
-  const locationParts = [location, estateName].filter(Boolean);
-  const locationLine =
-    locationParts.length > 0 ? locationParts.join(", ") : location;
+  // const location = getAddressDisplay(complaint.addressId);
+  // // const locationParts = [location, estateName].filter(Boolean);
+  // // const locationLine = locationParts.length > 0 ? locationParts.join : location;
   const ticketDisplay =
     complaint.ticketNumber ||
     `MR-${String(complaint.id).slice(-8).toUpperCase()}`;
@@ -196,7 +195,7 @@ export function MaintenanceRequestCard({
                 <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                   <MapPin className="w-3.5 h-3.5 shrink-0" />
                   <span>
-                    {locationLine === "—" ? "—" : `• ${locationLine}`}
+                    {estateName}
                   </span>
                 </p>
               </div>

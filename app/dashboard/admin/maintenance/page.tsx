@@ -1,3 +1,4 @@
+// app/admin/maintenance/page.tsx
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -6,6 +7,7 @@ import { toast } from "react-toastify";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { getComplaintsByEstate } from "@/redux/slice/admin/maintenance/complaints";
 import type { ComplaintItem } from "@/redux/slice/admin/maintenance/complaints-slice";
+import type { SignedInUser } from "@/types/user";
 import {
   StatusTabs,
   FilterBar,
@@ -14,11 +16,11 @@ import {
 } from "@/components/admin/maintenance";
 import { RootState, AppDispatch } from "@/redux/store";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 const PAGE_SIZE = 10;
 
-/** Debounce a value; returns the value after delay ms of no changes. */
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -40,19 +42,32 @@ export default function AdminMaintenancePage() {
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const { complaints, loading, pagination } = useSelector((state: RootState) => {
-    const c = state.complaints as {
-      complaintsByEstate?: { data: ComplaintItem[]; pagination?: { total: number; page: number; limit: number; pages?: number } } | null;
-      getComplaintsByEstateStatus?: string;
-    };
-    return {
-      complaints: c?.complaintsByEstate?.data ?? [],
-      loading: c?.getComplaintsByEstateStatus === "isLoading",
-      pagination: c?.complaintsByEstate?.pagination ?? null,
-    };
-  });
+  const { complaints, loading, pagination } = useSelector(
+    (state: RootState) => {
+      const c = state.complaints as {
+        complaintsByEstate?: {
+          data: ComplaintItem[];
+          pagination?: {
+            total: number;
+            page: number;
+            limit: number;
+            pages?: number;
+          };
+        } | null;
+        getComplaintsByEstateStatus?: string;
+      };
+      return {
+        complaints: c?.complaintsByEstate?.data ?? [],
+        loading: c?.getComplaintsByEstateStatus === "isLoading",
+        pagination: c?.complaintsByEstate?.pagination ?? null,
+      };
+    },
+  );
 
-  const list = useMemo(() => (Array.isArray(complaints) ? complaints : []), [complaints]);
+  const list = useMemo(
+    () => (Array.isArray(complaints) ? complaints : []),
+    [complaints],
+  );
 
   const filtered = useMemo(() => {
     return list.filter((item: ComplaintItem) => {
@@ -75,43 +90,48 @@ export default function AdminMaintenancePage() {
     });
   }, [list, statusTab, priority, category, search]);
 
+  // Fetch signed-in user and extract estate info
   useEffect(() => {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const data = userRes?.data ?? (userRes as Record<string, unknown>);
-        const rawEstateId = data?.estateId ?? (data?.estate as { id?: string; _id?: string } | undefined)?.id ?? (data?.estate as { id?: string; _id?: string } | undefined)?._id;
-        const id = typeof rawEstateId === "string" ? rawEstateId : (rawEstateId as { _id?: string; id?: string } | undefined)?._id ?? (rawEstateId as { _id?: string; id?: string } | undefined)?.id ?? "";
-        const name =
-          (data?.estate as { name?: string } | undefined)?.name ?? (data?.estateName as string) ?? "Estate";
-        if (!id) {
+        const user = userRes?.data as SignedInUser | undefined;
+        const estate = user?.estateId;
+
+        if (!estate?.id) {
           toast.warning("No estate found for this user.");
           return;
         }
-        setEstateId(id);
-        setEstateName(name);
+
+        setEstateId(estate.id);
+        setEstateName(estate.name ?? "Estate");
       } catch (err: unknown) {
-        toast.error((err as { message?: string })?.message ?? "Failed to load user.");
+        toast.error(
+          (err as { message?: string })?.message ?? "Failed to load user.",
+        );
       }
     })();
   }, [dispatch]);
 
+  // Reset to page 1 whenever filters change
   useEffect(() => {
     setPage(1);
   }, [searchDebounced, statusTab, priority, category]);
 
+  // Fetch complaints whenever estate or page changes
   useEffect(() => {
-    const id = typeof estateId === "string" ? estateId : (estateId as { _id?: string; id?: string } | null)?._id ?? (estateId as { _id?: string; id?: string } | null)?.id ?? "";
-    if (!id) return;
+    if (!estateId) return;
     dispatch(
       getComplaintsByEstate({
-        estateId: id,
+        estateId,
         page,
         limit: PAGE_SIZE,
-        search: (searchDebounced ?? "").trim() || undefined,
-      })
+        search: searchDebounced.trim() || undefined,
+      }),
     ).catch((err: unknown) =>
-      toast.error((err as { message?: string })?.message ?? "Failed to load complaints.")
+      toast.error(
+        (err as { message?: string })?.message ?? "Failed to load complaints.",
+      ),
     );
   }, [estateId, dispatch, page, searchDebounced]);
 
@@ -135,7 +155,26 @@ export default function AdminMaintenancePage() {
         </p>
       </div>
 
-      <StatusTabs value={statusTab} onChange={setStatusTab} />
+      {/* Stats cards */}
+      <div className="grid grid-cols-1 gap-4">
+        <Card className="p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Total Maintenance Requests
+              </p>
+              <p className="font-heading text-2xl font-bold mt-2">{total}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-[#D0DFF280]">
+              <Clock className="w-6 h-6" />
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="bg-white mb-4 p-4 rounded-lg">
+        <StatusTabs value={statusTab} onChange={setStatusTab} />
+      </div>
 
       <FilterBar
         category={category}
@@ -162,7 +201,7 @@ export default function AdminMaintenancePage() {
               isSelected={selectedId === complaint.id}
               onSelect={() =>
                 setSelectedId((prev) =>
-                  prev === complaint.id ? null : complaint.id
+                  prev === complaint.id ? null : complaint.id,
                 )
               }
             />

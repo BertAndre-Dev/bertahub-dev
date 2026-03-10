@@ -36,6 +36,7 @@ export default function TransactionPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [userId, setUserId] = useState<string | null>(null);
   const [estateId, setEstateId] = useState<string | null>(null);
+  const [estateName, setEstateName] = useState("Estate");
   const [email, setEmail] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
@@ -88,10 +89,26 @@ export default function TransactionPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const id = userRes?.data?.id;
-        const userEmail = userRes?.data?.email;
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+        const id = (data?.id as string) || (data?._id as string) || null;
+        const userEmail = (data?.email as string) || "";
+        const rawEstateId = data?.estateId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
         const estateIdFromUser =
-          userRes?.data?.estateId || userRes?.data?.estate?.id;
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id || rawEstateId?.id || "";
+
+        const estateFromId =
+          (data?.estateId as { name?: string } | undefined)?.name ?? "";
+        const estateFromObj =
+          (data?.estate as { name?: string } | undefined)?.name ?? "";
+        const fallbackEstateName = (data?.estateName as string) ?? "";
+        const name =
+          estateFromId || estateFromObj || fallbackEstateName || "Estate";
+        setEstateName(name);
 
         if (!id) {
           toast.warning("No user found.");
@@ -467,7 +484,7 @@ export default function TransactionPage() {
         <p className="text-muted-foreground mt-1">
           Welcome back! Here's is an overview on{" "}
           <span className="text-[18px] font-bold underline uppercase text-black">
-            Doe Estate
+            {estateName}
           </span>
           .
         </p>

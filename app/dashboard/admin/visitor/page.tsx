@@ -26,6 +26,7 @@ import AdminVisitorForm from "@/components/admin/visitor-form/page";
 export default function AdminVisitorManagement() {
   const dispatch = useDispatch<AppDispatch>();
   const [estateId, setEstateId] = useState<string | null>(null);
+  const [estateName, setEstateName] = useState("Estate");
   const [addVisitorOpen, setAddVisitorOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [verifyModalVisitor, setVerifyModalVisitor] = useState<{
@@ -67,7 +68,24 @@ export default function AdminVisitorManagement() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const foundEstateId = userRes?.data?.estateId;
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+        const rawEstateId = data?.estateId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
+        const foundEstateId =
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id || rawEstateId?.id || "";
+
+        const estateFromId =
+          (data?.estateId as { name?: string } | undefined)?.name ?? "";
+        const estateFromObj =
+          (data?.estate as { name?: string } | undefined)?.name ?? "";
+        const fallbackEstateName = (data?.estateName as string) ?? "";
+        const name =
+          estateFromId || estateFromObj || fallbackEstateName || "Estate";
+        setEstateName(name);
 
         if (!foundEstateId) {
           toast.warning("No estate found for this user");
@@ -293,7 +311,7 @@ export default function AdminVisitorManagement() {
           <p className="text-muted-foreground mt-1">
             Welcome back! Here's is an overview on{" "}
             <span className="text-[18px] font-bold underline uppercase text-black">
-              Doe Estate
+              {estateName}
             </span>
             .
           </p>
