@@ -228,7 +228,7 @@ export default function AdminAnnouncementsPage() {
         onClose={() => setViewingItem(null)}
       >
         {viewingItem && (
-          <div className="p-12 max-w-3xl mx-auto">
+          <div className="p-2 md:p-4 overflow-x-hidden">
             <h2 className="font-heading font-bold text-lg text-foreground mb-2">
               {viewingItem.title || "Untitled"}
             </h2>
@@ -245,9 +245,12 @@ export default function AdminAnnouncementsPage() {
               )}
             </div>
             <div
-              className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 text-foreground"
+              className="prose prose-sm max-w-full pb-2 break-words prose-p:my-1 prose-ul:my-1 prose-ol:my-1 text-foreground"
               dangerouslySetInnerHTML={{
-                __html: viewingItem.content ?? viewingItem.description ?? "<span>No content.</span>",
+                __html:
+                  viewingItem.content ??
+                  viewingItem.description ??
+                  "<span>No content.</span>",
               }}
             />
             <div className="flex gap-2 mt-6">

@@ -16,7 +16,7 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
   useEffect(() => {
     if (visible) {
       setShow(true);
-      document.body.style.overflow = "hidden"; // prevent background scroll
+      document.body.style.overflow = "hidden";
     } else {
       setTimeout(() => setShow(false), 300);
       document.body.style.overflow = "";
@@ -39,16 +39,18 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
         >
           <motion.div
             className="
-            bg-white 
-              w-full lg:w-[50%] 
-              rounded-xl 
-              shadow-xl 
-              p-5 
+              bg-white
+              w-full lg:w-[50%]
+              rounded-xl
+              shadow-xl
+              p-5
               overflow-y-auto
-              max-h-[70vh] 
-              flex 
+              overflow-x-hidden
+              max-h-[70vh]
+              flex
               flex-col
               relative
+              min-w-0
             "
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -58,16 +60,16 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
             <button
               onClick={onClose}
               className="
-                absolute 
+                absolute
                 cursor-pointer
-                top-6 
-                right-4 
-                bg-[#d0dff2] 
-                border 
+                top-6
+                right-4
+                bg-[#d0dff2]
+                border
                 border-black
-                p-1 
-                rounded-full 
-                hover:bg-gray-100 
+                p-1
+                rounded-full
+                hover:bg-gray-100
                 transition-colors
                 focus:outline-none
                 focus:ring-2
@@ -77,7 +79,7 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
             >
               <X className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="w-full">{children}</div>
+            <div className="w-full min-w-0 break-words">{children}</div>
           </motion.div>
         </motion.div>
       )}

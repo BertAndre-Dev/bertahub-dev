@@ -102,13 +102,19 @@ export default function ResidentAnnouncementsPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+        const rawEstateId = data?.estateId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
         const eId =
-          userRes?.data?.estateId ??
-          userRes?.data?.estate?.id ??
-          null;
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id || rawEstateId?.id || null;
         const name =
-          userRes?.data?.estate?.name ??
-          userRes?.data?.estateName ??
+          (data?.estateId as { name?: string } | undefined)?.name ??
+          (data?.estate as { name?: string } | undefined)?.name ??
+          (data?.estateName as string) ??
           "Estate";
         setEstateId(eId);
         setEstateName(name);
