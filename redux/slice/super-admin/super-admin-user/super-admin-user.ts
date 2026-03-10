@@ -10,12 +10,17 @@ export const getAllUsersByEstate = createAsyncThunk(
       estateId,
       page = 1,
       limit = 10,
-    }: { estateId: string; page?: number; limit?: number },
+    }: { estateId: string | { id?: string; _id?: string }; page?: number; limit?: number },
     { rejectWithValue }
   ) => {
     try {
+      const normalizedEstateId =
+        typeof estateId === "string"
+          ? estateId
+          : estateId?._id || estateId?.id || "";
+
       const res = await axiosInstance.get(
-        `/api/v1/user-mgt/estate/${estateId}?page=${page}&limit=${limit}`
+        `/api/v1/user-mgt/estate/${normalizedEstateId}?page=${page}&limit=${limit}`
       );
       return res.data;
     } catch (error: any) {
