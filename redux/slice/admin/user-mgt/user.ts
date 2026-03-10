@@ -1,10 +1,9 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '@/utils/axiosInstance';
-
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import axiosInstance from "@/utils/axiosInstance";
 
 // get all users by estate (with search)
 export const getAllUsersByEstate = createAsyncThunk(
-  'admin-user/getAllUsersByEstate',
+  "admin-user/getAllUsersByEstate",
   async (
     {
       estateId,
@@ -17,7 +16,7 @@ export const getAllUsersByEstate = createAsyncThunk(
       limit?: number;
       search?: string;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const params = new URLSearchParams({
@@ -26,90 +25,87 @@ export const getAllUsersByEstate = createAsyncThunk(
       });
 
       if (search && search.trim()) {
-        params.append('search', search.trim());
+        params.append("search", search.trim());
       }
 
       const normalizedEstateId =
-        typeof estateId === 'string'
+        typeof estateId === "string"
           ? estateId
-          : estateId?._id || estateId?.id || '';
+          : estateId?._id || estateId?.id || "";
 
       const res = await axiosInstance.get(
-        `/api/v1/user-mgt/estate/${normalizedEstateId}?${params.toString()}`
+        `/api/v1/user-mgt/estate/${normalizedEstateId}?${params.toString()}`,
       );
 
       return res.data;
     } catch (error: any) {
       return rejectWithValue({
-        message: error?.response?.data?.message || 'Unable to fetch users',
+        message: error?.response?.data?.message || "Unable to fetch users",
       });
     }
-  }
+  },
 );
-
-
-
 
 // get individual user
 export const getUser = createAsyncThunk(
-    'admin-user/getUser',
-    async (id: string, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.get(`/api/v1/user-mgt/${id}`);
-            return res.data;
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
-        }
+  "admin-user/getUser",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get(`/api/v1/user-mgt/${id}`);
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.res?.data?.message,
+      });
     }
+  },
 );
-
 
 // delete an user
 export const deleteUser = createAsyncThunk(
-    'admin-user/deleteUser',
-    async (id: string, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.delete(`/api/v1/user-mgt/${id}`);
-            return res.data;
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
-        }
+  "admin-user/deleteUser",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.delete(`/api/v1/user-mgt/${id}`);
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.res?.data?.message,
+      });
     }
+  },
 );
-
 
 // suspend an user
 export const suspendUser = createAsyncThunk(
-    'admin-user/suspendUser',
-    async(id: string, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.put(`/api/v1/user-mgt/${id}/suspend-user`);
-            return res.data;
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
-        }
+  "admin-user/suspendUser",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.put(
+        `/api/v1/user-mgt/${id}/suspend-user`,
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.res?.data?.message,
+      });
     }
+  },
 );
-
 
 // activate an user
 export const activateUser = createAsyncThunk(
-    'admin-user/activateUser',
-    async(id: string, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.put(`/api/v1/user-mgt/${id}/activate-user`);
-            return res.data;
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
-        }
+  "admin-user/activateUser",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.put(
+        `/api/v1/user-mgt/${id}/activate-user`,
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.res?.data?.message,
+      });
     }
+  },
 );
-
