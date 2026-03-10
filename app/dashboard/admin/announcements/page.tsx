@@ -228,7 +228,7 @@ export default function AdminAnnouncementsPage() {
         onClose={() => setViewingItem(null)}
       >
         {viewingItem && (
-          <div className="pr-8">
+          <div className="p-12 max-w-3xl mx-auto">
             <h2 className="font-heading font-bold text-lg text-foreground mb-2">
               {viewingItem.title || "Untitled"}
             </h2>
