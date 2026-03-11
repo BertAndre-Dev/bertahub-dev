@@ -6,6 +6,7 @@ interface CreateWalletData {
   balance: number;
   lockedBalance: number;
   accountNumber: string;
+  bankCode?: string;
 }
 
 export const createWallet = createAsyncThunk(

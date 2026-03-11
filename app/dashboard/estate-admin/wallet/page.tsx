@@ -15,6 +15,7 @@ import {
   getWallet,
   getEstateCredits,
 } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt";
+import { getBanks } from "@/redux/slice/estate-admin/fund-wallet/fund-wallet";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
   verifyTransaction,
@@ -40,6 +41,7 @@ export default function EstateAdminWalletPage() {
   const [createWalletModalOpen, setCreateWalletModalOpen] = useState(false);
   const [createWalletAccountNumber, setCreateWalletAccountNumber] =
     useState("");
+  const [createWalletBankCode, setCreateWalletBankCode] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [estateId, setEstateId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Estate");
@@ -67,6 +69,10 @@ export default function EstateAdminWalletPage() {
   const { txRef, loading, error } = useSelector(
     (state: RootState) => state.payment,
   );
+  const { banks, getBanksState } = useSelector(
+    (state: RootState) => state.estateAdminFundWallet,
+  );
+  const loadingBanks = getBanksState === "isLoading";
 
   // Fetch user, wallet, and estate credits on mount
   useEffect(() => {
@@ -127,6 +133,13 @@ export default function EstateAdminWalletPage() {
     dispatch(getEstateCredits({ estateId, page: creditsPage, limit }));
   }, [estateId, creditsPage, limit, dispatch]);
 
+  // Fetch banks when Create Wallet modal opens
+  useEffect(() => {
+    if (createWalletModalOpen) {
+      dispatch(getBanks("NG"));
+    }
+  }, [createWalletModalOpen, dispatch]);
+
   const handleCreateWallet = async () => {
     if (!estateId) {
       toast.warning("No estate found.");
@@ -136,6 +149,10 @@ export default function EstateAdminWalletPage() {
       toast.warning("Please enter the account number you want to withdraw to.");
       return;
     }
+    if (!createWalletBankCode.trim()) {
+      toast.warning("Please select a bank.");
+      return;
+    }
     try {
       await dispatch(
         createWallet({
@@ -143,44 +160,13 @@ export default function EstateAdminWalletPage() {
           balance: 0,
           lockedBalance: 0,
           accountNumber: createWalletAccountNumber.trim(),
-          // in the estate admin, to create wallet, {
-    // "success": true,
-    // "message": "Wallet created successfully.",
-    // "data": {
-    //     "estateId": "69b177244daf32b633ed9fc1",
-    //     "balance": 0,
-    //     "accountNumber": "01400444709",
-    //     "temporaryBalance": 0,
-    //     "lockedBalance": 0,
-    //     "withdrawableBalance": 0,
-    //     "availableBalance": 0,
-    //     "bankCode": null,
-    //     "id": "69b178194daf32b633eda06d",
-    //     "createdAt": "2026-03-11T14:11:37.906Z",
-    //     "updatedAt": "2026-03-11T14:11:37.906Z",
-    //     "__v": 0
-    // } bank code is needed
-          // this is the api to get bank 
-// /api/v1/payment-mgt/banks
-
-
-// Parameters
-// Try it out
-// Name	Description
-// country
-// string
-// (query)
-// Country code (default NG)
-
-// NG
-// Responses
-// Code	Description	Links
-// 200 so add a input for the user to select bankthensend the bankcode as re
+          bankCode: createWalletBankCode.trim(),
         }),
       ).unwrap();
       toast.success("Wallet created successfully.");
       setCreateWalletModalOpen(false);
       setCreateWalletAccountNumber("");
+      setCreateWalletBankCode("");
       await dispatch(getWallet(estateId));
     } catch (error: any) {
       toast.error(error?.message || "Failed to create wallet.");
@@ -478,15 +464,36 @@ export default function EstateAdminWalletPage() {
         onClose={() => {
           setCreateWalletModalOpen(false);
           setCreateWalletAccountNumber("");
+          setCreateWalletBankCode("");
         }}
       >
         <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto mt-12 pb-8 px-6">
           <h2 className="text-lg font-semibold mb-4">Create Wallet</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            Your withdrawal will be sent to this account number. This
-            information is automatically filled in from your Withdrawal from.
+            Your withdrawal will be sent to this account number. Select the bank
+            and enter the account number.
           </p>
           <div className="space-y-4">
+            <div>
+              <Label htmlFor="create-wallet-bank">Bank</Label>
+              <select
+                id="create-wallet-bank"
+                value={createWalletBankCode}
+                onChange={(e) => setCreateWalletBankCode(e.target.value)}
+                className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                disabled={loadingBanks}
+                aria-label="Select bank"
+              >
+                <option value="">
+                  {loadingBanks ? "Loading banks..." : "Select bank"}
+                </option>
+                {banks.map((bank) => (
+                  <option key={bank.code} value={bank.code}>
+                    {bank.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <Label htmlFor="create-wallet-account">Account Number</Label>
               <Input
@@ -504,6 +511,7 @@ export default function EstateAdminWalletPage() {
                 onClick={() => {
                   setCreateWalletModalOpen(false);
                   setCreateWalletAccountNumber("");
+                  setCreateWalletBankCode("");
                 }}
               >
                 Cancel
@@ -512,7 +520,9 @@ export default function EstateAdminWalletPage() {
                 onClick={handleCreateWallet}
                 disabled={
                   createWalletState === "isLoading" ||
-                  !createWalletAccountNumber.trim()
+                  !createWalletAccountNumber.trim() ||
+                  !createWalletBankCode.trim() ||
+                  loadingBanks
                 }
               >
                 {createWalletState === "isLoading"
