@@ -64,6 +64,8 @@ export default function TransactionPage() {
   const [search, setSearch] = useState("");
   const [totalVends, setTotalVends] = useState<number>(0);
   const [totalBills, setTotalBills] = useState<number>(0);
+  const [paidBillsCount, setPaidBillsCount] = useState<number>(0);
+  const [pendingBillsCount, setPendingBillsCount] = useState<number>(0);
   const [filterType, setFilterType] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [dateRangeLabel, setDateRangeLabel] =
@@ -152,14 +154,26 @@ export default function TransactionPage() {
             getEstatePaidBills({
               estateId: estateIdFromUser,
               page: 1,
-              limit: 1,
+              limit: 50000,
             }),
           )
             .unwrap()
             .catch(() => ({ pagination: { total: 0 } })),
         ]);
         setTotalVends(vendsRes?.pagination?.total ?? 0);
-        setTotalBills(billsRes?.pagination?.total ?? 0);
+
+        const billsData = billsRes?.data ?? [];
+        const billsTotal = billsRes?.pagination?.total ?? billsData.length ?? 0;
+        setTotalBills(billsTotal);
+
+        const paidCount = billsData.filter(
+          (item: any) => item.status === "paid",
+        ).length;
+        const pendingCount = billsData.filter(
+          (item: any) => item.status !== "paid",
+        ).length;
+        setPaidBillsCount(paidCount);
+        setPendingBillsCount(pendingCount);
       } catch (err) {
         toast.error("Failed to load data.");
       }
@@ -242,22 +256,10 @@ export default function TransactionPage() {
   };
 
   // const totalBills = paidBillsData.reduce((sum: number, item: any) => sum + (item.amountPaid ?? 0), 0);
-  const paidBills = paidBillsData
-    .filter((item: any) => item.status === "paid")
-    .reduce((sum: number, item: any) => sum + (item.amountPaid ?? 0), 0);
-  const pendingBills = paidBillsData
-    .filter((item: any) => item.status !== "paid")
-    .reduce((sum: number, item: any) => sum + (item.amountPaid ?? 0), 0);
-
-  // Total transaction amount (sum of current page – replace with API summary when available)
-  const totalTransactionsAmount = transactions.reduce(
-    (sum: number, t: { amount?: number }) => sum + (Number(t?.amount) || 0),
-    0,
-  );
-  const totalTransactionsDisplay =
-    totalTransactionsAmount > 0
-      ? `₦${totalTransactionsAmount.toLocaleString()}`
-      : `₦0`;
+  // 🔹 Counts instead of amounts for stats (precomputed so they are available immediately)
+  const totalTransactionsCount =
+    pagination?.total || transactions.length || 0;
+  const totalBillsCount = totalBills;
 
   // 🔹 Automatically verify transaction when redirected back
   useEffect(() => {
@@ -490,26 +492,26 @@ export default function TransactionPage() {
         </p>
       </div>
 
-      {/* Stats – Figma: Total Transactions (main) + Total Bills | Paid Bills | Pending Bills */}
+      {/* Stats – show counts (quantities) instead of amounts */}
       <TransactionStatsBar
         primary={{
           label: "Total Transactions",
-          value: totalTransactionsDisplay,
+          value: totalTransactionsCount.toLocaleString(),
           // trend: "5.2% this month",
         }}
         stats={[
-          { label: "Total Bills", value: `₦${totalBills.toLocaleString()}` },
-          { label: "Paid Bills", value: `₦${paidBills.toLocaleString()}` },
+          { label: "Total Vends", value: totalVends.toLocaleString() },
+          { label: "Total Bills", value: totalBillsCount.toLocaleString() },
           {
             label: "Pending Bills",
-            value: `₦${pendingBills.toLocaleString()}`,
+            value: pendingBillsCount.toLocaleString(),
           },
         ]}
       />
 
       {/* Filter bar – Date range, Filter by Type, Filter by Status, Export (Figma) */}
       <Card className="p-4">
-        <div className="flex flex-wrap items-center gap-3">
+        {/* <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background text-sm font-medium text-foreground hover:bg-muted/50"
@@ -579,7 +581,7 @@ export default function TransactionPage() {
               </>
             )}
           </div>
-        </div>
+        </div> */}
         <div className="mt-3">
           <input
             type="text"

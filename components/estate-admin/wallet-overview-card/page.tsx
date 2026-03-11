@@ -77,28 +77,8 @@ export default function EstateWalletOverviewCard({
 
               {/* Middle: Bill statistics row (Figma) */}
               {showBillStats && (
-                <div className="bg-[#D0DFF233] rounded-lg p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Bills</p>
-                    <p className="text-xl font-bold mt-0.5">
-                      {formatNaira(billStats.totalBills)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Paid Bills</p>
-                    <p className="text-xl font-bold mt-0.5">
-                      {formatNaira(billStats.paidBills)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Pending Bills
-                    </p>
-                    <p className="text-xl font-bold mt-0.5">
-                      {formatNaira(billStats.pendingBills)}
-                    </p>
-                  </div>
-                  <div>
+                <div className="bg-[#D0DFF233] rounded-lg p-4 flex justify-between items-center gap-4">
+                  <div className="flex flex-col items-center justify-center">
                     <p className="text-sm text-muted-foreground">
                       Service Fee (₦)
                     </p>
@@ -109,16 +89,18 @@ export default function EstateWalletOverviewCard({
                         : formatNaira(billStats.serviceFee)} */}
                     </p>
                   </div>
+                  <div></div>
+                  <div className="mx-auto">
+                    <Button
+                      onClick={onWithdraw}
+                      size="lg"
+                      className="px-8 w-full"
+                    >
+                      Withdraw Funds
+                    </Button>
+                  </div>
                 </div>
               )}
-
-              {/* Bottom: Withdraw Funds button */}
-
-              <div className="w-2/3 mx-auto">
-                <Button onClick={onWithdraw} size="lg" className="px-8 w-full">
-                  Withdraw Funds
-                </Button>
-              </div>
             </>
           ) : (
             <div className="flex justify-center py-4">

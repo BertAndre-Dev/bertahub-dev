@@ -66,13 +66,13 @@ export default function LoginPage() {
         if (role === "super admin") {
           router.push("/dashboard/super-admin/user");
         } else if (role === "admin") {
-          router.push("/dashboard/admin/overview");
+          router.push("/dashboard/admin/user");
         } else if (role === "security") {
-          router.push("/dashboard/security/dashboard");
+          router.push("/dashboard/security/visitor-management");
         } else if (role === "estate admin") {
-          router.push("/dashboard/estate-admin/dashboard");
+          router.push("/dashboard/estate-admin/transactions");
         } else if (role === "resident") {
-          router.push("/dashboard/resident/dashboard");
+          router.push("/dashboard/resident/bills");
         } else {
           router.push("/dashboard/resident/bills");
         }
