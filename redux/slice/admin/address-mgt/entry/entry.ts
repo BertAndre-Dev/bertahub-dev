@@ -3,42 +3,61 @@ import axiosInstance from "@/utils/axiosInstance";
 
 
 interface EntryData {
-  estateId: string
-  fieldId: string
-  data: Record<string, any>; 
+  estateId: string | { id?: string; _id?: string };
+  fieldId: string;
+  data: Record<string, any>;
 }
 
-
+function normalizeEstateId(
+  estateId: string | { id?: string; _id?: string } | undefined
+): string {
+  if (typeof estateId === "string") return estateId;
+  return estateId?._id || estateId?.id || "";
+}
 
 // create address entry
 export const createEntry = createAsyncThunk(
-    'entry/createEntry',
-    async(data: EntryData, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.post('/api/v1/address-mgt/entry', data);
-            return res.data;
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
-        }
+  "entry/createEntry",
+  async (data: EntryData, { rejectWithValue }) => {
+    try {
+      const payload = {
+        ...data,
+        estateId: normalizeEstateId(data.estateId),
+      };
+      const res = await axiosInstance.post("/api/v1/address-mgt/entry", payload);
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.res?.data?.message,
+      });
     }
+  }
 );
 
 
 // update address entry
 export const updateEntry = createAsyncThunk(
-    'entry/updateEntry',
-    async ({entryId, data}: {entryId: string, data: EntryData}, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.put(`/api/v1/address-mgt/entry/${entryId}`, data);
-            return res.data;
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
-        }
+  "entry/updateEntry",
+  async (
+    { entryId, data }: { entryId: string; data: EntryData },
+    { rejectWithValue }
+  ) => {
+    try {
+      const payload = {
+        ...data,
+        estateId: normalizeEstateId(data.estateId),
+      };
+      const res = await axiosInstance.put(
+        `/api/v1/address-mgt/entry/${entryId}`,
+        payload
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.res?.data?.message,
+      });
     }
+  }
 );
 
 

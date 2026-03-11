@@ -31,6 +31,7 @@ interface EntryData {
 export default function EntryPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [user, setUser] = useState<any>(null);
+  const [estateId, setEstateId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<EntryData | null>(null);
   const [entries, setEntries] = useState<EntryData[]>([]);
@@ -45,8 +46,17 @@ export default function EntryPage() {
       setLoading(true);
 
       const userRes = await dispatch(getSignedInUser()).unwrap();
-      const estateId = userRes?.data?.estateId;
-      setUser(userRes.data);
+      const data = userRes?.data ?? (userRes as Record<string, unknown>);
+      setUser(data);
+
+      const rawEstateId = data?.estateId as
+        | string
+        | { id?: string; _id?: string }
+        | undefined;
+      const estateId =
+        typeof rawEstateId === "string"
+          ? rawEstateId
+          : rawEstateId?._id || rawEstateId?.id || "";
 
       if (!estateId) {
         toast.warning("No estate found for this user.");
@@ -54,6 +64,7 @@ export default function EntryPage() {
         return;
       }
 
+      setEstateId(estateId);
       const fieldsRes = await dispatch(getFieldByEstate(estateId)).unwrap();
       const estateFields = fieldsRes?.data || [];
       setFields(estateFields);
@@ -390,10 +401,10 @@ export default function EntryPage() {
       </Card>
 
       {/* Modal */}
-      {open && user?.estateId && (
+      {open && estateId && (
         <Modal visible={open} onClose={handleCloseModal}>
           <EntryForm
-            estateId={user.estateId}
+            estateId={estateId}
             fieldId={selectedEntry?.fieldId || fields[0]?.id}
             fields={fields}
             initialData={selectedEntry}

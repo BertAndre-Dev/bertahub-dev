@@ -143,6 +143,39 @@ export default function EstateAdminWalletPage() {
           balance: 0,
           lockedBalance: 0,
           accountNumber: createWalletAccountNumber.trim(),
+          // in the estate admin, to create wallet, {
+    // "success": true,
+    // "message": "Wallet created successfully.",
+    // "data": {
+    //     "estateId": "69b177244daf32b633ed9fc1",
+    //     "balance": 0,
+    //     "accountNumber": "01400444709",
+    //     "temporaryBalance": 0,
+    //     "lockedBalance": 0,
+    //     "withdrawableBalance": 0,
+    //     "availableBalance": 0,
+    //     "bankCode": null,
+    //     "id": "69b178194daf32b633eda06d",
+    //     "createdAt": "2026-03-11T14:11:37.906Z",
+    //     "updatedAt": "2026-03-11T14:11:37.906Z",
+    //     "__v": 0
+    // } bank code is needed
+          // this is the api to get bank 
+// /api/v1/payment-mgt/banks
+
+
+// Parameters
+// Try it out
+// Name	Description
+// country
+// string
+// (query)
+// Country code (default NG)
+
+// NG
+// Responses
+// Code	Description	Links
+// 200 so add a input for the user to select bankthensend the bankcode as re
         }),
       ).unwrap();
       toast.success("Wallet created successfully.");
