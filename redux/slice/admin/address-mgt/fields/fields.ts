@@ -44,17 +44,27 @@ export const getField = createAsyncThunk(
 
 // get address field by estate
 export const getFieldByEstate = createAsyncThunk(
-    'field/getFieldByEstate',
-    async (estateId: string, { rejectWithValue }) => {
-        try {
-            const res = await axiosInstance.get(`/api/v1/address-mgt/estate/${estateId}/fields`);
-            return res.data;
-        } catch (error: any) {
-            return rejectWithValue({
-                message: error.res?.data?.message
-            });
-        }
+  "field/getFieldByEstate",
+  async (
+    estateId: string | { id?: string; _id?: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const normalizedEstateId =
+        typeof estateId === "string"
+          ? estateId
+          : estateId?._id || estateId?.id || "";
+
+      const res = await axiosInstance.get(
+        `/api/v1/address-mgt/estate/${normalizedEstateId}/fields`,
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.res?.data?.message,
+      });
     }
+  },
 );
 
 

@@ -9,19 +9,32 @@ export interface AddressOptionItem {
 /** Fetch address fields for an estate (for resident invite-tenant flow). */
 export const getResidentEstateFields = createAsyncThunk(
   "resident-address-options/getEstateFields",
-  async (estateId: string, { rejectWithValue }) => {
+  async (
+    estateId: string | { id?: string; _id?: string },
+    { rejectWithValue },
+  ) => {
     try {
+      const normalizedEstateId =
+        typeof estateId === "string"
+          ? estateId
+          : estateId?._id || estateId?.id || "";
+
       const res = await axiosInstance.get(
-        `/api/v1/address-mgt/estate/${estateId}/fields`
+        `/api/v1/address-mgt/estate/${normalizedEstateId}/fields`,
       );
       return res.data;
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
       return rejectWithValue({
-        message: err?.response?.data?.message ?? "Failed to fetch address fields.",
+        message:
+          err?.response?.data?.message ??
+          "Failed to fetch address fields.",
       });
     }
-  }
+  },
 );
 
 /** Fetch address entries for a field (for resident invite-tenant flow). May return 403 for residents. */

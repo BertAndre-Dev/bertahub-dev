@@ -303,14 +303,14 @@ export default function EstateAdminWalletPage() {
           ? Number(item.amount).toLocaleString()
           : "—",
     },
-    {
-      key: "serviceCharge",
-      header: "Service Charge (₦)",
-      render: (item: ExtendedEstateCreditItem): React.ReactNode =>
-        typeof item.serviceCharge === "number"
-          ? Number(item.serviceCharge).toLocaleString()
-          : "—",
-    },
+    // {
+    //   key: "serviceCharge",
+    //   header: "Service Charge (₦)",
+    //   render: (item: ExtendedEstateCreditItem): React.ReactNode =>
+    //     typeof item.serviceCharge === "number"
+    //       ? Number(item.serviceCharge).toLocaleString()
+    //       : "—",
+    // },
     {
       key: "tx_ref",
       header: "Transaction Reference",

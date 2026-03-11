@@ -42,7 +42,7 @@ export default function TransactionPage() {
   const [limit] = useState(10);
   const [activeTab, setActiveTab] = useState<
     "history" | "vends" | "paid-bills"
-  >("history");
+  >("vends");
   const [vendsData, setVendsData] = useState<any[]>([]);
   const [vendsPagination, setVendsPagination] = useState<{
     total: number;
@@ -495,7 +495,7 @@ export default function TransactionPage() {
         primary={{
           label: "Total Transactions",
           value: totalTransactionsDisplay,
-          trend: "5.2% this month",
+          // trend: "5.2% this month",
         }}
         stats={[
           { label: "Total Bills", value: `₦${totalBills.toLocaleString()}` },
@@ -595,7 +595,7 @@ export default function TransactionPage() {
       <Card className="p-4">
         <div className="flex gap-2 border-b border-border overflow-x-auto mb-4">
           {[
-            { id: "history" as const, label: "Transaction History" },
+            // { id: "history" as const, label: "Transaction History" },
             { id: "vends" as const, label: "Estate Vends" },
             { id: "paid-bills" as const, label: "Paid Bills" },
           ].map((tab) => (
