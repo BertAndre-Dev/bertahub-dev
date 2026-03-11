@@ -32,6 +32,7 @@ interface FieldData {
 export default function AddressField() {
   const dispatch = useDispatch<AppDispatch>();
   const [user, setUser] = useState<any>(null);
+  const [estateId, setEstateId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [selectedField, setSelectedField] = useState<FieldData | null>(null);
 
@@ -54,11 +55,22 @@ export default function AddressField() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        setUser(userRes.data);
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+        setUser(data);
 
-        const estateId = userRes?.data?.estateId;
-        if (estateId) {
-          await dispatch(getFieldByEstate(estateId)).unwrap();
+        const rawEstateId = data?.estateId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
+        const foundEstateId =
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id || rawEstateId?.id || "";
+
+        setEstateId(foundEstateId || null);
+
+        if (foundEstateId) {
+          await dispatch(getFieldByEstate(foundEstateId)).unwrap();
         } else {
           toast.warning("No estate found for this user.");
         }
@@ -91,8 +103,8 @@ export default function AddressField() {
       }
 
       handleCloseModal();
-      if (user?.estateId) {
-        await dispatch(getFieldByEstate(user.estateId)).unwrap();
+      if (estateId) {
+        await dispatch(getFieldByEstate(estateId)).unwrap();
       }
     } catch (err: any) {
       toast.error(err?.message || "Failed to save field.");
@@ -210,8 +222,8 @@ export default function AddressField() {
             pageSize: Number(pagination?.pageSize) || 10,
           }}
           onPageChange={(page) => {
-            if (!user?.estateId) return;
-            dispatch(getFieldByEstate(user.estateId))
+            if (!estateId) return;
+            dispatch(getFieldByEstate(estateId))
               .unwrap()
               .catch(() => toast.error("Failed to change page"));
           }}
@@ -220,10 +232,10 @@ export default function AddressField() {
         />
       </Card>
 
-      {open && user?.estateId && (
+      {open && estateId && (
         <Modal visible={open} onClose={handleCloseModal}>
           <FieldForm
-            estateId={user.estateId}
+            estateId={estateId}
             initialData={selectedField}
             onSubmit={handleSubmitField}
           />
