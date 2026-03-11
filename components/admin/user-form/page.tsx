@@ -60,8 +60,20 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
         setLoading(true);
 
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const estateId = userRes?.data?.estateId;
-        if (!estateId) return toast.error("No estate linked to your account.");
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+
+        const rawEstateId = data?.estateId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
+        const estateId =
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id || rawEstateId?.id || "";
+
+        if (!estateId) {
+          return toast.error("No estate linked to your account.");
+        }
 
         setFormData((prev) => ({ ...prev, estateId }));
 
