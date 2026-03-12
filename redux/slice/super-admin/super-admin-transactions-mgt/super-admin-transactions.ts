@@ -40,12 +40,19 @@ export const getAllTransactionHistory = createAsyncThunk(
       page = 1,
       limit = 10,
       type = "",
-      search = "",  // ✅ add this
+      search = "",
+      forGrandTotal = false,
     }: {
       page?: number;
       limit?: number;
       type?: string;
-      search?: string;  // ✅ add this
+      search?: string;
+      /**
+       * When true, the slice will use this response only to
+       * compute the grand total amount and will NOT overwrite
+       * the paginated list in state.
+       */
+      forGrandTotal?: boolean;
     },
     { rejectWithValue }
   ) => {
@@ -59,7 +66,7 @@ export const getAllTransactionHistory = createAsyncThunk(
         params.append("type", type);
       }
 
-      if (search) {  // ✅ add this
+      if (search) {
         params.append("search", search);
       }
 
@@ -67,7 +74,9 @@ export const getAllTransactionHistory = createAsyncThunk(
         `/api/v1/transaction-mgt/all-history?${params.toString()}`
       );
 
-      return res.data;
+      // We return the full response plus the flag so the slice
+      // can decide how to store it.
+      return { ...(res.data as any), forGrandTotal };
     } catch (error: any) {
       return rejectWithValue(error.response?.data);
     }

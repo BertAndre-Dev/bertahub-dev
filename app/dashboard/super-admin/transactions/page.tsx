@@ -21,26 +21,7 @@ export default function SuperAdminTransactionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [grandTotal, setGrandTotal] = useState(0);
-
-  // Fetch all data once just for the grand total
-  useEffect(() => {
-    dispatch(
-      getAllTransactionHistory({ page: 1, limit: 99999, type: "", search: "" }),
-    )
-      .unwrap()
-      .then((res: any) => {
-        const allData = res?.data || [];
-        const total = allData.reduce(
-          (sum: number, t: any) => sum + (t.amount || 0),
-          0,
-        );
-        setGrandTotal(total);
-      })
-      .catch(() => {});
-  }, []); // ← empty array means this only runs once on mount
-
-  const { allTransactionHistory, loading } = useSelector((state: RootState) => {
+  const { allTransactionHistory, loading, grandTotal } = useSelector((state: RootState) => {
     const s: any = state.superAdminTransaction;
     return {
       allTransactionHistory: s?.allTransactionHistory || {
@@ -48,8 +29,22 @@ export default function SuperAdminTransactionsPage() {
         pagination: { total: 0, page: 1, limit: PAGE_SIZE, pages: 1 },
       },
       loading: s?.getAllTransactionHistoryState === "isLoading",
+      grandTotal: s?.grandTotal ?? 0,
     };
   });
+
+  // Fetch grand total once, using Redux (but without overwriting the list)
+  useEffect(() => {
+    dispatch(
+      getAllTransactionHistory({
+        page: 1,
+        limit: 99999,
+        type: "",
+        search: "",
+        forGrandTotal: true,
+      }),
+    );
+  }, [dispatch]);
 
   const { selectedTransaction, getTransactionState, verifyTransactionState } =
     useSelector((state: RootState) => {
