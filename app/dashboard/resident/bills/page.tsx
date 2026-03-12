@@ -59,7 +59,17 @@ export default function BillPage() {
           return;
         }
         const uId = (user.id ?? user._id ?? "") as string;
-        const eId = (user.estateId ?? (user.estate as { id?: string })?.id ?? "") as string;
+
+        const rawEstateId = user.estateId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
+        const eId =
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id ||
+              rawEstateId?.id ||
+              ((user.estate as { id?: string } | undefined)?.id ?? "");
         const addresses = normalizeAddresses(user);
         const firstId = addresses.length > 0 ? addresses[0].id : null;
 
