@@ -33,10 +33,8 @@ const roleOptions = [
   { label: "Security", value: "security" },
 ];
 
-const residentTypeOptions = [
-  { label: "Owner", value: "owner" },
-  { label: "Tenant", value: "tenant" },
-];
+// Admins can only invite residents as OWNERS. Tenants must be invited by owners.
+const residentTypeOptions = [{ label: "Owner", value: "owner" }];
 
 const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -123,9 +121,6 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
     }
 
     if (formData.role === "resident") {
-      if (!formData.residentType) {
-        return toast.error("Please select resident type (Owner or Tenant)");
-      }
       if (!formData.addressIds?.length) {
         return toast.error("Please select at least one address");
       }
@@ -137,7 +132,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
       lastName: formData.lastName,
       email: formData.email,
       role: formData.role,
-      residentType: formData.role === "resident" ? formData.residentType : "owner",
+      residentType: formData.role === "resident" ? "owner" : "owner",
       addressIds: formData.role === "resident" ? formData.addressIds : [] as string[],
     };
 
@@ -201,12 +196,16 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
               <Label>Resident Type</Label>
               <Select
                 options={residentTypeOptions}
-                value={residentTypeOptions.find((r) => r.value === formData.residentType)}
-                onChange={(opt) =>
-                  setFormData((prev) => ({ ...prev, residentType: opt?.value ?? "" }))
-                }
-                placeholder="Select Owner or Tenant"
+                value={residentTypeOptions[0]}
+                onChange={() => {
+                  setFormData((prev) => ({ ...prev, residentType: "owner" }));
+                }}
+                isDisabled
+                placeholder="Owner"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Admins can only invite owners. Tenants are invited by owners.
+              </p>
             </div>
           )}
 
