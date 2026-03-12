@@ -26,6 +26,7 @@ export interface SuperAdminTransactionState {
   verifyTransactionState: "idle" | "isLoading" | "succeeded" | "failed";
   selectedTransaction: any | null;
   allTransactionHistory: SuperAdminTransactionResponse | null;
+  grandTotal: number;
   error: string | null;
 }
 
@@ -36,6 +37,7 @@ const initialState: SuperAdminTransactionState = {
   status: "idle",
   allTransactionHistory: null,
   selectedTransaction: null,
+  grandTotal: 0,
   error: null,
 };
 
@@ -59,13 +61,31 @@ const superAdminTransactionSlice = createSlice({
         state.getAllTransactionHistoryState = "succeeded";
         state.status = "succeeded";
 
+        const isGrandTotal = (action.payload as any)?.forGrandTotal;
+        const isExport = (action.payload as any)?.forExport;
+        const data: TransactionData[] = action.payload?.data || [];
+
+        if (isGrandTotal) {
+          // Only compute the grand total amount, do not touch the paginated list
+          state.grandTotal = data.reduce(
+            (sum, t) => sum + (t.amount || 0),
+            0
+          );
+          return;
+        }
+
+        if (isExport) {
+          // Export calls should not mutate the list state at all
+          return;
+        }
+
         const pagination = action.payload?.pagination;
         state.allTransactionHistory = {
           success: action.payload?.success ?? true,
           message:
             action.payload?.message ||
             "All transactions retrieved successfully.",
-          data: action.payload?.data || [],
+          data,
           pagination: {
             total: pagination?.total ?? 0,
             page: Number(pagination?.page) || 1,

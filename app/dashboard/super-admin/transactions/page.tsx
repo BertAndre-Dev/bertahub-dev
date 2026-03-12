@@ -13,6 +13,7 @@ import {
 import { Search } from "lucide-react";
 import { toast } from "react-toastify";
 import { TransactionDetailsDialog } from "@/components/super-admin/transaction-modal/page";
+import { TransactionsFilterBar } from "@/components/super-admin/transactions-filter-bar";
 
 const PAGE_SIZE = 10;
 
@@ -21,6 +22,9 @@ export default function SuperAdminTransactionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [fromDate, setFromDate] = useState<string | null>(null);
+  const [toDate, setToDate] = useState<string | null>(null);
+  const [estateFilter, setEstateFilter] = useState("");
   const { allTransactionHistory, loading, grandTotal } = useSelector((state: RootState) => {
     const s: any = state.superAdminTransaction;
     return {
@@ -67,6 +71,9 @@ export default function SuperAdminTransactionsPage() {
             limit: PAGE_SIZE,
             type: typeFilter,
             search: searchQuery,
+            estate: estateFilter,
+            startDate: fromDate || "",
+            endDate: toDate || "",
           }),
         ).unwrap();
       } catch (err) {
@@ -80,11 +87,161 @@ export default function SuperAdminTransactionsPage() {
     setCurrentPage(page);
   };
 
+  const handleFiltersChange = (filters: {
+    fromDate: string | null;
+    toDate: string | null;
+    estate: string;
+    type: string;
+  }) => {
+    setFromDate(filters.fromDate);
+    setToDate(filters.toDate);
+    setEstateFilter(filters.estate);
+    setTypeFilter(filters.type);
+    setCurrentPage(1);
+  };
+
+  const handleExport = async (format: "csv" | "pdf") => {
+    try {
+      const response: any = await dispatch(
+        getAllTransactionHistory({
+          page: 1,
+          limit: 99999,
+          type: typeFilter,
+          search: searchQuery,
+          estate: estateFilter,
+          startDate: fromDate || "",
+          endDate: toDate || "",
+          forExport: true,
+        }),
+      ).unwrap();
+
+      const rows = (response?.data || []) as any[];
+      if (!rows.length) {
+        toast.info("No transactions found for the selected filters.");
+        return;
+      }
+
+      if (format === "csv") {
+        const header = [
+          "Date",
+          "Type",
+          "Amount",
+          "Status",
+          "Resident Name",
+          "Estate",
+          "Description",
+          "Reference",
+        ];
+        const csvRows = rows.map((item) => {
+          const date = new Date(item.createdAt).toISOString();
+          const name = item.user
+            ? `${item.user.firstName || ""} ${item.user.lastName || ""}`.trim()
+            : "";
+          const estate = item.estate?.name || "";
+          const values = [
+            date,
+            item.type || "",
+            item.amount ?? "",
+            item.paymentStatus || "",
+            name,
+            estate,
+            item.description || "",
+            item.tx_ref || "",
+          ];
+          return values
+            .map((v) => {
+              const str = String(v ?? "");
+              if (str.includes(",") || str.includes("\"") || str.includes("\n")) {
+                return `"${str.replace(/"/g, '""')}"`;
+              }
+              return str;
+            })
+            .join(",");
+        });
+
+        const csvContent = [header.join(","), ...csvRows].join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute(
+          "download",
+          `transactions_${new Date().toISOString()}.csv`,
+        );
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) return;
+
+        const tableRows = rows
+          .map((item) => {
+            const date = new Date(item.createdAt).toLocaleString();
+            const name = item.user
+              ? `${item.user.firstName || ""} ${item.user.lastName || ""}`.trim()
+              : "";
+            const estate = item.estate?.name || "";
+            return `<tr>
+              <td>${date}</td>
+              <td>${item.type || ""}</td>
+              <td>${item.amount ?? ""}</td>
+              <td>${item.paymentStatus || ""}</td>
+              <td>${name}</td>
+              <td>${estate}</td>
+              <td>${item.description || ""}</td>
+              <td>${item.tx_ref || ""}</td>
+            </tr>`;
+          })
+          .join("");
+
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Transactions Export</title>
+              <style>
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #ccc; padding: 4px; font-size: 12px; }
+                th { background: #f5f5f5; }
+              </style>
+            </head>
+            <body>
+              <h3>Transactions Export</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Resident Name</th>
+                    <th>Estate</th>
+                    <th>Description</th>
+                    <th>Reference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows}
+                </tbody>
+              </table>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+      }
+    } catch (error) {
+      toast.error("Failed to export transactions.");
+    }
+  };
+
   const columns = [
     {
       key: "createdAt",
       header: "Date",
-      render: (item: any) => new Date(item.createdAt).toLocaleDateString(),
+      render: (item: any) => new Date(item.createdAt).toLocaleString(),
     },
     {
       key: "residentEstate",
@@ -204,31 +361,14 @@ export default function SuperAdminTransactionsPage() {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-lg border flex flex-wrap gap-3 items-center">
-        <button className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2">
-          <span>📅</span> From
-          <span>▼</span>
-        </button>
-        <button className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2">
-          To
-          <span>▼</span>
-        </button>
-        <button className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2">
-          Filter by Type
-          <span>▼</span>
-        </button>
-        <button className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2">
-          Filter by Status
-          <span>▼</span>
-        </button>
-        <button className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2">
-          Filter by Estate
-          <span>▼</span>
-        </button>
-        <button className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50">
-          Export
-        </button>
-      </div>
+      <TransactionsFilterBar
+        fromDate={fromDate}
+        toDate={toDate}
+        estate={estateFilter}
+        type={typeFilter}
+        onFiltersChange={handleFiltersChange}
+        onExport={(format) => handleExport(format)}
+      />
 
       <Card className="p-4">
         <Table

@@ -41,18 +41,30 @@ export const getAllTransactionHistory = createAsyncThunk(
       limit = 10,
       type = "",
       search = "",
+      estate = "",
+      startDate = "",
+      endDate = "",
       forGrandTotal = false,
+      forExport = false,
     }: {
       page?: number;
       limit?: number;
       type?: string;
       search?: string;
+      estate?: string;
+      startDate?: string;
+      endDate?: string;
       /**
        * When true, the slice will use this response only to
        * compute the grand total amount and will NOT overwrite
        * the paginated list in state.
        */
       forGrandTotal?: boolean;
+      /**
+       * When true, this call is used only for exporting data.
+       * The slice should not overwrite the current list.
+       */
+      forExport?: boolean;
     },
     { rejectWithValue }
   ) => {
@@ -70,13 +82,25 @@ export const getAllTransactionHistory = createAsyncThunk(
         params.append("search", search);
       }
 
+      if (estate) {
+        params.append("estate", estate);
+      }
+
+      if (startDate) {
+        params.append("startDate", startDate);
+      }
+
+      if (endDate) {
+        params.append("endDate", endDate);
+      }
+
       const res = await axiosInstance.get(
         `/api/v1/transaction-mgt/all-history?${params.toString()}`
       );
 
-      // We return the full response plus the flag so the slice
+      // We return the full response plus the flags so the slice
       // can decide how to store it.
-      return { ...(res.data as any), forGrandTotal };
+      return { ...(res.data as any), forGrandTotal, forExport };
     } catch (error: any) {
       return rejectWithValue(error.response?.data);
     }
