@@ -17,10 +17,7 @@ import {
 } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt";
 import { getBanks } from "@/redux/slice/estate-admin/fund-wallet/fund-wallet";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-import {
-  verifyTransaction,
-  transferFunds,
-} from "@/redux/slice/estate-admin/transaction/transaction";
+import { verifyTransaction } from "@/redux/slice/estate-admin/transaction/transaction";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
 import { useEffect, useState } from "react";
@@ -178,76 +175,7 @@ export default function EstateAdminWalletPage() {
       ? banks.find((b) => b.code === wallet.bankCode)?.name ?? ""
       : "";
 
-  const handleWithdrawSubmit = async ({
-    walletId,
-    amount,
-    description,
-    type,
-    currency,
-    country,
-    bankCode,
-    accountNumber,
-  }: {
-    walletId: string;
-    amount: number;
-    description: string;
-    type: "debit";
-    currency: string;
-    country: string;
-    bankCode?: string;
-    accountNumber?: string;
-  }) => {
-    try {
-      if (!bankCode || !accountNumber) {
-        toast.error(
-          "Bank code and account number are required for withdrawal.",
-        );
-        return;
-      }
-
-      if (!estateId) {
-        toast.error("Estate ID is required for withdrawal.");
-        return;
-      }
-
-      // ✅ 1. Generate tx_ref and WAIT for it
-      const txRefResponse = await dispatch(generateTxRef()).unwrap();
-
-      const tx_ref = txRefResponse?.tx_ref;
-
-      if (!tx_ref) {
-        toast.error("Failed to generate transaction reference.");
-        return;
-      }
-
-      // ✅ 2. Transfer funds using tx_ref
-      await dispatch(
-        transferFunds({
-          estateId,
-          amount,
-          currency,
-          bankCode,
-          accountNumber,
-          tx_ref, // 🔥 important
-          narration: description || `Withdrawal of ${currency} ${amount}`,
-        }),
-      ).unwrap();
-
-      toast.success("Fund withdrawal initiated successfully!");
-
-      // ✅ 3. Refresh wallet + credits
-      await dispatch(getWallet(estateId));
-      await dispatch(getEstateCredits({ estateId, page: creditsPage, limit }));
-
-      setOpen(false);
-    } catch (err: any) {
-      const errorMessage =
-        err?.message || err?.payload?.message || "Failed to withdraw fund.";
-
-      toast.error(errorMessage);
-      throw err;
-    }
-  };
+  // Withdrawal flow (create transaction + OTP + transfer) is handled inside WithdrawFundForm
 
   // Verify transaction when redirected back from payment
   useEffect(() => {
@@ -451,11 +379,11 @@ export default function EstateAdminWalletPage() {
             <WithdrawFundForm
               userId={userId}
               walletId={wallet.id ?? ""}
+              estateId={estateId ?? ""}
               defaultAccountNumber={wallet.accountNumber ?? ""}
               bankCode={wallet.bankCode ?? ""}
               bankName={walletBankName}
               maxWithdrawableAmount={wallet.temporaryBalance}
-              onSubmit={handleWithdrawSubmit}
               onClose={handleOpenModal}
             />
           ) : (

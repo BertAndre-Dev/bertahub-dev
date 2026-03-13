@@ -7,6 +7,11 @@ interface TransactionData {
   amount: number;
   description: string;
   userId: string;
+  serviceCharge?: number;
+  role?: string;
+  residentType?: string | null;
+  balanceType?: string;
+  isAuditOnly?: boolean;
 }
 
 
@@ -36,6 +41,17 @@ interface PaymentPayload {
 }
 
 interface TransferPayload {
+  estateId: string;
+  amount: number;
+  currency: string;
+  bankCode: string;
+  accountNumber: string;
+  narration: string;
+  tx_ref: string;
+  otp?: string;
+}
+
+interface EstateAdminOtpPayload {
   estateId: string;
   amount: number;
   currency: string;
@@ -73,10 +89,31 @@ export const createTransaction = createAsyncThunk(
       return res.data;
     } catch (error: any) {
       return rejectWithValue({
-        message: error.res?.data?.message || "Transaction created successfully."
-      })
+        message:
+          error?.response?.data?.message || "Failed to create transaction.",
+      });
     }
-  }
+  },
+);
+
+// ✅ Request OTP for estate admin transfer
+export const requestEstateAdminOtp = createAsyncThunk(
+  "estate-admin-transaction/requestEstateAdminOtp",
+  async (data: EstateAdminOtpPayload, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        "/api/v1/payment-mgt/estate-admin/request-otp",
+        data,
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message:
+          error?.response?.data?.message ||
+          "Failed to request transfer OTP for estate admin.",
+      });
+    }
+  },
 );
 
 // ✅ Get paginated transaction history

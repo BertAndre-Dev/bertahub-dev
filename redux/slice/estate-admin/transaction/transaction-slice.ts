@@ -6,7 +6,8 @@ import {
     getEstateTransactionHistory,
     verifyTransaction,
     // initializePayment,
-    transferFunds
+    transferFunds,
+    requestEstateAdminOtp,
 } from './transaction';
 
 interface TransactionData {
@@ -51,6 +52,7 @@ export interface TransactionState {
     verifyTransactionState: "idle" | "isLoading" | "succeeded" | "failed";
     initializePaymentState: "idle" | "isLoading" | "succeeded" | "failed";
     transferFundsState: "idle" | "isLoading" | "succeeded" | "failed";
+    requestOtpState: "idle" | "isLoading" | "succeeded" | "failed";
     status: "idle" | "isLoading" | "succeeded" | "failed";
     transaction: TransactionData | null;
     allTransactions: TransactionResponse | null;
@@ -66,6 +68,7 @@ const initialState: TransactionState = {
     verifyTransactionState: "idle",
     initializePaymentState: "idle",
     transferFundsState: "idle",
+    requestOtpState: "idle",
     status: "idle",
     transaction: null,
     allTransactions: null,
@@ -240,6 +243,24 @@ const transactionSlice = createSlice({
                     (action.payload as { message: string })?.message ||
                     action.error.message ||
                     "Failed to transfer funds";
+            });
+
+        // ✅ REQUEST ESTATE ADMIN OTP
+        builder
+            .addCase(requestEstateAdminOtp.pending, (state) => {
+                state.requestOtpState = "isLoading";
+                state.error = null;
+            })
+            .addCase(requestEstateAdminOtp.fulfilled, (state, action) => {
+                state.requestOtpState = "succeeded";
+                state.paymentData = action.payload;
+            })
+            .addCase(requestEstateAdminOtp.rejected, (state, action) => {
+                state.requestOtpState = "failed";
+                state.error =
+                    (action.payload as { message: string })?.message ||
+                    action.error.message ||
+                    "Failed to request OTP";
             });
     },
 });

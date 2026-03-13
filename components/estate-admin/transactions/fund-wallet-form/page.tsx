@@ -6,6 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/redux/store";
+import {
+  createTransaction,
+  requestEstateAdminOtp,
+  transferFunds,
+} from "@/redux/slice/estate-admin/transaction/transaction";
+import { getWallet, getEstateCredits } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt";
 
 const DEFAULT_COUNTRY = "NG";
 const DEFAULT_CURRENCY = "NGN";
@@ -13,35 +21,26 @@ const DEFAULT_CURRENCY = "NGN";
 interface FundWalletFormProps {
   userId: string;
   walletId: string;
+  estateId: string;
   defaultAccountNumber?: string;
   bankCode?: string;
   bankName?: string;
   /** Max amount that can be withdrawn (e.g. estate wallet temporaryBalance). */
   maxWithdrawableAmount?: number;
-  onSubmit: (data: {
-    userId: string;
-    walletId: string;
-    amount: number;
-    description: string;
-    type: "debit";
-    currency: string;
-    country: string;
-    bankCode?: string;
-    accountNumber?: string;
-  }) => Promise<void>;
   onClose?: () => void;
 }
 
 export default function FundWalletForm({
   userId,
   walletId,
+  estateId,
   defaultAccountNumber = "",
   bankCode,
   bankName,
   maxWithdrawableAmount,
-  onSubmit,
   onClose,
 }: FundWalletFormProps) {
+  const dispatch = useDispatch<AppDispatch>();
   const [amount, setAmount] = useState<number>();
   const [accountNumber, setAccountNumber] =
     useState<string>(defaultAccountNumber);
@@ -53,6 +52,9 @@ export default function FundWalletForm({
   const [currency] = useState<string>(DEFAULT_CURRENCY);
   const [country] = useState<string>(DEFAULT_COUNTRY);
   const [submitting, setSubmitting] = useState(false);
+  const [otpRequested, setOtpRequested] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [txRef, setTxRef] = useState<string | null>(null);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -96,22 +98,87 @@ export default function FundWalletForm({
     setSubmitting(true);
 
     try {
-      await onSubmit({
-        userId,
-        walletId,
-        amount,
-        description,
-        type: "debit",
-        currency,
-        country,
-        bankCode,
-        accountNumber: accountNumber || undefined,
-      });
+      if (!otpRequested) {
+        // Step 1: Create audit-only transaction
+        await dispatch(
+          createTransaction({
+            walletId,
+            type: "debit",
+            amount,
+            description,
+            userId,
+            role: "estate admin",
+            residentType: null,
+            balanceType: "withdrawableBalance",
+            isAuditOnly: true,
+          }),
+        ).unwrap();
 
-      toast.success("Fund withdrawal initiated successfully!");
-      onClose?.();
+        // Step 2: Request OTP (backend will generate tx_ref internally or from data)
+        const otpRes = await dispatch(
+          requestEstateAdminOtp({
+            estateId,
+            amount,
+            currency,
+            bankCode,
+            accountNumber,
+            narration:
+              description || `Withdrawal of ${currency} ${amount.toLocaleString()}`,
+            tx_ref: "",
+          }),
+        ).unwrap();
+
+        const generatedTxRef =
+          (otpRes as any)?.data?.tx_ref || (otpRes as any)?.tx_ref || "";
+
+        if (!generatedTxRef) {
+          toast.warning("OTP requested, but transaction reference is missing.");
+        } else {
+          setTxRef(generatedTxRef);
+        }
+
+        setOtpRequested(true);
+        toast.success("OTP sent to your email. Please enter it to confirm.");
+      } else {
+        // Step 3: Transfer with OTP
+        if (!otp.trim()) {
+          toast.error("Please enter the OTP sent to your email.");
+          setSubmitting(false);
+          return;
+        }
+
+        const tx_ref_to_use = txRef || "";
+
+        await dispatch(
+          transferFunds({
+            estateId,
+            amount,
+            currency,
+            bankCode,
+            accountNumber,
+            narration:
+              description || `Withdrawal of ${currency} ${amount.toLocaleString()}`,
+            tx_ref: tx_ref_to_use,
+            otp: otp.trim(),
+          }),
+        ).unwrap();
+
+        toast.success("Withdrawal successful!");
+
+        // Refresh wallet + credits
+        await dispatch(getWallet(estateId));
+        await dispatch(
+          getEstateCredits({
+            estateId,
+            page: 1,
+            limit: 10,
+          }),
+        );
+
+        onClose?.();
+      }
     } catch (err: any) {
-      toast.error(err?.message || "Failed to fund wallet.");
+      toast.error(err?.message || "Failed to process withdrawal.");
     } finally {
       setSubmitting(false);
     }
@@ -170,8 +237,24 @@ export default function FundWalletForm({
             />
           </div>
 
+          {otpRequested && (
+            <div>
+              <Label>OTP</Label>
+              <Input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter OTP sent to your email"
+              />
+            </div>
+          )}
+
           <Button type="submit" className="w-full mt-4" disabled={submitting}>
-            {submitting ? "Processing..." : `Withdraw Fund`}
+            {submitting
+              ? "Processing..."
+              : otpRequested
+                ? "Confirm Withdrawal"
+                : "Request OTP"}
           </Button>
         </CardContent>
       </form>

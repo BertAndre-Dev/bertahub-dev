@@ -10,7 +10,9 @@ export default function WithdrawModal({
   walletId,
   defaultAccountNumber,
   maxWithdrawableAmount,
-  onSubmit,
+  estateId,
+  bankCode,
+  bankName,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -18,17 +20,9 @@ export default function WithdrawModal({
   walletId: string | null;
   defaultAccountNumber?: string;
   maxWithdrawableAmount?: number;
-  onSubmit: (data: {
-    userId: string;
-    walletId: string;
-    amount: number;
-    description: string;
-    type: "debit";
-    currency: string;
-    country: string;
-    bankCode?: string;
-    accountNumber?: string;
-  }) => Promise<void>;
+  estateId: string | null;
+  bankCode?: string;
+  bankName?: string;
 }) {
   return (
     <Modal visible={visible} onClose={onClose}>
@@ -37,9 +31,11 @@ export default function WithdrawModal({
           <WithdrawFundForm
             userId={userId}
             walletId={walletId}
+            estateId={estateId ?? ""}
             defaultAccountNumber={defaultAccountNumber ?? ""}
+            bankCode={bankCode}
+            bankName={bankName}
             maxWithdrawableAmount={maxWithdrawableAmount ?? 0}
-            onSubmit={onSubmit}
             onClose={onClose}
           />
         ) : (

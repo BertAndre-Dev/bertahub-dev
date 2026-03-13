@@ -20,9 +20,11 @@ import {
   getTransactionHistory,
   generateTxRef,
   transferFundsResident,
+  requestResidentOwnerWithdrawalOtp,
 } from "@/redux/slice/resident/transaction/transaction";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
+import { getBanks as getResidentBanks } from "@/redux/slice/resident/payment-mgt/payment-mgt";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
@@ -55,6 +57,7 @@ export default function TransactionPage() {
   const [email, setEmail] = useState<string>("");
   const [residentType, setResidentType] = useState<string | null>(null);
   const [transId, setTransId] = useState<string>("");
+  const [ownerEstateId, setOwnerEstateId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
   const [continuingPaymentTxRef, setContinuingPaymentTxRef] = useState<string | null>(null);
@@ -67,6 +70,9 @@ export default function TransactionPage() {
   const wallet = useSelector((state: RootState) => state.wallet.wallet) as WalletData | null;
   const createWalletState = useSelector(
     (state: RootState) => state.wallet.createWalletState,
+  );
+  const residentBanks = useSelector(
+    (state: RootState) => state.residentPaymentMgt.banks,
   );
   const loading =
     useSelector(
@@ -82,6 +88,7 @@ export default function TransactionPage() {
         const id = userRes?.data?.id;
         const userEmail = userRes?.data?.email;
         const rType = userRes?.data?.residentType ?? userRes?.data?.resident_type ?? null;
+        const estateId = userRes?.data?.estateId ?? userRes?.data?.estate_id ?? null;
 
         if (!id) {
           toast.warning("No user found.");
@@ -91,6 +98,7 @@ export default function TransactionPage() {
         setUserId(id);
         setEmail(userEmail || "");
         setResidentType(rType ?? null);
+        setOwnerEstateId(estateId ?? null);
 
         // ✅ Fetch transactions (paginated)
         await dispatch(getTransactionHistory({ userId: id, page: 1, limit }));
@@ -99,6 +107,9 @@ export default function TransactionPage() {
         const walletRes = await dispatch(getWallet(id)).unwrap();
         if (!walletRes?.data?.id)
           toast.warning("No wallet found for this user.");
+
+        // Load banks for displaying bank name in withdraw modal
+        await dispatch(getResidentBanks("NG")).unwrap();
       } catch (err) {
         console.error("❌ Initialization error:", err);
         toast.error("Failed to load data.");
@@ -150,57 +161,7 @@ export default function TransactionPage() {
     setTransferToBalanceLoading(false);
   };
 
-  // Withdraw (owner only): generate tx_ref then call resident transfer
-  const handleWithdrawSubmit = async ({
-    walletId,
-    amount,
-    description,
-    type,
-    currency,
-    country,
-    bankCode,
-    accountNumber,
-  }: {
-    walletId: string;
-    amount: number;
-    description: string;
-    type: "debit";
-    currency: string;
-    country: string;
-    bankCode?: string;
-    accountNumber?: string;
-  }) => {
-    if (!userId) return;
-    if (!bankCode || !accountNumber) {
-      toast.error("Bank code and account number are required for withdrawal.");
-      return;
-    }
-    try {
-      const txRefRes = await dispatch(generateTxRef()).unwrap();
-      const tx_ref = txRefRes?.tx_ref;
-      if (!tx_ref) {
-        toast.error("Failed to generate transaction reference.");
-        return;
-      }
-      await dispatch(
-        transferFundsResident({
-          userId,
-          amount,
-          currency,
-          bankCode,
-          accountNumber,
-          narration: description || `Withdrawal of ${currency} ${amount}`,
-          tx_ref,
-        }),
-      ).unwrap();
-      toast.success("Fund withdrawal initiated successfully!");
-      await dispatch(getWallet(userId));
-      setWithdrawModalOpen(false);
-    } catch (err: any) {
-      toast.error(err?.message ?? err?.payload?.message ?? "Failed to withdraw funds.");
-      throw err;
-    }
-  };
+  // Withdraw (owner only) now handled via OTP flow inside WithdrawFundForm (createTransaction + request OTP + withdraw)
 
   const handleTransferToMainBalance = async (payload: {
     amount: number;
@@ -627,7 +588,13 @@ export default function TransactionPage() {
         walletId={wallet?.id ?? null}
         defaultAccountNumber={wallet?.accountNumber ?? ""}
         maxWithdrawableAmount={wallet?.withdrawableBalance ?? 0}
-        onSubmit={handleWithdrawSubmit}
+        estateId={ownerEstateId}
+        bankCode={wallet?.bankCode ?? ""}
+        bankName={
+          wallet?.bankCode
+            ? residentBanks.find((b) => b.code === wallet.bankCode)?.name ?? ""
+            : ""
+        }
       />
 
       <TransferToBalanceModal

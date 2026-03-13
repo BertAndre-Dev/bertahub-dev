@@ -9,6 +9,11 @@ interface TransactionData {
   amount: number;
   description: string;
   userId: string;
+  serviceCharge?: number;
+  role?: string;
+  residentType?: string | null;
+  balanceType?: string;
+  isAuditOnly?: boolean;
 }
 
 
@@ -165,6 +170,19 @@ export const generateTxRef = createAsyncThunk(
 /** Resident (owner) wallet withdrawal. */
 export interface ResidentTransferPayload {
   userId: string;
+  estateId: string;
+  amount: number;
+  currency: string;
+  bankCode: string;
+  accountNumber: string;
+  narration: string;
+  tx_ref: string;
+  otp?: string;
+}
+
+interface ResidentOwnerOtpPayload {
+  userId: string;
+  estateId: string;
   amount: number;
   currency: string;
   bankCode: string;
@@ -173,12 +191,30 @@ export interface ResidentTransferPayload {
   tx_ref: string;
 }
 
+export const requestResidentOwnerWithdrawalOtp = createAsyncThunk(
+  "resident-transaction/requestResidentOwnerWithdrawalOtp",
+  async (data: ResidentOwnerOtpPayload, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        "/api/v1/payment-mgt/resident-owner/request-withdrawal-otp",
+        data,
+      );
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message:
+          error?.response?.data?.message || "Failed to request withdrawal OTP.",
+      });
+    }
+  },
+);
+
 export const transferFundsResident = createAsyncThunk(
   "resident-transaction/transferFundsResident",
   async (data: ResidentTransferPayload, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.post(
-        "/api/v1/payment-mgt/resident/transfer",
+        "/api/v1/payment-mgt/resident-owner/withdraw",
         data,
       );
       return res.data;
