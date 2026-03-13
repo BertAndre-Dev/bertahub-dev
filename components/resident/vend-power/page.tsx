@@ -28,7 +28,6 @@ export default function VendPowerForm({
   const [amount, setAmount] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
 
-  // Calculate kWh based on amount / 500
   const kwh = useMemo(() => {
     return amount > 0 ? (amount / 500).toFixed(2) : "0";
   }, [amount]);
@@ -73,7 +72,7 @@ export default function VendPowerForm({
           <Label>Amount</Label>
           <Input
             type="number"
-            value={amount}
+            value={amount === 0 ? "" : amount}
             onChange={(e) => setAmount(Number(e.target.value))}
             placeholder="Enter amount"
           />
