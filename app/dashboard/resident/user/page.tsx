@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import Modal from "@/components/modal/page";
 import Table from "@/components/tables/list/page";
 import InviteTenantForm from "@/components/resident/invite-tenant-form/page";
+import DeleteModal from "@/components/resident/delete-modal/page";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { getInvitedTenants } from "@/redux/slice/resident/invited-tenants/invited-tenants";
 import type { InvitedTenantItem } from "@/redux/slice/resident/invited-tenants/invited-tenants";
+import { deleteUser } from "@/redux/slice/admin/user-mgt/user";
 import type { RootState, AppDispatch } from "@/redux/store";
 import { toast } from "react-toastify";
 
@@ -32,6 +34,7 @@ export default function ResidentUserPage() {
   const [open, setOpen] = useState(false);
   const [estateId, setEstateId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [tenantToDelete, setTenantToDelete] = useState<InvitedTenantItem | null>(null);
 
   const inviteTenantState = useSelector(
     (state: RootState) => (state as any).residentInviteTenant,
@@ -47,6 +50,10 @@ export default function ResidentUserPage() {
         pagination: s?.pagination ?? null,
       };
     }
+  );
+
+  const deleteUserState = useSelector(
+    (state: RootState) => (state as any).adminUser?.deleteUserState ?? "idle"
   );
 
   useEffect(() => {
@@ -94,6 +101,29 @@ export default function ResidentUserPage() {
   const handleOpenModal = () => setOpen(true);
   const handleCloseModal = () => setOpen(false);
 
+  const handleOpenDeleteModal = (tenant: InvitedTenantItem) => {
+    const userId = tenant.id || (tenant as { _id?: string })._id;
+    if (!userId) {
+      toast.error("Cannot delete: missing user id.");
+      return;
+    }
+    setTenantToDelete(tenant);
+  };
+
+  const handleCloseDeleteModal = () => setTenantToDelete(null);
+
+  const handleConfirmDelete = async () => {
+    if (!tenantToDelete || !estateId) return;
+    const userId = tenantToDelete.id || (tenantToDelete as { _id?: string })._id;
+    if (!userId) return;
+    await dispatch(deleteUser(userId)).unwrap();
+    toast.success("Tenant deleted successfully.");
+    setTenantToDelete(null);
+    await dispatch(
+      getInvitedTenants({ estateId, page: currentPage, limit: PAGE_SIZE })
+    ).unwrap();
+  };
+
   const columns = [
     {
       key: "name",
@@ -111,6 +141,22 @@ export default function ResidentUserPage() {
       key: "createdAt",
       header: "Created",
       render: (t: InvitedTenantItem) => formatDate(t.createdAt),
+    },
+    {
+      key: "action",
+      header: "Action",
+      render: (t: InvitedTenantItem) => (
+        <button
+          type="button"
+          onClick={() => handleOpenDeleteModal(t)}
+          disabled={deleteUserState === "isLoading"}
+          className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+          title="Delete tenant"
+          aria-label={`Delete ${t.firstName ?? t.email ?? "tenant"}`}
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      ),
     },
   ];
 
@@ -183,6 +229,34 @@ export default function ResidentUserPage() {
           <InviteTenantForm close={handleCloseModal} />
         </Modal>
       )}
+
+      <DeleteModal
+        visible={!!tenantToDelete}
+        onClose={handleCloseDeleteModal}
+        itemName={
+          tenantToDelete
+            ? [tenantToDelete.firstName, tenantToDelete.lastName]
+                .filter(Boolean)
+                .join(" ") || tenantToDelete.email || "this tenant"
+            : ""
+        }
+        title="Delete tenant"
+        message={
+          tenantToDelete ? (
+            <p className="text-sm text-muted-foreground mb-4">
+              Are you sure you want to delete{" "}
+              <strong>
+                {[tenantToDelete.firstName, tenantToDelete.lastName]
+                  .filter(Boolean)
+                  .join(" ") || tenantToDelete.email || "this tenant"}
+              </strong>{" "}
+              ? This will remove their account.
+            </p>
+          ) : null
+        }
+        onConfirm={handleConfirmDelete}
+        loading={deleteUserState === "isLoading"}
+      />
     </div>
   );
 }

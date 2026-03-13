@@ -64,8 +64,17 @@ export default function VisitorPage() {
                     return;
                 }
 
-                const uId = (user.id ?? user._id ?? "") as string;
-                const eId = (user.estateId ?? (user.estate as { id?: string })?.id ?? "") as string;
+                const uId = ((user.id as string | undefined) ?? (user._id as string | undefined) ?? "") || "";
+
+                const rawEstate =
+                    (user.estateId as string | { id?: string; _id?: string } | undefined) ??
+                    (user.estate as { id?: string; _id?: string } | undefined);
+                let eId = "";
+                if (typeof rawEstate === "string") {
+                    eId = rawEstate;
+                } else if (rawEstate && typeof rawEstate === "object") {
+                    eId = rawEstate.id ?? rawEstate._id ?? "";
+                }
                 const addresses = normalizeAddresses(user);
                 const firstId = addresses.length > 0 ? addresses[0].id : null;
 
