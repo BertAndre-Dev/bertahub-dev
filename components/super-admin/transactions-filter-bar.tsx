@@ -68,7 +68,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
   return (
     <div className="bg-white p-4 rounded-lg border flex flex-wrap gap-3 items-center">
       <div className="flex items-center gap-2">
-        <span role="img" aria-label="calendar" className="cursor-pointer">
+        <span role="img" aria-label="calendar" >
           📅
         </span>
         <input
@@ -77,7 +77,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
           type="date"
           value={fromDate ?? ""}
           onChange={handleFromDateChange}
-          className="px-3 py-2 border rounded-lg text-sm"
+          className="px-3 py-2 border rounded-lg text-sm cursor-pointer"
         />
         <span className="text-sm text-muted-foreground">to</span>
         <input
@@ -86,7 +86,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
           type="date"
           value={toDate ?? ""}
           onChange={handleToDateChange}
-          className="px-3 py-2 border rounded-lg text-sm"
+          className="px-3 py-2 border rounded-lg text-sm cursor-pointer"
         />
       </div>
 
@@ -107,7 +107,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
           aria-label="Select type"
           value={type}
           onChange={handleTypeChange}
-          className="px-3 py-2 border rounded-lg text-sm min-w-[160px] bg-white"
+          className="px-3 py-2 border rounded-lg text-sm min-w-[160px] bg-white cursor-pointer"
         >
           <option value="">All</option>
           <option value="credit">Credit</option>

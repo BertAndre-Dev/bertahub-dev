@@ -16,12 +16,21 @@ interface BillData {
 export const getBillsByEstate = createAsyncThunk(
   "bills/getBillsByEstate",
   async (
-    { estateId, page = 1, limit = 10 }: { estateId: string; page?: number; limit?: number },
-    { rejectWithValue }
+    {
+      estateId,
+      page = 1,
+      limit = 10,
+    }: { estateId: string | { id?: string; _id?: string }; page?: number; limit?: number },
+    { rejectWithValue },
   ) => {
     try {
+      const normalizedEstateId =
+        typeof estateId === "string"
+          ? estateId
+          : estateId?._id || estateId?.id || "";
+
       const res = await axiosInstance.get(
-        `/api/v1/bills-mgt/bills/${estateId}?page=${page}&limit=${limit}`
+        `/api/v1/bills-mgt/bills/${normalizedEstateId}?page=${page}&limit=${limit}`,
       );
       return res.data;
     } catch (error: any) {
@@ -29,7 +38,7 @@ export const getBillsByEstate = createAsyncThunk(
         message: error?.response?.data?.message || "Failed to fetch bills",
       });
     }
-  }
+  },
 );
 
 

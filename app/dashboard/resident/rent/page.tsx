@@ -126,8 +126,15 @@ export default function ResidentRentPage() {
       (async () => {
         try {
           const userRes = await dispatch(getSignedInUser()).unwrap();
-          const estateId =
-            userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
+          const rawEstate = userRes?.data?.estateId ?? userRes?.data?.estate;
+
+          let estateId = "";
+          if (typeof rawEstate === "string") {
+            estateId = rawEstate;
+          } else if (rawEstate && typeof rawEstate === "object") {
+            estateId = (rawEstate as { id?: string }).id ?? "";
+          }
+
           if (!estateId) return;
           await dispatch(
             getInvitedTenants({ estateId, page: 1, limit: 200 }),

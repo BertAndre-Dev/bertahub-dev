@@ -63,7 +63,15 @@ export default function ResidentUserPage() {
           return;
         }
 
-        const id = userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
+        const rawEstate = userRes?.data?.estateId ?? userRes?.data?.estate;
+
+        let id = "";
+        if (typeof rawEstate === "string") {
+          id = rawEstate;
+        } else if (rawEstate && typeof rawEstate === "object") {
+          id = (rawEstate as { id?: string }).id ?? "";
+        }
+
         if (!id) return;
         setEstateId(id);
         await dispatch(
