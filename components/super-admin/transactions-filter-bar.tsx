@@ -12,6 +12,12 @@ interface TransactionsFilterBarProps {
     type: string;
   }) => void;
   onExport?: (format: "csv" | "pdf") => void;
+  /** Placeholder for the text search input (e.g. "Filter by name", "Filter by estate name"). Default: "Filter by estate name" */
+  searchPlaceholder?: string;
+  /** Label shown before the search input (e.g. "Name", "Estate"). Default: "Estate" */
+  searchFieldLabel?: string;
+  /** Whether to show the Type (credit/debit) filter. Default: true */
+  showTypeFilter?: boolean;
 }
 
 export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
@@ -21,6 +27,9 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
   type,
   onFiltersChange,
   onExport,
+  searchPlaceholder = "Filter by estate name",
+  searchFieldLabel = "Estate",
+  showTypeFilter = true,
 }) => {
   const handleFromDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFiltersChange({
@@ -91,29 +100,31 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">Estate:</span>
+        <span className="text-sm font-medium">{searchFieldLabel}:</span>
         <input
           type="text"
-          placeholder="Filter by estate name"
+          placeholder={searchPlaceholder}
           value={estate}
           onChange={handleEstateChange}
           className="px-3 py-2 border rounded-lg text-sm min-w-[200px]"
         />
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">Type:</span>
-        <select
-          aria-label="Select type"
-          value={type}
-          onChange={handleTypeChange}
-          className="px-3 py-2 border rounded-lg text-sm min-w-[160px] bg-white cursor-pointer"
-        >
-          <option value="">All</option>
-          <option value="credit">Credit</option>
-          <option value="debit">Debit</option>
-        </select>
-      </div>
+      {showTypeFilter && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Type:</span>
+          <select
+            aria-label="Select type"
+            value={type}
+            onChange={handleTypeChange}
+            className="px-3 py-2 border rounded-lg text-sm min-w-[160px] bg-white cursor-pointer"
+          >
+            <option value="">All</option>
+            <option value="credit">Credit</option>
+            <option value="debit">Debit</option>
+          </select>
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium">Export:</span>

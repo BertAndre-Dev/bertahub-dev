@@ -368,6 +368,7 @@ export default function SuperAdminTransactionsPage() {
         type={typeFilter}
         onFiltersChange={handleFiltersChange}
         onExport={(format) => handleExport(format)}
+        showTypeFilter={false}
       />
 
       <Card className="p-4">

@@ -25,6 +25,7 @@ import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import type { EstateCreditItem } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt-slice";
 import { generateTxRef } from "@/redux/slice/estate-admin/payment/payment";
+import { TransactionsFilterBar } from "@/components/super-admin/transactions-filter-bar";
 
 // Extend the type to include all fields from API
 interface ExtendedEstateCreditItem extends EstateCreditItem {
@@ -44,6 +45,11 @@ export default function EstateAdminWalletPage() {
   const [estateName, setEstateName] = useState("Estate");
   const [creditsPage, setCreditsPage] = useState(1);
   const [limit] = useState(10);
+
+  const [fromDate, setFromDate] = useState<string | null>(null);
+  const [toDate, setToDate] = useState<string | null>(null);
+  const [sourceFilter, setSourceFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
 
   const wallet = useSelector(
     (state: RootState) => state.estateAdminWallet?.wallet ?? null,
@@ -76,7 +82,8 @@ export default function EstateAdminWalletPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const user = userRes?.data ?? (userRes as Record<string, unknown>) ?? null;
+        const user =
+          userRes?.data ?? (userRes as Record<string, unknown>) ?? null;
         const id = user?.id || user?._id || null;
         const rawEstateId =
           (user?.estateId as string | { id?: string; _id?: string }) || null;
@@ -172,7 +179,7 @@ export default function EstateAdminWalletPage() {
 
   const walletBankName =
     wallet && wallet.bankCode
-      ? banks.find((b) => b.code === wallet.bankCode)?.name ?? ""
+      ? (banks.find((b) => b.code === wallet.bankCode)?.name ?? "")
       : "";
 
   // Withdrawal flow (create transaction + OTP + transfer) is handled inside WithdrawFundForm
@@ -291,6 +298,51 @@ export default function EstateAdminWalletPage() {
   const pageSize =
     typeof pag?.limit === "number" ? pag.limit : Number(pag?.limit) || limit;
 
+  const handleCreditsFiltersChange = (filters: {
+    fromDate: string | null;
+    toDate: string | null;
+    estate: string;
+    type: string;
+  }) => {
+    setFromDate(filters.fromDate);
+    setToDate(filters.toDate);
+    setSourceFilter(filters.estate);
+    setTypeFilter(filters.type);
+  };
+
+  const filteredCreditsData = (
+    creditsData as ExtendedEstateCreditItem[]
+  ).filter((item) => {
+    const createdAt = item.createdAt ? new Date(item.createdAt) : null;
+
+    if (fromDate) {
+      const from = new Date(fromDate);
+      if (!createdAt || createdAt < from) return false;
+    }
+
+    if (toDate) {
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999);
+      if (!createdAt || createdAt > to) return false;
+    }
+
+    if (typeFilter) {
+      const itemType = (item as any).type as string | undefined;
+      if (!itemType || itemType.toLowerCase() !== typeFilter.toLowerCase()) {
+        return false;
+      }
+    }
+
+    if (sourceFilter.trim()) {
+      const src = (item.source || "") as string;
+      if (!src.toLowerCase().includes(sourceFilter.trim().toLowerCase())) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -315,11 +367,17 @@ export default function EstateAdminWalletPage() {
         onCreateWallet={() => setCreateWalletModalOpen(true)}
         createWalletLoading={createWalletState === "isLoading"}
         filterExportSlot={
-          <WalletFilterExportBar
-            onFilterByRef={() => {}}
-            onFilterByStatus={() => {}}
-            onExport={() => {}}
-          />
+          <div className="space-y-3">
+            <TransactionsFilterBar
+              fromDate={fromDate}
+              toDate={toDate}
+              estate={sourceFilter}
+              type={typeFilter}
+              onFiltersChange={handleCreditsFiltersChange}
+              searchPlaceholder="Filter by source"
+              searchFieldLabel="Source"
+            />
+          </div>
         }
       />
 
@@ -331,7 +389,7 @@ export default function EstateAdminWalletPage() {
         </p>
         <Table<ExtendedEstateCreditItem>
           columns={creditsColumns}
-          data={creditsData}
+          data={filteredCreditsData}
           emptyMessage={
             creditsLoading ? "Loading estate credits..." : "No credits found."
           }
