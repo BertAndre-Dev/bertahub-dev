@@ -46,7 +46,18 @@ export default function ResidentMaintenancePage() {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
         const data = (userRes?.data ?? userRes) as Record<string, unknown>;
-        const eid = (data?.estateId ?? (data?.estate as { id?: string })?.id ?? "") as string;
+
+        const rawEstate = (data as { estateId?: unknown; estate?: unknown })?.estateId
+          ?? (data as { estate?: unknown })?.estate;
+
+        let eid = "";
+        if (typeof rawEstate === "string") {
+          eid = rawEstate;
+        } else if (rawEstate && typeof rawEstate === "object") {
+          const estateObj = rawEstate as { id?: string; _id?: string };
+          eid = estateObj.id ?? estateObj._id ?? "";
+        }
+
         const rid = (data?.id ?? data?._id ?? "") as string;
         const addresses = normalizeAddresses(data);
         const firstId = addresses.length > 0 ? addresses[0].id : null;
