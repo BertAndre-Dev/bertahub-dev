@@ -134,7 +134,7 @@ export default function ResidentMaintenancePage() {
 
       {!selectedAddressId && addressOptions.length === 0 && !loading && (
         <p className="text-muted-foreground py-6 rounded-lg border border-border bg-muted/20 text-center">
-          No address linked to your account. Your addresses come from your profile (GET /api/v1/auth-mgt/me). Please contact your estate admin if you need an address added.
+          No address linked to your account.
         </p>
       )}
 
