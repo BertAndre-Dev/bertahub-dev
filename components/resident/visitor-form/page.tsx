@@ -104,7 +104,12 @@ export default function VisitorForm({
     setSubmitting(true);
     try {
       if (visitorId) {
-        // Update visitor
+        // Update visitor - include residentId, estateId and addressId to satisfy backend validation
+        const addressIdString =
+          typeof addressId === "object" && addressId !== null
+            ? addressId.id
+            : addressId;
+
         await dispatch(
           updateVisitor({
             id: visitorId,
@@ -113,6 +118,9 @@ export default function VisitorForm({
               lastName: formData.lastName,
               phone: formData.phone,
               purpose: formData.purpose,
+              residentId,
+              estateId,
+              addressId: addressIdString,
             },
           }),
         ).unwrap();

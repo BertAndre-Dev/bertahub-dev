@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   getVisitorsByEstate,
   verifyVisitor,
+  deleteVisitor,
 } from "@/redux/slice/admin/visitor/visitor";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
@@ -18,10 +19,12 @@ import {
   Eye,
   ShieldCheck,
   ShieldCheckIcon,
+  Trash2,
   UserPlus,
   UserPlus2,
 } from "lucide-react";
 import AdminVisitorForm from "@/components/admin/visitor-form/page";
+import DeleteModal from "@/components/resident/delete-modal/page";
 
 export default function AdminVisitorManagement() {
   const dispatch = useDispatch<AppDispatch>();
@@ -34,6 +37,7 @@ export default function AdminVisitorManagement() {
     firstName?: string;
     lastName?: string;
   } | null>(null);
+  const [visitorToDelete, setVisitorToDelete] = useState<any | null>(null);
 
   const { visitors, pagination, loading } = useSelector((state: RootState) => {
     const visitorState = state.visitor;
@@ -163,6 +167,25 @@ export default function AdminVisitorManagement() {
     }
   };
 
+  const handleOpenDeleteModal = (visitor: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setVisitorToDelete(visitor);
+  };
+
+  const handleCloseDeleteModal = () => setVisitorToDelete(null);
+
+  const handleConfirmDelete = async () => {
+    if (!visitorToDelete?.id) return;
+    try {
+      await dispatch(deleteVisitor(visitorToDelete.id)).unwrap();
+      toast.success("Visitor deleted successfully.");
+      setVisitorToDelete(null);
+      refreshVisitors();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete visitor");
+    }
+  };
+
   const columns = [
     {
       header: "Created At",
@@ -274,30 +297,38 @@ export default function AdminVisitorManagement() {
       ),
     },
     {
-      header: "Action",
-      key: "verify",
-      render: (item: any) => {
-        if (item.isVerified) {
-          return (
+      header: "Actions",
+      key: "actions",
+      render: (item: any) => (
+        <div className="flex items-center gap-2">
+          {item.isVerified ? (
             <div className="flex items-center gap-1 text-green-600">
               <CheckCircle className="w-5 h-5" />
               <span className="text-xs">Verified</span>
             </div>
-          );
-        }
-        return (
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openVerifyModal(item)}
+              className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+              title="Verify visitor"
+            >
+              <ShieldCheck className="w-5 h-5" />
+              <span className="text-xs">Verify</span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => openVerifyModal(item)}
-            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
-            title="Verify visitor"
+            onClick={(e) => handleOpenDeleteModal(item, e)}
+            className="flex items-center gap-1 text-destructive hover:bg-destructive/10 cursor-pointer"
+            title="Delete visitor"
           >
-            <ShieldCheck className="w-5 h-5" />
-            <span className="text-xs">Verify</span>
+            <Trash2 className="w-4 h-4" />
           </Button>
-        );
-      },
+        </div>
+      ),
     },
   ];
 
@@ -431,6 +462,20 @@ export default function AdminVisitorManagement() {
           </div>
         </div>
       </Modal>
+
+      <DeleteModal
+        visible={!!visitorToDelete}
+        onClose={handleCloseDeleteModal}
+        itemName={
+          visitorToDelete
+            ? `${visitorToDelete.firstName || ""} ${
+                visitorToDelete.lastName || ""
+              }`.trim() || visitorToDelete.visitorCode || "this visitor"
+            : ""
+        }
+        title="Delete visitor"
+        onConfirm={handleConfirmDelete}
+      />
 
       <Card className="p-4">
         <Table

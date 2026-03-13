@@ -18,6 +18,8 @@ export interface UpdateVisitorData {
   lastName?: string;
   phone?: string;
   purpose?: string;
+  residentId?: string;
+  estateId?: string;
   addressId?: string;
 }
 
@@ -26,6 +28,21 @@ export interface GetVisitorsByResidentParams {
   page: number;
   limit: number;
 }
+
+// Delete visitor
+export const deleteVisitor = createAsyncThunk(
+  "residentVisitor/deleteVisitor",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.delete(`/api/v1/visitor-mgt/${id}`);
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to delete visitor" },
+      );
+    }
+  },
+);
 
 // Create visitor
 export const createVisitor = createAsyncThunk(

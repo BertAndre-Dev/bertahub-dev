@@ -3,14 +3,16 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit } from "lucide-react";
+import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
 import VisitorForm from "@/components/resident/visitor-form/page";
+import DeleteModal from "@/components/resident/delete-modal/page";
 import SwitchAddress from "@/components/resident/switch-address/page";
 import {
     getVisitorsByResident,
     getVisitorById,
+    deleteVisitor,
 } from "@/redux/slice/resident/visitor/visitor";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { normalizeAddresses, toAddressIdString, type AddressOption } from "@/lib/address";
@@ -44,6 +46,7 @@ export default function VisitorPage() {
     const [pagination, setPagination] = useState<any>({});
     const [loading, setLoading] = useState<boolean>(true);
     const [viewingVisitor, setViewingVisitor] = useState<VisitorData | null>(null);
+    const [visitorToDelete, setVisitorToDelete] = useState<VisitorData | null>(null);
 
     // User meta
     const [userId, setUserId] = useState<string>("");
@@ -147,6 +150,25 @@ export default function VisitorPage() {
         setViewingVisitor(null);
     };
 
+    const handleOpenDeleteModal = (visitor: VisitorData, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        setVisitorToDelete(visitor);
+    };
+
+    const handleCloseDeleteModal = () => setVisitorToDelete(null);
+
+    const handleConfirmDelete = async () => {
+        if (!visitorToDelete) return;
+        try {
+            await dispatch(deleteVisitor(visitorToDelete.id)).unwrap();
+            toast.success("Visitor deleted successfully.");
+            setVisitorToDelete(null);
+            await refreshVisitors();
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to delete visitor");
+        }
+    };
+
     const handlePageChange = async (newPage: number) => {
         if (!userId) return;
         try {
@@ -243,6 +265,15 @@ export default function VisitorPage() {
                         <Edit className="w-4 h-4 mr-1 cursor-pointer" />
                         Edit
                     </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="cursor-pointer text-destructive hover:bg-destructive/10"
+                        onClick={(e) => handleOpenDeleteModal(item, e)}
+                        title="Delete visitor"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
                 </div>
             ),
         },
@@ -313,6 +344,20 @@ export default function VisitorPage() {
                     />
                 </Modal>
             )}
+
+            <DeleteModal
+                visible={!!visitorToDelete}
+                onClose={handleCloseDeleteModal}
+                itemName={
+                    visitorToDelete
+                        ? `${visitorToDelete.firstName || ""} ${
+                              visitorToDelete.lastName || ""
+                          }`.trim() || visitorToDelete.visitorCode || "this visitor"
+                        : ""
+                }
+                title="Delete visitor"
+                onConfirm={handleConfirmDelete}
+            />
 
             {/* View Modal */}
             {viewModalOpen && viewingVisitor && (
