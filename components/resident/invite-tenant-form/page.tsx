@@ -66,7 +66,15 @@ export default function InviteTenantForm({ close }: InviteTenantFormProps) {
     const load = async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const estateId = userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
+        const rawEstate = userRes?.data?.estateId ?? userRes?.data?.estate;
+
+        let estateId = "";
+        if (typeof rawEstate === "string") {
+          estateId = rawEstate;
+        } else if (rawEstate && typeof rawEstate === "object") {
+          estateId = (rawEstate as { id?: string }).id ?? "";
+        }
+
         if (!estateId) {
           toast.error("No estate linked to your account.");
           return;
