@@ -133,12 +133,10 @@ export default function EstateAdminWalletPage() {
     dispatch(getEstateCredits({ estateId, page: creditsPage, limit }));
   }, [estateId, creditsPage, limit, dispatch]);
 
-  // Fetch banks when Create Wallet modal opens
+  // Fetch banks so we can display bank name for the wallet and use in Create Wallet
   useEffect(() => {
-    if (createWalletModalOpen) {
-      dispatch(getBanks("NG"));
-    }
-  }, [createWalletModalOpen, dispatch]);
+    dispatch(getBanks("NG"));
+  }, [dispatch]);
 
   const handleCreateWallet = async () => {
     if (!estateId) {
@@ -174,6 +172,11 @@ export default function EstateAdminWalletPage() {
   };
 
   const handleOpenModal = () => setOpen((prev) => !prev);
+
+  const walletBankName =
+    wallet && wallet.bankCode
+      ? banks.find((b) => b.code === wallet.bankCode)?.name ?? ""
+      : "";
 
   const handleWithdrawSubmit = async ({
     walletId,
@@ -449,6 +452,8 @@ export default function EstateAdminWalletPage() {
               userId={userId}
               walletId={wallet.id ?? ""}
               defaultAccountNumber={wallet.accountNumber ?? ""}
+              bankCode={wallet.bankCode ?? ""}
+              bankName={walletBankName}
               maxWithdrawableAmount={wallet.temporaryBalance}
               onSubmit={handleWithdrawSubmit}
               onClose={handleOpenModal}
