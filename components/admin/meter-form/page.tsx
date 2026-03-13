@@ -54,7 +54,18 @@ const AssignMeterForm: React.FC<AssignMeterFormProps> = ({
         setLoading(true);
 
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const estateId = userRes?.data?.estateId;
+        const rawEstate = userRes?.data?.estateId ?? userRes?.data?.estate;
+
+        let estateId = "";
+        if (typeof rawEstate === "string") {
+          estateId = rawEstate;
+        } else if (rawEstate && typeof rawEstate === "object") {
+          estateId =
+            (rawEstate as { id?: string; _id?: string }).id ??
+            (rawEstate as { id?: string; _id?: string })._id ??
+            "";
+        }
+
         if (!estateId) {
           toast.error("No estate linked to this account");
           return;
