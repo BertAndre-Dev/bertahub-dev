@@ -40,7 +40,7 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
           <motion.div
             className="
               bg-white
-              w-full lg:w-[50%]
+              w-full md:w-[40%]
               rounded-xl
               shadow-xl
               p-5

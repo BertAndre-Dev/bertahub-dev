@@ -75,8 +75,14 @@ export default function ActivityLogPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
+        const rawEstateId =
+          userRes?.data?.estateId ?? userRes?.data?.estate ?? null;
         const foundEstateId =
-          userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : (rawEstateId as { id?: string; _id?: string })?._id ||
+              (rawEstateId as { id?: string; _id?: string })?.id ||
+              "";
 
         if (!foundEstateId) {
           toast.warning("No estate found for this user");
