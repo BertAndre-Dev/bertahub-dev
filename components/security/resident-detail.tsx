@@ -75,7 +75,7 @@ export default function ResidentDetails({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md w-full max-w-2xl overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-md w-full max-w-2xl h-[370px] overflow-y-scroll overflow-x-hidden pb-4 overflow-hidden">
       {/* Header */}
       <div className="px-8 pt-7 pb-5 border-b border-gray-100">
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight">

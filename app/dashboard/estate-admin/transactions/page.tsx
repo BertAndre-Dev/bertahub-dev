@@ -12,12 +12,16 @@ import {
 
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import { TrendingUp, ChevronDown, Calendar } from "lucide-react";
 import { Select } from "@/components/ui/select";
 import TransactionStatsBar from "@/components/estate-admin/transaction-statsbar/page";
+import {
+  TransactionsFilterBar,
+  type EstateTransactionsFilters,
+} from "@/components/estate-admin/transactions-filter-bar";
 
 interface TransactionData {
   walletId: string;
@@ -68,6 +72,9 @@ export default function TransactionPage() {
   const [pendingBillsCount, setPendingBillsCount] = useState<number>(0);
   const [filterType, setFilterType] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterFrequency, setFilterFrequency] = useState<string>("");
+  const [filterBill, setFilterBill] = useState<string>("");
+  const [filterBillStatus, setFilterBillStatus] = useState<string>("");
   const [dateRangeLabel, setDateRangeLabel] =
     useState<string>("5th Jan - 30th Jan");
   const [exportOpen, setExportOpen] = useState(false);
@@ -219,14 +226,19 @@ export default function TransactionPage() {
     })();
   }, [activeTab, estateId, vendsPage, dispatch]);
 
-  // 🔹 Fetch paid bills when tab is paid-bills
+  // 🔹 Fetch paid bills when tab is paid-bills (larger limit for client-side filtering)
+  const PAID_BILLS_FETCH_LIMIT = 2000;
   useEffect(() => {
     if (activeTab !== "paid-bills" || !estateId) return;
     (async () => {
       setLoadingPaidBills(true);
       try {
         const res = await dispatch(
-          getEstatePaidBills({ estateId, page: paidBillsPage, limit }),
+          getEstatePaidBills({
+            estateId,
+            page: 1,
+            limit: PAID_BILLS_FETCH_LIMIT,
+          }),
         ).unwrap();
         setPaidBillsData(res?.data ?? []);
         setPaidBillsPagination(res?.pagination ?? null);
@@ -237,7 +249,7 @@ export default function TransactionPage() {
         setLoadingPaidBills(false);
       }
     })();
-  }, [activeTab, estateId, paidBillsPage, dispatch]);
+  }, [activeTab, estateId, dispatch]);
 
   // 🔹 Pagination Handler
   const handlePageChange = async (newPage: number) => {
@@ -254,6 +266,83 @@ export default function TransactionPage() {
       }),
     );
   };
+
+  // 🔹 Filter paid bills by Frequency, Bill, Status (client-side)
+  const filteredPaidBills = useMemo(() => {
+    return (paidBillsData ?? []).filter((item: any) => {
+      if (filterFrequency) {
+        const freq = (item.frequency ?? "").toString().toLowerCase();
+        if (freq !== filterFrequency.toLowerCase()) return false;
+      }
+      if (filterBill) {
+        const billName =
+          item.bill?.name ?? item.billName ?? "";
+        if (billName !== filterBill) return false;
+      }
+      if (filterBillStatus) {
+        const status = (item.status ?? "").toString().toLowerCase();
+        if (status !== filterBillStatus.toLowerCase()) return false;
+      }
+      return true;
+    });
+  }, [paidBillsData, filterFrequency, filterBill, filterBillStatus]);
+
+  const paidBillsPageSize = 10;
+  const paidBillsTotalPages = Math.max(
+    1,
+    Math.ceil(filteredPaidBills.length / paidBillsPageSize),
+  );
+  const paginatedPaidBills = useMemo(() => {
+    const start = (paidBillsPage - 1) * paidBillsPageSize;
+    return filteredPaidBills.slice(start, start + paidBillsPageSize);
+  }, [filteredPaidBills, paidBillsPage, paidBillsPageSize]);
+
+  const paidBillsFrequencyOptions = useMemo(() => {
+    const set = new Set<string>();
+    (paidBillsData ?? []).forEach((item: any) => {
+      const f = item.frequency;
+      if (f) set.add(f);
+    });
+    return [
+      { value: "", label: "All" },
+      ...Array.from(set).map((f) => ({
+        value: f,
+        label: f.charAt(0).toUpperCase() + f.slice(1),
+      })),
+    ];
+  }, [paidBillsData]);
+
+  const paidBillsBillOptions = useMemo(() => {
+    const set = new Set<string>();
+    (paidBillsData ?? []).forEach((item: any) => {
+      const name = item.bill?.name ?? item.billName;
+      if (name) set.add(name);
+    });
+    return [
+      { value: "", label: "All" },
+      ...Array.from(set).map((name) => ({ value: name, label: name })),
+    ];
+  }, [paidBillsData]);
+
+  const handlePaidBillsFiltersChange = (filters: EstateTransactionsFilters) => {
+    setFilterFrequency(filters.frequency);
+    setFilterBill(filters.bill);
+    setFilterBillStatus(filters.status);
+    setPaidBillsPage(1);
+  };
+
+  // Keep paidBillsPage in bounds when filtered list shrinks
+  useEffect(() => {
+    const total = Math.max(1, Math.ceil(filteredPaidBills.length / paidBillsPageSize));
+    if (paidBillsPage > total) setPaidBillsPage(total);
+  }, [filteredPaidBills.length, paidBillsPageSize, paidBillsPage]);
+
+  const paidBillsEmptyMessage =
+    loadingPaidBills
+      ? "Loading paid bills..."
+      : filteredPaidBills.length === 0
+        ? "No paid bills match the selected filters."
+        : "No paid bills found.";
 
   // const totalBills = paidBillsData.reduce((sum: number, item: any) => sum + (item.amountPaid ?? 0), 0);
   // 🔹 Counts instead of amounts for stats (precomputed so they are available immediately)
@@ -493,7 +582,7 @@ export default function TransactionPage() {
       </div>
 
       {/* Stats – show counts (quantities) instead of amounts */}
-      <TransactionStatsBar
+      {/* <TransactionStatsBar
         primary={{
           label: "Total Transactions",
           value: totalTransactionsCount.toLocaleString(),
@@ -507,7 +596,7 @@ export default function TransactionPage() {
             value: pendingBillsCount.toLocaleString(),
           },
         ]}
-      />
+      /> */}
 
       {/* Filter bar – Date range, Filter by Type, Filter by Status, Export (Figma) */}
       <Card className="p-4">
@@ -692,7 +781,7 @@ export default function TransactionPage() {
                   : undefined
               }
             />
-            <div className="flex justify-end items-center gap-2 mt-4">
+            {/* <div className="flex justify-end items-center gap-2 mt-4">
               <Button
                 disabled={vendsPage === 1}
                 onClick={() => setVendsPage((p) => p - 1)}
@@ -708,40 +797,42 @@ export default function TransactionPage() {
               >
                 Next
               </Button>
-            </div>
+            </div> */}
           </>
         )}
 
         {activeTab === "paid-bills" && (
           <>
-            <Table
-              columns={paidBillsColumns}
-              data={paidBillsData}
-              emptyMessage={
-                loadingPaidBills
-                  ? "Loading paid bills..."
-                  : "No paid bills found."
-              }
-              showPagination
-              paginationInfo={{
-                total: paidBillsPagination?.total ?? 0,
-                current: paidBillsPagination?.page ?? paidBillsPage,
-                pageSize: paidBillsPagination?.limit ?? limit,
-              }}
-              onPageChange={(p) => setPaidBillsPage(p)}
-              enableExport
-              exportFileName="paid-bills"
-              onExportRequest={
-                estateId
-                  ? async () => {
-                      const res = await dispatch(
-                        getEstatePaidBills({ estateId, page: 1, limit: 50000 }),
-                      ).unwrap();
-                      return res?.data ?? [];
-                    }
-                  : undefined
-              }
+            <TransactionsFilterBar
+              frequency={filterFrequency}
+              bill={filterBill}
+              status={filterBillStatus}
+              onFiltersChange={handlePaidBillsFiltersChange}
+              frequencyOptions={paidBillsFrequencyOptions}
+              billOptions={paidBillsBillOptions}
+              visible={true}
             />
+            <div className="mt-4">
+              <Table
+                columns={paidBillsColumns}
+                data={paginatedPaidBills}
+                emptyMessage={paidBillsEmptyMessage}
+                showPagination
+                paginationInfo={{
+                  total: filteredPaidBills.length,
+                  current: paidBillsPage,
+                  pageSize: paidBillsPageSize,
+                }}
+                onPageChange={(p) => setPaidBillsPage(p)}
+                enableExport
+                exportFileName="paid-bills"
+                onExportRequest={
+                  filteredPaidBills.length > 0
+                    ? async () => filteredPaidBills
+                    : undefined
+                }
+              />
+            </div>
             <div className="flex justify-end items-center gap-2 mt-4">
               <Button
                 disabled={paidBillsPage === 1}
@@ -751,8 +842,8 @@ export default function TransactionPage() {
               </Button>
               <Button
                 disabled={
-                  (paidBillsPagination?.pages ?? 1) <= 1 ||
-                  paidBillsPage >= (paidBillsPagination?.pages ?? 1)
+                  paidBillsTotalPages <= 1 ||
+                  paidBillsPage >= paidBillsTotalPages
                 }
                 onClick={() => setPaidBillsPage((p) => p + 1)}
               >

@@ -63,7 +63,7 @@ export default function VerifyVisitorForm({
   const numberOfPeople = 1;
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mx-auto space-y-6">
+    <div className="w-full h-[370px] overflow-y-scroll pb-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mx-auto space-y-6">
       <div className="border-b border-[#D9D9D9] pb-4">
         <h2 className="text-2xl font-bold text-gray-900">Visitor Details</h2>
       </div>

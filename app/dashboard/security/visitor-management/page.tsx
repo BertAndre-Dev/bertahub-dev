@@ -94,13 +94,15 @@ export default function VisitorManagementPage() {
 
       <ViewVisitorSearch onDetailsLoaded={setVisitorDetails} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <VerifyVisitorForm
-          visitorDetails={visitorDetails}
-          initialCode={visitorDetails?.visitorCode}
-        />
-        <ResidentDetails visitorDetails={visitorDetails} />
-      </div>
+      {visitorDetails && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <VerifyVisitorForm
+            visitorDetails={visitorDetails}
+            initialCode={visitorDetails?.visitorCode}
+          />
+          <ResidentDetails visitorDetails={visitorDetails} />
+        </div>
+      )}
 
       <ClockedCard
         clockedIn={clockedIn}

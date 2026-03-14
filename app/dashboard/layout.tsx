@@ -55,14 +55,18 @@ export default function DashboardLayout({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 🔹 Load user from localStorage or redirect if missing
+  // 🔹 Load user from localStorage (auth or user key) or redirect if missing
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const userData = localStorage.getItem("user");
-    if (!userData) {
+    const rawAuth = localStorage.getItem("auth");
+    const fromAuth = rawAuth ? (() => { try { return JSON.parse(rawAuth)?.user; } catch { return null; } })() : null;
+    const user = userData ? (() => { try { return JSON.parse(userData); } catch { return null; } })() : fromAuth;
+    if (!user) {
       router.push("/auth/login");
       return;
     }
-    setUser(JSON.parse(userData));
+    setUser(user);
     setLoading(false);
   }, [router]);
 
@@ -73,10 +77,11 @@ export default function DashboardLayout({
     }
   }, [dispatch]);
 
-  // 🔹 Validate token and refresh user session
+  // 🔹 Validate token and refresh user session (token is stored in "auth", not "token")
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const localToken = localStorage.getItem("token");
+    const rawAuth = localStorage.getItem("auth");
+    const localToken = rawAuth ? (() => { try { return JSON.parse(rawAuth)?.token ?? null; } catch { return null; } })() : null;
 
     if (!localToken && !token) {
       router.push("/auth/login");
@@ -89,8 +94,6 @@ export default function DashboardLayout({
         .unwrap()
         .catch(() => {
           toast.error("Session expired. Please sign in again.");
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
           dispatch(logoutLocally());
           router.push("/auth/login");
         });
@@ -106,12 +109,10 @@ export default function DashboardLayout({
     });
   }, [token]);
 
-  // 🔹 Sign out handler
+  // 🔹 Sign out handler (logoutLocally already clears auth & user from localStorage)
   const handleSignOut = () => {
     clearCsrfToken();
     dispatch(logoutLocally());
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     toast.success("Signed out successfully");
     router.push("/auth/login");
   };
