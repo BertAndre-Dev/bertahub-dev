@@ -6,6 +6,9 @@ interface WalletData {
   estateId: string;
   balance: number;
   temporaryBalance: number;
+  /** Amount available for withdrawal (API: withdrawableBalance). */
+  withdrawableBalance?: number;
+  availableBalance?: number;
   lockedBalance: number;
   accountNumber?: string;
   bankCode?: string;

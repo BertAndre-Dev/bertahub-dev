@@ -37,7 +37,14 @@ export default function VisitorManagementPage() {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const id = userRes?.data?.estateId ?? userRes?.data?.estate?.id ?? "";
+        const rawEstateId =
+          userRes?.data?.estateId ?? userRes?.data?.estate ?? null;
+        const id =
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : (rawEstateId as { id?: string; _id?: string })?._id ||
+              (rawEstateId as { id?: string; _id?: string })?.id ||
+              "";
         if (!id) return;
         setEstateId(id);
         await dispatch(

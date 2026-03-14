@@ -441,7 +441,11 @@ export default function EstateAdminWalletPage() {
               defaultAccountNumber={wallet.accountNumber ?? ""}
               bankCode={wallet.bankCode ?? ""}
               bankName={walletBankName}
-              maxWithdrawableAmount={wallet.temporaryBalance}
+              maxWithdrawableAmount={
+                wallet.withdrawableBalance ??
+                  wallet.temporaryBalance ??
+                  0
+              }
               onClose={handleOpenModal}
             />
           ) : (

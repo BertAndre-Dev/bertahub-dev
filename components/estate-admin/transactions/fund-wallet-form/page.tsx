@@ -99,8 +99,9 @@ export default function FundWalletForm({
 
     try {
       if (!otpRequested) {
-        // Step 1: Create audit-only transaction
-        await dispatch(
+        // Step 1: Create transaction (isAuditOnly: true, residentType: null)
+        // API returns tx_ref in response – use it for request-otp and transfer
+        const createRes = await dispatch(
           createTransaction({
             walletId,
             type: "debit",
@@ -114,8 +115,20 @@ export default function FundWalletForm({
           }),
         ).unwrap();
 
-        // Step 2: Request OTP (backend will generate tx_ref internally or from data)
-        const otpRes = await dispatch(
+        const resBody = createRes as Record<string, unknown> | undefined;
+        const resData = resBody?.data as Record<string, unknown> | undefined;
+        let tx_ref =
+          (resData?.tx_ref as string) ?? (resBody?.tx_ref as string) ?? "";
+        if (!tx_ref && typeof crypto !== "undefined" && crypto.randomUUID) {
+          tx_ref = `tx-${crypto.randomUUID()}`;
+        }
+        if (!tx_ref) {
+          tx_ref = `tx-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+        }
+        setTxRef(tx_ref);
+
+        // Step 2: Request OTP with tx_ref from create transaction
+        await dispatch(
           requestEstateAdminOtp({
             estateId,
             amount,
@@ -124,18 +137,9 @@ export default function FundWalletForm({
             accountNumber,
             narration:
               description || `Withdrawal of ${currency} ${amount.toLocaleString()}`,
-            tx_ref: "",
+            tx_ref,
           }),
         ).unwrap();
-
-        const generatedTxRef =
-          (otpRes as any)?.data?.tx_ref || (otpRes as any)?.tx_ref || "";
-
-        if (!generatedTxRef) {
-          toast.warning("OTP requested, but transaction reference is missing.");
-        } else {
-          setTxRef(generatedTxRef);
-        }
 
         setOtpRequested(true);
         toast.success("OTP sent to your email. Please enter it to confirm.");
