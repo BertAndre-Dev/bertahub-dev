@@ -27,10 +27,13 @@ interface AdminUserData {
   residentType: string;
   createdAt: string;
   email: string;
-  addressId: {
+  // Single primary address id from backend (kept for backwards compatibility)
+  addressId?: string;
+  // Full address objects with metadata like block & apartment
+  addressIds?: {
     id: string;
     data: Record<string, string>;
-  };
+  }[];
   role: string;
   isActive?: boolean;
   invitationStatus?: string;
@@ -199,9 +202,11 @@ export default function AdminUserPage() {
     const keys = new Set<string>();
 
     data.forEach((item) => {
-      if (item.addressId?.data) {
-        Object.keys(item.addressId.data).forEach((key) => keys.add(key));
-      }
+      item.addressIds?.forEach((address) => {
+        if (address?.data) {
+          Object.keys(address.data).forEach((key) => keys.add(key));
+        }
+      });
     });
 
     return Array.from(keys);
@@ -217,7 +222,19 @@ export default function AdminUserPage() {
       header: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (c) => c.toUpperCase()),
-      render: (item: AdminUserData) => item.addressId?.data?.[key] ?? "-",
+      render: (item: AdminUserData) => {
+        if (!item.addressIds?.length) return "-";
+
+        const values = item.addressIds
+          .map((address) => address?.data?.[key])
+          .filter((value): value is string => Boolean(value));
+
+        if (!values.length) return "-";
+
+        // Deduplicate in case the same value appears across multiple addresses
+        const uniqueValues = Array.from(new Set(values));
+        return uniqueValues.join(", ");
+      },
     }));
   };
 
@@ -359,7 +376,7 @@ export default function AdminUserPage() {
       <Card className="p-4">
         <input
           type="text"
-          placeholder="Search users by name or email..."
+          placeholder="Search users by name, email, block or apartment..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
