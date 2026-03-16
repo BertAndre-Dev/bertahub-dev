@@ -15,7 +15,7 @@ export default function FeaturesSection() {
             <Image
               src={
                 activeTab === "owners"
-                  ? "/assets/Frame 2147227113.svg"
+                  ? "/assets/Frame%202147227113.svg"
                   : "/assets/home.svg"
               }
               alt={

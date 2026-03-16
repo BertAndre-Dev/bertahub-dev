@@ -180,6 +180,7 @@ export default function BookDemoModal({ isOpen, onClose }: BookDemoModalProps) {
                 <option value="Instagram">Instagram</option>
                 <option value="Referral">Referral</option>
                 <option value="Google">Google</option>
+                <option value="Sales Agent">Sales Agent</option>
               </select>
             </div>
 
@@ -200,10 +201,11 @@ export default function BookDemoModal({ isOpen, onClose }: BookDemoModalProps) {
                 <option value="" disabled>
                   Select a feature
                 </option>
-                <option value="Smart meters">Smart meters</option>
-                <option value="Full package">Full package</option>
+                <option value="Smart meters">Smart meters</option> 
                 <option value="Revenue collection">Revenue collection</option>
                 <option value="User management">User management</option>
+                <option value="Bills Management"> Bills Management</option>
+                <option value="Full package">Full package</option>
               </select>
             </div>
           </div>

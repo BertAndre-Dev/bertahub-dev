@@ -18,7 +18,7 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <Navbar onOpenBookDemo={() => setIsBookDemoOpen(true)} />
       <main>
-        <HeroSection />
+        <HeroSection onOpenBookDemo={() => setIsBookDemoOpen(true)} />
         <FeaturesShowcaseSection />
         <FeaturesSection />
         <BertaShowcaseSection />
