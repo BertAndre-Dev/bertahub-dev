@@ -40,7 +40,7 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
           <motion.div
             className="
               bg-white
-              w-full md:w-[40%]
+              w-full md:w-[45%]
               rounded-xl
               shadow-xl
               p-5
@@ -62,7 +62,7 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
               className="
                 absolute
                 cursor-pointer
-                top-6
+                top-2
                 right-4
                 bg-[#d0dff2]
                 border
