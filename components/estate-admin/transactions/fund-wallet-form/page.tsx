@@ -13,10 +13,14 @@ import {
   requestEstateAdminOtp,
   transferFunds,
 } from "@/redux/slice/estate-admin/transaction/transaction";
+import {
+  requestResidentOwnerWithdrawalOtp,
+  transferFundsResident,
+} from "@/redux/slice/resident/transaction/transaction";
 import { getWallet, getEstateCredits } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt";
-import { OtpVerification } from "@/components/common/otp-verification/page";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-
+import OtpVerification from "@/components/otp-modal/otp-verification/page";
+ 
 const DEFAULT_COUNTRY = "NG";
 const DEFAULT_CURRENCY = "NGN";
 
@@ -30,6 +34,8 @@ interface FundWalletFormProps {
   /** Max amount that can be withdrawn (e.g. estate wallet temporaryBalance). */
   maxWithdrawableAmount?: number;
   onClose?: () => void;
+  /** When true, use resident-owner withdrawal APIs instead of estate-admin ones. */
+  isResidentOwner?: boolean;
 }
 
 export default function FundWalletForm({
@@ -41,6 +47,7 @@ export default function FundWalletForm({
   bankName,
   maxWithdrawableAmount,
   onClose,
+  isResidentOwner = false,
 }: FundWalletFormProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [amount, setAmount] = useState<number>();
@@ -123,8 +130,10 @@ export default function FundWalletForm({
 
     try {
       if (!otpRequested) {
-        // Step 1: Create transaction (isAuditOnly: true, residentType: null)
-        // API returns tx_ref in response – use it for request-otp and transfer
+        // First-time click on "Request OTP"
+        let tx_ref = "";
+
+        // 1) Create audit-only transaction; backend returns tx_ref in response
         const createRes = await dispatch(
           createTransaction({
             walletId,
@@ -132,8 +141,8 @@ export default function FundWalletForm({
             amount,
             description,
             userId,
-            role: "estate admin",
-            residentType: null,
+            role: isResidentOwner ? "resident" : "estate admin",
+            residentType: isResidentOwner ? "owner" : null,
             balanceType: "withdrawableBalance",
             isAuditOnly: true,
           }),
@@ -141,29 +150,49 @@ export default function FundWalletForm({
 
         const resBody = createRes as Record<string, unknown> | undefined;
         const resData = resBody?.data as Record<string, unknown> | undefined;
-        let tx_ref =
+        tx_ref =
           (resData?.tx_ref as string) ?? (resBody?.tx_ref as string) ?? "";
         if (!tx_ref && typeof crypto !== "undefined" && crypto.randomUUID) {
           tx_ref = `tx-${crypto.randomUUID()}`;
         }
         if (!tx_ref) {
-          tx_ref = `tx-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+          tx_ref = `tx-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 11)}`;
         }
         setTxRef(tx_ref);
 
-        // Step 2: Request OTP with tx_ref from create transaction
-        await dispatch(
-          requestEstateAdminOtp({
-            estateId,
-            amount,
-            currency,
-            bankCode,
-            accountNumber,
-            narration:
-              description || `Withdrawal of ${currency} ${amount.toLocaleString()}`,
-            tx_ref,
-          }),
-        ).unwrap();
+        // 2) Request OTP using correct endpoint for the role
+        if (isResidentOwner) {
+          await dispatch(
+            requestResidentOwnerWithdrawalOtp({
+              userId,
+              estateId,
+              amount: amount ?? 0,
+              currency,
+              bankCode: bankCode ?? "",
+              accountNumber,
+              narration:
+                description ||
+                `Withdrawal of ${currency} ${(amount ?? 0).toLocaleString()}`,
+              tx_ref,
+            }),
+          ).unwrap();
+        } else {
+          await dispatch(
+            requestEstateAdminOtp({
+              estateId,
+              amount,
+              currency,
+              bankCode,
+              accountNumber,
+              narration:
+                description ||
+                `Withdrawal of ${currency} ${amount.toLocaleString()}`,
+              tx_ref,
+            }),
+          ).unwrap();
+        }
 
         setOtpError(null);
         setOtpRequested(true);
@@ -191,19 +220,38 @@ export default function FundWalletForm({
     setOtpError(null);
 
     try {
-      await dispatch(
-        transferFunds({
-          estateId,
-          amount: amount ?? 0,
-          currency,
-          bankCode: bankCode ?? "",
-          accountNumber,
-          narration:
-            description || `Withdrawal of ${currency} ${(amount ?? 0).toLocaleString()}`,
-          tx_ref: txRef,
-          otp: code,
-        }),
-      ).unwrap();
+      if (isResidentOwner) {
+        await dispatch(
+          transferFundsResident({
+            userId,
+            estateId,
+            amount: amount ?? 0,
+            currency,
+            bankCode: bankCode ?? "",
+            accountNumber,
+            narration:
+              description ||
+              `Withdrawal of ${currency} ${(amount ?? 0).toLocaleString()}`,
+            tx_ref: txRef,
+            otp: code,
+          }),
+        ).unwrap();
+      } else {
+        await dispatch(
+          transferFunds({
+            estateId,
+            amount: amount ?? 0,
+            currency,
+            bankCode: bankCode ?? "",
+            accountNumber,
+            narration:
+              description ||
+              `Withdrawal of ${currency} ${(amount ?? 0).toLocaleString()}`,
+            tx_ref: txRef,
+            otp: code,
+          }),
+        ).unwrap();
+      }
 
       toast.success("Withdrawal successful!");
 
@@ -235,18 +283,36 @@ export default function FundWalletForm({
     setOtpError(null);
 
     try {
-      await dispatch(
-        requestEstateAdminOtp({
-          estateId,
-          amount: amount ?? 0,
-          currency,
-          bankCode: bankCode ?? "",
-          accountNumber,
-          narration:
-            description || `Withdrawal of ${currency} ${(amount ?? 0).toLocaleString()}`,
-          tx_ref: txRef,
-        }),
-      ).unwrap();
+      if (isResidentOwner) {
+        await dispatch(
+          requestResidentOwnerWithdrawalOtp({
+            userId,
+            estateId,
+            amount: amount ?? 0,
+            currency,
+            bankCode: bankCode ?? "",
+            accountNumber,
+            narration:
+              description ||
+              `Withdrawal of ${currency} ${(amount ?? 0).toLocaleString()}`,
+            tx_ref: txRef,
+          }),
+        ).unwrap();
+      } else {
+        await dispatch(
+          requestEstateAdminOtp({
+            estateId,
+            amount: amount ?? 0,
+            currency,
+            bankCode: bankCode ?? "",
+            accountNumber,
+            narration:
+              description ||
+              `Withdrawal of ${currency} ${(amount ?? 0).toLocaleString()}`,
+            tx_ref: txRef,
+          }),
+        ).unwrap();
+      }
     } catch (err: any) {
       setOtpError(err?.message || "Failed to resend OTP. Please try again.");
     } finally {
@@ -258,7 +324,7 @@ export default function FundWalletForm({
     <Card className="w-full max-w-md mx-auto">
       <form onSubmit={handleSubmit}>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-blue-600">
+          <CardTitle className="text-lg font-semibold text-blue-600 mx-auto">
             {otpRequested ? "OTP Verification" : "Withdraw Fund"}
           </CardTitle>
         </CardHeader>

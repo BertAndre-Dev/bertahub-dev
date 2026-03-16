@@ -37,6 +37,7 @@ export default function WithdrawModal({
             bankName={bankName}
             maxWithdrawableAmount={maxWithdrawableAmount ?? 0}
             onClose={onClose}
+            isResidentOwner
           />
         ) : (
           <p className="text-center text-gray-500 p-6">Loading...</p>

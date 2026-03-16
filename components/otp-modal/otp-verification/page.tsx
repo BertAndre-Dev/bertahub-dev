@@ -112,7 +112,6 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
             ? ` to your email address ${emailHint}.`
             : " to your email."}{" "}
           </span>
-          
         </p>
 
         <p className="text-sm text-muted-foreground text-center">
@@ -159,7 +158,7 @@ export const OtpVerification: React.FC<OtpVerificationProps> = ({
         <p className="text-xs text-red-500 text-center mt-2">{errorMessage}</p>
       )}
 
-      <div className="flex justify-between gap-3 mt-6">
+      <div className="flex justify-between gap-3 pb-2">
         <Button
           type="button"
           variant="outline"

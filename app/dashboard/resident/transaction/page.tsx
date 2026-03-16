@@ -87,8 +87,18 @@ export default function TransactionPage() {
         const userRes = await dispatch(getSignedInUser()).unwrap();
         const id = userRes?.data?.id;
         const userEmail = userRes?.data?.email;
-        const rType = userRes?.data?.residentType ?? userRes?.data?.resident_type ?? null;
-        const estateId = userRes?.data?.estateId ?? userRes?.data?.estate_id ?? null;
+        const rType =
+          userRes?.data?.residentType ??
+          userRes?.data?.resident_type ??
+          null;
+        const rawEstateId =
+          userRes?.data?.estateId ?? userRes?.data?.estate_id ?? null;
+        const estateId =
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : (rawEstateId as { id?: string; _id?: string })?._id ||
+              (rawEstateId as { id?: string; _id?: string })?.id ||
+              null;
 
         if (!id) {
           toast.warning("No user found.");
@@ -579,8 +589,8 @@ export default function TransactionPage() {
         userId={userId}
         walletId={wallet?.id ?? null}
         onSubmit={handleFundWallet}
-      />
-
+      /> 
+      
       <WithdrawModal
         visible={withdrawModalOpen}
         onClose={handleCloseWithdrawModal}
