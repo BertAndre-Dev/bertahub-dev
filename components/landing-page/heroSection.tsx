@@ -3,7 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export default function HeroSection() {
+type HeroSectionProps = {
+  readonly onOpenBookDemo?: () => void;
+};
+
+export default function HeroSection({ onOpenBookDemo }: HeroSectionProps) {
   return (
     <section className="bg-[#050816] text-white pt-2">
       {/* HERO */}
@@ -22,12 +26,22 @@ export default function HeroSection() {
             </p>
 
             <div className="">
-              <Link
-                href="/book-demo"
-                className="inline-flex items-center justify-center rounded-full bg-[#0150AC] hover:bg-[#124ea0] text-base font-medium sm:px-9 px-10 py-2 transition-colors"
-              >
-                Book a demo
-              </Link>
+              {onOpenBookDemo ? (
+                <button
+                  type="button"
+                  onClick={onOpenBookDemo}
+                  className="inline-flex items-center justify-center rounded-full bg-[#0150AC] hover:bg-[#124ea0] text-base font-medium sm:px-9 px-10 py-2 transition-colors cursor-pointer"
+                >
+                  Book a demo
+                </button>
+              ) : (
+                <Link
+                  href="/book-demo"
+                  className="inline-flex items-center justify-center rounded-full bg-[#0150AC] hover:bg-[#124ea0] text-base font-medium sm:px-9 px-10 py-2 transition-colors"
+                >
+                  Book a demo
+                </Link>
+              )}
             </div>
           </div>
 
@@ -46,14 +60,13 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-
-      {/* About section — pulled up so the hero image overlaps it */}
+ 
       <div
         id="about"
         className="scroll-mt-28 -mt-4 sm:-mt-8 lg:-mt-12 bg-white pb-10"
       >
         <div className="container mx-auto px-6 md:px-8 lg:px-10 max-w-[1320px] xl:max-w-[1440px]">
-          {/* Extra top padding so content clears the overlapping image */}
+       
           <div className="pt-6">
             <div className="relative overflow-hidden rounded-3xl bg-[#111827]">
               <Image
@@ -66,7 +79,7 @@ export default function HeroSection() {
               />
 
               <div className="relative flex flex-col lg:flex-row items-stretch gap-8 lg:gap-0 p-6 md:p-8">
-                {/* Phone mockup */}
+          
                 <div className="w-full lg:w-1/2 flex items-center justify-center">
                   <Image
                     src="/assets/phone.svg"
@@ -111,13 +124,7 @@ export default function HeroSection() {
                       <li>Enhance transparency, accountability, and trust</li>
                       <li>Deliver a modern, connected living experience</li>
                     </ul>
-                  </div>
-
-                  <div className="mt-6 sm:mt-8">
-                    <button className="inline-flex items-center justify-center rounded-full bg-[#1560BD] hover:bg-[#124ea0] text-white text-sm sm:text-base font-medium px-7 sm:px-8 lg:px-10 py-2.5 sm:py-3 transition-colors">
-                      Get Started
-                    </button>
-                  </div>
+                  </div> 
                 </div>
               </div>
             </div>
