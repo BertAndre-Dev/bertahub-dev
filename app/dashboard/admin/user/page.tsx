@@ -24,7 +24,6 @@ interface AdminUserData {
   id?: string;
   firstName: string;
   lastName: string;
-  residentType: string;
   createdAt: string;
   email: string;
   // Single primary address id from backend (kept for backwards compatibility)
@@ -273,7 +272,6 @@ export default function AdminUserPage() {
         </span>
       ),
     },
-    { key: "residentType", header: "Resident Type" }, // ✅ add
     {
       key: "actions",
       header: "Actions",

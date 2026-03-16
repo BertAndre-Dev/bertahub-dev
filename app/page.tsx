@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { redirect } from "next/navigation"
+import LandingHome from "./landing";
 
 export default function Home() {
-  redirect("/auth/login")
+  return <LandingHome />;
 }
