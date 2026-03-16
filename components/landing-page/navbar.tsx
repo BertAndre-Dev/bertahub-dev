@@ -70,7 +70,7 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
         {/* Right buttons */}
         <div className="hidden lg:flex items-center gap-3">
           <Link
-            href="https://www.bertahub.com/"
+            href="https://www.bertahub.com/auth/login"
             className="cursor-pointer"
             target="_blank"
             rel="noopener noreferrer"
@@ -237,7 +237,7 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
                 </Link>
               )}
               <Link
-                href="https://www.bertahub.com/"
+                href="https://www.bertahub.com/auth/login"
                 className="cursor-pointer"
                 target="_blank"
                 rel="noopener noreferrer"

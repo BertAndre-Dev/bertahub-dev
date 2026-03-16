@@ -65,11 +65,12 @@ export default function FeaturesSection() {
                 }`}
               >
                 <div>
-                  <h2 className="text-[#171717] text-base font-semibold mb-2 cursor-pointer">
+                  <h2 className="text-[#171717] text-[20px] font-bold mb-2 cursor-pointer">
                     {activeTab === "owners"
                       ? "Property Management"
                       : "Resident Management"}
                   </h2>
+                  <div className="mt-2 h-[3px] w-20 rounded-full bg-[#FA8128] mb-4" />
                   {activeTab === "owners" ? (
                     <p className="text-[#4C4C4C] text-sm sm:text-base leading-relaxed">
                       A powerful web-based management suite designed for
@@ -89,7 +90,7 @@ export default function FeaturesSection() {
                 <div>
                   {activeTab === "owners" ? (
                     <>
-                      <p className="text-[#171717] text-sm sm:text-base font-semibold mb-2">
+                      <p className="text-[#171717] text-sm sm:text-base font-normal mb-2">
                         You can:
                       </p>
                       <ul className="list-disc pl-5 space-y-2 text-[#4C4C4C] text-sm sm:text-base leading-relaxed">
