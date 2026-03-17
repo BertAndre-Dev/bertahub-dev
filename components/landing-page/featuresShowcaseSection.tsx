@@ -54,27 +54,28 @@ function FeatureCard({
       onMouseLeave={handleMouseLeave}
     >
       {/* ── Top content ─────────────────────────────── */}
-      <div className="flex flex-col gap-4 p-6 sm:p-7">
-        {/* Icon badge */}
-        <div className="w-11 h-11 rounded-full bg-[#1E3A5F] flex items-center justify-center shrink-0">
-          <Image
-            src={iconSrc}
-            alt={iconAlt}
-            width={22}
-            height={22}
-            className="object-contain"
-          />
+      <div className="flex flex-col gap-8 p-6 sm:p-7">
+        <div className="flex items-center justify-between">
+          {/* Title */}
+          <h3 className="text-white text-2xl sm:text-3xl font-bold leading-tight">
+            {titleLines.map((line, i) => (
+              <React.Fragment key={i}>
+                {line}
+                {i < titleLines.length - 1 && <br />}
+              </React.Fragment>
+            ))}
+          </h3>
+          {/* Icon badge */}
+          <div className="w-11 h-11 rounded-full bg-[#1E3A5F] flex items-center justify-center shrink-0">
+            <Image
+              src={iconSrc}
+              alt={iconAlt}
+              width={22}
+              height={22}
+              className="object-contain"
+            />
+          </div>
         </div>
-
-        {/* Title */}
-        <h3 className="text-white text-2xl sm:text-3xl font-bold leading-tight">
-          {titleLines.map((line, i) => (
-            <React.Fragment key={i}>
-              {line}
-              {i < titleLines.length - 1 && <br />}
-            </React.Fragment>
-          ))}
-        </h3>
 
         {/* Description */}
         <p className="text-white/60 text-sm sm:text-base leading-relaxed">
@@ -83,7 +84,7 @@ function FeatureCard({
       </div>
 
       {/* ── Image area ──────────────────────────────── */}
-      <div className="relative mt-auto flex items-end justify-center overflow-hidden px-6 pt-6 pb-4 min-h-[240px] sm:min-h-[280px]">
+      <div className="relative mt-auto flex items-end justify-center overflow-hidden px-6 pb-4 min-h-[240px] sm:min-h-[280px]">
         <div
           style={{
             transform: isHovered ? hoveredTransform : baseTransform,

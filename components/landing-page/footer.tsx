@@ -34,7 +34,7 @@ function FooterColumn({
       </h3>
       <ul className="flex flex-col gap-4">
         {links.map(({ label, href }) => (
-          <li key={href}>
+          <li key={`${href}-${label}`}>
             <Link
               href={href}
               className="text-[#FFFFFF80] text-[14px] md:text-[18px] font-light md:font-normal hover:text-white transition-colors"
