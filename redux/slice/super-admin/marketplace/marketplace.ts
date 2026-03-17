@@ -37,6 +37,8 @@ export interface GetMarketplaceParams {
   status?: string;
   estateId?: string;
   category?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface MarketplaceListResponse {
@@ -55,10 +57,11 @@ export const getMarketplaceList = createAsyncThunk(
   "super-admin-marketplace/getList",
   async (params: GetMarketplaceParams | undefined, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 10, status, estateId, category } = params ?? {};
+      const { page = 1, limit = 10, status, estateId, category, startDate, endDate } =
+        params ?? {};
       const res = await axiosInstance.get<MarketplaceListResponse>(
         "/api/v1/marketplace",
-        { params: { page, limit, status, estateId, category } }
+        { params: { page, limit, status, estateId, category, startDate, endDate } }
       );
       return res.data;
     } catch (error: unknown) {

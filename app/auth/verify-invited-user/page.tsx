@@ -103,7 +103,7 @@ export default function VerifyInvitedUserPage() {
 
       // 🔹 Success: show toast and navigate
       toast.success(res?.message);
-      router.push("/"); // only navigate on success
+      router.push("/auth/login"); // only navigate on success
 
     } catch (err: any) {
       // 🔹 Extract error message safely

@@ -3,7 +3,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Plus, Edit2, Trash2, ScrollText, Power, PowerOff } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
@@ -34,6 +33,7 @@ import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import SuspendRentModal from "@/components/resident/suspend-rent-modal/page";
 
 interface BillData {
+  createdAt?: string;
   id?: string;
   estateId: string;
   name: string;
@@ -52,6 +52,10 @@ export default function BillPage() {
   const [activeTab, setActiveTab] = useState<"create" | "assign">("create");
   const [billSearch, setBillSearch] = useState("");
   const [assignSearch, setAssignSearch] = useState("");
+  const [billsStartDate, setBillsStartDate] = useState("");
+  const [billsEndDate, setBillsEndDate] = useState("");
+  const [assignedStartDate, setAssignedStartDate] = useState("");
+  const [assignedEndDate, setAssignedEndDate] = useState("");
   const [assignAddressOptions, setAssignAddressOptions] = useState<
     { label: string; value: string }[]
   >([]);
@@ -60,22 +64,28 @@ export default function BillPage() {
   const [suspendBillItem, setSuspendBillItem] = useState<BillData | null>(null);
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
 
-  const { allBills, pagination, loading, assignedBills, assignedPagination, loadingAssigned } =
-    useSelector((state: RootState) => {
-      const billState = state.adminBill as any;
-      return {
-        allBills: billState?.allBills?.data || [],
-        pagination: billState?.allBills?.pagination || {},
-        loading:
-          billState.getBillsByEstateState === "isLoading" ||
-          billState.createBillState === "isLoading" ||
-          billState.updateBillState === "isLoading" ||
-          billState.deleteBillState === "isLoading",
-        assignedBills: (billState?.assignedBills || []) as BillsForAddressItem[],
-        assignedPagination: billState?.assignedBillsPagination || null,
-        loadingAssigned: billState?.getBillsForAddressState === "isLoading",
-      };
-    });
+  const {
+    allBills,
+    pagination,
+    loading,
+    assignedBills,
+    assignedPagination,
+    loadingAssigned,
+  } = useSelector((state: RootState) => {
+    const billState = state.adminBill as any;
+    return {
+      allBills: billState?.allBills?.data || [],
+      pagination: billState?.allBills?.pagination || {},
+      loading:
+        billState.getBillsByEstateState === "isLoading" ||
+        billState.createBillState === "isLoading" ||
+        billState.updateBillState === "isLoading" ||
+        billState.deleteBillState === "isLoading",
+      assignedBills: (billState?.assignedBills || []) as BillsForAddressItem[],
+      assignedPagination: billState?.assignedBillsPagination || null,
+      loadingAssigned: billState?.getBillsForAddressState === "isLoading",
+    };
+  });
 
   useEffect(() => {
     (async () => {
@@ -116,20 +126,40 @@ export default function BillPage() {
     })();
   }, [dispatch]);
 
+  // Refetch bills when date range changes (only apply when both are selected)
+  useEffect(() => {
+    if (!estateId) return;
+    if (activeTab !== "create") return;
+    const shouldApplyDate = Boolean(billsStartDate && billsEndDate);
+    dispatch(
+      getBillsByEstate({
+        estateId,
+        page: 1,
+        limit: 10,
+        startDate: shouldApplyDate ? billsStartDate : undefined,
+        endDate: shouldApplyDate ? billsEndDate : undefined,
+      }),
+    )
+      .unwrap()
+      .catch(() => toast.error("Failed to fetch bills."));
+  }, [dispatch, estateId, activeTab, billsStartDate, billsEndDate]);
+
   // Load address options for assign tab (using same estate fields/entries)
   useEffect(() => {
-    if (activeTab !== "assign" || !estateId || assignAddressOptions.length > 0) {
+    if (
+      activeTab !== "assign" ||
+      !estateId ||
+      assignAddressOptions.length > 0
+    ) {
       return;
     }
     (async () => {
       try {
         setAssignAddressLoading(true);
-        const { getFieldByEstate } = await import(
-          "@/redux/slice/admin/address-mgt/fields/fields"
-        );
-        const { getEntriesByField } = await import(
-          "@/redux/slice/admin/address-mgt/entry/entry"
-        );
+        const { getFieldByEstate } =
+          await import("@/redux/slice/admin/address-mgt/fields/fields");
+        const { getEntriesByField } =
+          await import("@/redux/slice/admin/address-mgt/entry/entry");
 
         const fieldRes = await dispatch(getFieldByEstate(estateId)).unwrap();
         const fields = fieldRes?.data || [];
@@ -143,9 +173,11 @@ export default function BillPage() {
         ).unwrap();
         const entries =
           entryRes?.data ??
-          (entryRes as {
-            data?: Array<{ id: string; data?: Record<string, string> }>;
-          })?.data ??
+          (
+            entryRes as {
+              data?: Array<{ id: string; data?: Record<string, string> }>;
+            }
+          )?.data ??
           [];
         const opts = entries.map(
           (entry: { id: string; data?: Record<string, string> }) => {
@@ -161,7 +193,12 @@ export default function BillPage() {
           const firstId = opts[0].value;
           setAssignAddressId(firstId);
           await dispatch(
-            getBillsForAddress({ addressId: firstId, estateId, page: 1, limit: 10 }),
+            getBillsForAddress({
+              addressId: firstId,
+              estateId,
+              page: 1,
+              limit: 10,
+            }),
           ).unwrap();
         }
       } catch {
@@ -171,6 +208,32 @@ export default function BillPage() {
       }
     })();
   }, [activeTab, estateId, assignAddressOptions.length, dispatch]);
+
+  // Refetch assigned bills when address/date range changes (only apply when both are selected)
+  useEffect(() => {
+    if (activeTab !== "assign") return;
+    if (!estateId || !assignAddressId) return;
+    const shouldApplyDate = Boolean(assignedStartDate && assignedEndDate);
+    dispatch(
+      getBillsForAddress({
+        addressId: assignAddressId,
+        estateId,
+        page: 1,
+        limit: 10,
+        startDate: shouldApplyDate ? assignedStartDate : undefined,
+        endDate: shouldApplyDate ? assignedEndDate : undefined,
+      }),
+    )
+      .unwrap()
+      .catch(() => toast.error("Failed to load assigned bills."));
+  }, [
+    dispatch,
+    activeTab,
+    estateId,
+    assignAddressId,
+    assignedStartDate,
+    assignedEndDate,
+  ]);
 
   const handleOpenModal = (bill?: BillData) => {
     setSelectedBill(bill || null);
@@ -203,7 +266,14 @@ export default function BillPage() {
       toast.info(`${suspendBillItem.name} suspended.`);
       setSuspendBillItem(null);
       await dispatch(
-        getBillsByEstate({ estateId, page: 1, limit: 10 }),
+        getBillsByEstate({
+          estateId,
+          page: 1,
+          limit: 10,
+          startDate:
+            billsStartDate && billsEndDate ? billsStartDate : undefined,
+          endDate: billsStartDate && billsEndDate ? billsEndDate : undefined,
+        }),
       ).unwrap();
     } catch (err: any) {
       toast.error(err?.message);
@@ -218,7 +288,14 @@ export default function BillPage() {
       await dispatch(activateBill(bill.id)).unwrap();
       toast.success(`${bill.name} activated.`);
       await dispatch(
-        getBillsByEstate({ estateId, page: 1, limit: 10 }),
+        getBillsByEstate({
+          estateId,
+          page: 1,
+          limit: 10,
+          startDate:
+            billsStartDate && billsEndDate ? billsStartDate : undefined,
+          endDate: billsStartDate && billsEndDate ? billsEndDate : undefined,
+        }),
       ).unwrap();
     } catch (err: any) {
       toast.error(err?.message);
@@ -234,7 +311,14 @@ export default function BillPage() {
         await dispatch(deleteBill(id)).unwrap();
         toast.success(`${name} deleted successfully.`);
         await dispatch(
-          getBillsByEstate({ estateId, page: 1, limit: 10 }),
+          getBillsByEstate({
+            estateId,
+            page: 1,
+            limit: 10,
+            startDate:
+              billsStartDate && billsEndDate ? billsStartDate : undefined,
+            endDate: billsStartDate && billsEndDate ? billsEndDate : undefined,
+          }),
         ).unwrap();
       },
     });
@@ -254,7 +338,14 @@ export default function BillPage() {
 
       handleCloseModal();
       await dispatch(
-        getBillsByEstate({ estateId, page: 1, limit: 10 }),
+        getBillsByEstate({
+          estateId,
+          page: 1,
+          limit: 10,
+          startDate:
+            billsStartDate && billsEndDate ? billsStartDate : undefined,
+          endDate: billsStartDate && billsEndDate ? billsEndDate : undefined,
+        }),
       ).unwrap();
     } catch (err: any) {
       toast.error(err?.message || "Failed to save bill.");
@@ -291,6 +382,19 @@ export default function BillPage() {
     header: string;
     render?: (item: BillData) => React.ReactNode;
   }[] = [
+    {
+      key: "createdAt",
+      header: "Created At",
+      render: (item: BillData) =>
+        new Date(item.createdAt as string | number | Date).toLocaleDateString(
+          "en-GB",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          },
+        ),
+    },
     { key: "name", header: "Bill Name" },
     { key: "description", header: "Description" },
     { key: "yearlyAmount", header: "Yearly Amount" },
@@ -430,7 +534,7 @@ export default function BillPage() {
               value: assignedBills?.length || 0,
               icon: ScrollText,
               color: "bg-[#D0DFF280]",
-            }
+            },
           ];
 
           return stats.map((stat, i) => {
@@ -502,19 +606,50 @@ export default function BillPage() {
             columns={columns}
             data={filteredBills}
             emptyMessage={loading ? "Loading bills..." : "No bills found."}
+            enableDateRangeFilter
+            startDate={billsStartDate}
+            endDate={billsEndDate}
+            onDateRangeChange={({ startDate, endDate }) => {
+              setBillsStartDate(startDate);
+              setBillsEndDate(endDate);
+            }}
             showPagination
             paginationInfo={{
               total: pagination?.total || 0,
               current: Number(pagination?.page) || 1,
               pageSize: Number(pagination?.limit) || 10,
             }}
+            onPageChange={(page) => {
+              if (!estateId) return;
+              const shouldApplyDate = Boolean(billsStartDate && billsEndDate);
+              dispatch(
+                getBillsByEstate({
+                  estateId,
+                  page,
+                  limit: 10,
+                  startDate: shouldApplyDate ? billsStartDate : undefined,
+                  endDate: shouldApplyDate ? billsEndDate : undefined,
+                }),
+              )
+                .unwrap()
+                .catch(() => toast.error("Failed to change page"));
+            }}
             enableExport
             exportFileName="bills"
             onExportRequest={
               estateId
                 ? async () => {
+                    const shouldApplyDate = Boolean(
+                      billsStartDate && billsEndDate,
+                    );
                     const res = await dispatch(
-                      getBillsByEstate({ estateId, page: 1, limit: 50000 }),
+                      getBillsByEstate({
+                        estateId,
+                        page: 1,
+                        limit: 50000,
+                        startDate: shouldApplyDate ? billsStartDate : undefined,
+                        endDate: shouldApplyDate ? billsEndDate : undefined,
+                      }),
                     ).unwrap();
                     return res?.data ?? [];
                   }
@@ -528,6 +663,14 @@ export default function BillPage() {
           <div className="space-y-4">
             <Table
               columns={[
+                {
+                  key: "createdAt",
+                  header: "Created At",
+                  render: (item: BillsForAddressItem) =>
+                    item.createdAt
+                      ? new Date(item.createdAt).toLocaleString()
+                      : "—",
+                },
                 {
                   key: "billName",
                   header: "Bill Name",
@@ -563,14 +706,6 @@ export default function BillPage() {
                       ? new Date(item.nextDueDate).toLocaleDateString()
                       : "—",
                 },
-                {
-                  key: "createdAt",
-                  header: "Created At",
-                  render: (item: BillsForAddressItem) =>
-                    item.createdAt
-                      ? new Date(item.createdAt).toLocaleString()
-                      : "—",
-                },
               ]}
               data={filteredAssignedBills}
               emptyMessage={
@@ -580,12 +715,63 @@ export default function BillPage() {
                     : "No bills assigned to this address."
                   : "Select an address to view assigned bills."
               }
+              enableDateRangeFilter
+              startDate={assignedStartDate}
+              endDate={assignedEndDate}
+              onDateRangeChange={({ startDate, endDate }) => {
+                setAssignedStartDate(startDate);
+                setAssignedEndDate(endDate);
+              }}
               showPagination
               paginationInfo={{
                 total: assignedPagination?.total || 0,
                 current: assignedPagination?.page || 1,
                 pageSize: assignedPagination?.limit || 10,
               }}
+              onPageChange={(page) => {
+                if (!estateId || !assignAddressId) return;
+                const shouldApplyDate = Boolean(
+                  assignedStartDate && assignedEndDate,
+                );
+                dispatch(
+                  getBillsForAddress({
+                    addressId: assignAddressId,
+                    estateId,
+                    page,
+                    limit: assignedPagination?.limit || 10,
+                    startDate: shouldApplyDate ? assignedStartDate : undefined,
+                    endDate: shouldApplyDate ? assignedEndDate : undefined,
+                  }),
+                )
+                  .unwrap()
+                  .catch(() => toast.error("Failed to change page"));
+              }}
+              enableExport
+              exportFileName="assigned-bills"
+              onExportRequest={
+                estateId && assignAddressId
+                  ? async () => {
+                      const shouldApplyDate = Boolean(
+                        assignedStartDate && assignedEndDate,
+                      );
+                      const res = await dispatch(
+                        getBillsForAddress({
+                          addressId: assignAddressId,
+                          estateId,
+                          page: 1,
+                          limit: 50000,
+                          startDate: shouldApplyDate
+                            ? assignedStartDate
+                            : undefined,
+                          endDate: shouldApplyDate
+                            ? assignedEndDate
+                            : undefined,
+                        }),
+                      ).unwrap();
+                      return res?.data ?? [];
+                    }
+                  : undefined
+              }
             />
           </div>
         )}

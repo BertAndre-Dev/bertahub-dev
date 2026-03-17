@@ -97,12 +97,30 @@ export const getEntry = createAsyncThunk(
 export const getEntriesByField = createAsyncThunk(
   'entry/getEntriesByField',
   async (
-    { fieldId, page, limit }: { fieldId: string; page: number; limit: number },
+    {
+      fieldId,
+      page,
+      limit,
+      startDate,
+      endDate,
+    }: {
+      fieldId: string;
+      page: number;
+      limit: number;
+      startDate?: string;
+      endDate?: string;
+    },
     { rejectWithValue }
   ) => {
     try {
+      const params = new URLSearchParams();
+      params.set("fieldId", fieldId);
+      if (page != null) params.set("page", String(page));
+      if (limit != null) params.set("limit", String(limit));
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
       const res = await axiosInstance.get(
-        `/api/v1/address-mgt/field-entries?fieldId=${fieldId}&page=${page}&limit=${limit}`
+        `/api/v1/address-mgt/field-entries?${params.toString()}`,
       );
       return res.data;
     } catch (error: any) {

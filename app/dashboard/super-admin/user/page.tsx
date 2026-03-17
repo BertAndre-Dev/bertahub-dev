@@ -86,9 +86,18 @@ export default function SuperAdminUserPage() {
   const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(
     null,
   );
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [selectedUser, setSelectedUser] = useState<SuperAdminUserData | null>(
     null,
   );
+
+  // ✅ Map estates for dropdown
+  const estateOptions: EstateOption[] =
+    allEstates?.map((e: any) => ({
+      label: e.name,
+      value: e.id,
+    })) || [];
 
   // ✅ Fetch all estates on mount
   useEffect(() => {
@@ -99,20 +108,30 @@ export default function SuperAdminUserPage() {
       .catch(() => toast.error("Failed to fetch estates"));
   }, [dispatch]);
 
+  // ✅ Default to the first estate as soon as estates load
+  useEffect(() => {
+    if (selectedEstate?.value) return;
+    if (!estateOptions.length) return;
+    setSelectedEstate(estateOptions[0]);
+  }, [estateOptions, selectedEstate?.value]);
+
   // ✅ Fetch users for the selected estate
   useEffect(() => {
     if (selectedEstate?.value) {
+      const shouldApplyDate = Boolean(startDate && endDate);
       dispatch(
         getAllUsersByEstate({
           estateId: selectedEstate.value,
           page: 1,
           limit: Number(pagination?.pageSize) || 10,
+          startDate: shouldApplyDate ? startDate : undefined,
+          endDate: shouldApplyDate ? endDate : undefined,
         }),
       )
         .unwrap()
         .catch(() => toast.error("Failed to fetch users for selected estate"));
     }
-  }, [selectedEstate, dispatch]);
+  }, [selectedEstate, dispatch, startDate, endDate]);
 
   const handleEstateModal = (user?: SuperAdminUserData) => {
     setSelectedUser(user || null);
@@ -167,13 +186,6 @@ export default function SuperAdminUserPage() {
       },
     });
   };
-
-  // ✅ Map estates for dropdown
-  const estateOptions: EstateOption[] =
-    allEstates?.map((e: any) => ({
-      label: e.name,
-      value: e.id,
-    })) || [];
 
   const columns = [
     { key: "firstName", header: "First Name" },
@@ -333,6 +345,13 @@ export default function SuperAdminUserPage() {
           emptyMessage={
             loading ? "Loading users..." : "No users found for this estate"
           }
+          enableDateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onDateRangeChange={({ startDate, endDate }) => {
+            setStartDate(startDate);
+            setEndDate(endDate);
+          }}
           showPagination={true}
           paginationInfo={{
             total: pagination?.total || 0,
@@ -341,12 +360,15 @@ export default function SuperAdminUserPage() {
           }}
           onPageChange={(page) => {
             if (!selectedEstate?.value) return; // ✅ Prevent null access
+            const shouldApplyDate = Boolean(startDate && endDate);
 
             dispatch(
               getAllUsersByEstate({
                 estateId: selectedEstate.value,
                 page,
                 limit: Number(pagination?.pageSize) || 10,
+                startDate: shouldApplyDate ? startDate : undefined,
+                endDate: shouldApplyDate ? endDate : undefined,
               }),
             )
               .unwrap()
@@ -357,11 +379,14 @@ export default function SuperAdminUserPage() {
           onExportRequest={
             selectedEstate?.value
               ? async () => {
+                  const shouldApplyDate = Boolean(startDate && endDate);
                   const res = await dispatch(
                     getAllUsersByEstate({
                       estateId: selectedEstate.value,
                       page: 1,
                       limit: 50000,
+                      startDate: shouldApplyDate ? startDate : undefined,
+                      endDate: shouldApplyDate ? endDate : undefined,
                     }),
                   ).unwrap();
                   return res?.data ?? [];

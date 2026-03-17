@@ -14,7 +14,6 @@ import {
   PauseCircle,
   Store,
   ListCheck,
-  Search,
 } from "lucide-react";
 import {
   getMarketplaceList,
@@ -33,6 +32,7 @@ import Table from "@/components/tables/list/page";
 import AddBusinessForm from "@/components/super-admin/add-business-form/page";
 import type { AddBusinessFormPayload } from "@/components/super-admin/add-business-form/page";
 import SuspendRentModal from "@/components/resident/suspend-rent-modal/page";
+import { MarketplaceListingCard } from "@/components/super-admin/marketplace-listing-card";
 
 export default function SuperAdminMarketplacePage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,6 +41,13 @@ export default function SuperAdminMarketplacePage() {
   const [suspendItem, setSuspendItem] = useState<MarketplaceItem | null>(null);
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [estateIdFilter, setEstateIdFilter] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
 
   const { list, pagination, getListStatus, createStatus, updateStatus } =
     useSelector((state: RootState) => {
@@ -76,10 +83,28 @@ export default function SuperAdminMarketplacePage() {
   }, [listings, search]);
 
   useEffect(() => {
-    dispatch(getMarketplaceList({ page: 1, limit: 100 })).catch(() =>
-      toast.error("Failed to load marketplace."),
-    );
-  }, [dispatch]);
+    const shouldApplyDate = Boolean(startDate && endDate);
+    dispatch(
+      getMarketplaceList({
+        page,
+        limit,
+        status: statusFilter || undefined,
+        category: categoryFilter || undefined,
+        estateId: estateIdFilter.trim() || undefined,
+        startDate: shouldApplyDate ? startDate : undefined,
+        endDate: shouldApplyDate ? endDate : undefined,
+      }),
+    ).catch(() => toast.error("Failed to load marketplace."));
+  }, [
+    dispatch,
+    page,
+    limit,
+    statusFilter,
+    categoryFilter,
+    estateIdFilter,
+    startDate,
+    endDate,
+  ]);
 
   const openAddModal = () => {
     setEditingItem(null);
@@ -123,9 +148,7 @@ export default function SuperAdminMarketplacePage() {
         toast.success("Business added to marketplace.");
       }
       closeModal();
-      dispatch(
-        getMarketplaceList({ page: 1, limit: pagination?.limit ?? 100 }),
-      );
+      setPage(1);
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message ?? "Failed to save.";
       toast.error(msg);
@@ -171,9 +194,7 @@ export default function SuperAdminMarketplacePage() {
       onConfirm: async () => {
         await dispatch(deleteMarketplace(item.id!)).unwrap();
         toast.success("Listing deleted.");
-        dispatch(
-          getMarketplaceList({ page: 1, limit: pagination?.limit ?? 100 }),
-        );
+        setPage(1);
       },
     });
   };
@@ -329,8 +350,7 @@ export default function SuperAdminMarketplacePage() {
         })}
       </div>
 
-      <div className="flex items-center gap-2 bg-white p-4 rounded-lg border border-border">
-        <Search className="w-5 h-5 text-muted-foreground shrink-0" />
+      <div className="flex flex-row items-center justify-between gap-2 bg-white p-4 rounded-lg border border-border">
         <Input
           type="text"
           placeholder="Search by company name, product name, category, etc..."
@@ -338,9 +358,53 @@ export default function SuperAdminMarketplacePage() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-md border-gray-300"
         />
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="flex flex-row items-center gap-1">
+            <label
+              htmlFor="marketplace-status"
+              className="text-sm text-muted-foreground"
+            >
+              Status
+            </label>
+            <select
+              id="marketplace-status"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              aria-label="Marketplace status"
+              className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+          <div className="flex flex-row items-center gap-1">
+            <label
+              htmlFor="marketplace-category"
+              className="text-sm text-muted-foreground"
+            >
+              Category
+            </label>
+            <input
+              id="marketplace-category"
+              type="text"
+              value={categoryFilter}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                setPage(1);
+              }}
+              placeholder="e.g. Fashion"
+              className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
       </div>
 
-       <div className="bg-white p-4 rounded-lg border border-border">
+      <div className="bg-white p-4 rounded-lg border border-border">
         <Tab
           titles={["Edit Business", "View Business"]}
           renderContent={(activeTab) => {
@@ -355,68 +419,19 @@ export default function SuperAdminMarketplacePage() {
                     <p className="text-muted-foreground py-8 text-center">
                       {search.trim()
                         ? "No businesses match your search."
-                        : "No businesses yet. Click \"Add business\" to create one."}
+                        : 'No businesses yet. Click "Add business" to create one.'}
                     </p>
                   ) : (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {filteredListings.map((item) => (
-                        <Card key={item.id} className="p-4 overflow-hidden">
-                          {item.images?.[0] ? (
-                            <img
-                              src={item.images[0]}
-                              alt=""
-                              className="w-full h-40 object-cover rounded-t-lg -mx-4 -mt-4 mb-3"
-                            />
-                          ) : (
-                            <div className="w-full h-40 bg-muted rounded-t-lg -mx-4 -mt-4 mb-3 flex items-center justify-center text-muted-foreground text-sm">
-                              No image
-                            </div>
-                          )}
-                          <h3 className="font-semibold truncate">{item.companyName}</h3>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {item.productName} · {item.productCategory}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                            {item.productDescription}
-                          </p>
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8"
-                              onClick={() => openEditModal(item)}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            {item.status === "suspended" ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 text-green-600"
-                                onClick={() => handleActivate(item)}
-                              >
-                                <PlayCircle className="w-4 h-4" />
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 text-amber-600"
-                                onClick={() => openSuspendModal(item)}
-                              >
-                                <PauseCircle className="w-4 h-4" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 text-destructive"
-                              onClick={() => handleDelete(item)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </Card>
+                        <MarketplaceListingCard
+                          key={item.id}
+                          item={item}
+                          onEdit={openEditModal}
+                          onActivate={handleActivate}
+                          onSuspend={openSuspendModal}
+                          onDelete={handleDelete}
+                        />
                       ))}
                     </div>
                   )}
@@ -433,8 +448,23 @@ export default function SuperAdminMarketplacePage() {
                       ? "No businesses match your search."
                       : getListStatus === "isLoading"
                         ? "Loading..."
-                        : "No businesses yet. Click \"Add business\" to create one."
+                        : 'No businesses yet. Click "Add business" to create one.'
                   }
+                  enableDateRangeFilter
+                  startDate={startDate}
+                  endDate={endDate}
+                  onDateRangeChange={({ startDate, endDate }) => {
+                    setStartDate(startDate);
+                    setEndDate(endDate);
+                    setPage(1);
+                  }}
+                  showPagination
+                  paginationInfo={{
+                    total: pagination?.total ?? filteredListings.length,
+                    current: pagination?.page ?? page,
+                    pageSize: pagination?.limit ?? limit,
+                  }}
+                  onPageChange={(p) => setPage(p)}
                   enableExport
                   exportFileName="marketplace-businesses"
                   onExportRequest={() => Promise.resolve(filteredListings)}
@@ -465,7 +495,9 @@ export default function SuperAdminMarketplacePage() {
         onClose={() => setSuspendItem(null)}
         tenantName={
           suspendItem
-            ? suspendItem.companyName ?? suspendItem.productName ?? "this listing"
+            ? (suspendItem.companyName ??
+              suspendItem.productName ??
+              "this listing")
             : ""
         }
         title="Suspend listing"

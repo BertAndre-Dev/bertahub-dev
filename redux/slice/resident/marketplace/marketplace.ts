@@ -21,6 +21,8 @@ export interface GetResidentMarketplaceParams {
   status?: string;
   estateId?: string;
   category?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface ResidentMarketplaceListResponse {
@@ -39,10 +41,11 @@ export const getResidentMarketplaceList = createAsyncThunk(
   "resident-marketplace/getList",
   async (params: GetResidentMarketplaceParams | undefined, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 50, status, estateId, category } = params ?? {};
+      const { page = 1, limit = 50, status, estateId, category, startDate, endDate } =
+        params ?? {};
       const res = await axiosInstance.get<ResidentMarketplaceListResponse>(
         "/api/v1/marketplace",
-        { params: { page, limit, status, estateId, category } }
+        { params: { page, limit, status, estateId, category, startDate, endDate } }
       );
       return res.data;
     } catch (error: unknown) {

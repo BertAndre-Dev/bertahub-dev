@@ -15,6 +15,8 @@ export interface CreateRentPayload {
 export interface GetOwnerRentsParams {
   page?: number;
   limit?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface RentItem {
@@ -75,10 +77,10 @@ export const getOwnerRents = createAsyncThunk(
   "resident-rent-mgt/getOwnerRents",
   async (params: GetOwnerRentsParams | undefined, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 10 } = params ?? {};
+      const { page = 1, limit = 10, startDate, endDate } = params ?? {};
       const res = await axiosInstance.get<RentListResponse>(
         "/api/v1/rent/owner/all",
-        { params: { page, limit } }
+        { params: { page, limit, startDate, endDate } }
       );
       return res.data;
     } catch (error: unknown) {
@@ -94,6 +96,8 @@ export const getOwnerRents = createAsyncThunk(
 export interface GetTenantRentsParams {
   page?: number;
   limit?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 /** Get all rents for the authenticated tenant. GET /api/v1/rent/tenant/all */
@@ -101,10 +105,10 @@ export const getTenantRents = createAsyncThunk(
   "resident-rent-mgt/getTenantRents",
   async (params: GetTenantRentsParams | undefined, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 10 } = params ?? {};
+      const { page = 1, limit = 10, startDate, endDate } = params ?? {};
       const res = await axiosInstance.get<RentListResponse>(
         "/api/v1/rent/tenant/all",
-        { params: { page, limit } }
+        { params: { page, limit, startDate, endDate } }
       );
       return res.data;
     } catch (error: unknown) {

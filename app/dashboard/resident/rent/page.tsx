@@ -47,6 +47,8 @@ export default function ResidentRentPage() {
   const [editRentId, setEditRentId] = useState<string | null>(null);
   const [residentType, setResidentType] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [viewRentId, setViewRentId] = useState<string | null>(null);
   const [suspendRentItem, setSuspendRentItem] = useState<RentItem | null>(null);
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
@@ -122,6 +124,31 @@ export default function ResidentRentPage() {
   }, [dispatch]);
 
   useEffect(() => {
+    if (!residentType) return;
+    const shouldApplyDate = Boolean(startDate && endDate);
+    setCurrentPage(1);
+    if (residentType === "owner") {
+      dispatch(
+        getOwnerRents({
+          page: 1,
+          limit: PAGE_SIZE,
+          startDate: shouldApplyDate ? startDate : undefined,
+          endDate: shouldApplyDate ? endDate : undefined,
+        }),
+      ).catch(() => toast.error("Failed to load rents."));
+    } else {
+      dispatch(
+        getTenantRents({
+          page: 1,
+          limit: PAGE_SIZE,
+          startDate: shouldApplyDate ? startDate : undefined,
+          endDate: shouldApplyDate ? endDate : undefined,
+        }),
+      ).catch(() => toast.error("Failed to load rents."));
+    }
+  }, [dispatch, residentType, startDate, endDate]);
+
+  useEffect(() => {
     if (createModalOpen && isOwner) {
       (async () => {
         try {
@@ -148,8 +175,16 @@ export default function ResidentRentPage() {
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
+    const shouldApplyDate = Boolean(startDate && endDate);
     const fetcher = isOwner ? getOwnerRents : getTenantRents;
-    dispatch(fetcher({ page: newPage, limit: PAGE_SIZE })).catch(() =>
+    dispatch(
+      fetcher({
+        page: newPage,
+        limit: PAGE_SIZE,
+        startDate: shouldApplyDate ? startDate : undefined,
+        endDate: shouldApplyDate ? endDate : undefined,
+      } as any),
+    ).catch(() =>
       toast.error("Failed to load rents."),
     );
   };
@@ -163,7 +198,15 @@ export default function ResidentRentPage() {
 
   const refreshList = () => {
     const fetcher = isOwner ? getOwnerRents : getTenantRents;
-    dispatch(fetcher({ page: currentPage, limit: PAGE_SIZE })).catch(() =>
+    const shouldApplyDate = Boolean(startDate && endDate);
+    dispatch(
+      fetcher({
+        page: currentPage,
+        limit: PAGE_SIZE,
+        startDate: shouldApplyDate ? startDate : undefined,
+        endDate: shouldApplyDate ? endDate : undefined,
+      } as any),
+    ).catch(() =>
       toast.error("Failed to refresh rents."),
     );
   };
@@ -444,6 +487,13 @@ export default function ResidentRentPage() {
           columns={columns}
           data={list}
           emptyMessage={loading ? "Loading rents..." : "No rent records found."}
+          enableDateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onDateRangeChange={({ startDate, endDate }) => {
+            setStartDate(startDate);
+            setEndDate(endDate);
+          }}
           showPagination
           paginationInfo={{
             total: (isOwner ? pagination : tenantPagination)?.total ?? 0,
@@ -459,14 +509,26 @@ export default function ResidentRentPage() {
           onExportRequest={
             isOwner
               ? async () => {
+                  const shouldApplyDate = Boolean(startDate && endDate);
                   const res = await dispatch(
-                    getOwnerRents({ page: 1, limit: 50000 }),
+                    getOwnerRents({
+                      page: 1,
+                      limit: 50000,
+                      startDate: shouldApplyDate ? startDate : undefined,
+                      endDate: shouldApplyDate ? endDate : undefined,
+                    }),
                   ).unwrap();
                   return res?.data ?? [];
                 }
               : async () => {
+                  const shouldApplyDate = Boolean(startDate && endDate);
                   const res = await dispatch(
-                    getTenantRents({ page: 1, limit: 50000 }),
+                    getTenantRents({
+                      page: 1,
+                      limit: 50000,
+                      startDate: shouldApplyDate ? startDate : undefined,
+                      endDate: shouldApplyDate ? endDate : undefined,
+                    }),
                   ).unwrap();
                   return res?.data ?? [];
                 }

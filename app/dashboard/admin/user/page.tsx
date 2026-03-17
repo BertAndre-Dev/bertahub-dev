@@ -57,6 +57,8 @@ export default function AdminUserPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [suspendUserItem, setSuspendUserItem] = useState<AdminUserData | null>(null);
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const { allAdminUsers, pagination, loading } = useSelector(
     (state: RootState) => {
@@ -79,12 +81,15 @@ export default function AdminUserPage() {
     if (!estateId) return;
 
     try {
+      const shouldApplyDate = Boolean(startDate && endDate);
       await dispatch(
         getAllUsersByEstate({
           estateId,
           page,
           limit: 10,
           search: searchTerm,
+          startDate: shouldApplyDate ? startDate : undefined,
+          endDate: shouldApplyDate ? endDate : undefined,
         }),
       ).unwrap();
       setCurrentPage(page);
@@ -134,7 +139,7 @@ export default function AdminUserPage() {
     if (selectedEstate?.value) {
       fetchAdminUsers(selectedEstate.value, 1, search);
     }
-  }, [selectedEstate, search]);
+  }, [selectedEstate, search, startDate, endDate]);
 
   const handleEstateModal = (user?: AdminUserData) => {
     setSelectedUser(user || null);
@@ -389,6 +394,14 @@ export default function AdminUserPage() {
           emptyMessage={
             loading ? "Loading users..." : "No users found for this estate"
           }
+          enableDateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onDateRangeChange={({ startDate, endDate }) => {
+            setStartDate(startDate);
+            setEndDate(endDate);
+            setCurrentPage(1);
+          }}
           showPagination={true}
           paginationInfo={{
             total: pagination?.total || 0,
@@ -404,12 +417,15 @@ export default function AdminUserPage() {
           onExportRequest={
             selectedEstate?.value
               ? async () => {
+                  const shouldApplyDate = Boolean(startDate && endDate);
                   const res = await dispatch(
                     getAllUsersByEstate({
                       estateId: selectedEstate.value,
                       page: 1,
                       limit: 50000,
                       search,
+                      startDate: shouldApplyDate ? startDate : undefined,
+                      endDate: shouldApplyDate ? endDate : undefined,
                     }),
                   ).unwrap();
                   return res?.data ?? [];

@@ -10,11 +10,15 @@ export const getAllUsersByEstate = createAsyncThunk(
       page = 1,
       limit = 10,
       search,
+      startDate,
+      endDate,
     }: {
       estateId: string | { id?: string; _id?: string };
       page?: number;
       limit?: number;
       search?: string;
+      startDate?: string;
+      endDate?: string;
     },
     { rejectWithValue },
   ) => {
@@ -27,6 +31,8 @@ export const getAllUsersByEstate = createAsyncThunk(
       if (search && search.trim()) {
         params.append("search", search.trim());
       }
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
 
       const normalizedEstateId =
         typeof estateId === "string"

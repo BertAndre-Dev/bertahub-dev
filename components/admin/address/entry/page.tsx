@@ -39,6 +39,8 @@ export default function EntryPage() {
   const [stats, setStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState<any>({});
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   // ✅ Fetch all data
   const fetchAllData = async () => {
@@ -84,8 +86,15 @@ export default function EntryPage() {
         return;
       }
 
+      const shouldApplyDate = Boolean(startDate && endDate);
       const entryRes = await dispatch(
-        getEntriesByField({ fieldId, page: 1, limit: 10 }),
+        getEntriesByField({
+          fieldId,
+          page: 1,
+          limit: 10,
+          startDate: shouldApplyDate ? startDate : undefined,
+          endDate: shouldApplyDate ? endDate : undefined,
+        }),
       ).unwrap();
 
       setEntries(entryRes?.data || []);
@@ -115,6 +124,31 @@ export default function EntryPage() {
   useEffect(() => {
     fetchAllData();
   }, [dispatch]);
+
+  // Refetch entries when date range changes (only apply when both are selected)
+  useEffect(() => {
+    const fieldId = fields[0]?.id || fields[0]?._id;
+    if (!fieldId) return;
+    const shouldApplyDate = Boolean(startDate && endDate);
+
+    setLoading(true);
+    dispatch(
+      getEntriesByField({
+        fieldId,
+        page: 1,
+        limit: pagination.pageSize ?? 10,
+        startDate: shouldApplyDate ? startDate : undefined,
+        endDate: shouldApplyDate ? endDate : undefined,
+      }),
+    )
+      .unwrap()
+      .then((res) => {
+        setEntries(res?.data || []);
+        setPagination(res?.pagination || {});
+      })
+      .catch(() => toast.error("Failed to fetch entries."))
+      .finally(() => setLoading(false));
+  }, [dispatch, startDate, endDate, fields]);
 
   const handleOpenModal = (entry?: EntryData) => {
     setSelectedEntry(entry || null);
@@ -359,6 +393,13 @@ export default function EntryPage() {
           columns={columns}
           data={mappedEntries}
           emptyMessage={loading ? "Loading entries..." : "No entries found."}
+          enableDateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onDateRangeChange={({ startDate, endDate }) => {
+            setStartDate(startDate);
+            setEndDate(endDate);
+          }}
           showPagination
           paginationInfo={{
             total: pagination.total ?? 0,
@@ -368,12 +409,15 @@ export default function EntryPage() {
           onPageChange={(page) => {
             const fieldId = fields[0]?.id || fields[0]?._id;
             if (!fieldId) return;
+            const shouldApplyDate = Boolean(startDate && endDate);
 
             dispatch(
               getEntriesByField({
                 fieldId,
                 page,
                 limit: pagination.pageSize ?? 10,
+                startDate: shouldApplyDate ? startDate : undefined,
+                endDate: shouldApplyDate ? endDate : undefined,
               }),
             )
               .unwrap()
@@ -390,8 +434,15 @@ export default function EntryPage() {
               ? async () => {
                   const fieldId = fields[0]?.id || fields[0]?._id;
                   if (!fieldId) return [];
+                  const shouldApplyDate = Boolean(startDate && endDate);
                   const res = await dispatch(
-                    getEntriesByField({ fieldId, page: 1, limit: 50000 }),
+                    getEntriesByField({
+                      fieldId,
+                      page: 1,
+                      limit: 50000,
+                      startDate: shouldApplyDate ? startDate : undefined,
+                      endDate: shouldApplyDate ? endDate : undefined,
+                    }),
                   ).unwrap();
                   return res?.data ?? [];
                 }

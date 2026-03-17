@@ -53,6 +53,8 @@ export default function VisitorPage() {
     const [estateId, setEstateId] = useState<string>("");
     const [addressOptions, setAddressOptions] = useState<AddressOption[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     // Fetch user and visitors
     useEffect(() => {
@@ -109,8 +111,15 @@ export default function VisitorPage() {
     const refreshVisitors = async () => {
         if (!userId) return;
         try {
+            const shouldApplyDate = Boolean(startDate && endDate);
             const visitorsRes = await dispatch(
-                getVisitorsByResident({ residentId: userId, page: pagination?.page || 1, limit: pagination?.limit || 10 })
+                getVisitorsByResident({
+                    residentId: userId,
+                    page: pagination?.page || 1,
+                    limit: pagination?.limit || 10,
+                    startDate: shouldApplyDate ? startDate : undefined,
+                    endDate: shouldApplyDate ? endDate : undefined,
+                })
             ).unwrap();
             setVisitors(visitorsRes?.data || []);
             setPagination(visitorsRes?.pagination || {});
@@ -118,6 +127,28 @@ export default function VisitorPage() {
             console.error("Refresh visitors failed:", err);
         }
     };
+
+    useEffect(() => {
+        if (!userId) return;
+        const shouldApplyDate = Boolean(startDate && endDate);
+        setLoading(true);
+        dispatch(
+            getVisitorsByResident({
+                residentId: userId,
+                page: 1,
+                limit: pagination?.limit || 10,
+                startDate: shouldApplyDate ? startDate : undefined,
+                endDate: shouldApplyDate ? endDate : undefined,
+            }),
+        )
+            .unwrap()
+            .then((visitorsRes) => {
+                setVisitors(visitorsRes?.data || []);
+                setPagination(visitorsRes?.pagination || {});
+            })
+            .catch(() => toast.error("Failed to fetch visitors"))
+            .finally(() => setLoading(false));
+    }, [dispatch, userId, startDate, endDate]);
 
     const handleOpenModal = (mode: "create" | "edit" | "view", visitorId?: string) => {
         setMode(mode);
@@ -172,8 +203,15 @@ export default function VisitorPage() {
     const handlePageChange = async (newPage: number) => {
         if (!userId) return;
         try {
+            const shouldApplyDate = Boolean(startDate && endDate);
             const visitorsRes = await dispatch(
-                getVisitorsByResident({ residentId: userId, page: newPage, limit: pagination?.limit || 10 })
+                getVisitorsByResident({
+                    residentId: userId,
+                    page: newPage,
+                    limit: pagination?.limit || 10,
+                    startDate: shouldApplyDate ? startDate : undefined,
+                    endDate: shouldApplyDate ? endDate : undefined,
+                })
             ).unwrap();
             setVisitors(visitorsRes?.data || []);
             setPagination(visitorsRes?.pagination || {});
@@ -305,6 +343,13 @@ export default function VisitorPage() {
                     columns={columns}
                     data={displayedVisitors || []}
                     emptyMessage={loading ? "Loading visitors..." : "You haven't created any visitors yet."}
+                    enableDateRangeFilter
+                    startDate={startDate}
+                    endDate={endDate}
+                    onDateRangeChange={({ startDate, endDate }) => {
+                        setStartDate(startDate);
+                        setEndDate(endDate);
+                    }}
                     showPagination
                     paginationInfo={{
                         total: addressOptions.length > 1 ? displayedVisitors.length : (pagination?.total || visitors.length || 0),
@@ -317,11 +362,14 @@ export default function VisitorPage() {
                     onExportRequest={
                         userId
                             ? async () => {
+                                const shouldApplyDate = Boolean(startDate && endDate);
                                 const res = await dispatch(
                                     getVisitorsByResident({
                                         residentId: userId,
                                         page: 1,
                                         limit: 50000,
+                                        startDate: shouldApplyDate ? startDate : undefined,
+                                        endDate: shouldApplyDate ? endDate : undefined,
                                     }),
                                 ).unwrap();
                                 return res?.data ?? [];

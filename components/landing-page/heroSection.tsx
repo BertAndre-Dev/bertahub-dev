@@ -49,7 +49,7 @@ export default function HeroSection({ onOpenBookDemo }: HeroSectionProps) {
           <div className="relative z-10 translate-y-24 md:translate-y-20 lg:translate-y-18 xl:translate-y-16">
             <div className="relative mx-auto max-w-[980px]">
               <Image
-                src="/assets/hero.png"
+                src="/assets/hero.svg"
                 alt="Berta Hub dashboard and mobile app"
                 width={1100}
                 height={1000}

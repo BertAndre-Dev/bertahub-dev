@@ -32,6 +32,8 @@ export default function AdminVisitorManagement() {
   const [estateName, setEstateName] = useState("Estate");
   const [addVisitorOpen, setAddVisitorOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [verifyModalVisitor, setVerifyModalVisitor] = useState<{
     visitorCode: string;
     firstName?: string;
@@ -107,16 +109,36 @@ export default function AdminVisitorManagement() {
     })();
   }, [dispatch]);
 
+  // Refetch visitors when date range changes (only apply when both are selected)
+  useEffect(() => {
+    if (!estateId) return;
+    const shouldApplyDate = Boolean(startDate && endDate);
+    dispatch(
+      getVisitorsByEstate({
+        estateId,
+        page: 1,
+        limit: pagination.limit,
+        startDate: shouldApplyDate ? startDate : undefined,
+        endDate: shouldApplyDate ? endDate : undefined,
+      }),
+    )
+      .unwrap()
+      .catch(() => toast.error("Failed to fetch visitors"));
+  }, [dispatch, estateId, startDate, endDate, pagination.limit]);
+
   // Pagination handler
   const handlePageChange = async (page: number) => {
     if (!estateId) return;
 
     try {
+      const shouldApplyDate = Boolean(startDate && endDate);
       await dispatch(
         getVisitorsByEstate({
           estateId,
           page,
           limit: pagination.limit,
+          startDate: shouldApplyDate ? startDate : undefined,
+          endDate: shouldApplyDate ? endDate : undefined,
         }),
       ).unwrap();
     } catch {
@@ -157,11 +179,14 @@ export default function AdminVisitorManagement() {
 
   const refreshVisitors = () => {
     if (estateId) {
+      const shouldApplyDate = Boolean(startDate && endDate);
       dispatch(
         getVisitorsByEstate({
           estateId,
           page: pagination.page,
           limit: pagination.limit,
+          startDate: shouldApplyDate ? startDate : undefined,
+          endDate: shouldApplyDate ? endDate : undefined,
         }),
       );
     }
@@ -482,6 +507,13 @@ export default function AdminVisitorManagement() {
           columns={columns}
           data={filteredVisitors}
           emptyMessage={loading ? "Loading visitors..." : "No visitors found."}
+          enableDateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onDateRangeChange={({ startDate, endDate }) => {
+            setStartDate(startDate);
+            setEndDate(endDate);
+          }}
           showPagination
           paginationInfo={{
             total: pagination.total,
@@ -494,11 +526,14 @@ export default function AdminVisitorManagement() {
           onExportRequest={
             estateId
               ? async () => {
+                  const shouldApplyDate = Boolean(startDate && endDate);
                   const res = await dispatch(
                     getVisitorsByEstate({
                       estateId,
                       page: 1,
                       limit: 50000,
+                      startDate: shouldApplyDate ? startDate : undefined,
+                      endDate: shouldApplyDate ? endDate : undefined,
                     }),
                   ).unwrap();
                   return res?.data ?? [];

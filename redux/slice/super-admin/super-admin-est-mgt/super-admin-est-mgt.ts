@@ -35,13 +35,22 @@ export const getAllEstates = createAsyncThunk(
         {
             limit = 10,
             page = 1,
-        }: { page?: number; limit?: number},
+            search,
+            startDate,
+            endDate,
+        }: { page?: number; limit?: number; search?: string; startDate?: string; endDate?: string },
         { rejectWithValue }
     ) => {
         try {
-            const res = await axiosInstance.get(
-                `/api/v1/estate-mgt?page=${page}&limit=${limit}`
-            );
+            const params = new URLSearchParams();
+            if (page != null) params.set("page", String(page));
+            if (limit != null) params.set("limit", String(limit));
+            if (search?.trim()) params.set("search", search.trim());
+            if (startDate) params.set("startDate", startDate);
+            if (endDate) params.set("endDate", endDate);
+            const query = params.toString();
+            const suffix = query ? "?" + query : "";
+            const res = await axiosInstance.get(`/api/v1/estate-mgt` + suffix);
             return res.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data);;

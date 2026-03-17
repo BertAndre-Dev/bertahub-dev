@@ -81,7 +81,9 @@ export const getTransactionHistory = createAsyncThunk(
       userId,
       page = 1,
       limit = 10,
-    }: { userId: string; page?: number; limit?: number },
+      startDate,
+      endDate,
+    }: { userId: string; page?: number; limit?: number; startDate?: string; endDate?: string },
     { rejectWithValue }
   ) => {
     try {
@@ -93,6 +95,8 @@ export const getTransactionHistory = createAsyncThunk(
             userId,
             page,
             limit,
+            startDate,
+            endDate,
           },
         }
       );

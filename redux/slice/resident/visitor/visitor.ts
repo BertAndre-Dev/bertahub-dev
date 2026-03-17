@@ -27,6 +27,8 @@ export interface GetVisitorsByResidentParams {
   residentId: string;
   page: number;
   limit: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 // Delete visitor
@@ -60,11 +62,18 @@ export const createVisitor = createAsyncThunk(
 // Get all visitors by resident
 export const getVisitorsByResident = createAsyncThunk(
   "residentVisitor/getVisitorsByResident",
-  async ({ residentId, page = 1, limit = 10 }: GetVisitorsByResidentParams, { rejectWithValue }) => {
+  async (
+    { residentId, page = 1, limit = 10, startDate, endDate }: GetVisitorsByResidentParams,
+    { rejectWithValue }
+  ) => {
     try {
-      const res = await axiosInstance.get(
-        `/api/v1/visitor-mgt?residentId=${residentId}&page=${page}&limit=${limit}`
-      );
+      const params = new URLSearchParams();
+      params.set("residentId", residentId);
+      if (page != null) params.set("page", String(page));
+      if (limit != null) params.set("limit", String(limit));
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
+      const res = await axiosInstance.get(`/api/v1/visitor-mgt?${params.toString()}`);
       return res.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data || { message: "Failed to fetch visitors" });

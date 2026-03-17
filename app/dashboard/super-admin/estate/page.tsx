@@ -60,6 +60,8 @@ export default function EstatePage() {
 
   const [open, setOpen] = useState(false);
   const [selectedEstate, setSelectedEstate] = useState<EstateData | null>(null);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   // Fetch estates on mount
   useEffect(() => {
@@ -71,6 +73,21 @@ export default function EstatePage() {
         toast.error("Failed to fetch estates");
       });
   }, [dispatch]);
+
+  // Refetch on date range changes (only apply when both are selected)
+  useEffect(() => {
+    const shouldApplyDate = Boolean(startDate && endDate);
+    dispatch(
+      getAllEstates({
+        page: 1,
+        limit: Number(pagination?.pageSize) || 10,
+        startDate: shouldApplyDate ? startDate : undefined,
+        endDate: shouldApplyDate ? endDate : undefined,
+      }),
+    )
+      .unwrap()
+      .catch(() => toast.error("Failed to fetch estates"));
+  }, [dispatch, startDate, endDate]);
 
   const handleEstateModal = (estate?: EstateData) => {
     setSelectedEstate(estate || null);
@@ -136,6 +153,19 @@ export default function EstatePage() {
   };
 
   const columns = [
+        {
+      key: "createdAt",
+      header: "Created At",
+      render: (item: EstateData) =>
+        new Date(item.createdAt as string | number | Date).toLocaleDateString(
+          "en-GB",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          },
+        ),
+    },
     { key: "name", header: "Estate Name" },
     { key: "address", header: "Address" },
     { key: "city", header: "City" },
@@ -155,19 +185,6 @@ export default function EstatePage() {
           {item.isActive ? "Active" : "Inactive"}
         </span>
       ),
-    },
-    {
-      key: "createdAt",
-      header: "Created At",
-      render: (item: EstateData) =>
-        new Date(item.createdAt as string | number | Date).toLocaleDateString(
-          "en-GB",
-          {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          },
-        ),
     },
     {
       key: "actions",
@@ -314,6 +331,13 @@ export default function EstatePage() {
           columns={columns}
           data={allEstates}
           emptyMessage={loading ? "Loading estates..." : "No estates found"}
+          enableDateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onDateRangeChange={({ startDate, endDate }) => {
+            setStartDate(startDate);
+            setEndDate(endDate);
+          }}
           showPagination={true}
           paginationInfo={{
             total: pagination?.total || 0,
@@ -325,14 +349,22 @@ export default function EstatePage() {
               getAllEstates({
                 page,
                 limit: Number(pagination?.pageSize) || 10,
+                startDate: startDate && endDate ? startDate : undefined,
+                endDate: startDate && endDate ? endDate : undefined,
               }),
             )
           }
           enableExport
           exportFileName="estates"
           onExportRequest={async () => {
+            const shouldApplyDate = Boolean(startDate && endDate);
             const res = await dispatch(
-              getAllEstates({ page: 1, limit: 50000 }),
+              getAllEstates({
+                page: 1,
+                limit: 50000,
+                startDate: shouldApplyDate ? startDate : undefined,
+                endDate: shouldApplyDate ? endDate : undefined,
+              }),
             ).unwrap();
             return res?.data ?? [];
           }}
