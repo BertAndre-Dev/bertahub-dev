@@ -12,12 +12,9 @@ import {
 
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
-import { TrendingUp, ChevronDown, Calendar } from "lucide-react";
-import { Select } from "@/components/ui/select";
-import TransactionStatsBar from "@/components/estate-admin/transaction-statsbar/page";
 import {
   TransactionsFilterBar,
   type EstateTransactionsFilters,
@@ -56,29 +53,19 @@ export default function TransactionPage() {
   } | null>(null);
   const [vendsPage, setVendsPage] = useState(1);
   const [loadingVends, setLoadingVends] = useState(false);
+  const [vendsStartDate, setVendsStartDate] = useState<string>("");
+  const [vendsEndDate, setVendsEndDate] = useState<string>("");
   const [paidBillsData, setPaidBillsData] = useState<any[]>([]);
-  const [paidBillsPagination, setPaidBillsPagination] = useState<{
-    total: number;
-    page: number;
-    limit: number;
-    pages: number;
-  } | null>(null);
   const [paidBillsPage, setPaidBillsPage] = useState(1);
   const [loadingPaidBills, setLoadingPaidBills] = useState(false);
+  const [paidBillsStartDate, setPaidBillsStartDate] = useState<string>("");
+  const [paidBillsEndDate, setPaidBillsEndDate] = useState<string>("");
   const [search, setSearch] = useState("");
-  const [totalVends, setTotalVends] = useState<number>(0);
-  const [totalBills, setTotalBills] = useState<number>(0);
-  const [paidBillsCount, setPaidBillsCount] = useState<number>(0);
-  const [pendingBillsCount, setPendingBillsCount] = useState<number>(0);
-  const [filterType, setFilterType] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterType] = useState<string>("");
+  const [filterStatus] = useState<string>("");
   const [filterFrequency, setFilterFrequency] = useState<string>("");
   const [filterBill, setFilterBill] = useState<string>("");
   const [filterBillStatus, setFilterBillStatus] = useState<string>("");
-  const [dateRangeLabel, setDateRangeLabel] =
-    useState<string>("5th Jan - 30th Jan");
-  const [exportOpen, setExportOpen] = useState(false);
-  const exportRef = useRef<HTMLDivElement>(null);
   const transactions = useSelector(
     (state: RootState) =>
       (state as any).estateAdminTransaction?.allTransactions?.data || [],
@@ -147,7 +134,7 @@ export default function TransactionPage() {
         );
 
         // ✅ Fetch vends and paid bills totals for stats (limit 1 just to get pagination.total)
-        const [vendsRes, billsRes] = await Promise.all([
+        await Promise.all([
           dispatch(
             getEstateVends({
               estateId: estateIdFromUser,
@@ -167,20 +154,6 @@ export default function TransactionPage() {
             .unwrap()
             .catch(() => ({ pagination: { total: 0 } })),
         ]);
-        setTotalVends(vendsRes?.pagination?.total ?? 0);
-
-        const billsData = billsRes?.data ?? [];
-        const billsTotal = billsRes?.pagination?.total ?? billsData.length ?? 0;
-        setTotalBills(billsTotal);
-
-        const paidCount = billsData.filter(
-          (item: any) => item.status === "paid",
-        ).length;
-        const pendingCount = billsData.filter(
-          (item: any) => item.status !== "paid",
-        ).length;
-        setPaidBillsCount(paidCount);
-        setPendingBillsCount(pendingCount);
       } catch (err) {
         toast.error("Failed to load data.");
       }
@@ -212,8 +185,15 @@ export default function TransactionPage() {
     (async () => {
       setLoadingVends(true);
       try {
+        const shouldApplyDateFilter = Boolean(vendsStartDate && vendsEndDate);
         const res = await dispatch(
-          getEstateVends({ estateId, page: vendsPage, limit }),
+          getEstateVends({
+            estateId,
+            page: vendsPage,
+            limit,
+            startDate: shouldApplyDateFilter ? vendsStartDate : undefined,
+            endDate: shouldApplyDateFilter ? vendsEndDate : undefined,
+          }),
         ).unwrap();
         setVendsData(res?.data ?? []);
         setVendsPagination(res?.pagination ?? null);
@@ -224,7 +204,7 @@ export default function TransactionPage() {
         setLoadingVends(false);
       }
     })();
-  }, [activeTab, estateId, vendsPage, dispatch]);
+  }, [activeTab, estateId, vendsPage, dispatch, limit, vendsStartDate, vendsEndDate]);
 
   // 🔹 Fetch paid bills when tab is paid-bills (larger limit for client-side filtering)
   const PAID_BILLS_FETCH_LIMIT = 2000;
@@ -238,18 +218,19 @@ export default function TransactionPage() {
             estateId,
             page: 1,
             limit: PAID_BILLS_FETCH_LIMIT,
+            startDate: paidBillsStartDate || undefined,
+            endDate: paidBillsEndDate || undefined,
           }),
         ).unwrap();
         setPaidBillsData(res?.data ?? []);
-        setPaidBillsPagination(res?.pagination ?? null);
+        // pagination is not currently used in the UI (client-side paging)
       } catch {
         setPaidBillsData([]);
-        setPaidBillsPagination(null);
       } finally {
         setLoadingPaidBills(false);
       }
     })();
-  }, [activeTab, estateId, dispatch]);
+  }, [activeTab, estateId, dispatch, paidBillsStartDate, paidBillsEndDate]);
 
   // 🔹 Pagination Handler
   const handlePageChange = async (newPage: number) => {
@@ -346,9 +327,9 @@ export default function TransactionPage() {
 
   // const totalBills = paidBillsData.reduce((sum: number, item: any) => sum + (item.amountPaid ?? 0), 0);
   // 🔹 Counts instead of amounts for stats (precomputed so they are available immediately)
-  const totalTransactionsCount =
-    pagination?.total || transactions.length || 0;
-  const totalBillsCount = totalBills;
+  // const totalTransactionsCount =
+  //   pagination?.total || transactions.length || 0;
+  // const totalBillsCount = totalBills;
 
   // 🔹 Automatically verify transaction when redirected back
   useEffect(() => {
@@ -761,6 +742,14 @@ export default function TransactionPage() {
               emptyMessage={
                 loadingVends ? "Loading vends..." : "No vends found."
               }
+              enableDateRangeFilter
+              startDate={vendsStartDate}
+              endDate={vendsEndDate}
+              onDateRangeChange={({ startDate, endDate }) => {
+                setVendsStartDate(startDate);
+                setVendsEndDate(endDate);
+                setVendsPage(1);
+              }}
               showPagination
               paginationInfo={{
                 total: vendsPagination?.total ?? 0,
@@ -774,7 +763,15 @@ export default function TransactionPage() {
                 estateId
                   ? async () => {
                       const res = await dispatch(
-                        getEstateVends({ estateId, page: 1, limit: 50000 }),
+                        getEstateVends({
+                          estateId,
+                          page: 1,
+                          limit: 50000,
+                          startDate:
+                            vendsStartDate && vendsEndDate ? vendsStartDate : undefined,
+                          endDate:
+                            vendsStartDate && vendsEndDate ? vendsEndDate : undefined,
+                        }),
                       ).unwrap();
                       return res?.data ?? [];
                     }
@@ -817,6 +814,14 @@ export default function TransactionPage() {
                 columns={paidBillsColumns}
                 data={paginatedPaidBills}
                 emptyMessage={paidBillsEmptyMessage}
+                enableDateRangeFilter
+                startDate={paidBillsStartDate}
+                endDate={paidBillsEndDate}
+                onDateRangeChange={({ startDate, endDate }) => {
+                  setPaidBillsStartDate(startDate);
+                  setPaidBillsEndDate(endDate);
+                  setPaidBillsPage(1);
+                }}
                 showPagination
                 paginationInfo={{
                   total: filteredPaidBills.length,

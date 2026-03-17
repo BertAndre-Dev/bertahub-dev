@@ -6,18 +6,18 @@ import Image from "next/image";
 
 const QUICK_LINKS = [
   { label: "Home", href: "/" },
-  { label: "About Us", href: "/about" },
-  { label: "Business", href: "/subsidiaries" },
+  { label: "About Us", href: "#about" },
+  // { label: "Business", href: "/" },
   { label: "Contact Us", href: "/contact" },
 ];
 
-const SERVICES = [{ label: "Businesses", href: "/subsidiaries" }];
+const SERVICES = [{ label: "Businesses", href: "/" }];
 
 const INFORMATION = [
-  { label: "Privacy Policy", href: "/privacy" },
-  { label: "Cookie Policy", href: "/cookies" },
-  { label: "Terms & Conditions", href: "/terms" },
-  { label: "FAQ", href: "/faq" },
+  { label: "Privacy Policy", href: "/privacy-notice" },
+  { label: "Cookie Policy", href: "/cookie-policy" },
+  { label: "Terms & Conditions", href: "/terms-and-conditions" },
+  { label: "FAQ", href: "/#faq" },
 ];
 
 function FooterColumn({
@@ -107,8 +107,7 @@ export default function Footer() {
   return (
     <footer className="bg-[#1A1A1A]">
       <div
-        className="container mx-auto px-6 md:px-8 lg:px-10 xl:px-20 pt-12 pb-8 "
-
+        className="container mx-auto px-6 md:px-8 lg:px-10 xl:px-20 pt-12 pb-8 " 
         // className="container mx-auto px-4 pt-12 pb-8 lg:pt-16 lg:pb-10"
       >
         <div>
@@ -123,7 +122,6 @@ export default function Footer() {
                   height={350}
                   loading="lazy"
                 />
-
                   <p className="text-white text-[14px] md:text-[16px] lg:text-[18px] font-normal pt-4">
                     Purpose-driven ventures. Built to scale.
                   </p>

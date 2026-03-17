@@ -20,7 +20,7 @@ import {
 import { getWallet, getEstateCredits } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import OtpVerification from "@/components/otp-modal/otp-verification/page";
- 
+
 const DEFAULT_COUNTRY = "NG";
 const DEFAULT_CURRENCY = "NGN";
 

@@ -260,13 +260,23 @@ export const getEstateVends = createAsyncThunk(
       estateId,
       page = 1,
       limit = 10,
-    }: { estateId: string; page?: number; limit?: number },
+      startDate,
+      endDate,
+    }: {
+      estateId: string;
+      page?: number;
+      limit?: number;
+      startDate?: string;
+      endDate?: string;
+    },
     { rejectWithValue }
   ) => {
     try {
       const params = new URLSearchParams();
       if (page != null) params.set("page", String(page));
       if (limit != null) params.set("limit", String(limit));
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
       const query = params.toString();
       const suffix = query ? "?" + query : "";
       const res = await axiosInstance.get(
@@ -290,13 +300,23 @@ export const getEstatePaidBills = createAsyncThunk(
       estateId,
       page = 1,
       limit = 10,
-    }: { estateId: string; page?: number; limit?: number },
+      startDate,
+      endDate,
+    }: {
+      estateId: string;
+      page?: number;
+      limit?: number;
+      startDate?: string;
+      endDate?: string;
+    },
     { rejectWithValue }
   ) => {
     try {
       const params = new URLSearchParams();
       if (page != null) params.set("page", String(page));
       if (limit != null) params.set("limit", String(limit));
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
       const query = params.toString();
       const suffix = query ? "?" + query : "";
       const res = await axiosInstance.get(

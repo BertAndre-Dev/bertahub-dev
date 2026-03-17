@@ -31,6 +31,14 @@ interface TableProps<T> {
   onPageChange?: (newPage: number) => void;
   enableSearch?: boolean;
   onSearch?: (value: string) => void;
+  /** Show built-in date range filter inputs (YYYY-MM-DD). */
+  enableDateRangeFilter?: boolean;
+  /** Controlled start date (YYYY-MM-DD). If omitted, Table manages its own state. */
+  startDate?: string;
+  /** Controlled end date (YYYY-MM-DD). If omitted, Table manages its own state. */
+  endDate?: string;
+  /** Called when date range changes. Dates are YYYY-MM-DD or empty string when cleared. */
+  onDateRangeChange?: (range: { startDate: string; endDate: string }) => void;
   /** Show an Export button that downloads table data as CSV. */
   enableExport?: boolean;
   /** Base name for the downloaded file (e.g. "transactions"). Default "export". */
@@ -57,6 +65,10 @@ export default function Table<T extends { id?: string }>({
   onPageChange,
   enableSearch = false,
   onSearch,
+  enableDateRangeFilter = false,
+  startDate,
+  endDate,
+  onDateRangeChange,
   enableExport = false,
   exportFileName = "export",
   onExportRequest,
@@ -128,11 +140,88 @@ export default function Table<T extends { id?: string }>({
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }, [paginationInfo, totalPages]);
   const [searchValue, setSearchValue] = React.useState("");
+  const isStartControlled = startDate !== undefined;
+  const isEndControlled = endDate !== undefined;
+  const [internalStartDate, setInternalStartDate] = React.useState(startDate ?? "");
+  const [internalEndDate, setInternalEndDate] = React.useState(endDate ?? "");
+
+  React.useEffect(() => {
+    if (isStartControlled) setInternalStartDate(startDate ?? "");
+  }, [isStartControlled, startDate]);
+
+  React.useEffect(() => {
+    if (isEndControlled) setInternalEndDate(endDate ?? "");
+  }, [isEndControlled, endDate]);
+
+  const effectiveStartDate = isStartControlled ? startDate ?? "" : internalStartDate;
+  const effectiveEndDate = isEndControlled ? endDate ?? "" : internalEndDate;
+  const showDateReset = Boolean(effectiveStartDate && effectiveEndDate);
 
   return (
     <div className="overflow-hidden border rounded-lg">
-      {(enableSearch || enableExport) && (
+      {(enableSearch || enableExport || enableDateRangeFilter) && (
         <div className="p-4 border-b bg-muted/30 flex flex-wrap items-center gap-3">
+          {enableDateRangeFilter && (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="table-start-date"
+                  className="text-sm text-muted-foreground"
+                >
+                  From
+                </label>
+                <input
+                  id="table-start-date"
+                  type="date"
+                  value={effectiveStartDate}
+                  aria-label="Start date"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!isStartControlled) setInternalStartDate(value);
+                    onDateRangeChange?.({
+                      startDate: value,
+                      endDate: effectiveEndDate,
+                    });
+                  }}
+                  className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label htmlFor="table-end-date" className="text-sm text-muted-foreground">
+                  To
+                </label>
+                <input
+                  id="table-end-date"
+                  type="date"
+                  value={effectiveEndDate}
+                  aria-label="End date"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!isEndControlled) setInternalEndDate(value);
+                    onDateRangeChange?.({
+                      startDate: effectiveStartDate,
+                      endDate: value,
+                    });
+                  }}
+                  className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              {showDateReset && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (!isStartControlled) setInternalStartDate("");
+                    if (!isEndControlled) setInternalEndDate("");
+                    onDateRangeChange?.({ startDate: "", endDate: "" });
+                  }}
+                >
+                  Reset
+                </Button>
+              )}
+            </div>
+          )}
           {enableSearch && (
             <input
               type="text"
