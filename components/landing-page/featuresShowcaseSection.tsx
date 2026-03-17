@@ -31,8 +31,7 @@ function FeatureCard({
 
   const baseTransform =
     initialTransform ?? `rotate(${tiltAngle}deg) translateY(0px)`;
-  const hoveredTransform =
-    hoverTransform ?? "rotate(0deg) translateY(-20px)";
+  const hoveredTransform = hoverTransform ?? "rotate(0deg) translateY(-20px)";
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -88,8 +87,7 @@ function FeatureCard({
         <div
           style={{
             transform: isHovered ? hoveredTransform : baseTransform,
-            transition:
-              "transform 700ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+            transition: "transform 700ms cubic-bezier(0.22, 0.61, 0.36, 1)",
             transformOrigin: "center bottom",
             width: "100%",
             maxWidth: "340px",
@@ -120,12 +118,12 @@ const FEATURES: readonly FeatureCardProps[] = [
     imageAlt: "Energy intelligence dashboard preview",
     tiltAngle: -17,
     initialTransform: "rotate(16deg) translate(-48px, 86px)",
-     hoverTransform: "rotate(-17deg) translateY(0px)",
+    hoverTransform: "rotate(-17deg) translateY(0px)",
   },
   {
     title: "Property\nManagement",
     description:
-      "Buy electricity tokens instantly, recharge meters seamlessly, track transactions, and manage energy payments conveniently through a secure digital platform.",
+      "Manage estates efficiently with digital tools for billing, maintenance requests, announcements, resident communication, and transparent financial tracking in one platform.",
     iconSrc: "/assets/feature/propertyIcon.svg",
     iconAlt: "Property management icon",
     imageSrc: "/assets/feature/property.svg",
@@ -135,7 +133,7 @@ const FEATURES: readonly FeatureCardProps[] = [
   {
     title: "Energy\nVending",
     description:
-      "Manage estates efficiently with digital tools for billing, maintenance requests, announcements, resident communication, and transparent financial tracking in one platform.",
+      "Buy electricity tokens instantly, recharge meters seamlessly, track transactions, and manage energy payments conveniently through a secure digital platform.",
     iconSrc: "/assets/feature/energyVendingIcon.svg",
     iconAlt: "Energy vending icon",
     imageSrc: "/assets/feature/energyVending2.svg",
