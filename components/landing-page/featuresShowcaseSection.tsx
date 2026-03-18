@@ -134,7 +134,7 @@ const FEATURES: readonly FeatureCardProps[] = [
   {
     title: "Energy\nVending",
     description:
-      "Buy electricity tokens instantly, recharge meters seamlessly, track transactions, and manage energy payments conveniently through a secure digital platform.",
+      "Buy electricity tokens instantly, recharge meters seamlessly, enable automatic token recharge, manage meters remotely, track transactions, and handle energy payments conveniently through a secure digital platform.",
     iconSrc: "/assets/feature/energyVendingIcon.svg",
     iconAlt: "Energy vending icon",
     imageSrc: "/assets/feature/energyVending2.svg",

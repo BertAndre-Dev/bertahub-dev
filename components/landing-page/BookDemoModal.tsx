@@ -14,11 +14,17 @@ export default function BookDemoModal({ isOpen, onClose }: BookDemoModalProps) {
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [heardAboutUs, setHeardAboutUs] = useState("");
-  const [featureInterest, setFeatureInterest] = useState("");
+  const [featureInterest, setFeatureInterest] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 
   if (!isOpen) return null;
+
+  const handleFeatureToggle = (value: string) => {
+    setFeatureInterest((prev) =>
+      prev.includes(value) ? prev.filter((f) => f !== value) : [...prev, value],
+    );
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -44,7 +50,13 @@ export default function BookDemoModal({ isOpen, onClose }: BookDemoModalProps) {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to submit");
+        const payload = await res.json().catch(() => null);
+        const messageFromServer =
+          payload && typeof payload === "object"
+            ? (payload as { details?: string; message?: string })?.details ||
+              (payload as { details?: string; message?: string })?.message
+            : null;
+        throw new Error(messageFromServer || "Failed to submit");
       }
 
       setStatus("success");
@@ -54,7 +66,7 @@ export default function BookDemoModal({ isOpen, onClose }: BookDemoModalProps) {
       setPhone("");
       setMessage("");
       setHeardAboutUs("");
-      setFeatureInterest("");
+      setFeatureInterest([]);
     } catch {
       setStatus("error");
     } finally {
@@ -90,38 +102,40 @@ export default function BookDemoModal({ isOpen, onClose }: BookDemoModalProps) {
           onSubmit={handleSubmit}
           className="space-y-5 px-6 pb-6 sm:px-7 sm:pb-7"
         >
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="firstName"
-              className="text-xs sm:text-sm font-medium text-gray-700"
-            >
-              First name
-            </label>
-            <input
-              id="firstName"
-              name="firstName"
-              type="text"
-              value={firstName}
-              onChange={(event) => setFirstName(event.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm sm:text-base outline-none focus:border-[#1560BD] text-[#101828]"
-            />
-          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="firstName"
+                className="text-xs sm:text-sm font-medium text-gray-700"
+              >
+                First name
+              </label>
+              <input
+                id="firstName"
+                name="firstName"
+                type="text"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm sm:text-base outline-none focus:border-[#1560BD] text-[#101828]"
+              />
+            </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="lastName"
-              className="text-xs sm:text-sm font-medium text-gray-700"
-            >
-              Last name
-            </label>
-            <input
-              id="lastName"
-              name="lastName"
-              type="text"
-              value={lastName}
-              onChange={(event) => setLastName(event.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm sm:text-base outline-none focus:border-[#1560BD] text-[#101828]"
-            />
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="lastName"
+                className="text-xs sm:text-sm font-medium text-gray-700"
+              >
+                Last name
+              </label>
+              <input
+                id="lastName"
+                name="lastName"
+                type="text"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm sm:text-base outline-none focus:border-[#1560BD] text-[#101828]"
+              />
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -158,56 +172,59 @@ export default function BookDemoModal({ isOpen, onClose }: BookDemoModalProps) {
                 className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm sm:text-base outline-none focus:border-[#1560BD] text-[#101828]"
               />
             </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="heardAboutUs"
-                className="text-xs sm:text-sm font-medium text-gray-700"
-              >
-                Where did you hear about us?
-              </label>
-              <select
-                id="heardAboutUs"
-                name="heardAboutUs"
-                value={heardAboutUs}
-                onChange={(event) => setHeardAboutUs(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm sm:text-base outline-none focus:border-[#1560BD] text-[#101828]"
-              >
-                <option value="" disabled>
-                  Select an option
-                </option>
-                <option value="LinkedIn">LinkedIn</option>
-                <option value="Instagram">Instagram</option>
-                <option value="Referral">Referral</option>
-                <option value="Google">Google</option>
-                <option value="Sales Agent">Sales Agent</option>
-              </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs sm:text-sm font-medium text-gray-700">
+              What feature are you interested in?
+            </p>
+            <div className="rounded-lg border border-gray-300 bg-white px-3 py-2 flex flex-col gap-2">
+              {[
+                "Smart meters",
+                "Revenue collection",
+                "User management",
+                "Bills Management",
+                "Full package",
+              ].map((feature) => (
+                <label
+                  key={feature}
+                  className="flex items-center gap-2 text-sm text-[#101828] cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    value={feature}
+                    checked={featureInterest.includes(feature)}
+                    onChange={() => handleFeatureToggle(feature)}
+                    className="accent-[#1560BD] w-4 h-4 cursor-pointer"
+                  />
+                  {feature}
+                </label>
+              ))}
             </div>
+          </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="featureInterest"
-                className="text-xs sm:text-sm font-medium text-gray-700"
-              >
-                What feature are you interested in?
-              </label>
-              <select
-                id="featureInterest"
-                name="featureInterest"
-                value={featureInterest}
-                onChange={(event) => setFeatureInterest(event.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm sm:text-base outline-none focus:border-[#1560BD] text-[#101828]"
-              >
-                <option value="" disabled>
-                  Select a feature
-                </option>
-                <option value="Smart meters">Smart meters</option> 
-                <option value="Revenue collection">Revenue collection</option>
-                <option value="User management">User management</option>
-                <option value="Bills Management"> Bills Management</option>
-                <option value="Full package">Full package</option>
-              </select>
-            </div>
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="heardAboutUs"
+              className="text-xs sm:text-sm font-medium text-gray-700"
+            >
+              Where did you hear about us?
+            </label>
+            <select
+              id="heardAboutUs"
+              name="heardAboutUs"
+              value={heardAboutUs}
+              onChange={(event) => setHeardAboutUs(event.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm sm:text-base outline-none focus:border-[#1560BD] text-[#101828]"
+            >
+              <option value="" disabled>
+                Select an option
+              </option>
+              <option value="LinkedIn">LinkedIn</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Referral">Referral</option>
+              <option value="Google">Google</option>
+              <option value="Sales Agent">Sales Agent</option>
+            </select>
           </div>
 
           <div className="flex flex-col gap-1.5">
