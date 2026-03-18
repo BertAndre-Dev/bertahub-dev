@@ -4,7 +4,9 @@ import { Geist, Geist_Mono, Varela_Round, Albert_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css";
 import ClientProvider from "@/components/client-provider/page";
-import { CookieBanner } from "@/components/cookie-banner";
+import { CookieBanner } from "@/components/cookie-banner"; 
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })

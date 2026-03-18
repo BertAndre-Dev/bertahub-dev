@@ -10,6 +10,7 @@ import BertaShowcaseSection from "@/components/landing-page/bertaShowcaseSection
 import FeaturesSection from "@/components/landing-page/featuresSection";
 import Footer from "@/components/landing-page/footer";
 import BookDemoModal from "@/components/landing-page/BookDemoModal";
+import TrustedBySection from "@/components/landing-page/trustedBy";
 
 export default function Home() {
   const [isBookDemoOpen, setIsBookDemoOpen] = useState(false);
@@ -20,6 +21,7 @@ export default function Home() {
       <main>
         <HeroSection onOpenBookDemo={() => setIsBookDemoOpen(true)} />
         <FeaturesShowcaseSection />
+        <TrustedBySection />
         <FeaturesSection />
         <BertaShowcaseSection />
         <FAQSection />

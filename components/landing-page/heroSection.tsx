@@ -102,7 +102,7 @@ export default function HeroSection({ onOpenBookDemo }: HeroSectionProps) {
 
                   <p className="mt-5 text-base md:text-[20px] xl:text-[24px] text-white/90 max-w-2xl leading-relaxed">
                     Berta Hub is built for forward-thinking property operators,
-                    community managers, landlords, and developers who want to
+                    community managers, homeowners, and developers who want to
                     deliver exceptional experiences at scale.
                   </p>
 
