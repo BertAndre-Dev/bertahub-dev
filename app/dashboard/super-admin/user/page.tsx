@@ -94,10 +94,16 @@ export default function SuperAdminUserPage() {
 
   // ✅ Map estates for dropdown
   const estateOptions: EstateOption[] =
-    allEstates?.map((e: any) => ({
-      label: e.name,
-      value: e.id,
-    })) || [];
+    allEstates
+      ?.map((e: any) => {
+        const value = String(e?._id || e?.id || "").trim();
+        if (!value) return null;
+        return {
+          label: e?.name ?? "Unnamed estate",
+          value,
+        };
+      })
+      .filter((x): x is EstateOption => Boolean(x)) || [];
 
   // ✅ Fetch all estates on mount
   useEffect(() => {

@@ -27,6 +27,12 @@ export const getAllUsersByEstate = createAsyncThunk(
         typeof estateId === "string"
           ? estateId
           : estateId?._id || estateId?.id || "";
+      const estateIdValue = String(normalizedEstateId).trim();
+      if (!estateIdValue) {
+        return rejectWithValue({
+          message: "Please select a valid estate.",
+        });
+      }
 
       const params = new URLSearchParams();
       if (page != null) params.set("page", String(page));
@@ -37,7 +43,7 @@ export const getAllUsersByEstate = createAsyncThunk(
       const query = params.toString();
       const suffix = query ? "?" + query : "";
       const res = await axiosInstance.get(
-        `/api/v1/user-mgt/estate/${normalizedEstateId}` + suffix,
+        `/api/v1/user-mgt/estate/${estateIdValue}` + suffix,
       );
       return res.data;
     } catch (error: any) {
