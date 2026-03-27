@@ -152,17 +152,6 @@ export default function ResidentRentPage() {
     if (createModalOpen && isOwner) {
       (async () => {
         try {
-          const userRes = await dispatch(getSignedInUser()).unwrap();
-          const rawEstate = userRes?.data?.estateId ?? userRes?.data?.estate;
-
-          let estateId = "";
-          if (typeof rawEstate === "string") {
-            estateId = rawEstate;
-          } else if (rawEstate && typeof rawEstate === "object") {
-            estateId = (rawEstate as { id?: string }).id ?? "";
-          }
-
-          if (!estateId) return;
           await dispatch(
             getInvitedTenants({ page: 1, limit: 200 }),
           ).unwrap();
