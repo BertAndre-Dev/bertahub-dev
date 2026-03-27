@@ -21,24 +21,27 @@ export interface InvitedTenantItem {
 }
 
 export interface GetInvitedTenantsParams {
-  estateId: string;
   page?: number;
   limit?: number;
   search?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
-/** GET /api/v1/user-mgt/invited-tenants/:estateId (OWNER only) */
+/** GET /api/v1/user-mgt/invited-tenants (OWNER only) */
 export const getInvitedTenants = createAsyncThunk(
   "resident-invited-tenants/getInvitedTenants",
   async (
-    { estateId, page = 1, limit = 10, search }: GetInvitedTenantsParams,
+    { page = 1, limit = 10, search, startDate, endDate }: GetInvitedTenantsParams,
     { rejectWithValue }
   ) => {
     try {
       const params: Record<string, string | number> = { page, limit };
       if (search?.trim()) params.search = search.trim();
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
       const res = await axiosInstance.get(
-        `/api/v1/user-mgt/invited-tenants/${estateId}`,
+        `/api/v1/user-mgt/invited-tenants`,
         { params }
       );
       return res.data;

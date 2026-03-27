@@ -164,7 +164,7 @@ export default function ResidentRentPage() {
 
           if (!estateId) return;
           await dispatch(
-            getInvitedTenants({ estateId, page: 1, limit: 200 }),
+            getInvitedTenants({ page: 1, limit: 200 }),
           ).unwrap();
         } catch {
           toast.error("Failed to load tenants.");

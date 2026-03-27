@@ -60,8 +60,24 @@ export default function DashboardLayout({
     if (typeof window === "undefined") return;
     const userData = localStorage.getItem("user");
     const rawAuth = localStorage.getItem("auth");
-    const fromAuth = rawAuth ? (() => { try { return JSON.parse(rawAuth)?.user; } catch { return null; } })() : null;
-    const user = userData ? (() => { try { return JSON.parse(userData); } catch { return null; } })() : fromAuth;
+    const fromAuth = rawAuth
+      ? (() => {
+          try {
+            return JSON.parse(rawAuth)?.user;
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+    const user = userData
+      ? (() => {
+          try {
+            return JSON.parse(userData);
+          } catch {
+            return null;
+          }
+        })()
+      : fromAuth;
     if (!user) {
       router.push("/auth/login");
       return;
@@ -81,7 +97,15 @@ export default function DashboardLayout({
   useEffect(() => {
     if (typeof window === "undefined") return;
     const rawAuth = localStorage.getItem("auth");
-    const localToken = rawAuth ? (() => { try { return JSON.parse(rawAuth)?.token ?? null; } catch { return null; } })() : null;
+    const localToken = rawAuth
+      ? (() => {
+          try {
+            return JSON.parse(rawAuth)?.token ?? null;
+          } catch {
+            return null;
+          }
+        })()
+      : null;
 
     if (!localToken && !token) {
       router.push("/auth/login");
@@ -136,11 +160,13 @@ export default function DashboardLayout({
     // Residents: hide Tenant Management for residentType=Tenant (owners only)
     if (role === "resident") {
       const residentType = (user?.residentType ?? "").toString().toLowerCase();
-      if (residentType === "tenant") {
+      if (residentType !== "owner") {
         navItems = navItems.filter(
           (item) =>
             item.label !== "Tenant Management" &&
-            !(item.path ? item.path.includes("/dashboard/resident/user") : false),
+            !(item.path
+              ? item.path.includes("/dashboard/resident/user")
+              : false),
         );
       }
     }

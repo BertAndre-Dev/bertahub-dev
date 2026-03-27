@@ -32,9 +32,10 @@ export default function ResidentUserPage() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
-  const [estateId, setEstateId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [tenantToDelete, setTenantToDelete] = useState<InvitedTenantItem | null>(null);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const inviteTenantState = useSelector(
     (state: RootState) => (state as any).residentInviteTenant,
@@ -69,32 +70,35 @@ export default function ResidentUserPage() {
           router.replace("/dashboard/resident/dashboard");
           return;
         }
-
-        const rawEstate = userRes?.data?.estateId ?? userRes?.data?.estate;
-
-        let id = "";
-        if (typeof rawEstate === "string") {
-          id = rawEstate;
-        } else if (rawEstate && typeof rawEstate === "object") {
-          id = (rawEstate as { id?: string }).id ?? "";
-        }
-
-        if (!id) return;
-        setEstateId(id);
-        await dispatch(
-          getInvitedTenants({ estateId: id, page: 1, limit: PAGE_SIZE })
-        ).unwrap();
+        await dispatch(getInvitedTenants({ page: 1, limit: PAGE_SIZE })).unwrap();
       } catch {
         toast.error("Failed to load tenants.");
       }
     })();
   }, [dispatch, router]);
 
+  useEffect(() => {
+    const shouldApplyDate = Boolean(startDate && endDate);
+    setCurrentPage(1);
+    dispatch(
+      getInvitedTenants({
+        page: 1,
+        limit: PAGE_SIZE,
+        startDate: shouldApplyDate ? startDate : undefined,
+        endDate: shouldApplyDate ? endDate : undefined,
+      }),
+    ).catch(() => toast.error("Failed to load tenants."));
+  }, [dispatch, startDate, endDate]);
+
   const handlePageChange = (newPage: number) => {
-    if (!estateId) return;
     setCurrentPage(newPage);
     dispatch(
-      getInvitedTenants({ estateId, page: newPage, limit: PAGE_SIZE })
+      getInvitedTenants({
+        page: newPage,
+        limit: PAGE_SIZE,
+        startDate: startDate && endDate ? startDate : undefined,
+        endDate: startDate && endDate ? endDate : undefined,
+      })
     ).catch(() => toast.error("Failed to load tenants."));
   };
 
@@ -113,14 +117,20 @@ export default function ResidentUserPage() {
   const handleCloseDeleteModal = () => setTenantToDelete(null);
 
   const handleConfirmDelete = async () => {
-    if (!tenantToDelete || !estateId) return;
+    if (!tenantToDelete) return;
     const userId = tenantToDelete.id || (tenantToDelete as { _id?: string })._id;
     if (!userId) return;
     await dispatch(deleteUser(userId)).unwrap();
     toast.success("Tenant deleted successfully.");
     setTenantToDelete(null);
+    const shouldApplyDate = Boolean(startDate && endDate);
     await dispatch(
-      getInvitedTenants({ estateId, page: currentPage, limit: PAGE_SIZE })
+      getInvitedTenants({
+        page: currentPage,
+        limit: PAGE_SIZE,
+        startDate: shouldApplyDate ? startDate : undefined,
+        endDate: shouldApplyDate ? endDate : undefined,
+      }),
     ).unwrap();
   };
 
@@ -201,6 +211,13 @@ export default function ResidentUserPage() {
                 ? "Loading tenants..."
                 : "You have not invited any tenants yet."
             }
+            enableDateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onDateRangeChange={({ startDate, endDate }) => {
+              setStartDate(startDate);
+              setEndDate(endDate);
+            }}
             showPagination
             paginationInfo={{
               total: pagination?.total ?? 0,
@@ -211,14 +228,18 @@ export default function ResidentUserPage() {
             enableExport
             exportFileName="tenants"
             onExportRequest={
-              estateId
-                ? async () => {
-                    const res = await dispatch(
-                      getInvitedTenants({ estateId, page: 1, limit: 50000 })
-                    ).unwrap();
-                    return (res?.data ?? []) as InvitedTenantItem[];
-                  }
-                : undefined
+              async () => {
+                const shouldApplyDate = Boolean(startDate && endDate);
+                const res = await dispatch(
+                  getInvitedTenants({
+                    page: 1,
+                    limit: 50000,
+                    startDate: shouldApplyDate ? startDate : undefined,
+                    endDate: shouldApplyDate ? endDate : undefined,
+                  }),
+                ).unwrap();
+                return (res?.data ?? []) as InvitedTenantItem[];
+              }
             }
           />
         </Card>

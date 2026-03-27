@@ -12,11 +12,11 @@ export async function POST(req: Request) {
     body: JSON.stringify({
       personalizations: [
         {
-          to: [{ email: "your@email.com" }],
+          to: [{ email: "support@bertahub.com" }],
           subject: "New Book Demo Request",
         },
       ],
-      from: { email: "your@email.com" },
+      from: { email: "support@bertahub.com" },
       content: [
         {
           type: "text/plain",
