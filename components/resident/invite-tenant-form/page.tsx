@@ -436,7 +436,7 @@ export default function InviteTenantForm({ close }: InviteTenantFormProps) {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, addressId: e.target.value }))
                 }
-                className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
               >
                 <option value="">Select an address</option>
                 {entryOptions.length === 0 ? (
