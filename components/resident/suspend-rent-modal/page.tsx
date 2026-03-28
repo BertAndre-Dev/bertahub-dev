@@ -15,6 +15,8 @@ export interface SuspendRentModalProps {
   readonly loading?: boolean;
   /** Modal title. Default "Suspend Rent". */
   readonly title?: string;
+  /** Whether the reason field is shown and required. Default false. */
+  readonly requireReason?: boolean;
 }
 
 export default function SuspendRentModal({
@@ -25,6 +27,7 @@ export default function SuspendRentModal({
   confirmLabel = "Suspend",
   loading = false,
   title = "Suspend Rent",
+  requireReason = false,
 }: SuspendRentModalProps) {
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -32,10 +35,12 @@ export default function SuspendRentModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = reason.trim();
-    if (!trimmed) {
+
+    if (requireReason && !trimmed) {
       setError("Reason is required.");
       return;
     }
+
     setError(null);
     try {
       await onConfirm(trimmed);
@@ -58,28 +63,39 @@ export default function SuspendRentModal({
         <h2 className="font-heading text-xl font-bold mb-1">{title}</h2>
         <p className="text-sm text-muted-foreground mb-4">
           Are you sure you want to suspend{" "}
-          <strong>{tenantName || "this item"}</strong>? Please provide a reason.
+          <strong>{tenantName || "this item"}</strong>?
+          {requireReason && " Please provide a reason."}
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="suspend-reason">Reason (required)</Label>
-            <Input
-              id="suspend-reason"
-              value={reason}
-              onChange={(e) => {
-                setReason(e.target.value);
-                if (error) setError(null);
-              }}
-              placeholder="e.g. Payment default, lease violation"
-              className="mt-1"
-              disabled={loading}
-              autoFocus
-            />
-            {error && (
-              <p className="text-sm text-destructive mt-1">{error}</p>
-            )}
-          </div>
+          {requireReason && (
+            <div>
+              <Label htmlFor="suspend-reason">Reason</Label>
+              <Input
+                id="suspend-reason"
+                value={reason}
+                onChange={(e) => {
+                  setReason(e.target.value);
+                  if (error) setError(null);
+                }}
+                placeholder="e.g. Payment default, lease violation"
+                className="mt-1"
+                disabled={loading}
+                autoFocus
+              />
+              {error && (
+                <p className="text-sm text-destructive mt-1">{error}</p>
+              )}
+            </div>
+          )}
           <div className="flex justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={loading}>
               {loading ? "Suspending…" : confirmLabel}
             </Button>

@@ -491,6 +491,7 @@ export default function SuperAdminMarketplacePage() {
       </Modal>
 
       <SuspendRentModal
+        requireReason={true}
         visible={!!suspendItem}
         onClose={() => setSuspendItem(null)}
         tenantName={
