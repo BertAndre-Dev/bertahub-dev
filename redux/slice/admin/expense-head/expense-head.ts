@@ -87,8 +87,21 @@ export const fetchExpenseHeadById = createAsyncThunk(
   "admin-expense-head/fetchExpenseHeadById",
   async (id: string, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get(`/api/v1/expense-head/${id}`);
-      return res.data;
+      // Backend implementations differ: some require `?id=` even with path param.
+      try {
+        const res = await axiosInstance.get(`/api/v1/expense-head/${id}`, {
+          params: { id },
+        });
+        return res.data;
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status !== 404 && status !== 500) throw err;
+      }
+
+      const res2 = await axiosInstance.get(`/api/v1/expense-head`, {
+        params: { id },
+      });
+      return res2.data;
     } catch (error: any) {
       return rejectWithValue({
         message:

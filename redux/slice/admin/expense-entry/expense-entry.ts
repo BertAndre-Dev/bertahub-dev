@@ -24,8 +24,8 @@ export type ExpenseEntryListResponse = {
   };
 };
 
-export const createExpenseEntriesBulk = createAsyncThunk(
-  "admin-expense-entry/createExpenseEntriesBulk",
+export const createExpenseEntries = createAsyncThunk(
+  "admin-expense-entry/createExpenseEntries",
   async (
     payload: {
       entries: Array<{
@@ -38,6 +38,11 @@ export const createExpenseEntriesBulk = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
+      if (payload.entries.length > 100) {
+        return rejectWithValue({
+          message: "Max 100 entries per request.",
+        });
+      }
       const res = await axiosInstance.post("/api/v1/expense-entry", payload);
       return res.data;
     } catch (error: any) {
@@ -49,8 +54,8 @@ export const createExpenseEntriesBulk = createAsyncThunk(
   },
 );
 
-export const getExpenseEntriesByHead = createAsyncThunk(
-  "admin-expense-entry/getExpenseEntriesByHead",
+export const fetchExpenseEntries = createAsyncThunk(
+  "admin-expense-entry/fetchExpenseEntries",
   async (
     {
       headId,
@@ -83,6 +88,35 @@ export const getExpenseEntriesByHead = createAsyncThunk(
         message:
           error?.response?.data?.message ||
           "Failed to fetch expense entries for head.",
+      });
+    }
+  },
+);
+
+export const fetchExpenseEntryById = createAsyncThunk(
+  "admin-expense-entry/fetchExpenseEntryById",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      // Backend implementations differ: some do not expose GET /expense-entry/:id.
+      try {
+        const res = await axiosInstance.get(`/api/v1/expense-entry/${id}`, {
+          params: { id },
+        });
+        return res.data;
+      } catch (err: any) {
+        const status = err?.response?.status;
+        // If route is missing (404) try query-based fallback.
+        if (status !== 404 && status !== 500) throw err;
+      }
+
+      const res2 = await axiosInstance.get(`/api/v1/expense-entry`, {
+        params: { id },
+      });
+      return res2.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message:
+          error?.response?.data?.message || "Failed to fetch expense entry.",
       });
     }
   },

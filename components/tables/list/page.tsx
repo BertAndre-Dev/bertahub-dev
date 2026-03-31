@@ -3,6 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { createRowKeyGenerator } from "@/components/tables/list/rowKey";
 
 interface Column<T> {
   key: keyof T | string;
@@ -75,6 +76,13 @@ export default function Table<T extends { id?: string }>({
 }: TableProps<T>) {
   if (!paginationInfo) {
     showPagination = false;
+  }
+
+  const getRowKeyRef = React.useRef<ReturnType<typeof createRowKeyGenerator> | null>(
+    null,
+  );
+  if (!getRowKeyRef.current) {
+    getRowKeyRef.current = createRowKeyGenerator("tbl");
   }
 
   const exportableColumns = columns.filter(
@@ -270,7 +278,7 @@ export default function Table<T extends { id?: string }>({
             {data.length > 0 ? (
               data.map((item, index) => (
                 <tr
-                  key={`${item.id ?? JSON.stringify(item)}-${index}`}
+                  key={getRowKeyRef.current!(item, index)}
                   className={`transition-colors ${onRowClick ? "hover:bg-muted/30 cursor-pointer" : ""}`}
                   onClick={() => onRowClick && onRowClick(item)}
                 >

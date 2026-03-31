@@ -1,11 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
-  createExpenseEntriesBulk,
+  createExpenseEntries,
   deleteExpenseEntry,
-  getExpenseEntriesByHead,
+  fetchExpenseEntries,
+  fetchExpenseEntryById,
   updateExpenseEntry,
   type ExpenseEntry,
 } from "./expense-entry";
+import type { RootState } from "@/redux/store";
 
 type AsyncState = "idle" | "isLoading" | "succeeded" | "failed";
 
@@ -19,9 +21,11 @@ export interface ExpenseEntryPagination {
 export interface ExpenseEntryState {
   createBulkState: AsyncState;
   listState: AsyncState;
+  getByIdState: AsyncState;
   updateState: AsyncState;
   deleteState: AsyncState;
   items: ExpenseEntry[];
+  selected: ExpenseEntry | null;
   pagination: ExpenseEntryPagination | null;
   error: string | null;
 }
@@ -29,9 +33,11 @@ export interface ExpenseEntryState {
 const initialState: ExpenseEntryState = {
   createBulkState: "idle",
   listState: "idle",
+  getByIdState: "idle",
   updateState: "idle",
   deleteState: "idle",
   items: [],
+  selected: null,
   pagination: null,
   error: null,
 };
@@ -50,15 +56,16 @@ const expenseEntrySlice = createSlice({
     clearExpenseEntries: (state) => {
       state.items = [];
       state.pagination = null;
+      state.selected = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(createExpenseEntriesBulk.pending, (state) => {
+      .addCase(createExpenseEntries.pending, (state) => {
         state.createBulkState = "isLoading";
         state.error = null;
       })
-      .addCase(createExpenseEntriesBulk.fulfilled, (state, action: any) => {
+      .addCase(createExpenseEntries.fulfilled, (state, action: any) => {
         state.createBulkState = "succeeded";
         const created: ExpenseEntry[] =
           action.payload?.data ?? action.payload ?? [];
@@ -67,7 +74,7 @@ const expenseEntrySlice = createSlice({
           if (state.pagination) state.pagination.total += created.length;
         }
       })
-      .addCase(createExpenseEntriesBulk.rejected, (state, action: any) => {
+      .addCase(createExpenseEntries.rejected, (state, action: any) => {
         state.createBulkState = "failed";
         state.error =
           action?.payload?.message ||
@@ -76,11 +83,11 @@ const expenseEntrySlice = createSlice({
       });
 
     builder
-      .addCase(getExpenseEntriesByHead.pending, (state) => {
+      .addCase(fetchExpenseEntries.pending, (state) => {
         state.listState = "isLoading";
         state.error = null;
       })
-      .addCase(getExpenseEntriesByHead.fulfilled, (state, action: any) => {
+      .addCase(fetchExpenseEntries.fulfilled, (state, action: any) => {
         state.listState = "succeeded";
         const apiPagination = action.payload?.pagination || {};
         state.items = action.payload?.data || [];
@@ -91,12 +98,29 @@ const expenseEntrySlice = createSlice({
           pageSize: apiPagination.limit ?? 10,
         };
       })
-      .addCase(getExpenseEntriesByHead.rejected, (state, action: any) => {
+      .addCase(fetchExpenseEntries.rejected, (state, action: any) => {
         state.listState = "failed";
         state.error =
           action?.payload?.message ||
           action?.error?.message ||
           "Failed to fetch expense entries.";
+      });
+
+    builder
+      .addCase(fetchExpenseEntryById.pending, (state) => {
+        state.getByIdState = "isLoading";
+        state.error = null;
+      })
+      .addCase(fetchExpenseEntryById.fulfilled, (state, action: any) => {
+        state.getByIdState = "succeeded";
+        state.selected = action.payload?.data ?? action.payload ?? null;
+      })
+      .addCase(fetchExpenseEntryById.rejected, (state, action: any) => {
+        state.getByIdState = "failed";
+        state.error =
+          action?.payload?.message ||
+          action?.error?.message ||
+          "Failed to fetch expense entry.";
       });
 
     builder
@@ -148,4 +172,16 @@ const expenseEntrySlice = createSlice({
 export const { resetExpenseEntryError, clearExpenseEntries } =
   expenseEntrySlice.actions;
 export default expenseEntrySlice.reducer;
+
+export const selectExpenseEntries = (state: RootState) =>
+  (state.adminExpenseEntry as ExpenseEntryState)?.items ?? [];
+export const selectExpenseEntriesLoading = (state: RootState) =>
+  (state.adminExpenseEntry as ExpenseEntryState)?.listState === "isLoading";
+export const selectExpenseEntriesError = (state: RootState) =>
+  (state.adminExpenseEntry as ExpenseEntryState)?.error ?? null;
+export const selectExpenseEntriesPagination = (state: RootState) =>
+  (state.adminExpenseEntry as ExpenseEntryState)?.pagination ?? null;
+export const selectExpenseEntrySelected = (state: RootState) =>
+  (state.adminExpenseEntry as ExpenseEntryState)?.selected ?? null;
+
 

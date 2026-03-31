@@ -2,30 +2,62 @@
 
 import React from "react";
 import Image from "next/image";
-import { Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
 import type { ExpenseHead } from "@/redux/slice/admin/expense-head/expense-head";
+import { slugify } from "@/lib/slug";
 
 export interface ExpenseHeadCardProps {
   item: ExpenseHead;
+  onView: (item: ExpenseHead) => void;
   onEdit: (item: ExpenseHead) => void;
   onDelete: (item: ExpenseHead) => void;
 }
 
 export function ExpenseHeadCard({
   item,
+  onView,
   onEdit,
   onDelete,
 }: Readonly<ExpenseHeadCardProps>) {
+  const router = useRouter();
+  const slug = slugify(item.name ?? "");
+
   return (
-    <Card className="relative overflow-hidden p-6 hover:shadow-md transition-shadow">
+    <Card
+      role="button"
+      tabIndex={0}
+      className="relative overflow-hidden p-6 hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => router.push(`/dashboard/admin/expenses/${slug}`)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push(`/dashboard/admin/expenses/${slug}`);
+        }
+      }}
+    >
       <div className="absolute right-4 top-4 flex items-center gap-2">
         <button
           type="button"
           className="h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
+          aria-label="View expense head"
+          onClick={(e) => {
+            e.stopPropagation();
+            onView(item);
+          }}
+        >
+          <Eye className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          className="h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
           aria-label="Edit expense head"
-          onClick={() => onEdit(item)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(item);
+          }}
         >
           <Pencil className="h-4 w-4 text-blue-600" />
         </button>
@@ -33,7 +65,10 @@ export function ExpenseHeadCard({
           type="button"
           className="h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
           aria-label="Delete expense head"
-          onClick={() => onDelete(item)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(item);
+          }}
         >
           <Trash2 className="h-4 w-4 text-red-600" />
         </button>

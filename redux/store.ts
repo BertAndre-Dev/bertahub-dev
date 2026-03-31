@@ -44,6 +44,7 @@ import residentMarketplaceSliceReducer from '@/redux/slice/resident/marketplace/
 import residentAnnouncementsSliceReducer from '@/redux/slice/resident/announcements/announcements-slice';
 import adminExpenseHeadSliceReducer from '@/redux/slice/admin/expense-head/expense-head-slice';
 import adminExpenseEntrySliceReducer from '@/redux/slice/admin/expense-entry/expense-entry-slice';
+import estateAdminFinancialReportSliceReducer from '@/redux/slice/estate-admin/financial-report/financial-report-slice';
 
 
 const persistConfig = {
@@ -126,6 +127,7 @@ export const store = configureStore({
         residentAnnouncements: residentAnnouncementsSliceReducer,
         adminExpenseHead: persistedAdminExpenseHeadSliceReducer,
         adminExpenseEntry: persistedAdminExpenseEntrySliceReducer,
+        estateAdminFinancialReport: estateAdminFinancialReportSliceReducer,
     },
 
     middleware: (getDefaultMiddleware) =>

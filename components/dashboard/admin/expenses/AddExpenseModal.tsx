@@ -22,11 +22,8 @@ export interface AddExpenseModalProps {
   open: boolean;
   saving: boolean;
   headName: string;
-  date: string;
   drafts: AddExpenseDraftEntry[];
-  file: File | null;
   onOpenChange: (open: boolean) => void;
-  onDateChange: (value: string) => void;
   onDraftChange: (
     id: string,
     field: "description" | "amount" | "documentNumber",
@@ -34,24 +31,29 @@ export interface AddExpenseModalProps {
   ) => void;
   onAddDraft: () => void;
   onRemoveDraft: (id: string) => void;
-  onFileChange: (file: File | null) => void;
   onSubmit: () => void;
+  showDateAndUpload?: boolean;
+  date?: string;
+  file?: File | null;
+  onDateChange?: (value: string) => void;
+  onFileChange?: (file: File | null) => void;
 }
 
 export function AddExpenseModal({
   open,
   saving,
   headName,
-  date,
   drafts,
-  file,
   onOpenChange,
-  onDateChange,
   onDraftChange,
   onAddDraft,
   onRemoveDraft,
-  onFileChange,
   onSubmit,
+  showDateAndUpload = true,
+  date = "",
+  file = null,
+  onDateChange,
+  onFileChange,
 }: Readonly<AddExpenseModalProps>) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -68,18 +70,20 @@ export function AddExpenseModal({
             <Input id="add-expense-head" value={headName} disabled />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="add-expense-date">
-              Date
-            </label>
-            <input
-              id="add-expense-date"
-              type="date"
-              value={date}
-              onChange={(e) => onDateChange(e.target.value)}
-              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
+          {showDateAndUpload ? (
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="add-expense-date">
+                Date
+              </label>
+              <input
+                id="add-expense-date"
+                type="date"
+                value={date}
+                onChange={(e) => onDateChange?.(e.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          ) : null}
 
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
@@ -169,20 +173,22 @@ export function AddExpenseModal({
             ))}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="add-expense-file">
-              Upload supporting document (Receipt/ Invoice)
-            </label>
-            <input
-              id="add-expense-file"
-              type="file"
-              onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm"
-            />
-            {file ? (
-              <p className="text-xs text-muted-foreground">{file.name}</p>
-            ) : null}
-          </div>
+          {showDateAndUpload ? (
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="add-expense-file">
+                Upload supporting document (Receipt/ Invoice)
+              </label>
+              <input
+                id="add-expense-file"
+                type="file"
+                onChange={(e) => onFileChange?.(e.target.files?.[0] ?? null)}
+                className="block w-full text-sm"
+              />
+              {file ? (
+                <p className="text-xs text-muted-foreground">{file.name}</p>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="flex items-center justify-between gap-3 pt-2">
             <Button

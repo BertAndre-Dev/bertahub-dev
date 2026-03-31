@@ -11,12 +11,14 @@ import {
   ExpenseHeadModal,
   type ExpenseHeadModalValues,
 } from "@/components/dashboard/admin/expenses/ExpenseHeadModal";
+import { ViewExpenseHeadModal } from "@/components/dashboard/admin/expenses/ViewExpenseHeadModal";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
   createExpenseHead,
   deleteExpenseHead,
   fetchExpenseHeads,
+  fetchExpenseHeadById,
   updateExpenseHead,
   type ExpenseHead,
 } from "@/redux/slice/admin/expense-head/expense-head";
@@ -80,6 +82,10 @@ export default function ExpenseHeadsPage() {
     description: "",
   });
   const [saving, setSaving] = useState(false);
+
+  const [viewOpen, setViewOpen] = useState(false);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [viewItem, setViewItem] = useState<ExpenseHead | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -151,6 +157,23 @@ export default function ExpenseHeadsPage() {
     });
   };
 
+  const handleView = async (item: ExpenseHead) => {
+    const id = getId(item);
+    if (!id) return;
+    setViewOpen(true);
+    setViewLoading(true);
+    setViewItem(null);
+    try {
+      const payload: any = await dispatch(fetchExpenseHeadById(id)).unwrap();
+      setViewItem(payload?.data ?? payload ?? null);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to load expense head.");
+      setViewOpen(false);
+    } finally {
+      setViewLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!estateId) {
       toast.warning("No estate found for this user.");
@@ -202,11 +225,12 @@ export default function ExpenseHeadsPage() {
       <ExpenseHeadCard
         key={getId(item) ?? item.name}
         item={item}
+        onView={handleView}
         onEdit={openEdit}
         onDelete={handleDelete}
       />
     ));
-  }, [filtered, handleDelete, loading]);
+  }, [filtered, handleDelete, handleView, loading]);
 
   return (
     <div className="space-y-6">
@@ -256,6 +280,19 @@ export default function ExpenseHeadsPage() {
         }}
         onChange={setModalValues}
         onSubmit={handleSubmit}
+      />
+
+      <ViewExpenseHeadModal
+        open={viewOpen}
+        loading={viewLoading}
+        item={viewItem}
+        onOpenChange={(open) => {
+          setViewOpen(open);
+          if (!open) {
+            setViewItem(null);
+            setViewLoading(false);
+          }
+        }}
       />
     </div>
   );
