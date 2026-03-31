@@ -42,6 +42,8 @@ import adminAnnouncementsSliceReducer from '@/redux/slice/admin/announcements/an
 import superAdminMarketplaceSliceReducer from '@/redux/slice/super-admin/marketplace/marketplace-slice';
 import residentMarketplaceSliceReducer from '@/redux/slice/resident/marketplace/marketplace-slice';
 import residentAnnouncementsSliceReducer from '@/redux/slice/resident/announcements/announcements-slice';
+import adminExpenseHeadSliceReducer from '@/redux/slice/admin/expense-head/expense-head-slice';
+import adminExpenseEntrySliceReducer from '@/redux/slice/admin/expense-entry/expense-entry-slice';
 
 
 const persistConfig = {
@@ -76,6 +78,8 @@ const persistedUserProfileSliceReducer = persistReducer(persistConfig, userProfi
 const persistedEstateProfileSliceReducer = persistReducer(persistConfig, estateProfileSliceReducer);
 const persistedComplaintsSliceReducer = persistReducer(persistConfig, complaintsSliceReducer);
 const persistedResidentComplaintsSliceReducer = persistReducer(persistConfig, residentComplaintsSliceReducer);
+const persistedAdminExpenseHeadSliceReducer = persistReducer(persistConfig, adminExpenseHeadSliceReducer);
+const persistedAdminExpenseEntrySliceReducer = persistReducer(persistConfig, adminExpenseEntrySliceReducer);
 
 
 export const store = configureStore({
@@ -120,6 +124,8 @@ export const store = configureStore({
         superAdminMarketplace: superAdminMarketplaceSliceReducer,
         residentMarketplace: residentMarketplaceSliceReducer,
         residentAnnouncements: residentAnnouncementsSliceReducer,
+        adminExpenseHead: persistedAdminExpenseHeadSliceReducer,
+        adminExpenseEntry: persistedAdminExpenseEntrySliceReducer,
     },
 
     middleware: (getDefaultMiddleware) =>

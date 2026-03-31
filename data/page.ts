@@ -9,7 +9,7 @@ import { BsBuildings } from "react-icons/bs";
 import { IoSpeedometerOutline } from "react-icons/io5";
 import { GrTransaction } from "react-icons/gr";
 import { LuReceipt } from "react-icons/lu";
-import { LayoutDashboard, Wrench, Bell, Store } from "lucide-react";
+import { LayoutDashboard, Wrench, Bell, Store, BarChart } from "lucide-react";
 
 export const superAdminNav = [
   // {
@@ -91,6 +91,11 @@ export const adminNav = [
     label: "Visitors Management",
     icon: FiUsers,
     path: "/dashboard/admin/visitor",
+  },
+    {
+    label: "Expenses",
+    icon: LuReceipt,
+    path: "/dashboard/admin/expenses",
   },
   {
     label: "Maintenance Requests",
@@ -197,6 +202,11 @@ export const estateAdminNav = [
     label: "Wallet",
     icon: LuReceipt,
     path: "/dashboard/estate-admin/wallet",
+  },
+  {
+    label: 'Reports',
+    icon: BarChart,
+    path: "/dashboard/estate-admin/reports",
   },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
