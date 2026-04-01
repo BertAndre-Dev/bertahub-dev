@@ -2,8 +2,11 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import {
+  IsoLinkedRangeEnd,
+  IsoLinkedRangeStart,
+} from "@/components/ui/iso-date-picker";
 import { Download } from "lucide-react";
-import { createRowKeyGenerator } from "@/components/tables/list/rowKey";
 
 interface Column<T> {
   key: keyof T | string;
@@ -76,13 +79,6 @@ export default function Table<T extends { id?: string }>({
 }: TableProps<T>) {
   if (!paginationInfo) {
     showPagination = false;
-  }
-
-  const getRowKeyRef = React.useRef<ReturnType<typeof createRowKeyGenerator> | null>(
-    null,
-  );
-  if (!getRowKeyRef.current) {
-    getRowKeyRef.current = createRowKeyGenerator("tbl");
   }
 
   const exportableColumns = columns.filter(
@@ -173,45 +169,44 @@ export default function Table<T extends { id?: string }>({
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-2">
                 <label
-                  htmlFor="table-start-date"
+                  htmlFor="table-start-date-input"
                   className="text-sm text-muted-foreground"
                 >
                   From
                 </label>
-                <input
-                  id="table-start-date"
-                  type="date"
-                  value={effectiveStartDate}
-                  aria-label="Start date"
-                  onChange={(e) => {
-                    const value = e.target.value;
+                <IsoLinkedRangeStart
+                  id="table-start-date-input"
+                  startDate={effectiveStartDate}
+                  endDate={effectiveEndDate}
+                  onStartChange={(value) => {
                     if (!isStartControlled) setInternalStartDate(value);
                     onDateRangeChange?.({
                       startDate: value,
                       endDate: effectiveEndDate,
                     });
                   }}
-                  className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  ariaLabel="Start date"
                 />
               </div>
               <div className="flex items-center gap-2">
-                <label htmlFor="table-end-date" className="text-sm text-muted-foreground">
+                <label
+                  htmlFor="table-end-date-input"
+                  className="text-sm text-muted-foreground"
+                >
                   To
                 </label>
-                <input
-                  id="table-end-date"
-                  type="date"
-                  value={effectiveEndDate}
-                  aria-label="End date"
-                  onChange={(e) => {
-                    const value = e.target.value;
+                <IsoLinkedRangeEnd
+                  id="table-end-date-input"
+                  startDate={effectiveStartDate}
+                  endDate={effectiveEndDate}
+                  onEndChange={(value) => {
                     if (!isEndControlled) setInternalEndDate(value);
                     onDateRangeChange?.({
                       startDate: effectiveStartDate,
                       endDate: value,
                     });
                   }}
-                  className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  ariaLabel="End date"
                 />
               </div>
               {showDateReset && (
@@ -278,7 +273,7 @@ export default function Table<T extends { id?: string }>({
             {data.length > 0 ? (
               data.map((item, index) => (
                 <tr
-                  key={getRowKeyRef.current!(item, index)}
+                  key={`${item.id ?? JSON.stringify(item)}-${index}`}
                   className={`transition-colors ${onRowClick ? "hover:bg-muted/30 cursor-pointer" : ""}`}
                   onClick={() => onRowClick && onRowClick(item)}
                 >

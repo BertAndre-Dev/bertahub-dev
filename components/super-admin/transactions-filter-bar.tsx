@@ -1,4 +1,11 @@
+"use client";
+
 import React from "react";
+import { Calendar } from "lucide-react";
+import {
+  IsoLinkedRangeEnd,
+  IsoLinkedRangeStart,
+} from "@/components/ui/iso-date-picker";
 
 interface TransactionsFilterBarProps {
   fromDate: string | null;
@@ -31,19 +38,19 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
   searchFieldLabel = "Estate",
   showTypeFilter = true,
 }) => {
-  const handleFromDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFromDateChange = (iso: string) => {
     onFiltersChange({
-      fromDate: e.target.value || null,
+      fromDate: iso || null,
       toDate,
       estate,
       type,
     });
   };
 
-  const handleToDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleToDateChange = (iso: string) => {
     onFiltersChange({
       fromDate,
-      toDate: e.target.value || null,
+      toDate: iso || null,
       estate,
       type,
     });
@@ -77,25 +84,24 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
   return (
     <div className="bg-white p-4 rounded-lg border flex flex-wrap gap-3 items-center">
       <div className="flex items-center gap-2">
-        <span role="img" aria-label="calendar" >
-          📅
-        </span>
-        <input
-          title="From Date"
-          placeholder="From Date"
-          type="date"
-          value={fromDate ?? ""}
-          onChange={handleFromDateChange}
-          className="px-3 py-2 border rounded-lg text-sm cursor-pointer"
+        <Calendar
+          className="h-4 w-4 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+        <IsoLinkedRangeStart
+          startDate={fromDate ?? ""}
+          endDate={toDate ?? ""}
+          onStartChange={handleFromDateChange}
+          className="px-3 py-2 border rounded-lg text-sm cursor-pointer min-w-[140px]"
+          ariaLabel="From Date"
         />
         <span className="text-sm text-muted-foreground">to</span>
-        <input
-          title="To Date"
-          placeholder="To Date"
-          type="date"
-          value={toDate ?? ""}
-          onChange={handleToDateChange}
-          className="px-3 py-2 border rounded-lg text-sm cursor-pointer"
+        <IsoLinkedRangeEnd
+          startDate={fromDate ?? ""}
+          endDate={toDate ?? ""}
+          onEndChange={handleToDateChange}
+          className="px-3 py-2 border rounded-lg text-sm cursor-pointer min-w-[140px]"
+          ariaLabel="To Date"
         />
       </div>
 

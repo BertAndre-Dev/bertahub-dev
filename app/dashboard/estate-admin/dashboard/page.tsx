@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { TrendingUp, Users, FileText, DollarSign } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { IsoDatePicker } from "@/components/ui/iso-date-picker";
 import { Select } from "@/components/ui/select";
 import TransactionsChart from "@/components/charts/transactions-chart";
 import BillsOverview from "@/components/charts/bills-overview";
@@ -398,12 +399,11 @@ export default function EstateAdminOverview() {
             className="min-w-[100px]"
           />
           {transactionPeriodType === "day" && (
-            <input
-              type="date"
-              aria-label="Select day"
+            <IsoDatePicker
               value={transactionSelectedDay}
-              onChange={(e) => setTransactionSelectedDay(e.target.value)}
+              onChange={setTransactionSelectedDay}
               className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+              ariaLabel="Select day"
             />
           )}
           {transactionPeriodType === "month" && (

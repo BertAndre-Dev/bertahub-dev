@@ -9,6 +9,7 @@ import { Save } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IsoDatePicker } from "@/components/ui/iso-date-picker";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { resetUserProfileState } from "@/redux/slice/resident/user-profile/user-profile-slice";
 import { getUserProfile } from "@/redux/slice/resident/user-profile/user-profile";
@@ -197,14 +198,15 @@ export function GeneralSettingsCard() {
               <label className="text-sm font-medium" htmlFor="date-of-birth">
                 Date of Birth
               </label>
-              <Input
+              <IsoDatePicker
                 id="date-of-birth"
-                name="dateOfBirth"
-                type="date"
                 value={formData.dateOfBirth}
-                onChange={handleChange}
+                onChange={(iso) =>
+                  setFormData((prev) => ({ ...prev, dateOfBirth: iso }))
+                }
                 className="mt-2 h-10"
                 disabled={isLoading}
+                ariaLabel="Date of Birth"
               />
             </div>
           </div>

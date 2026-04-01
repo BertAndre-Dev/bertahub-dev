@@ -171,6 +171,20 @@ export default function DashboardLayout({
       }
     }
 
+    // Estate admin: show only sidebar entries for modules enabled on the active estate
+    if (role === "estate admin") {
+      const sessionUser = reduxUser ?? user;
+      const rawModules =
+        sessionUser?.estate?.modules ?? sessionUser?.modules;
+      if (Array.isArray(rawModules)) {
+        navItems = navItems.filter((item) => {
+          const key = (item as { module?: string }).module;
+          if (!key) return true;
+          return rawModules.includes(key);
+        });
+      }
+    }
+
     return navItems.map((item, i) => {
       const Icon = item.icon;
       const active = item.path ? pathname.startsWith(item.path) : false;

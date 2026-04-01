@@ -5,6 +5,10 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  IsoLinkedRangeEnd,
+  IsoLinkedRangeStart,
+} from "@/components/ui/iso-date-picker";
 
 export interface ExpensesFiltersBarProps {
   startDate: string;
@@ -33,24 +37,22 @@ export function ExpensesFiltersBar({
             <label className="text-sm text-muted-foreground" htmlFor="eh-start-date">
               From
             </label>
-            <input
+            <IsoLinkedRangeStart
               id="eh-start-date"
-              type="date"
-              value={startDate}
-              onChange={(e) => onStartDateChange(e.target.value)}
-              className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+              startDate={startDate}
+              endDate={endDate}
+              onStartChange={onStartDateChange}
             />
           </div>
           <div className="flex items-center gap-2">
             <label className="text-sm text-muted-foreground" htmlFor="eh-end-date">
               To
             </label>
-            <input
+            <IsoLinkedRangeEnd
               id="eh-end-date"
-              type="date"
-              value={endDate}
-              onChange={(e) => onEndDateChange(e.target.value)}
-              className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+              startDate={startDate}
+              endDate={endDate}
+              onEndChange={onEndDateChange}
             />
           </div>
           {startDate && endDate && (

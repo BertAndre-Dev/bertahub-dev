@@ -5,6 +5,10 @@ import { useDispatch } from "react-redux";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  IsoLinkedRangeEnd,
+  IsoLinkedRangeStart,
+} from "@/components/ui/iso-date-picker";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
 import { updateRent } from "@/redux/slice/resident/rent-mgt/rent-mgt";
@@ -124,25 +128,25 @@ export default function UpdateRentForm({
           </div>
           <div>
             <Label htmlFor="edit-startDate">Start Date</Label>
-            <Input
-              id="edit-startDate"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1"
-              required
-            />
+            <div className="mt-1">
+              <IsoLinkedRangeStart
+                id="edit-startDate"
+                startDate={startDate}
+                endDate={endDate}
+                onStartChange={setStartDate}
+              />
+            </div>
           </div>
           <div>
             <Label htmlFor="edit-endDate">End Date</Label>
-            <Input
-              id="edit-endDate"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1"
-              required
-            />
+            <div className="mt-1">
+              <IsoLinkedRangeEnd
+                id="edit-endDate"
+                startDate={startDate}
+                endDate={endDate}
+                onEndChange={setEndDate}
+              />
+            </div>
           </div>
           <div>
             <Label htmlFor="edit-notes">Notes (optional)</Label>

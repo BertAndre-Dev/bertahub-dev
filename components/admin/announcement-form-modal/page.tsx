@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import "react-quill-new/dist/quill.snow.css";
+import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -263,15 +264,21 @@ export default function AnnouncementFormModal({
             {sendMode === "schedule" && (
               <div className="pt-1">
                 <Label htmlFor="announcement-scheduled">Date &amp; time</Label>
-                <Input
-                  id="announcement-scheduled"
-                  type="datetime-local"
-                  value={formScheduledFor}
-                  onChange={(e) => setFormScheduledFor(e.target.value)}
-                  className="mt-1"
-                  disabled={loading}
-                  required
-                />
+                <div className="mt-1 flex items-center gap-2">
+                  <Calendar
+                    className="h-4 w-4 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
+                  <Input
+                    id="announcement-scheduled"
+                    type="datetime-local"
+                    value={formScheduledFor}
+                    onChange={(e) => setFormScheduledFor(e.target.value)}
+                    className="min-w-0 flex-1"
+                    disabled={loading}
+                    required
+                  />
+                </div>
               </div>
             )}
           </div>

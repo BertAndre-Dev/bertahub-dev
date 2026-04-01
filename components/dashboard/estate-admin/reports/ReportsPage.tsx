@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "react-toastify";
 
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
@@ -21,8 +20,23 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import Table from "@/components/tables/list/page";
-import { TrendingUp, Lock, MessageSquareText, MessageCircle } from "lucide-react";
+import {
+  TrendingUp,
+  Lock,
+  MessageSquareText,
+  MessageCircle,
+} from "lucide-react";
+import { FinancialReportBarChart } from "@/components/dashboard/estate-admin/reports/FinancialReportBarChart";
+import {
+  buildChartSeries,
+  keysForCategory,
+  type FinancialChartPoint,
+} from "@/components/dashboard/estate-admin/reports/financial-report-chart-utils";
+import { ReportTable } from "@/components/estate-admin/expense-report/expense-report-table";
+import {
+  IsoLinkedRangeEnd,
+  IsoLinkedRangeStart,
+} from "@/components/ui/iso-date-picker";
 
 function toInputDate(iso: string): string {
   if (!iso) return "";
@@ -50,10 +64,13 @@ function normalizeEstate(user: any): { estateId: string; estateName: string } {
       ? rawEstateId
       : rawEstateId?._id || rawEstateId?.id || "";
 
-  const estateFromId = (rawEstateId as { name?: string } | undefined)?.name ?? "";
-  const estateFromObj = (user?.estate as { name?: string } | undefined)?.name ?? "";
+  const estateFromId =
+    (rawEstateId as { name?: string } | undefined)?.name ?? "";
+  const estateFromObj =
+    (user?.estate as { name?: string } | undefined)?.name ?? "";
   const fallbackEstateName = (user?.estateName as string) ?? "";
-  const estateName = estateFromId || estateFromObj || fallbackEstateName || "Estate";
+  const estateName =
+    estateFromId || estateFromObj || fallbackEstateName || "Estate";
   return { estateId, estateName };
 }
 
@@ -65,22 +82,30 @@ export default function ReportsPage() {
 
   const [startDate, setStartDate] = useState(() => {
     const now = new Date();
-    const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const first = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
     return toInputDate(first.toISOString());
   });
-  const [endDate, setEndDate] = useState(() => toInputDate(new Date().toISOString()));
+  const [endDate, setEndDate] = useState(() =>
+    toInputDate(new Date().toISOString()),
+  );
 
   const [granularity, setGranularity] = useState<"day" | "month" | "year">(
     "month",
   );
   const [selectedHeadId, setSelectedHeadId] = useState<string>("all");
-  const [revenueCategory, setRevenueCategory] = useState<"all" | "bills" | "vending">(
-    "all",
-  );
+  const [revenueCategory, setRevenueCategory] = useState<
+    "all" | "bills" | "vending"
+  >("all");
 
   const report = useSelector((s: RootState) => selectFinancialReportData(s));
-  const chartData = useSelector((s: RootState) => selectFinancialReportChartData(s));
-  const loading = useSelector((s: RootState) => selectFinancialReportLoading(s));
+  const chartData = useSelector((s: RootState) =>
+    selectFinancialReportChartData(s),
+  );
+  const loading = useSelector((s: RootState) =>
+    selectFinancialReportLoading(s),
+  );
   const error = useSelector((s: RootState) => selectFinancialReportError(s));
 
   useEffect(() => {
@@ -135,25 +160,29 @@ export default function ReportsPage() {
     return list.filter((x) => x._id === selectedHeadId);
   }, [report?.expenses?.byHead, selectedHeadId]);
 
+  const rawChartPoints = useMemo(() => {
+    return (chartData ?? []).map((p: any) => ({
+      date: String(p.date ?? "").slice(0, 10),
+      vending: Number(p.vending ?? 0),
+      bills: Number(p.bills ?? 0),
+      revenue: Number(p.revenue ?? 0),
+      expenses: Number(p.expenses ?? 0),
+    })) as FinancialChartPoint[];
+  }, [chartData]);
+
   const chartSeries = useMemo(() => {
-    // API returns daily points; we optionally bucket them for Month/Year views.
-    const points = chartData ?? [];
-    if (granularity === "day") return points;
+    return buildChartSeries(rawChartPoints, granularity);
+  }, [rawChartPoints, granularity]);
 
-    const map = new Map<string, { date: string; revenue: number; expenses: number }>();
-    for (const p of points) {
-      const key =
-        granularity === "month" ? String(p.date).slice(0, 7) : String(p.date).slice(0, 4);
-      const existing = map.get(key) ?? { date: key, revenue: 0, expenses: 0 };
-      existing.revenue += Number(p.revenue ?? 0);
-      existing.expenses += Number(p.expenses ?? 0);
-      map.set(key, existing);
-    }
-    return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date)) as any;
-  }, [chartData, granularity]);
+  const chartKeys = useMemo(
+    () => keysForCategory(revenueCategory),
+    [revenueCategory],
+  );
 
-  const totalRevenue = report?.summary?.totalRevenue ?? report?.revenue?.totalRevenue ?? 0;
-  const totalExpenses = report?.summary?.totalExpenses ?? report?.expenses?.totalExpenses ?? 0;
+  const totalRevenue =
+    report?.summary?.totalRevenue ?? report?.revenue?.totalRevenue ?? 0;
+  const totalExpenses =
+    report?.summary?.totalExpenses ?? report?.expenses?.totalExpenses ?? 0;
   const net = report?.summary?.netProfitLoss ?? totalRevenue - totalExpenses;
 
   const revenueRows = useMemo(() => {
@@ -171,18 +200,6 @@ export default function ReportsPage() {
     return [base[1], { ...base[2], amount: vending }];
   }, [report?.revenue]);
 
-  const expensesRows = useMemo(() => {
-    const rows = (filteredExpensesByHead ?? []).map((h) => ({
-      name: h.headName,
-      amount: h.totalAmount,
-    }));
-    return [
-      ...rows,
-      { name: "TOTAL EXPENSES", amount: totalExpenses, _rowTone: "red" as const },
-      { name: "PROFIT/LOSS", amount: net, _rowTone: "blue" as const },
-    ];
-  }, [filteredExpensesByHead, totalExpenses, net]);
-
   return (
     <div className="space-y-6">
       <div>
@@ -198,10 +215,30 @@ export default function ReportsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label: "Total Revenue", value: formatNaira(totalRevenue), icon: Lock, tone: "bg-[#FEE6D480]" },
-          { label: "Total Expenses", value: formatNaira(totalExpenses), icon: TrendingUp, tone: "bg-[#D0DFF280]" },
-          { label: "Profit", value: formatNaira(Math.max(0, net)), icon: MessageSquareText, tone: "bg-[#EDE9FE]" },
-          { label: "Loss", value: formatNaira(Math.max(0, -net)), icon: MessageCircle, tone: "bg-[#EDE9FE]" },
+          {
+            label: "Total Revenue",
+            value: formatNaira(totalRevenue),
+            icon: Lock,
+            tone: "bg-[#FEE6D480]",
+          },
+          {
+            label: "Total Expenses",
+            value: formatNaira(totalExpenses),
+            icon: TrendingUp,
+            tone: "bg-[#D0DFF280]",
+          },
+          {
+            label: "Profit",
+            value: formatNaira(Math.max(0, net)),
+            icon: MessageSquareText,
+            tone: "bg-[#EDE9FE]",
+          },
+          {
+            label: "Loss",
+            value: formatNaira(Math.max(0, -net)),
+            icon: MessageCircle,
+            tone: "bg-[#EDE9FE]",
+          },
         ].map((c) => {
           const Icon = c.icon;
           return (
@@ -209,9 +246,13 @@ export default function ReportsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm text-muted-foreground">{c.label}</p>
-                  <p className="font-heading text-3xl font-bold mt-2">{c.value}</p>
+                  <p className="font-heading text-3xl font-bold mt-2">
+                    {c.value}
+                  </p>
                 </div>
-                <div className={`h-12 w-12 rounded-xl grid place-items-center ${c.tone}`}>
+                <div
+                  className={`h-12 w-12 rounded-xl grid place-items-center ${c.tone}`}
+                >
                   <Icon className="h-6 w-6" />
                 </div>
               </div>
@@ -226,37 +267,65 @@ export default function ReportsPage() {
             <p className="font-heading text-xl font-bold">Insights</p>
             <p className="text-sm text-muted-foreground">Revenue vs Expense</p>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
+            {/* From */}
             <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground" htmlFor="rep-start">
+              <label
+                className="text-sm text-muted-foreground"
+                htmlFor="rep-start"
+              >
                 From
               </label>
-              <input
+              <IsoLinkedRangeStart
                 id="rep-start"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                startDate={startDate}
+                endDate={endDate}
+                onStartChange={setStartDate}
+                className="cursor-pointer"
               />
             </div>
+
+            {/* To */}
             <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground" htmlFor="rep-end">
+              <label
+                className="text-sm text-muted-foreground"
+                htmlFor="rep-end"
+              >
                 To
               </label>
-              <input
+              <IsoLinkedRangeEnd
                 id="rep-end"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                startDate={startDate}
+                endDate={endDate}
+                onEndChange={setEndDate}
+                className="cursor-pointer"
               />
             </div>
+
+            {/* Selects */}
             <Select
               value={selectedHeadId}
               onChange={(e) => setSelectedHeadId(e.target.value)}
               options={expenseHeads}
-              className="w-[200px]"
+              className="w-[200px] cursor-pointer"
             />
+
+            <Select
+              value={revenueCategory}
+              onChange={(e) =>
+                setRevenueCategory(
+                  e.target.value as "all" | "bills" | "vending",
+                )
+              }
+              options={[
+                { label: "Revenue Category", value: "all" },
+                { label: "Bills", value: "bills" },
+                { label: "Vending", value: "vending" },
+              ]}
+              className="w-[190px] cursor-pointer"
+            />
+
             <Select
               value={granularity}
               onChange={(e) =>
@@ -267,28 +336,40 @@ export default function ReportsPage() {
                 { label: "Month", value: "month" },
                 { label: "Year", value: "year" },
               ]}
-              className="w-[140px]"
+              className="w-[140px] cursor-pointer"
             />
+
+            {/* Export */}
             <Button
               type="button"
               variant="outline"
               onClick={() => {
                 const ok = chartSeries.length > 0;
                 if (!ok) return toast.info("Nothing to export yet.");
-                const headers = ["date", "revenue", "expenses"];
+
+                const headers = ["date", ...chartKeys.map(String)];
                 const body = chartSeries.map((r: any) =>
-                  [r.date, r.revenue ?? 0, r.expenses ?? 0].join(","),
+                  [
+                    r.date,
+                    ...chartKeys.map((k) => Number((r as any)[k] ?? 0)),
+                  ].join(","),
                 );
+
                 const csv = [headers.join(","), ...body].join("\r\n");
-                const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                const blob = new Blob([csv], {
+                  type: "text/csv;charset=utf-8;",
+                });
+
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
                 a.download = `report_insights_${new Date().toISOString().slice(0, 10)}.csv`;
                 a.click();
+
                 URL.revokeObjectURL(url);
               }}
               disabled={chartSeries.length === 0}
+              className="cursor-pointer disabled:cursor-not-allowed"
             >
               Export
             </Button>
@@ -296,161 +377,89 @@ export default function ReportsPage() {
         </div>
 
         <div className="mt-4">
-          <div className="h-[320px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartSeries}>
-                <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} width={60} />
-                <Tooltip
-                  formatter={(value: any) => formatNaira(Number(value))}
-                  labelFormatter={String}
-                />
-                <Bar dataKey="revenue" fill="#0B5CAB" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="expenses" fill="#A7C5E8" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          {loading ? (
-            <p className="text-sm text-muted-foreground py-3">Loading chart...</p>
-          ) : null}
+          <FinancialReportBarChart
+            loading={loading}
+            series={chartSeries as any}
+            category={revenueCategory}
+          />
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Revenue</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Select
-                value={revenueCategory}
-                onChange={(e) =>
-                  setRevenueCategory(e.target.value as "all" | "bills" | "vending")
-                }
-                options={[
-                  { label: "Category", value: "all" },
-                  { label: "Bills", value: "bills" },
-                  { label: "Vending", value: "vending" },
-                ]}
-                className="w-[170px]"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  // Table already has a CSV exporter, but we keep the control here to match the design.
-                  // Trigger export by using the Table's built-in export via onExportRequest.
-                  const id = document.getElementById("rep-revenue-export");
-                  id?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-                }}
-                disabled={revenueRows.length === 0}
-              >
-                Export
-              </Button>
-            </div>
-          </div>
-          <Table
-            columns={[
-              { key: "name", header: "Revenue" },
-              {
-                key: "amount",
-                header: "Amount (₦)",
-                render: (row: any) => (
-                  <span className="font-medium">{formatNaira(row.amount)}</span>
-                ),
-              },
-            ]}
-            data={revenueRows.map((r: any) => ({
-              ...r,
-              name:
-                r._rowTone === "green" ? (
-                  <span className="font-semibold text-emerald-700">{r.name}</span>
-                ) : (
-                  r.name
-                ),
-              amount: r.amount,
-            }))}
-            emptyMessage={loading ? "Loading..." : "No revenue data."}
-            showPagination={false}
-            enableExport
-            exportFileName="revenue"
-            onExportRequest={() =>
-              revenueRows.map((r: any) => ({
-                id: r.name,
-                name: r.name,
-                amount: r.amount,
-              }))
-            }
-          />
-        </Card>
+      <ReportTable
+        columnLabel="Revenue"
+        rows={[
+          {
+            key: "bills",
+            label: "Bills",
+            amount: report?.revenue?.billPaymentRevenue ?? 0,
+          },
+          {
+            key: "vending",
+            label: "Vending",
+            amount: report?.revenue?.vendingRevenue ?? 0,
+          },
+        ].filter((r) => revenueCategory === "all" || r.key === revenueCategory)}
+        summaryRows={[
+          {
+            label: "Gross Profit",
+            amount: totalRevenue,
+            colorClass: "bg-emerald-100 text-emerald-700",
+          },
+        ]}
+        filterLabel="Category"
+        filterOptions={[
+          { label: "Category", value: "all" },
+          { label: "Bills", value: "bills" },
+          { label: "Vending", value: "vending" },
+        ]}
+        filterValue={revenueCategory}
+        onFilterChange={(v) => setRevenueCategory(v as any)}
+        startDate={startDate}
+        endDate={endDate}
+        onDateRangeChange={({ startDate, endDate }) => {
+          setStartDate(startDate);
+          setEndDate(endDate);
+        }}
+        exportFileName="revenue_report"
+      />
 
-        <Card className="p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <span className="text-sm text-muted-foreground">Expenses</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <Select
-                value={selectedHeadId}
-                onChange={(e) => setSelectedHeadId(e.target.value)}
-                options={expenseHeads}
-                className="w-[200px]"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  const ok = expensesRows.length > 0;
-                  if (!ok) return;
-                  const headers = ["name", "amount"];
-                  const body = expensesRows.map((r: any) =>
-                    [String(r.name).replaceAll(",", " "), r.amount ?? 0].join(","),
-                  );
-                  const csv = [headers.join(","), ...body].join("\r\n");
-                  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `expenses_${new Date().toISOString().slice(0, 10)}.csv`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                }}
-                disabled={expensesRows.length === 0}
-              >
-                Export
-              </Button>
-            </div>
-          </div>
-          <Table
-            columns={[
-              { key: "name", header: "Expenses" },
-              {
-                key: "amount",
-                header: "Amount (₦)",
-                render: (row: any) => (
-                  <span className="font-medium">{formatNaira(row.amount)}</span>
-                ),
-              },
-            ]}
-            data={expensesRows.map((r: any) => {
-              const tone = r._rowTone as "red" | "blue" | undefined;
-              let nameNode: React.ReactNode = r.name;
-              if (tone === "red") {
-                nameNode = (
-                  <span className="font-semibold text-red-700">{r.name}</span>
-                );
-              } else if (tone === "blue") {
-                nameNode = (
-                  <span className="font-semibold text-blue-700">{r.name}</span>
-                );
-              }
-              return { ...r, name: nameNode };
-            })}
-            emptyMessage={loading ? "Loading..." : "No expenses data."}
-            showPagination={false}
-          />
-        </Card>
-      </div>
+      <ReportTable
+        columnLabel="Expenses"
+        rows={(report?.expenses?.byHead ?? []).map((h) => ({
+          key: h._id,
+          label: h.headName,
+          amount: h.totalAmount,
+        }))}
+        summaryRows={[
+          {
+            label: "Total Expenses",
+            amount: totalExpenses,
+            colorClass: "bg-red-100 text-red-700",
+          },
+          {
+            label: `Profit/Loss (${net >= 0 ? "Profit" : "Loss"})`,
+            amount: Math.abs(net),
+            colorClass: "bg-blue-100 text-blue-700",
+          },
+        ]}
+        filterLabel="Expense Head"
+        filterOptions={[
+          { label: "All Heads", value: "all" },
+          ...(report?.expenses?.byHead ?? []).map((h) => ({
+            label: h.headName,
+            value: h._id,
+          })),
+        ]}
+        filterValue={selectedHeadId}
+        onFilterChange={setSelectedHeadId}
+        startDate={startDate}
+        endDate={endDate}
+        onDateRangeChange={({ startDate, endDate }) => {
+          setStartDate(startDate);
+          setEndDate(endDate);
+        }}
+        exportFileName="expenses_report"
+      />
     </div>
   );
 }
-

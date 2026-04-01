@@ -197,14 +197,16 @@ export const estateAdminNav = [
     label: "Transactions",
     icon: GrTransaction,
     path: "/dashboard/estate-admin/transactions",
+    module: "transactions",
   },
   {
     label: "Wallet",
     icon: LuReceipt,
     path: "/dashboard/estate-admin/wallet",
+    module: "wallet",
   },
   {
-    label: 'Reports',
+    label: "Reports",
     icon: BarChart,
     path: "/dashboard/estate-admin/reports",
   },

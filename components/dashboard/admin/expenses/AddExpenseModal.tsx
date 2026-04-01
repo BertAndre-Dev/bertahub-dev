@@ -4,6 +4,7 @@ import React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IsoDatePicker } from "@/components/ui/iso-date-picker";
 import {
   Dialog,
   DialogContent,
@@ -75,11 +76,10 @@ export function AddExpenseModal({
               <label className="text-sm font-medium" htmlFor="add-expense-date">
                 Date
               </label>
-              <input
+              <IsoDatePicker
                 id="add-expense-date"
-                type="date"
                 value={date}
-                onChange={(e) => onDateChange?.(e.target.value)}
+                onChange={(iso) => onDateChange?.(iso)}
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
               />
             </div>

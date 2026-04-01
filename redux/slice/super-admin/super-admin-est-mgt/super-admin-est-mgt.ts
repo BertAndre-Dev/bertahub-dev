@@ -2,14 +2,29 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '@/utils/axiosInstance';
 
 
-interface EstateData {
+export interface EstateData {
     name: string;
     address: string;
     city: string;
     state: string;
     country: string;
-};
+    isActive?: boolean;
+    modules: string[];
+}
 
+
+
+export const fetchAvailableModules = createAsyncThunk(
+    'super-admin-est-mgt/fetchAvailableModules',
+    async (_, { rejectWithValue }) => {
+        try {
+            const res = await axiosInstance.get<{ data: string[] }>('/api/v1/estate-mgt/modules');
+            return res.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data ?? { message: error?.message ?? 'Failed to load modules' });
+        }
+    }
+);
 
 
 // create estate

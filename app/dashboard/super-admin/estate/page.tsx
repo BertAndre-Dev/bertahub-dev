@@ -22,6 +22,7 @@ import {
   activateEstate,
   suspendEstate,
   deleteEstate,
+  type EstateData,
 } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
@@ -31,16 +32,11 @@ import Modal from "@/components/modal/page";
 import EstateForm from "@/components/super-admin/estate-form/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 
-interface EstateData {
+type EstateTableRow = Omit<EstateData, "modules"> & {
   id?: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  isActive?: boolean;
+  modules?: string[];
   createdAt?: string | number | Date;
-}
+};
 
 export default function EstatePage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -59,7 +55,7 @@ export default function EstatePage() {
   );
 
   const [open, setOpen] = useState(false);
-  const [selectedEstate, setSelectedEstate] = useState<EstateData | null>(null);
+  const [selectedEstate, setSelectedEstate] = useState<EstateTableRow | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -89,7 +85,7 @@ export default function EstatePage() {
       .catch(() => toast.error("Failed to fetch estates"));
   }, [dispatch, startDate, endDate]);
 
-  const handleEstateModal = (estate?: EstateData) => {
+  const handleEstateModal = (estate?: EstateTableRow) => {
     setSelectedEstate(estate || null);
     setOpen(true);
   };
@@ -118,7 +114,7 @@ export default function EstatePage() {
   };
 
   // ✅ Handle Activate / Suspend Estate
-  const handleToggleStatus = async (estate: EstateData) => {
+  const handleToggleStatus = async (estate: EstateTableRow) => {
     try {
       if (!estate.id) return;
       if (estate.isActive) {
@@ -156,7 +152,7 @@ export default function EstatePage() {
         {
       key: "createdAt",
       header: "Created At",
-      render: (item: EstateData) =>
+      render: (item: EstateTableRow) =>
         new Date(item.createdAt as string | number | Date).toLocaleDateString(
           "en-GB",
           {
@@ -174,7 +170,7 @@ export default function EstatePage() {
     {
       key: "isActive",
       header: "Status",
-      render: (item: EstateData) => (
+      render: (item: EstateTableRow) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${
             item.isActive
@@ -189,7 +185,7 @@ export default function EstatePage() {
     {
       key: "actions",
       header: "Actions",
-      render: (item: EstateData) => (
+      render: (item: EstateTableRow) => (
         <div className="flex items-center gap-1">
           {/* Edit Button */}
           <Button
@@ -263,7 +259,7 @@ export default function EstatePage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {(() => {
-          const estates = allEstates as EstateData[];
+          const estates = allEstates as EstateTableRow[];
 
           const stats = [
             {
@@ -375,7 +371,18 @@ export default function EstatePage() {
       {open && (
         <Modal visible={open} onClose={handleCloseModal}>
           <EstateForm
-            initialData={selectedEstate}
+            initialData={
+              selectedEstate
+                ? {
+                    name: selectedEstate.name,
+                    address: selectedEstate.address,
+                    city: selectedEstate.city,
+                    state: selectedEstate.state,
+                    country: selectedEstate.country,
+                    modules: selectedEstate.modules ?? [],
+                  }
+                : null
+            }
             onSubmit={handleSubmitEstate}
           />
         </Modal>

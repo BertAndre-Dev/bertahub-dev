@@ -5,6 +5,10 @@ import { useDispatch } from "react-redux";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  IsoLinkedRangeEnd,
+  IsoLinkedRangeStart,
+} from "@/components/ui/iso-date-picker";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { toast } from "react-toastify";
@@ -173,29 +177,29 @@ export default function CreateRentForm({
           </div>
           <div>
             <Label htmlFor="startDate">Start Date</Label>
-            <Input
-              id="startDate"
-              type="date"
-              value={form.startDate}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, startDate: e.target.value }))
-              }
-              className="mt-1"
-              required
-            />
+            <div className="mt-1">
+              <IsoLinkedRangeStart
+                id="startDate"
+                startDate={form.startDate}
+                endDate={form.endDate}
+                onStartChange={(iso) =>
+                  setForm((p) => ({ ...p, startDate: iso }))
+                }
+              />
+            </div>
           </div>
           <div>
             <Label htmlFor="endDate">End Date</Label>
-            <Input
-              id="endDate"
-              type="date"
-              value={form.endDate}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, endDate: e.target.value }))
-              }
-              className="mt-1"
-              required
-            />
+            <div className="mt-1">
+              <IsoLinkedRangeEnd
+                id="endDate"
+                startDate={form.startDate}
+                endDate={form.endDate}
+                onEndChange={(iso) =>
+                  setForm((p) => ({ ...p, endDate: iso }))
+                }
+              />
+            </div>
           </div>
           <div>
             <Label htmlFor="notes">Notes (optional)</Label>

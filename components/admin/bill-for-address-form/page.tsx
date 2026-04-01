@@ -6,6 +6,7 @@ import type { AppDispatch } from "@/redux/store";
 import { getFieldByEstate } from "@/redux/slice/admin/address-mgt/fields/fields";
 import { getEntriesByField } from "@/redux/slice/admin/address-mgt/entry/entry";
 import { Input } from "@/components/ui/input";
+import { IsoDatePicker } from "@/components/ui/iso-date-picker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -204,11 +205,10 @@ export default function BillForAddressForm(props: BillForAddressFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="startDate">Start Date</Label>
-          <Input
+          <IsoDatePicker
             id="startDate"
-            type="date"
             value={form.startDate}
-            onChange={(e) => handleChange("startDate", e.target.value)}
+            onChange={(iso) => handleChange("startDate", iso)}
           />
         </div>
 

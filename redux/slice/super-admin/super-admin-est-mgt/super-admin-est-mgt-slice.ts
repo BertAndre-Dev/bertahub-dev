@@ -1,8 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
+import type { RootState } from "@/redux/store";
 import {
   activateEstate,
   createEstate,
   deleteEstate,
+  fetchAvailableModules,
   getAllEstates,
   getEstate,
   suspendEstate,
@@ -17,6 +19,7 @@ export interface EstateDetails {
   state?: string;
   country?: string;
   isActive?: boolean;
+  modules?: string[];
   createdAt?: string;
   updatedAt?: string;
   id?: string;
@@ -48,6 +51,9 @@ export interface EstateState {
   estate: EstateDetails | null;
   allEstates: AllEstatesResponse | null;
   error: string | null;
+  availableModules: string[];
+  modulesLoading: boolean;
+  modulesError: string | null;
 }
 
 // 🧱 Initial State
@@ -63,6 +69,9 @@ const initialState: EstateState = {
   estate: null,
   allEstates: null,
   error: null,
+  availableModules: [],
+  modulesLoading: false,
+  modulesError: null,
 };
 
 // 🧩 Slice Definition
@@ -76,6 +85,27 @@ const estateSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    builder
+      .addCase(fetchAvailableModules.pending, (state) => {
+        state.modulesLoading = true;
+        state.modulesError = null;
+      })
+      .addCase(fetchAvailableModules.fulfilled, (state, action) => {
+        state.modulesLoading = false;
+        state.modulesError = null;
+        state.availableModules = Array.isArray(action.payload?.data)
+          ? action.payload.data
+          : [];
+      })
+      .addCase(fetchAvailableModules.rejected, (state, action) => {
+        state.modulesLoading = false;
+        const payload = action.payload as { message?: string } | undefined;
+        state.modulesError =
+          payload?.message ||
+          (action.error?.message ?? "Failed to load modules");
+        state.availableModules = [];
+      });
+
     // 🔹 GET ALL ESTATES
     builder
       .addCase(getAllEstates.pending, (state) => {
@@ -234,3 +264,10 @@ const estateSlice = createSlice({
 // Export actions & reducer
 export const { resetEstateState } = estateSlice.actions;
 export default estateSlice.reducer;
+
+export const selectAvailableModules = (state: RootState) =>
+  state.estate.availableModules ?? [];
+export const selectModulesLoading = (state: RootState) =>
+  state.estate.modulesLoading ?? false;
+export const selectModulesError = (state: RootState) =>
+  state.estate.modulesError ?? null;
