@@ -1,6 +1,7 @@
 'use client';
 
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { RootState } from '@/redux/store';
 import {
   signIn,
   signOut,
@@ -109,6 +110,10 @@ const authSlice = createSlice({
       .addCase(getSignedInUser.fulfilled, (state, action) => {
         state.getSignedInUserStatus = 'succeeded';
         const user = action.payload?.data || null;
+        const modules = action.payload?.data?.estateId?.modules;
+        if (user && user.estateId && Array.isArray(modules)) {
+          user.estateId.modules = modules;
+        }
         state.user = user;
 
         if (typeof window !== 'undefined') {
@@ -161,3 +166,11 @@ const authSlice = createSlice({
 
 export const { resetAuthState, logoutLocally, hydrateAuthFromStorage, setToken } = authSlice.actions;
 export default authSlice.reducer;
+
+export const selectUserRole = (state: RootState) =>
+  (state.auth.user?.role ?? '').toString().toLowerCase();
+
+export const selectEstateModules = (state: RootState): string[] => {
+  const modules = state.auth.user?.estateId?.modules;
+  return Array.isArray(modules) ? modules : [];
+};

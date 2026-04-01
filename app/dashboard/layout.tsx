@@ -18,6 +18,8 @@ import { AppDispatch, RootState } from "@/redux/store";
 import {
   hydrateAuthFromStorage,
   logoutLocally,
+  selectEstateModules,
+  selectUserRole,
 } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import NextImage from "next/image";
@@ -35,6 +37,8 @@ export default function DashboardLayout({
   const { token, user: reduxUser } = useSelector(
     (state: RootState) => state.auth,
   );
+  const userRole = useSelector(selectUserRole);
+  const estateModules = useSelector(selectEstateModules);
   const hasFetchedUser = useRef(false);
   const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -145,7 +149,7 @@ export default function DashboardLayout({
   const renderNavItems = () => {
     if (!user) return null;
 
-    const role = user?.role?.toLowerCase();
+    const role = (userRole || user?.role || "").toString().toLowerCase();
     let navItems =
       role === "super admin"
         ? superAdminNav
@@ -171,18 +175,15 @@ export default function DashboardLayout({
       }
     }
 
-    // Estate admin: show only sidebar entries for modules enabled on the active estate
-    if (role === "estate admin") {
-      const sessionUser = reduxUser ?? user;
-      const rawModules =
-        sessionUser?.estate?.modules ?? sessionUser?.modules;
-      if (Array.isArray(rawModules)) {
-        navItems = navItems.filter((item) => {
-          const key = (item as { module?: string }).module;
-          if (!key) return true;
-          return rawModules.includes(key);
-        });
-      }
+    // Admin: show only sidebar entries for modules enabled on user's estate
+    // IMPORTANT: super admin is excluded above (fully hardcoded).
+    if (role === "admin") {
+      navItems = navItems.filter((item) => {
+        if (item.label === "Settings" || item.label === "Logout") return true;
+        const key = (item as { module?: string }).module;
+        if (!key) return false;
+        return estateModules.includes(key);
+      });
     }
 
     return navItems.map((item, i) => {
