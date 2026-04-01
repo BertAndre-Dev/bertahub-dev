@@ -175,13 +175,26 @@ export default function DashboardLayout({
       }
     }
 
-    // Admin: show only sidebar entries for modules enabled on user's estate
+    // Roles with module-scoped sidebar items.
     // IMPORTANT: super admin is excluded above (fully hardcoded).
-    if (role === "admin") {
+    const rolesWithModules = new Set(["admin", "resident", "security", "estate admin"]);
+    if (rolesWithModules.has(role)) {
+      const staticLabels = new Set<string>(["Settings", "Logout"]);
+      if (role === "security") staticLabels.add("Activity Log");
+
       navItems = navItems.filter((item) => {
-        if (item.label === "Settings" || item.label === "Logout") return true;
-        const key = (item as { module?: string }).module;
+        if (staticLabels.has(item.label)) return true;
+        if (!Array.isArray(estateModules) || estateModules.length === 0) return false;
+
+        const key =
+          (item as { moduleKey?: string; module?: string }).moduleKey ??
+          (item as { moduleKey?: string; module?: string }).module;
         if (!key) return false;
+
+        // Backward-compat for older API key: "expenses" vs new "expense"
+        if (key === "expense") {
+          return estateModules.includes("expense") || estateModules.includes("expenses");
+        }
         return estateModules.includes(key);
       });
     }

@@ -49,7 +49,8 @@ export default function AdminMeterManagement() {
     null,
   );
   const [assignMeter, setAssignMeter] = useState(false);
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [detailsAddressId, setDetailsAddressId] = useState<string | null>(null);
 
@@ -71,7 +72,7 @@ export default function AdminMeterManagement() {
     const fetchMeters = async () => {
       try {
         await dispatch(
-          getAllMeters({ page: 1, limit: 10, search: search || undefined }),
+          getAllMeters({ page: 1, limit: 10, search: searchQuery || undefined }),
         ).unwrap();
       } catch (error: any) {
         console.error("Failed to fetch meters:", error);
@@ -79,7 +80,7 @@ export default function AdminMeterManagement() {
       }
     };
     fetchMeters();
-  }, [dispatch, search]);
+  }, [dispatch, searchQuery]);
 
   const handleRefresh = async () => {
     try {
@@ -87,7 +88,7 @@ export default function AdminMeterManagement() {
         getAllMeters({
           page: 1,
           limit: Number(pagination?.pageSize) || 10,
-          search: search || undefined,
+          search: searchQuery || undefined,
         }),
       ).unwrap();
     } catch (error: any) {
@@ -286,14 +287,58 @@ export default function AdminMeterManagement() {
       </div>
 
       <div className="bg-white p-4 rounded-lg">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            placeholder="Search by meter number."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
+        <div className="relative w-full max-w-sm flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              placeholder="Search by meter number."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearchQuery(searchInput);
+                  dispatch(
+                    getAllMeters({
+                      page: 1,
+                      limit: Number(pagination?.pageSize) || 10,
+                      search: searchInput || undefined,
+                    }),
+                  );
+                }
+                if (e.key === "Escape") {
+                  setSearchInput("");
+                  setSearchQuery("");
+                  dispatch(
+                    getAllMeters({
+                      page: 1,
+                      limit: Number(pagination?.pageSize) || 10,
+                      search: undefined,
+                    }),
+                  );
+                }
+              }}
+              className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          {searchInput.trim().length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery(searchInput);
+                dispatch(
+                  getAllMeters({
+                    page: 1,
+                    limit: Number(pagination?.pageSize) || 10,
+                    search: searchInput || undefined,
+                  }),
+                );
+              }}
+              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:opacity-90 transition"
+            >
+              Search
+            </button>
+          )}
         </div>
       </div>
 
@@ -302,7 +347,7 @@ export default function AdminMeterManagement() {
           columns={columns}
           data={allSuperAdminMeters}
           showPagination
-          onSearch={(value) => setSearch(value)}
+          onSearch={(value) => setSearchInput(value)}
           paginationInfo={{
             total: pagination?.total || 0,
             current: Number(pagination?.currentPage) || 1,

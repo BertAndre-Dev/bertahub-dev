@@ -21,6 +21,7 @@ export default function SuperAdminTransactionsPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [currentPage, setCurrentPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [fromDate, setFromDate] = useState<string | null>(null);
   const [toDate, setToDate] = useState<string | null>(null);
@@ -350,14 +351,40 @@ export default function SuperAdminTransactionsPage() {
       </div>
 
       <div className="bg-white p-4 rounded-lg border">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            placeholder="Search by estate name, address, city etc..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
+        <div className="relative w-full max-w-sm flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              placeholder="Search by estate name, address, city etc..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearchQuery(searchInput);
+                  setCurrentPage(1);
+                }
+                if (e.key === "Escape") {
+                  setSearchInput("");
+                  setSearchQuery("");
+                  setCurrentPage(1);
+                }
+              }}
+              className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          {searchInput.trim().length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery(searchInput);
+                setCurrentPage(1);
+              }}
+              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:opacity-90 transition"
+            >
+              Search
+            </button>
+          )}
         </div>
       </div>
 
