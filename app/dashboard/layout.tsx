@@ -191,9 +191,12 @@ export default function DashboardLayout({
           (item as { moduleKey?: string; module?: string }).module;
         if (!key) return false;
 
-        // Backward-compat for older API key: "expenses" vs new "expense"
-        if (key === "expense") {
-          return estateModules.includes("expense") || estateModules.includes("expenses");
+        // API uses "expense"; older nav data used "expenses" — accept either
+        if (key === "expense" || key === "expenses") {
+          return (
+            estateModules.includes("expense") ||
+            estateModules.includes("expenses")
+          );
         }
         return estateModules.includes(key);
       });

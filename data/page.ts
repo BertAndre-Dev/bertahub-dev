@@ -99,12 +99,12 @@ export const adminNav = [
     module: "visitor",
     moduleKey: "visitor",
   },
-    {
+  {
     label: "Expenses",
     icon: LuReceipt,
     path: "/dashboard/admin/expenses",
-    module: "expenses",
     moduleKey: "expense",
+    module: "expense",
   },
   {
     label: "Maintenance Requests",
