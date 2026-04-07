@@ -692,7 +692,7 @@ import MeterTrendChart from "@/components/charts/meter-trend-chart";
 import MeterCreditSummary from "@/components/charts/meter-credit-summary";
 import { VendingTrendChart } from "../../super-admin/dashboard/components";
 
-const formatNaira = (n: number) => `₦{n.toLocaleString()}`;
+const formatNaira = (n: number) => `${n.toLocaleString()}`;
 
 export default function DummyDashboard() {
   const [transactionChartView, setTransactionChartView] = useState("revenue");
