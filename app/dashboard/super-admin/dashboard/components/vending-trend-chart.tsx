@@ -36,7 +36,7 @@ const FILL_COLOR = "#0150AC"
 
 function formatY(value: number) {
   if (value >= 1) return `${value}`
-  return `₦{value * 1000}K`
+  return `${value * 1000}K`
 }
 
 export function VendingTrendChart({
