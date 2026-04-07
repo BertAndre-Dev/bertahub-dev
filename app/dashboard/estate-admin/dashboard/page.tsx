@@ -876,7 +876,7 @@ export default function DummyDashboard() {
       </div>
 
       {/* Meter */}
-      <div>
+      {/* <div>
         <Select
           options={[
             { label: "Assignment", value: "assignment" },
@@ -909,7 +909,7 @@ export default function DummyDashboard() {
             formatValue={formatNaira}
           />
         )}
-      </div>
+      </div> */}
     </div>
   );
 }
