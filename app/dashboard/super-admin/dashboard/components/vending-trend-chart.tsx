@@ -35,7 +35,7 @@ const STROKE_COLOR = "#0150AC"
 const FILL_COLOR = "#0150AC"
 
 function formatY(value: number) {
-  if (value >= 1) return `$₦{value}M`
+  if (value >= 1) return `${value}`
   return `₦{value * 1000}K`
 }
 
