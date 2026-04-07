@@ -704,7 +704,7 @@ export default function DummyDashboard() {
   const stats = [
     {
       title: "Total Revenue",
-      value: formatNaira(12500000),
+      value: `₦{12500000}`,
       change: "this month",
       trend: "up",
       icon: DollarSign,
@@ -720,7 +720,7 @@ export default function DummyDashboard() {
     },
     {
       title: "Paid Bills",
-      value: formatNaira(8900000),
+      value: `₦{8900000}`,
       change: "320 active",
       trend: "up",
       icon: FileText,
@@ -728,7 +728,7 @@ export default function DummyDashboard() {
     },
     {
       title: "Pending",
-      value: formatNaira(3600000),
+      value: `₦{3600000}`,
       change: "120 unpaid",
       trend: "up",
       icon: FileText,
