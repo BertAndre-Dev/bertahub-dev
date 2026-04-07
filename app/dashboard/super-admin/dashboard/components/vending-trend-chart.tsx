@@ -92,7 +92,7 @@ export function VendingTrendChart({
             }}
             // ✅ Fixed: value is not an array
             formatter={(value: number) => [formatY(value), "Value"]}
-            labelFormatter={(label) => `₦{label} kWh`}
+            labelFormatter={(label) => `{label}`}
             cursor={{ stroke: "#0150AC", strokeDasharray: "4 4" }}
           />
           <Area
