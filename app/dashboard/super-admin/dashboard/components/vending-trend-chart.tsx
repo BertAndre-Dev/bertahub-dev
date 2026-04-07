@@ -35,8 +35,8 @@ const STROKE_COLOR = "#0150AC"
 const FILL_COLOR = "#0150AC"
 
 function formatY(value: number) {
-  if (value >= 1) return `$${value}M`
-  return `$${value * 1000}K`
+  if (value >= 1) return `$₦{value}M`
+  return `₦{value * 1000}K`
 }
 
 export function VendingTrendChart({
@@ -92,7 +92,7 @@ export function VendingTrendChart({
             }}
             // ✅ Fixed: value is not an array
             formatter={(value: number) => [formatY(value), "Value"]}
-            labelFormatter={(label) => `${label} kWh`}
+            labelFormatter={(label) => `₦{label} kWh`}
             cursor={{ stroke: "#0150AC", strokeDasharray: "4 4" }}
           />
           <Area
