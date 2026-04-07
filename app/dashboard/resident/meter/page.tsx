@@ -281,6 +281,7 @@ export default function ResidentMeter() {
           <VendPower
             walletId={walletId}
             meterNumber={meter?.meterNumber ?? ""}
+            tariffPrice={meter?.currentTariff?.price ?? null}
             onSubmitSuccess={handleRefresh}
             onClose={handleOpenModal}
           />
