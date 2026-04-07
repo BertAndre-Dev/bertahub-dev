@@ -860,10 +860,10 @@ export default function DummyDashboard() {
       </Card>
 
       {/* Withdrawals */}
-      <Card className="p-4">
+      {/* <Card className="p-4">
         <h2 className="font-bold mb-2">Withdrawals</h2>
         <VendingTrendChart data={withdrawalsData} />
-      </Card>
+      </Card> */}
 
       {/* Breakdown + Occupancy */}
       <div className="grid lg:grid-cols-2 gap-6">
