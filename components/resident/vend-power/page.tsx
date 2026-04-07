@@ -15,6 +15,7 @@ import { Copy, CheckCircle } from "lucide-react";
 interface VendPowerFormProps {
   walletId: string;
   meterNumber: string;
+  tariffPrice?: number | null;
   onSubmitSuccess?: () => void;
   onClose?: () => void;
 }
@@ -24,9 +25,10 @@ const SUCCESS_MODAL_AUTO_CLOSE_MS = 20000;
 export default function VendPowerForm({
   walletId,
   meterNumber,
+  tariffPrice = null,
   onSubmitSuccess,
   onClose,
-}: VendPowerFormProps) {
+}: Readonly<VendPowerFormProps>) {
   const dispatch = useDispatch<AppDispatch>();
 
   const [amount, setAmount] = useState<number>(0);
@@ -36,8 +38,11 @@ export default function VendPowerForm({
   const [copied, setCopied] = useState(false);
 
   const kwh = useMemo(() => {
-    return amount > 0 ? (amount / 500).toFixed(2) : "0";
-  }, [amount]);
+    const price = Number(tariffPrice);
+    if (amount <= 0) return "0";
+    if (!Number.isFinite(price) || price <= 0) return "0";
+    return (amount / price).toFixed(2);
+  }, [amount, tariffPrice]);
 
   const closeSuccessModal = useCallback(() => {
     setShowSuccessModal(false);
@@ -119,6 +124,14 @@ export default function VendPowerForm({
               onChange={(e) => setAmount(Number(e.target.value))}
               placeholder="Enter amount"
             />
+            <p className="text-sm text-muted-foreground mt-1">
+              Price per kWh:{" "}
+              <strong>
+                {tariffPrice != null && Number.isFinite(Number(tariffPrice))
+                  ? `₦${Number(tariffPrice).toLocaleString()}`
+                  : "—"}
+              </strong>
+            </p>
             <p className="text-sm text-muted-foreground mt-1">
               You will get <strong>{kwh} kWh</strong> for this amount.
             </p>
