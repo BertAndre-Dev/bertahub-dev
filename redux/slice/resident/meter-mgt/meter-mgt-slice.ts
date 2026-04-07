@@ -30,6 +30,12 @@ export interface ResidentMeterData {
   createdAt: string;
   addressId: string;
   vendorData: VendorData;
+  currentTariff?: {
+    price?: number;
+    unit?: string;
+    taxRate?: number;
+    source?: string;
+  };
 }
 
 export interface Pagination {
