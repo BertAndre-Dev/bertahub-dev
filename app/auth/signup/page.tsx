@@ -59,7 +59,8 @@ export default function SignupPage() {
 
     // Simulate API call
     setTimeout(() => {
-      localStorage.setItem(
+      // Per-tab storage to avoid cross-tab session mixing
+      sessionStorage.setItem(
         "user",
         JSON.stringify({
           email: formData.email,

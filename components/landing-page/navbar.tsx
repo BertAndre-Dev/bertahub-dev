@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import Button from "@/components/landing-page/atom/button";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.bertahub.com";
+
 type NavbarProps = {
   readonly onOpenBookDemo?: () => void;
 };
@@ -45,7 +47,6 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
           <div className="inline-flex items-center gap-10 rounded-full bg-[#FA812880] px-10 py-3">
             {navLinks.map((link) => {
               const isActive = activeLink === link.href;
-
               return (
                 <div key={link.href} className="relative group">
                   <Link
@@ -55,8 +56,6 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
                   >
                     {link.label}
                   </Link>
-
-                  {/* Shows on active OR hover */}
                   <span
                     className={`absolute -bottom-2 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-white transition-opacity duration-200
                       ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
@@ -70,7 +69,7 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
         {/* Right buttons */}
         <div className="hidden lg:flex items-center gap-3">
           <Link
-            href="https://www.bertahub.com/auth/login"
+            href={`${APP_URL}/auth/login`}
             className="cursor-pointer"
             target="_blank"
             rel="noopener noreferrer"
@@ -113,7 +112,7 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
           )}
         </div>
 
-        {/* Mobile: logo + hamburger only */}
+        {/* Mobile hamburger */}
         <div className="flex lg:hidden items-center">
           <button
             type="button"
@@ -150,7 +149,7 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
             onClick={() => setIsMobileMenuOpen(false)}
           />
 
-            <div className="absolute right-0 top-0 h-full w-[88%] max-w-sm bg-[#050816] border-l border-white/10 p-6">
+          <div className="absolute right-0 top-0 h-full w-[88%] max-w-sm bg-[#050816] border-l border-white/10 p-6">
             <div className="flex items-center justify-between">
               <Link
                 href="/"
@@ -236,8 +235,9 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
                   </Button>
                 </Link>
               )}
+
               <Link
-                href="https://www.bertahub.com/auth/login"
+                href={`${APP_URL}/auth/login`}
                 className="cursor-pointer"
                 target="_blank"
                 rel="noopener noreferrer"

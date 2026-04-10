@@ -1,375 +1,3 @@
-// "use client";
-
-// import { useEffect, useState, useRef, Suspense } from "react";
-// import Link from "next/link";
-// import { useRouter, usePathname } from "next/navigation";
-// import { useDispatch, useSelector } from "react-redux";
-// import { toast } from "react-toastify";
-// import { Menu, X, LogOut, Bell, Search } from "lucide-react";
-// import { Button } from "@/components/ui/button";
-// import {
-//   adminNav,
-//   superAdminNav,
-//   securityNav,
-//   residentNav,
-//   estateAdminNav,
-// } from "@/data/page";
-// import { AppDispatch, RootState } from "@/redux/store";
-// import {
-//   hydrateAuthFromStorage,
-//   logoutLocally,
-//   selectEstateModules,
-//   selectUserRole,
-// } from "@/redux/slice/auth-mgt/auth-mgt-slice";
-// import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-// import { clearCsrfToken, ensureCsrfToken } from "@/utils/csrf";
-
-// export default function DashboardLayout({
-//   children,
-// }: {
-//   children: React.ReactNode;
-// }) {
-//   const router = useRouter();
-//   const pathname = usePathname();
-//   const dispatch = useDispatch<AppDispatch>();
-//   const { token, user: reduxUser } = useSelector(
-//     (state: RootState) => state.auth,
-//   );
-//   const userRole = useSelector(selectUserRole);
-//   const estateModules = useSelector(selectEstateModules);
-//   const hasFetchedUser = useRef(false);
-//   const [user, setUser] = useState<any>(null);
-//   const [sidebarOpen, setSidebarOpen] = useState(true);
-//   const [loading, setLoading] = useState(true);
-
-//   // 🔹 Handle sidebar state based on screen size (collapsed on mobile, expanded on desktop)
-//   useEffect(() => {
-//     const handleResize = () => {
-//       if (window.innerWidth < 768) {
-//         setSidebarOpen(false);
-//       } else {
-//         setSidebarOpen(true);
-//       }
-//     };
-
-//     handleResize();
-//     window.addEventListener("resize", handleResize);
-//     return () => window.removeEventListener("resize", handleResize);
-//   }, []);
-
-//   // 🔹 Load user from localStorage (auth or user key) or redirect if missing
-//   useEffect(() => {
-//     if (typeof window === "undefined") return;
-//     const userData = localStorage.getItem("user");
-//     const rawAuth = localStorage.getItem("auth");
-//     const fromAuth = rawAuth
-//       ? (() => {
-//           try {
-//             return JSON.parse(rawAuth)?.user;
-//           } catch {
-//             return null;
-//           }
-//         })()
-//       : null;
-//     const user = userData
-//       ? (() => {
-//           try {
-//             return JSON.parse(userData);
-//           } catch {
-//             return null;
-//           }
-//         })()
-//       : fromAuth;
-//     if (!user) {
-//       router.push("/auth/login");
-//       return;
-//     }
-//     setUser(user);
-//     setLoading(false);
-//   }, [router]);
-
-//   // 🔹 Hydrate Redux state from localStorage
-//   useEffect(() => {
-//     if (typeof window !== "undefined") {
-//       dispatch(hydrateAuthFromStorage());
-//     }
-//   }, [dispatch]);
-
-//   // 🔹 Validate token and refresh user session (token is stored in "auth", not "token")
-//   useEffect(() => {
-//     if (typeof window === "undefined") return;
-//     const rawAuth = localStorage.getItem("auth");
-//     const localToken = rawAuth
-//       ? (() => {
-//           try {
-//             return JSON.parse(rawAuth)?.token ?? null;
-//           } catch {
-//             return null;
-//           }
-//         })()
-//       : null;
-
-//     if (!localToken && !token) {
-//       router.push("/auth/login");
-//       return;
-//     }
-
-//     if (!hasFetchedUser.current && (token || localToken)) {
-//       hasFetchedUser.current = true;
-//       dispatch(getSignedInUser())
-//         .unwrap()
-//         .catch(() => {
-//           toast.error("Session expired. Please sign in again.");
-//           dispatch(logoutLocally());
-//           router.push("/auth/login");
-//         });
-//     }
-//   }, [dispatch, router, token]);
-
-//   // 🔹 Ensure CSRF token exists for authenticated sessions (needed after refresh)
-//   useEffect(() => {
-//     if (typeof window === "undefined") return;
-//     if (!token) return;
-//     ensureCsrfToken(token).catch(() => {
-//       // If this fails, state-changing requests will attempt to refresh it anyway.
-//     });
-//   }, [token]);
-
-//   // 🔹 Sign out handler (logoutLocally already clears auth & user from localStorage)
-//   const handleSignOut = () => {
-//     clearCsrfToken();
-//     dispatch(logoutLocally());
-//     toast.success("Signed out successfully");
-//     router.push("/auth/login");
-//   };
-
-//   // 🔹 Choose navigation items based on role
-//   const renderNavItems = () => {
-//     if (!user) return null;
-
-//     const role = (userRole || user?.role || "").toString().toLowerCase();
-//     let navItems =
-//       role === "super admin"
-//         ? superAdminNav
-//         : role === "admin"
-//           ? adminNav
-//           : role === "estate admin"
-//             ? estateAdminNav
-//             : role === "resident"
-//               ? residentNav
-//               : securityNav;
-
-//     // Residents: hide Tenant Management for residentType=Tenant (owners only)
-//     if (role === "resident") {
-//       const residentType = (user?.residentType ?? "").toString().toLowerCase();
-//       if (residentType !== "owner") {
-//         navItems = navItems.filter(
-//           (item) =>
-//             item.label !== "Tenant Management" &&
-//             !(item.path
-//               ? item.path.includes("/dashboard/resident/user")
-//               : false),
-//         );
-//       }
-//     }
-
-//     // Roles with module-scoped sidebar items.
-//     // IMPORTANT: super admin is excluded above (fully hardcoded).
-//     const rolesWithModules = new Set(["admin", "resident", "security", "estate admin"]);
-//     if (rolesWithModules.has(role)) {
-//       const staticLabels = new Set<string>(["Settings", "Logout"]);
-//       if (role === "security") staticLabels.add("Activity Log");
-
-//       navItems = navItems.filter((item) => {
-//         if (staticLabels.has(item.label)) return true;
-//         if (!Array.isArray(estateModules) || estateModules.length === 0) return false;
-
-//         const key =
-//           (item as { moduleKey?: string; module?: string }).moduleKey ??
-//           (item as { moduleKey?: string; module?: string }).module;
-//         if (!key) return false;
-
-//         // API uses "expense"; older nav data used "expenses" — accept either
-//         if (key === "expense" || key === "expenses") {
-//           return (
-//             estateModules.includes("expense") ||
-//             estateModules.includes("expenses")
-//           );
-//         }
-//         return estateModules.includes(key);
-//       });
-//     }
-
-//     return navItems.map((item, i) => {
-//       const Icon = item.icon;
-//       const active = item.path ? pathname.startsWith(item.path) : false;
-
-//       // Render Logout as a button so it can trigger sign out logic
-//       if (item.label === "Logout") {
-//         return (
-//           <button
-//             key={i}
-//             onClick={handleSignOut}
-//             className={`flex items-center w-full gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-muted/50`}
-//           >
-//             <Icon className="w-4 h-4 text-[#D31510]" />
-//             {sidebarOpen && (
-//               <span className="text-[#D31510]">{item.label}</span>
-//             )}
-//           </button>
-//         );
-//       }
-
-//       // ✅ Guard clause: skip rendering if path is undefined
-//       if (!item.path) return null;
-
-//       return (
-//         <Link
-//           key={i}
-//           href={item.path}
-//           className={`flex items-center w-full gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-//             active
-//               ? "bg-primary/10 text-primary font-semibold"
-//               : "text-muted-foreground hover:bg-muted/50"
-//           }`}
-//         >
-//           <Icon className="w-4 h-4" />
-//           {sidebarOpen && <span>{item.label}</span>}
-//         </Link>
-//       );
-//     });
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="flex items-center justify-center min-h-screen">
-//         <div className="text-center space-y-4">
-//           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
-//           <p className="text-muted-foreground">Loading dashboard...</p>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-//       {/* Sidebar */}
-//       <aside
-//         className={`fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 z-40 ${
-//           sidebarOpen ? "w-64" : "w-20"
-//         }`}
-//       >
-//         <div className="flex flex-col h-full">
-//           {/* Header */}
-//           <div className="flex items-center justify-between pl-6 border-b border-sidebar-border">
-//             <div
-//               className={`flex items-center ${!sidebarOpen && "justify-center w-full"}`}
-//             >
-//               <NextImage
-//                 src="/logo.svg"
-//                 alt="BertaHub"
-//                 width={100}
-//                 height={100}
-//               />
-//             </div>
-//           </div>
-
-//           {/* Navigation */}
-//           <nav className="flex-1 overflow-y-auto p-4 space-y-8">
-//             {renderNavItems()}
-//           </nav>
-
-//           {/* User Info */}
-//           <div className="bg-[#f2f2f2] border-t border-sidebar-border m-4 rounded-lg px-2 py-4  ">
-//             <button
-//               className="flex items-center gap-0 md:gap-3 w-full rounded-lg hover:bg-sidebar-accent transition-colors overflow-x-scroll"
-//               // onClick={handleSignOut}
-//             >
-//               <div className="bg-[#4E61E5] rounded-full overflow-hidden w-8 h-8 flex-shrink-0">
-//                 <Image
-//                   src={user?.image || "/profile.svg"}
-//                   alt="User image"
-//                   width={40}
-//                   height={40}
-//                   className="rounded-full object-cover w-full h-full"
-//                 />
-//               </div>
-//               {sidebarOpen && (
-//                 <div className="flex-1 text-left">
-//                   <p className="text-base font-semibold">
-//                     {user?.firstName} {user?.lastName}
-//                   </p>
-//                   <div className="flex items-center gap-2">
-//                     <p className="text-base font-normal">
-//                       {user?.role === "resident"
-//                         ? user?.residentType || "Resident"
-//                         : user?.role}
-//                     </p>
-//                   </div>
-//                 </div>
-//               )}
-//             </button>
-//           </div>
-//         </div>
-//       </aside>
-
-//       {/* Main */}
-//       <main
-//         className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}
-//       >
-//         {/* Topbar */}
-//         <header className="sticky top-0 bg-background border-b border-border z-30">
-//           <div className="flex items-center justify-between px-6 py-8">
-//             <button
-//               onClick={() => setSidebarOpen(!sidebarOpen)}
-//               className="p-2 hover:bg-muted rounded-lg transition-colors"
-//             >
-//               {sidebarOpen ? (
-//                 <X className="w-5 h-5" />
-//               ) : (
-//                 <Menu className="w-5 h-5" />
-//               )}
-//             </button>
-
-//             <div className="flex items-center gap-4">
-//               <div className="hidden md:flex items-center gap-2 bg-muted px-4 py-2 rounded-lg">
-//                 <Search className="w-4 h-4 text-muted-foreground" />
-//                 <input
-//                   type="text"
-//                   placeholder="Search..."
-//                   className="bg-transparent outline-none text-sm w-48"
-//                 />
-//               </div>
-//               <button
-//                 title="Notifications"
-//                 className="p-2 hover:bg-muted rounded-lg transition-colors relative"
-//               >
-//                 <Bell className="w-5 h-5" />
-//                 <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
-//               </button>
-//               <Button
-//                 variant="ghost"
-//                 size="sm"
-//                 onClick={handleSignOut}
-//                 className="text-muted-foreground hover:text-foreground"
-//               >
-//                 <LogOut className="w-5 h-5" />
-//               </Button>
-//             </div>
-//           </div>
-//         </header>
-
-//         {/* Page Content */}
-//         <Suspense fallback={<div>Loading...</div>}>
-//           <div className="p-4 md:p-6">{children}</div>
-//         </Suspense>
-//       </main>
-//     </div>
-//   );
-// }
-
-
-
 "use client";
 
 import { useEffect, useState, useRef, Suspense } from "react";
@@ -390,11 +18,12 @@ import { AppDispatch, RootState } from "@/redux/store";
 import {
   hydrateAuthFromStorage,
   logoutLocally,
+  selectEstateModules,
+  selectUserRole,
 } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-import NextImage from "next/image";
-import Image from "next/image";
 import { clearCsrfToken, ensureCsrfToken } from "@/utils/csrf";
+import Image from "next/image";
 
 export default function DashboardLayout({
   children,
@@ -407,6 +36,8 @@ export default function DashboardLayout({
   const { token, user: reduxUser } = useSelector(
     (state: RootState) => state.auth,
   );
+  const userRole = useSelector(selectUserRole);
+  const estateModules = useSelector(selectEstateModules);
   const hasFetchedUser = useRef(false);
   const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -427,11 +58,11 @@ export default function DashboardLayout({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 🔹 Load user from localStorage (auth or user key) or redirect if missing
+  // 🔹 Load user from sessionStorage (per-tab) or redirect if missing
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const userData = localStorage.getItem("user");
-    const rawAuth = localStorage.getItem("auth");
+    const userData = sessionStorage.getItem("user");
+    const rawAuth = sessionStorage.getItem("auth");
     const fromAuth = rawAuth
       ? (() => {
           try {
@@ -468,7 +99,7 @@ export default function DashboardLayout({
   // 🔹 Validate token and refresh user session (token is stored in "auth", not "token")
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const rawAuth = localStorage.getItem("auth");
+    const rawAuth = sessionStorage.getItem("auth");
     const localToken = rawAuth
       ? (() => {
           try {
@@ -517,7 +148,7 @@ export default function DashboardLayout({
   const renderNavItems = () => {
     if (!user) return null;
 
-    const role = user?.role?.toLowerCase();
+    const role = (userRole || user?.role || "").toString().toLowerCase();
     let navItems =
       role === "super admin"
         ? superAdminNav
@@ -541,6 +172,33 @@ export default function DashboardLayout({
               : false),
         );
       }
+    }
+
+    // Roles with module-scoped sidebar items.
+    // IMPORTANT: super admin is excluded above (fully hardcoded).
+    const rolesWithModules = new Set(["admin", "resident", "security", "estate admin"]);
+    if (rolesWithModules.has(role)) {
+      const staticLabels = new Set<string>(["Settings", "Logout"]);
+      if (role === "security") staticLabels.add("Activity Log");
+
+      navItems = navItems.filter((item) => {
+        if (staticLabels.has(item.label)) return true;
+        if (!Array.isArray(estateModules) || estateModules.length === 0) return false;
+
+        const key =
+          (item as { moduleKey?: string; module?: string }).moduleKey ??
+          (item as { moduleKey?: string; module?: string }).module;
+        if (!key) return false;
+
+        // API uses "expense"; older nav data used "expenses" — accept either
+        if (key === "expense" || key === "expenses") {
+          return (
+            estateModules.includes("expense") ||
+            estateModules.includes("expenses")
+          );
+        }
+        return estateModules.includes(key);
+      });
     }
 
     return navItems.map((item, i) => {
@@ -608,7 +266,7 @@ export default function DashboardLayout({
             <div
               className={`flex items-center ${!sidebarOpen && "justify-center w-full"}`}
             >
-              <NextImage
+              <Image
                 src="/logo.svg"
                 alt="BertaHub"
                 width={100}
