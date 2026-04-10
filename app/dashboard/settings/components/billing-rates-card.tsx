@@ -25,7 +25,7 @@ export function BillingRatesCard({
               </label>
               <div className="relative mt-2">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  $
+                ₦
                 </span>
                 <Input
                   type="number"
@@ -48,7 +48,7 @@ export function BillingRatesCard({
               </label>
               <div className="relative mt-2">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  $
+                  ₦
                 </span>
                 <Input
                   type="number"
@@ -68,7 +68,7 @@ export function BillingRatesCard({
               </label>
               <div className="relative mt-2">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  $
+                  ₦
                 </span>
                 <Input
                   type="number"
@@ -91,7 +91,7 @@ export function BillingRatesCard({
               </label>
               <div className="relative mt-2">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  $
+                  ₦
                 </span>
                 <Input
                   type="number"

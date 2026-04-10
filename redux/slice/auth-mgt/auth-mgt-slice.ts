@@ -2,6 +2,7 @@
 
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/redux/store';
+import { clearStoredAuth, readStoredAuth, writeStoredAuth, writeStoredUser } from '@/utils/auth-storage';
 import {
   signIn,
   signOut,
@@ -63,11 +64,9 @@ const authSlice = createSlice({
 
     hydrateAuthFromStorage: (state) => {
       if (typeof window === 'undefined') return;
-      const rawAuth = localStorage.getItem('auth');
-      if (!rawAuth) return;
-      const parsed = JSON.parse(rawAuth);
+      const parsed = readStoredAuth();
       state.user = parsed?.user ?? null;
-      state.token = parsed?.token ?? null;
+      state.token = (parsed?.token as string | null | undefined) ?? null;
     },
 
     setToken: (state, action: PayloadAction<string>) => {
@@ -78,9 +77,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth');
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('accessToken');
+        clearStoredAuth();
       }
     },
   },
@@ -99,7 +96,8 @@ const authSlice = createSlice({
         state.token = token;
 
         if (typeof window !== "undefined") {
-          localStorage.setItem("auth", JSON.stringify({ user, token }));
+          writeStoredUser(user);
+          writeStoredAuth({ user, token });
         }
       })
       .addCase(signIn.rejected, (state, action) => {
@@ -113,9 +111,9 @@ const authSlice = createSlice({
         state.user = user;
 
         if (typeof window !== 'undefined') {
-          const rawAuth = localStorage.getItem('auth');
-          const parsed = rawAuth ? JSON.parse(rawAuth) : {};
-          localStorage.setItem('auth', JSON.stringify({ ...parsed, user }));
+          const parsed = readStoredAuth() ?? {};
+          writeStoredUser(user);
+          writeStoredAuth({ ...parsed, user });
         }
       })
 
@@ -123,7 +121,7 @@ const authSlice = createSlice({
         state.getSignedInUserStatus = 'failed';
         state.user = null;
         state.token = null;
-        if (typeof window !== 'undefined') localStorage.removeItem('auth');
+        if (typeof window !== 'undefined') clearStoredAuth();
       })
 
 
@@ -131,7 +129,7 @@ const authSlice = createSlice({
       .addCase(signOut.fulfilled, (state) => {
         state.user = null;
         state.token = null;
-        if (typeof window !== 'undefined') localStorage.removeItem('auth');
+        if (typeof window !== 'undefined') clearStoredAuth();
       })
 
       // ✅ INVITE USER

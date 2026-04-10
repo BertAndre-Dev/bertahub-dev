@@ -12,11 +12,11 @@ import { LuReceipt } from "react-icons/lu";
 import { LayoutDashboard, Wrench, Bell, Store, BarChart } from "lucide-react";
 
 export const superAdminNav = [
-  {
-    label: "Overview",
-    icon: FiHome,
-    path: "/dashboard/super-admin/dashboard",
-  },
+  // {
+  //   label: "Overview",
+  //   icon: FiHome,
+  //   path: "/dashboard/super-admin/dashboard",
+  // },
   {
     label: "Estate Management",
     icon: BsBuildings,
@@ -70,7 +70,7 @@ export const superAdminNav = [
 ];
 
 export const adminNav = [
-  { label: "Overview", icon: FiHome, path: "/dashboard/admin/overview" },
+  // { label: "Overview", icon: FiHome, path: "/dashboard/admin/overview" },
   {
     label: "Address Management",
     icon: FiMapPin,
@@ -151,7 +151,7 @@ export const securityNav = [
 ];
 
 export const residentNav = [
-  { label: "Overview", icon: FiHome, path: "/dashboard/resident/dashboard" },
+  // { label: "Overview", icon: FiHome, path: "/dashboard/resident/dashboard" },
   {
     label: "Tenant Management", 
     icon: FiUsers,
@@ -211,11 +211,11 @@ export const residentNav = [
 ];
 
 export const estateAdminNav = [
-  {
-    label: "Overview",
-    icon: FiHome,
-    path: "/dashboard/estate-admin/dashboard",
-  },
+  // {
+  //   label: "Overview",
+  //   icon: FiHome,
+  //   path: "/dashboard/estate-admin/dashboard",
+  // },
   {
     label: "Transactions",
     icon: GrTransaction,

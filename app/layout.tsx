@@ -7,6 +7,7 @@ import ClientProvider from "@/components/client-provider/page";
 import { CookieBanner } from "@/components/cookie-banner"; 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -33,6 +34,7 @@ export default function RootLayout({
         <ClientProvider>{children}</ClientProvider>
         <CookieBanner />
         <Analytics />
+        <GoogleAnalytics gaId="G-2QKPRW9HZL" />
       </body>
     </html>
   )

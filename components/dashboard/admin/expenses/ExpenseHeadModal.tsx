@@ -59,7 +59,7 @@ export function ExpenseHeadModal({
 
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="eh-desc">
-              Description <span className="text-muted-foreground">(optional)</span>
+              Description
             </label>
             <Input
               id="eh-desc"

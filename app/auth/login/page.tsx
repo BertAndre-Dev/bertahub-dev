@@ -55,9 +55,8 @@ export default function LoginPage() {
         const user = res.data;
         const token = res.accessToken;
 
-        // ✅ Keep user in localStorage so getStoredUserEmail() can read it
-        // even before redux-persist has finished rehydrating on a hard reload.
-        localStorage.setItem("user", JSON.stringify(user));
+        // Store user per-tab so multiple logins in different tabs don't mix.
+        sessionStorage.setItem("user", JSON.stringify(user));
 
         toast.success(res.message || "Signed in successfully");
 

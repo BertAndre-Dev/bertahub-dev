@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import storageSession from 'redux-persist/lib/storage/session';
 import { injectStore } from '@/utils/store-accessor';
 import authSliceReducer from '@/redux/slice/auth-mgt/auth-mgt-slice';
 import estateSliceReducer from '@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt-slice';
@@ -49,7 +49,9 @@ import estateAdminFinancialReportSliceReducer from '@/redux/slice/estate-admin/f
 
 const persistConfig = {
     key: 'root',
-    storage,
+    // Use sessionStorage so auth/user state is isolated per-tab.
+    // This prevents multi-tab data mixing when users sign in as different accounts.
+    storage: storageSession,
 };
 
 

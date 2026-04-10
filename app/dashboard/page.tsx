@@ -54,7 +54,7 @@ export default function DashboardPage() {
   const stats = [
     {
       title: "Total Revenue",
-      value: "$328,000",
+      value: "₦328,000",
       change: "+12.5%",
       trend: "up",
       icon: DollarSign,
