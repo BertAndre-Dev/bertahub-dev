@@ -6,6 +6,7 @@ import {
   getCsrfToken,
   updateCsrfFromResponseHeaders,
 } from "@/utils/csrf";
+import { getStoredUserEmail } from "@/utils/auth-storage";
 
 // On the client, use a relative base URL so every request goes through the
 // Next.js rewrite proxy (/api/v1/* → https://bertahubdev.com/api/v1/*).
@@ -51,20 +52,9 @@ function getEmail(): string | null {
     // store not injected yet (SSR)
   }
 
-  // 2) localStorage fallback (written by login page before redirect)
-  if (typeof window !== "undefined") {
-    try {
-      const raw = localStorage.getItem("user");
-      if (raw) {
-        const email = (JSON.parse(raw) as { email?: string }).email;
-        if (email) return email;
-      }
-    } catch {
-      // malformed JSON
-    }
-  }
+  // 2) sessionStorage fallback (per-tab; written by login flow)
+  return getStoredUserEmail();
 
-  return null;
 }
 
 /** Reads the current access token from Redux state. */
@@ -129,6 +119,12 @@ async function doRefresh(): Promise<string | null> {
   console.log("[auth] Access token expired — refreshing for:", email);
 
   try {
+    // NOTE:
+    // The refresh-token endpoint uses cookies (`withCredentials: true`).
+    // Cookies are shared across tabs in the same browser profile, so two different
+    // logged-in users across tabs can overwrite the refresh cookie server-side.
+    // We isolate the access token per tab (sessionStorage + per-tab redux-persist),
+    // and if refresh fails or returns an unexpected token, we log out.
     // Always use the relative path so the request goes through the Next.js
     // proxy — the same mechanism that keeps cookies same-origin on the client.
     const refreshUrl =
@@ -175,8 +171,8 @@ async function clearSession() {
   } catch {
     // fallback: clear manually if Redux isn't available
     if (typeof window !== "undefined") {
-      localStorage.removeItem("user");
-      localStorage.removeItem("auth");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("auth");
     }
   }
   if (typeof window !== "undefined") {
