@@ -67,7 +67,7 @@ export const getEstateCredits = createAsyncThunk(
           message: "Estate ID is required to fetch estate credits",
         });
       }
-      const res = await axiosInstance.get("/api/v1/wallet-mgt/estate-credits/{estateId}", {
+      const res = await axiosInstance.get(`/api/v1/wallet-mgt/estate-credits/${estateId}`, {
         params: { estateId, page, limit },
       });
       return res.data;
