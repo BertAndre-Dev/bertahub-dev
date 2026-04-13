@@ -9,8 +9,7 @@ type HeroSectionProps = {
 
 export default function HeroSection({ onOpenBookDemo }: HeroSectionProps) {
   return (
-    <section
-  className="relative bg-[#050816] text-white pt-2 overflow-hidden"
+    <section className="relative bg-[#050816] text-white pt-2 overflow-hidden"
 >
   {/* Background image — positioned absolutely so it doesn't push content */}
   <div
@@ -25,8 +24,8 @@ export default function HeroSection({ onOpenBookDemo }: HeroSectionProps) {
   />
 
   {/* HERO */}
-  <div className="relative z-10 container mx-auto px-6 md:px-8 lg:px-10 xl:px-20 max-w-[1320px] xl:max-w-[1440px] pt-6 sm:pt-8 lg:pt-10 pb-20">
-    <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] items-start">
+  <div className="relative z-10 container mx-auto px-6 md:px-8 lg:px-10 xl:px-20 max-w-[1320px] xl:max-w-[1440px] pt-6 sm:pt-8 lg:pt-10 pb-20 lg:h-[600px]">
+    <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] items-start mt-12 xl:mt-16">
       {/* Left: Copy */}
       <div className="space-y-6 md:space-y-5 pt-4 lg:pt-8">
         <h1 className="text-3xl sm:text-4xl lg:text-[44px] leading-tight font-semibold">

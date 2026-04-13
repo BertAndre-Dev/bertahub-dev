@@ -26,7 +26,7 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
   };
 
   return (
-    <nav className="w-full bg-[#050816] z-50">
+    <nav className="w-full bg-transparent fixed top-0 z-50">
       <div className="container mx-auto px-6 md:px-8 lg:px-10 xl:px-20 max-w-[1320px] xl:max-w-[1440px] py-4 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center cursor-pointer">
@@ -70,7 +70,7 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
         {/* Right buttons */}
         <div className="hidden lg:flex items-center gap-3">
           <Link
-            href="https://bertahub-dev.vercel.app/auth/login"
+            href="https://www.bertahub.com/auth/login"
             className="cursor-pointer"
             target="_blank"
             rel="noopener noreferrer"
@@ -237,7 +237,7 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
                 </Link>
               )}
               <Link
-                href="https://bertahub-dev.vercel.app/auth/login"
+                href="https://www.bertahub.com/auth/login"
                 className="cursor-pointer"
                 target="_blank"
                 rel="noopener noreferrer"
