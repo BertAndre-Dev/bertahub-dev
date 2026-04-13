@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -27,18 +26,28 @@ type UserFormState = {
   residentType: string;
 };
 
+// ✅ Helper: extract a clean, non-empty MongoDB ObjectId string or return null
+function extractUserId(raw: unknown): string | null {
+  if (!raw) return null;
+  const str = typeof raw === "string" ? raw.trim() : String(raw).trim();
+  // Basic ObjectId format: 24 hex characters
+  if (/^[a-f\d]{24}$/i.test(str)) return str;
+  return null;
+}
+
 export function GeneralSettingsCard() {
   const dispatch = useDispatch<AppDispatch>();
+
+  // ✅ Validate the ID shape before ever using it — null means "not ready"
   const userId = useSelector((state: RootState) => {
-    const rawId = state.auth.user?.id || state.auth.user?._id || "";
-    const trimmed = typeof rawId === "string" ? rawId.trim() : "";
-    return trimmed.length > 0 ? trimmed : "";
+    const raw = state.auth.user?.id || state.auth.user?._id;
+    return extractUserId(raw);
   });
- 
+
   const { user, getStatus, updateStatus, error } = useSelector(
     (state: RootState) => state.userProfile,
   );
-  
+
   const [formData, setFormData] = useState<UserFormState>({
     firstName: "",
     lastName: "",
@@ -58,6 +67,7 @@ export function GeneralSettingsCard() {
   }, [dispatch]);
 
   useEffect(() => {
+    // ✅ Only fetch when we have a validated, non-empty ObjectId
     if (!userId) return;
     dispatch(getUserProfile(userId));
   }, [dispatch, userId]);
@@ -84,16 +94,16 @@ export function GeneralSettingsCard() {
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
 
-
+    // ✅ Re-validate at submit time too — belt-and-suspenders
     if (!userId) {
-      setFormError("No signed-in user found");
+      setFormError("Your session is not ready yet. Please wait or refresh.");
       return;
     }
 
@@ -126,12 +136,24 @@ export function GeneralSettingsCard() {
       ).unwrap();
       toast.success(res?.message || "Profile updated successfully");
     } catch (err: any) {
-      const message =
-        err?.message || err?.payload || "Failed to update profile";
+      const message = err?.message || err?.payload || "Failed to update profile";
       setFormError(message);
       toast.error(message);
     }
   };
+
+  // ✅ Show a clear loading state while userId hasn't resolved yet
+  if (!userId) {
+    return (
+      <div className="space-y-6">
+        <Card className="pt-6 md:pt-8 px-8 md:px-16 pb-12 md:pb-18 w-full md:w-3/4 lg:w-2/3 mx-auto">
+          <p className="text-center text-sm text-muted-foreground py-8">
+            Loading your profile...
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -148,62 +170,29 @@ export function GeneralSettingsCard() {
               {formError || error}
             </div>
           )}
-           
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium" htmlFor="first-name">
-                First Name
-              </label>
-              <Input
-                id="first-name"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className="mt-2 h-10"
-                disabled={isLoading}
-              />
+              <label className="text-sm font-medium" htmlFor="first-name">First Name</label>
+              <Input id="first-name" name="firstName" value={formData.firstName} onChange={handleChange} className="mt-2 h-10" disabled={isLoading} />
             </div>
             <div>
-              <label className="text-sm font-medium" htmlFor="last-name">
-                Last Name
-              </label>
-              <Input
-                id="last-name"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="mt-2 h-10"
-                disabled={isLoading}
-              />
+              <label className="text-sm font-medium" htmlFor="last-name">Last Name</label>
+              <Input id="last-name" name="lastName" value={formData.lastName} onChange={handleChange} className="mt-2 h-10" disabled={isLoading} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium" htmlFor="email">
-                Email
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="mt-2 h-10"
-                disabled={isLoading}
-              />
+              <label className="text-sm font-medium" htmlFor="email">Email</label>
+              <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} className="mt-2 h-10" disabled={isLoading} />
             </div>
             <div>
-              <label className="text-sm font-medium" htmlFor="date-of-birth">
-                Date of Birth
-              </label>
+              <label className="text-sm font-medium" htmlFor="date-of-birth">Date of Birth</label>
               <IsoDatePicker
                 id="date-of-birth"
                 value={formData.dateOfBirth}
-                onChange={(iso) =>
-                  setFormData((prev) => ({ ...prev, dateOfBirth: iso }))
-                }
+                onChange={(iso) => setFormData((prev) => ({ ...prev, dateOfBirth: iso }))}
                 className="mt-2 h-10"
                 disabled={isLoading}
                 ariaLabel="Date of Birth"
@@ -213,47 +202,23 @@ export function GeneralSettingsCard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium" htmlFor="country-code">
-                Country Code
-              </label>
-              <Input
-                id="country-code"
-                name="countryCode"
-                placeholder="+234"
-                value={formData.countryCode}
-                onChange={handleChange}
-                className="mt-2 h-10"
-                disabled={isLoading}
-              />
+              <label className="text-sm font-medium" htmlFor="country-code">Country Code</label>
+              <Input id="country-code" name="countryCode" placeholder="+234" value={formData.countryCode} onChange={handleChange} className="mt-2 h-10" disabled={isLoading} />
             </div>
-
             <div>
-              <label className="text-sm font-medium" htmlFor="phone-number">
-                Phone
-              </label>
-              <Input
-                id="phone-number"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                className="mt-2 h-10"
-                disabled={isLoading}
-              />
+              <label className="text-sm font-medium" htmlFor="phone-number">Phone</label>
+              <Input id="phone-number" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className="mt-2 h-10" disabled={isLoading} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium" htmlFor="gender">
-                Gender
-              </label>
+              <label className="text-sm font-medium" htmlFor="gender">Gender</label>
               <select
                 id="gender"
                 title="Gender"
                 value={formData.gender}
-                onChange={(e) =>
-                  setFormData({ ...formData, gender: e.target.value })
-                }
+                onChange={(e) => setFormData((prev) => ({ ...prev, gender: e.target.value }))}
                 className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mt-2"
                 disabled={isLoading}
               >
@@ -263,31 +228,18 @@ export function GeneralSettingsCard() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium" htmlFor="role">
-                Role
-              </label>
-              <Input
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="mt-2 h-10"
-                disabled
-              />
+              <label className="text-sm font-medium" htmlFor="role">Role</label>
+              <Input id="role" name="role" value={formData.role} onChange={handleChange} className="mt-2 h-10" disabled />
             </div>
           </div>
 
           {(formData.role === "resident" || formData.role === "Resident") && (
             <div>
-              <label className="text-sm font-medium" htmlFor="resident-type">
-                Resident Type
-              </label>
+              <label className="text-sm font-medium" htmlFor="resident-type">Resident Type</label>
               <select
                 id="resident-type"
                 value={formData.residentType}
-                onChange={(e) =>
-                  setFormData({ ...formData, residentType: e.target.value })
-                }
+                onChange={(e) => setFormData((prev) => ({ ...prev, residentType: e.target.value }))}
                 className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mt-2"
                 disabled={isLoading}
               >
