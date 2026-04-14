@@ -133,7 +133,11 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
       email: formData.email,
       role: formData.role,
       residentType: formData.role === "resident" ? "owner" : "owner",
-      addressIds: formData.role === "resident" ? formData.addressIds : [] as string[],
+      // Guard against accidental empty ids (prevents backend ObjectId cast errors)
+      addressIds:
+        formData.role === "resident"
+          ? (formData.addressIds ?? []).map((x) => String(x).trim()).filter(Boolean)
+          : ([] as string[]),
     };
 
     setLoading(true);

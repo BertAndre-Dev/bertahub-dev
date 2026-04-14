@@ -19,13 +19,16 @@ export type UpdateUserProfilePayload = {
 export const getUserProfile = createAsyncThunk(
   "user-profile/getUserProfile",
   async (id: string, { rejectWithValue }) => {
+    // ✅ Hard stop — never let an empty string reach the API
+    if (!id || !/^[a-f\d]{24}$/i.test(id.trim())) {
+      return rejectWithValue({ message: "Invalid user ID — cannot fetch profile" });
+    }
     try {
-      const res = await axiosInstance.get(`/api/v1/user-mgt/${id}`);
+      const res = await axiosInstance.get(`/api/v1/user-mgt/${id.trim()}`);
       return res.data;
     } catch (error: any) {
       return rejectWithValue({
-        message:
-          error?.response?.data?.message || "Failed to fetch user profile",
+        message: error?.response?.data?.message || "Failed to fetch user profile",
       });
     }
   },
@@ -34,13 +37,16 @@ export const getUserProfile = createAsyncThunk(
 export const updateUserProfile = createAsyncThunk(
   "user-profile/updateUserProfile",
   async ({ id, data }: UpdateUserProfilePayload, { rejectWithValue }) => {
+    // ✅ Same guard on update
+    if (!id || !/^[a-f\d]{24}$/i.test(id.trim())) {
+      return rejectWithValue({ message: "Invalid user ID — cannot update profile" });
+    }
     try {
-      const res = await axiosInstance.put(`/api/v1/user-mgt/${id}`, data);
+      const res = await axiosInstance.put(`/api/v1/user-mgt/${id.trim()}`, data);
       return res.data;
     } catch (error: any) {
       return rejectWithValue({
-        message:
-          error?.response?.data?.message || "Failed to update user profile",
+        message: error?.response?.data?.message || "Failed to update user profile",
       });
     }
   },

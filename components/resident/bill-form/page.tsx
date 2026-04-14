@@ -9,18 +9,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select } from "@/components/ui/select"; 
+import { Select } from "@/components/ui/select";
+import SwitchAddress from "@/components/resident/switch-address/page";
+import type { AddressOption } from "@/lib/address";
 import { toast } from "react-toastify";
 
 interface BillsFormProps {
   billId: string;
+  addressOptions?: AddressOption[];
+  selectedAddressId?: string | null;
+  onSelectedAddressChange?: (addressId: string) => void;
   onSubmitSuccess?: () => void;
   onClose?: () => void;
 }
 
 type FrequencyOption = "monthly" | "quarterly" | "yearly";
 
-export default function BillsForm({ billId, onSubmitSuccess, onClose }: BillsFormProps) {
+export default function BillsForm({
+  billId,
+  addressOptions = [],
+  selectedAddressId = null,
+  onSelectedAddressChange,
+  onSubmitSuccess,
+  onClose,
+}: BillsFormProps) {
   const dispatch = useDispatch<AppDispatch>();
 
   const [loading, setLoading] = useState(false);
@@ -82,6 +94,11 @@ export default function BillsForm({ billId, onSubmitSuccess, onClose }: BillsFor
       return;
     }
 
+    if (addressOptions.length > 1 && !selectedAddressId) {
+      toast.error("Please select an address to pay this bill.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       await dispatch(
@@ -89,6 +106,7 @@ export default function BillsForm({ billId, onSubmitSuccess, onClose }: BillsFor
           billId,
           userId,
           walletId,
+          addressId: selectedAddressId ?? undefined,
           frequency,
           amountPaid: Number(proratedAmount),
         })
@@ -118,6 +136,15 @@ export default function BillsForm({ billId, onSubmitSuccess, onClose }: BillsFor
       </CardHeader>
 
       <CardContent className="space-y-6">
+        <SwitchAddress
+          addresses={addressOptions}
+          value={selectedAddressId}
+          onChange={(id) => onSelectedAddressChange?.(id)}
+          label="Pay for address"
+          direction="col"
+          className="p-0 border-0 shadow-none"
+        />
+
         {loading ? (
           <p className="text-gray-500 italic">Loading bill details...</p>
         ) : (
