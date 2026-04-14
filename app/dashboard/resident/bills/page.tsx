@@ -178,11 +178,11 @@ export default function BillPage() {
         </Button>
       </div>
 
-      <SwitchAddress
+      {/* <SwitchAddress
         addresses={addressOptions}
         value={selectedAddressId}
         onChange={setSelectedAddressId}
-      />
+      /> */}
 
       {/* Payable bills - cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -252,6 +252,9 @@ export default function BillPage() {
         <Modal visible={open} onClose={handleCloseModal}>
           <BillsForm
             billId={selectedBillId}
+            addressOptions={addressOptions}
+            selectedAddressId={selectedAddressId}
+            onSelectedAddressChange={setSelectedAddressId}
             onSubmitSuccess={refreshLists}
             onClose={handleCloseModal}
           />
