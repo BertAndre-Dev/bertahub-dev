@@ -16,6 +16,8 @@ export interface SwitchAddressProps {
   readonly label?: string;
   /** Optional class for the card wrapper */
   readonly className?: string;
+  /** Layout direction for label + select. Default "row" */
+  readonly direction?: "row" | "col";
 }
 
 /**
@@ -28,6 +30,7 @@ export default function SwitchAddress({
   onChange,
   label = "Switch address",
   className,
+  direction = "row",
 }: SwitchAddressProps) {
   if (addresses.length <= 1) return null;
 
@@ -38,10 +41,21 @@ export default function SwitchAddress({
 
   return (
     <Card className={className ?? "p-4"}>
-      <div className="flex flex-row items-center justify-between">
-        <Label htmlFor="switch-address-select" className="text-sm font-medium shrink-0">
-          {label}
-        </Label>
+      <div
+        className={
+          direction === "col"
+            ? "flex flex-col gap-2"
+            : "flex flex-row items-center justify-between"
+        }
+      >
+        {label ? (
+          <Label
+            htmlFor="switch-address-select"
+            className="text-sm font-medium shrink-0"
+          >
+            {label}
+          </Label>
+        ) : null}
         <Select
           id="switch-address-select"
           value={value ?? ""}
@@ -50,7 +64,7 @@ export default function SwitchAddress({
             if (id) onChange(id);
           }}
           options={options}
-          className="max-w-xs cursor-pointer"
+          className={direction === "col" ? "w-full cursor-pointer" : "max-w-xs cursor-pointer"}
         />
       </div>
     </Card>

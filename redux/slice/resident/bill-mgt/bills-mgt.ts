@@ -7,6 +7,7 @@ interface BillData {
   billId: string;
   userId: string;
   walletId: string;
+  addressId?: string;
   frequency: string;
   amountPaid: number;
 }
