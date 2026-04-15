@@ -33,6 +33,7 @@ interface VisitorData {
   purpose?: string;
   isVerified: boolean;
   checkoutTime?: string;
+  isCheckedOut: boolean;
   createdAt: string;
   updatedAt?: string;
   addressId?: any;
@@ -316,6 +317,12 @@ export default function VisitorPage() {
       header: "Checkout Time",
       render: (item: VisitorData) =>
         item.checkoutTime ? new Date(item.checkoutTime).toLocaleTimeString() : "—",
+    },
+    {
+      key: "isCheckedOut",
+      header: "Checked Out",
+      render: (item: VisitorData) =>
+        item.isCheckedOut ? "Yes" : "No",
     },
     {
       key: "actions",
