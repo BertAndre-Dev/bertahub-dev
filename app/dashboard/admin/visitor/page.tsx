@@ -256,15 +256,19 @@ export default function AdminVisitorManagement() {
         if (!item.addressId?.data) {
           return <span className="text-gray-500 text-xs">No address</span>;
         }
-        const { block, unit, flat } = item.addressId.data as {
+        const { block, unit, flat, apartment, street } = item.addressId.data as {
           block?: string;
           unit?: string;
           flat?: string;
+          apartment?: string;
+          street?: string;
         };
-        const unitOrFlat = unit ?? flat;
+        const unitOrFlat = unit ?? flat ?? apartment;
         return (
           <div className="text-xs">
-            {block && unitOrFlat ? `${block}, ${unitOrFlat}` : "N/A"}
+            {block && unitOrFlat
+              ? `${block}, ${unitOrFlat}${street ? ` (${street})` : ""}`
+              : "N/A"}
           </div>
         );
       },
