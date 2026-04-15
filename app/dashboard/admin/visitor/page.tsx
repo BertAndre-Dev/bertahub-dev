@@ -211,6 +211,53 @@ export default function AdminVisitorManagement() {
     }
   };
 
+  const formatVisitorAddress = (data: Record<string, unknown>) => {
+    const toStr = (v: unknown) => {
+      const s =
+        typeof v === "string" || typeof v === "number" ? String(v).trim() : "";
+      return s;
+    };
+
+    const block = toStr(data.block);
+    const street = toStr(data.street);
+    const unit = toStr(data.unit);
+    const flat = toStr(data.flat);
+    const apartment = toStr(data.apartment);
+    const houseNumber = toStr(data.houseNumber);
+    const number = toStr(data.number);
+
+    const unitLikeValue = unit || flat || apartment || houseNumber || number || "";
+    const unitLikeKey = unit
+      ? "unit"
+      : flat
+        ? "flat"
+        : apartment
+          ? "apartment"
+          : houseNumber
+            ? "houseNumber"
+            : number
+              ? "number"
+              : "";
+
+    if (block && unitLikeValue) {
+      const base = `block ${block}, ${unitLikeKey} ${unitLikeValue}`;
+      return street ? `${base} (${street})` : base;
+    }
+    if (block) {
+      const base = `block ${block}`;
+      return street ? `${base} (${street})` : base;
+    }
+
+    const pairs = Object.entries(data)
+      .map(([k, v]) => {
+        const sv = toStr(v);
+        return sv ? `${k}: ${sv}` : "";
+      })
+      .filter(Boolean);
+
+    return pairs.join(" • ");
+  };
+
   const columns = [
     {
       header: "Created At",
@@ -256,19 +303,12 @@ export default function AdminVisitorManagement() {
         if (!item.addressId?.data) {
           return <span className="text-gray-500 text-xs">No address</span>;
         }
-        const { block, unit, flat, apartment, street } = item.addressId.data as {
-          block?: string;
-          unit?: string;
-          flat?: string;
-          apartment?: string;
-          street?: string;
-        };
-        const unitOrFlat = unit ?? flat ?? apartment;
+        const label = formatVisitorAddress(
+          item.addressId.data as Record<string, unknown>,
+        );
         return (
           <div className="text-xs">
-            {block && unitOrFlat
-              ? `${block}, ${unitOrFlat}${street ? ` (${street})` : ""}`
-              : "N/A"}
+            {label || "N/A"}
           </div>
         );
       },

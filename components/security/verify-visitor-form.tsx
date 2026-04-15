@@ -110,7 +110,7 @@ export default function VerifyVisitorForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 pt-2">
+      <div className="grid grid-cols-1 gap-4 pt-2">
         <Button
           onClick={handleVerify}
           disabled={loading || denyLoading}
@@ -119,14 +119,14 @@ export default function VerifyVisitorForm({
           <CheckCircle className="w-5 h-5" />
           {loading ? "Verifying..." : "Verify & Allow Access"}
         </Button>
-        <Button
+        {/* <Button
           disabled={loading || denyLoading}
           variant="destructive"
           className="w-full rounded-xl py-6 text-base font-medium flex items-center justify-center gap-2"
         >
           <XCircle className="w-5 h-5" />
           {denyLoading ? "Denying..." : "Deny Access"}
-        </Button>
+        </Button> */}
       </div>
     </div>
   );
