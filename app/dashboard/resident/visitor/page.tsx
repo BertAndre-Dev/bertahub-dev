@@ -280,7 +280,15 @@ export default function VisitorPage() {
       render: (item: VisitorData) =>
         item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—",
     },
-    { key: "visitorCode", header: "Visitor Code" },
+    {
+      key: "visitorCode",
+      header: "Visitor Code",
+      render: (item: VisitorData) => (
+        <span className="font-mono text-sm font-semibold">
+          {item.visitorCode}
+        </span>
+      ),
+    },
     {
       key: "name",
       header: "Name",
@@ -316,13 +324,14 @@ export default function VisitorPage() {
       key: "checkoutTime",
       header: "Checkout Time",
       render: (item: VisitorData) =>
-        item.checkoutTime ? new Date(item.checkoutTime).toLocaleTimeString() : "—",
+        item.checkoutTime
+          ? new Date(item.checkoutTime).toLocaleTimeString()
+          : "—",
     },
     {
       key: "isCheckedOut",
       header: "Checked Out",
-      render: (item: VisitorData) =>
-        item.isCheckedOut ? "Yes" : "No",
+      render: (item: VisitorData) => (item.isCheckedOut ? "Yes" : "No"),
     },
     {
       key: "actions",
