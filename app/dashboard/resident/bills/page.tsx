@@ -7,7 +7,7 @@ import { Plus } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
 import BillsForm from "@/components/resident/bill-form/page";
-import SwitchAddress from "@/components/resident/switch-address/page";
+// import SwitchAddress from "@/components/resident/switch-address/page";
 import {
   getBillsByEstate,
   getResidentBills,
