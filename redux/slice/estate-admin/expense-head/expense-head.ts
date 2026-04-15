@@ -137,22 +137,12 @@ export const deleteExpenseHead = createAsyncThunk(
   "admin-expense-head/deleteExpenseHead",
   async (id: string, { rejectWithValue }) => {
     try {
-      // Backend implementations differ: some expect `id` as a query param (Swagger),
-      // others accept the id as a path param. Try query-param first, then fallback.
-      try {
-        const res = await axiosInstance.delete(`/api/v1/expense-head/{id}`, {
-          params: { id },
-        });
-        return res.data ? { id, ...res.data } : { id };
-      } catch (err: any) {
-        const status = err?.response?.status;
-        if (status !== 404 && status !== 500) throw err;
-      }
-
-      const res2 = await axiosInstance.delete(`/api/v1/expense-head/${id}`, {
+      // Swagger: DELETE /api/v1/expense-head/{id}?id=...
+      // Use the actual id in the path (not the literal "{id}") and pass `id` as query param.
+      const res = await axiosInstance.delete(`/api/v1/expense-head/${id}`, {
         params: { id },
       });
-      return res2.data ? { id, ...res2.data } : { id };
+      return res.data ? { id, ...res.data } : { id };
     } catch (error: any) {
       return rejectWithValue({
         message:
