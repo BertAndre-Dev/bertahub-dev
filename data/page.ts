@@ -1,5 +1,4 @@
 import {
-  FiHome,
   FiSettings,
   FiUsers,
   FiMapPin,
@@ -9,7 +8,14 @@ import { BsBuildings } from "react-icons/bs";
 import { IoSpeedometerOutline } from "react-icons/io5";
 import { GrTransaction } from "react-icons/gr";
 import { LuReceipt } from "react-icons/lu";
-import { LayoutDashboard, Wrench, Bell, Store, BarChart } from "lucide-react";
+import {
+  LayoutDashboard,
+  Wrench,
+  Bell,
+  Store,
+  BarChart,
+  MessageCircle,
+} from "lucide-react";
 
 export const superAdminNav = [
   // {
@@ -120,6 +126,7 @@ export const adminNav = [
     module: "announcements",
     moduleKey: "announcements",
   },
+  { label: "Support", icon: MessageCircle, path: "/dashboard/admin/support" },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];
@@ -146,6 +153,7 @@ export const securityNav = [
   //   icon: FiCheckCircle,
   //   path: "/dashboard/security/verify-visitor",
   // },
+  { label: "Support", icon: MessageCircle, path: "/dashboard/security/support" },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];
@@ -206,6 +214,7 @@ export const residentNav = [
     path: "/dashboard/resident/announcements",
     moduleKey: "announcements",
   },
+  { label: "Support", icon: MessageCircle, path: "/dashboard/resident/support" },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];
@@ -235,6 +244,11 @@ export const estateAdminNav = [
     icon: BarChart,
     path: "/dashboard/estate-admin/reports",
     moduleKey: "reporting",
+  },
+  {
+    label: "Support",
+    icon: MessageCircle,
+    path: "/dashboard/estate-admin/support",
   },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
