@@ -213,6 +213,22 @@
   animation: parallax 0.5s ease-out forwards;
 }
 
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.animate-breathe {
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
 /* Stagger animations */
 .stagger-1 {
   animation-delay: 0.1s;

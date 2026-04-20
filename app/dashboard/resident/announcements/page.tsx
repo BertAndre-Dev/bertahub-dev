@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Loader from "@/components/ui/Loader";
 import { Bell, Megaphone } from "lucide-react";
 import Modal from "@/components/modal/page";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
@@ -87,6 +88,7 @@ export default function ResidentAnnouncementsPage() {
   const [estateId, setEstateId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Estate");
   const [viewingItem, setViewingItem] = useState<ResidentAnnouncementItem | null>(null);
+  const [bootstrapping, setBootstrapping] = useState(true);
 
   const { list, getListStatus } = useSelector((state: RootState) => {
     const s = (state as RootState).residentAnnouncements;
@@ -126,6 +128,8 @@ export default function ResidentAnnouncementsPage() {
         }
       } catch {
         // keep default
+      } finally {
+        setBootstrapping(false);
       }
     })();
   }, [dispatch]);
@@ -148,10 +152,10 @@ export default function ResidentAnnouncementsPage() {
         </div>
       </div>
 
-      {getListStatus === "isLoading" ? (
-        <p className="text-muted-foreground py-12 text-center">
-          Loading announcements...
-        </p>
+      {bootstrapping || getListStatus === "isLoading" ? (
+        <div className="py-12">
+          <Loader label="Loading announcements..." />
+        </div>
       ) : announcements.length === 0 ? (
         <Card className="p-12 text-center">
           <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-3" />

@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
-
 import SideModal from "@/components/modal/side-modal";
-import { Input } from "@/components/ui/input";
 import Image from "next/image";
-import { Paperclip, Send } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+
+import ChatSidebar from "@/components/chat/ChatSidebar";
+import ChatWindow from "@/components/chat/ChatWindow";
+import NewChatModal from "@/components/chat/NewChatModal";
+import { Button } from "@/components/ui/button";
+import { useChatPermissions } from "@/hooks/useChatPermissions";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
 
 type Props = {
   open: boolean;
@@ -18,10 +23,19 @@ export default function SupportChatModal({
   onClose,
   agentName = "Zainab",
 }: Readonly<Props>) {
-  const [chatInput, setChatInput] = useState("");
+  const { canCreateChat, canViewAgentChats } = useChatPermissions();
+  const activeChat = useSelector((state: RootState) => state.chat.activeChat);
+  const [newOpen, setNewOpen] = useState(false);
+
+  const widthClassName = useMemo(() => {
+    return canViewAgentChats ? "w-full sm:w-[980px]" : "w-full sm:w-[720px]";
+  }, [canViewAgentChats]);
+
+  const handleOpenNew = useCallback(() => setNewOpen(true), []);
+  const handleCloseNew = useCallback(() => setNewOpen(false), []);
 
   return (
-    <SideModal visible={open} onClose={onClose} widthClassName="w-full sm:w-[440px]">
+    <SideModal visible={open} onClose={onClose} widthClassName={widthClassName}>
       <div className="min-w-0">
         <div className="flex items-center justify-between gap-3 bg-primary px-4 py-6 text-primary-foreground">
           <div className="flex items-center gap-3">
@@ -31,85 +45,35 @@ export default function SupportChatModal({
             <div className="min-w-0">
               <p className="font-semibold leading-tight">{agentName}</p>
               <p className="text-xs text-primary-foreground/90 leading-tight">
-                Support
+                Contact Support
               </p>
+            </div>
+          </div>
+
+          {canCreateChat && !activeChat && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleOpenNew}
+              aria-label="Start new chat"
+            >
+              Start New Chat
+            </Button>
+          )}
+        </div>
+
+        <div className="p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[60vh]">
+            <div className="lg:col-span-1">
+              <ChatSidebar />
+            </div>
+            <div className="lg:col-span-2">
+              <ChatWindow />
             </div>
           </div>
         </div>
 
-        <div className="mt-4 space-y-4 p-6">
-          <div className="flex gap-3 items-start">
-            <div className="h-9 w-9 rounded-full bg-[#D0DFF24D] flex items-center justify-center shrink-0">
-              <Image src="/chatLogo2.svg" alt="Chat" width={20} height={20} />
-            </div>
-            <div className="rounded-xl bg-muted px-4 py-3 min-w-0">
-              <p className="text-sm font-medium">
-                Hi there! Welcome to BertaHub Support.
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                How can we help you today?
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3 items-start justify-end">
-            <div className="max-w-[75%] rounded-xl bg-primary px-4 py-3 text-primary-foreground">
-              <p className="text-sm">
-                Hi, I want to make a complain, i&apos;m not able to add funds to
-                my wallet
-              </p>
-              <p className="text-xs opacity-90 mt-2 text-right">03:53 PM</p>
-            </div>
-          </div>
-
-          <div className="flex gap-3 items-start">
-            <div className="h-9 w-9 rounded-full bg-[#D0DFF24D] flex items-center justify-center shrink-0">
-              <Image src="/chatLogo2.svg" alt="Chat" width={20} height={20} />
-            </div>
-            <div className="rounded-xl bg-muted px-4 py-3 min-w-0">
-              <p className="text-sm font-semibold">{agentName}</p>
-              <p className="text-sm mt-1">
-                Sorry to hear about your predicament, I&apos;ll look into this
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">03:53 PM</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6">
-          <div className="relative">
-            <Input
-              placeholder="Write a message"
-              className="h-12 pr-20"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-3">
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Attach file"
-                title="Attach"
-                onClick={() => {
-                  // UI-only for now
-                }}
-              >
-                <Paperclip className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Send message"
-                title="Send"
-                onClick={() => {
-                  // UI-only for now
-                }}
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <NewChatModal open={newOpen} onClose={handleCloseNew} />
       </div>
     </SideModal>
   );
