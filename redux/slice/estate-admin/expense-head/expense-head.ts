@@ -1,7 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 
-
 // interface ExpenseHeadData {
 //   estateId: string;
 //   name: string;
@@ -70,17 +69,14 @@ export const getEstateExpenseHeads = createAsyncThunk(
   ) => {
     try {
       const params = new URLSearchParams();
-      // API uses `id` as the query param for estateId
       params.set("id", estateId);
       params.set("page", String(page));
       params.set("limit", String(limit));
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
       if (search?.trim()) params.set("search", search.trim());
-
-      // Correct endpoint: /api/v1/expense-head/estate/{id}
       const res = await axiosInstance.get(
-        `/api/v1/expense-head/estate/{id}?${params.toString()}`,
+        `/api/v1/expense-head/estate/${estateId}?${params.toString()}`,
       );
       return res.data as ExpenseHeadListResponse;
     } catch (error: any) {
@@ -137,7 +133,9 @@ export const deleteExpenseHead = createAsyncThunk(
   "admin-expense-head/deleteExpenseHead",
   async (id: string, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.delete(`/api/v1/expense-head/${id}`);
+      const res = await axiosInstance.delete(`/api/v1/expense-head/${id}`, {
+        params: { id },
+      });
       return res.data ? { id, ...res.data } : { id };
     } catch (error: any) {
       return rejectWithValue({

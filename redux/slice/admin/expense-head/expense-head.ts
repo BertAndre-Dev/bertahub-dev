@@ -140,7 +140,9 @@ export const deleteExpenseHead = createAsyncThunk(
   "admin-expense-head/deleteExpenseHead",
   async (id: string, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.delete(`/api/v1/expense-head/${id}`);
+      const res = await axiosInstance.delete(`/api/v1/expense-head/${id}`, {
+        params: { id },
+      });
       return res.data ? { id, ...res.data } : { id };
     } catch (error: any) {
       return rejectWithValue({

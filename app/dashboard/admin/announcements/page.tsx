@@ -26,6 +26,7 @@ import AnnouncementsStatsGrid from "@/components/admin/announcements/announcemen
 import AnnouncementsListSection from "@/components/admin/announcements/announcements-list-section/page";
 import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
+import Loader from "@/components/ui/Loader";
 
 function formatAnnouncementDate(dateStr?: string) {
   if (!dateStr) return "—";
@@ -50,25 +51,20 @@ export default function AdminAnnouncementsPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AnnouncementItem | null>(null);
   const [viewingItem, setViewingItem] = useState<AnnouncementItem | null>(null);
+  const [bootstrapping, setBootstrapping] = useState(true);
 
-  const {
-    list,
-    stats,
-    getStatus,
-    getStatsStatus,
-    createStatus,
-    updateStatus,
-  } = useSelector((state: RootState) => {
-    const s = (state as RootState).adminAnnouncements;
-    return {
-      list: s?.list ?? null,
-      stats: s?.stats ?? null,
-      getStatus: s?.getStatus ?? "idle",
-      getStatsStatus: s?.getStatsStatus ?? "idle",
-      createStatus: s?.createStatus ?? "idle",
-      updateStatus: s?.updateStatus ?? "idle",
-    };
-  });
+  const { list, stats, getStatus, getStatsStatus, createStatus, updateStatus } =
+    useSelector((state: RootState) => {
+      const s = (state as RootState).adminAnnouncements;
+      return {
+        list: s?.list ?? null,
+        stats: s?.stats ?? null,
+        getStatus: s?.getStatus ?? "idle",
+        getStatsStatus: s?.getStatsStatus ?? "idle",
+        createStatus: s?.createStatus ?? "idle",
+        updateStatus: s?.updateStatus ?? "idle",
+      };
+    });
 
   useEffect(() => {
     (async () => {
@@ -91,27 +87,34 @@ export default function AdminAnnouncementsPage() {
           (data?.estate as { name?: string } | undefined)?.name ?? "";
         const fallbackEstateName = (data?.estateName as string) ?? "";
         const estateNameFinal =
-          nameFromEstateId || nameFromEstateObj || fallbackEstateName || "Estate";
+          nameFromEstateId ||
+          nameFromEstateObj ||
+          fallbackEstateName ||
+          "Estate";
 
         setEstateId(normalizedEstateId);
         setEstateName(estateNameFinal);
 
         if (normalizedEstateId) {
-          dispatch(
-            getAnnouncements({ estateId: normalizedEstateId }),
-          ).catch((err: unknown) => {
-            const e = err as { message?: string };
-            toast.error(e?.message ?? "Failed to load announcements.");
-          });
+          dispatch(getAnnouncements({ estateId: normalizedEstateId })).catch(
+            (err: unknown) => {
+              const e = err as { message?: string };
+              toast.error(e?.message ?? "Failed to load announcements.");
+            },
+          );
           dispatch(getAnnouncementStats(normalizedEstateId)).catch(() => {});
         }
       } catch {
         // keep default
+      } finally {
+        setBootstrapping(false);
       }
     })();
   }, [dispatch]);
 
   const announcements = list ?? [];
+  const pageLoading =
+    getStatus === "isLoading" || getStatsStatus === "isLoading";
 
   const handleCreate = async (data: AnnouncementFormData) => {
     if (!estateId) {
@@ -123,7 +126,7 @@ export default function AdminAnnouncementsPage() {
       title: data.title,
       content: data.content,
       description: data.description || undefined,
-      scheduledFor: data.sendNow ? undefined : (data.scheduledFor || undefined),
+      scheduledFor: data.sendNow ? undefined : data.scheduledFor || undefined,
       category: data.category,
       tags: data.tags,
       isPinned: data.isPinned,
@@ -147,7 +150,7 @@ export default function AdminAnnouncementsPage() {
       title: data.title,
       content: data.content,
       description: data.description || undefined,
-      scheduledFor: data.sendNow ? undefined : (data.scheduledFor || undefined),
+      scheduledFor: data.sendNow ? undefined : data.scheduledFor || undefined,
       category: data.category,
       tags: data.tags,
       isPinned: data.isPinned,
@@ -173,13 +176,48 @@ export default function AdminAnnouncementsPage() {
   };
 
   const statsCards = [
-    { label: "Total", value: stats?.totalAnnouncements ?? 0, icon: Megaphone, color: "bg-[#D0DFF280]" },
-    { label: "Published", value: stats?.publishedCount ?? 0, icon: Eye, color: "bg-green-100" },
-    { label: "Scheduled", value: stats?.scheduledCount ?? 0, icon: Calendar, color: "bg-amber-100" },
-    { label: "Draft", value: stats?.draftCount ?? 0, icon: Megaphone, color: "bg-gray-100" },
-    { label: "Total views", value: stats?.totalViews ?? 0, icon: Eye, color: "bg-blue-100" },
-    { label: "Emails sent", value: stats?.totalEmailsSent ?? 0, icon: Mail, color: "bg-blue-100" },
-    { label: "Avg views/ann.", value: stats?.averageViewsPerAnnouncement ?? 0, icon: Eye, color: "bg-purple-100" },
+    {
+      label: "Total",
+      value: stats?.totalAnnouncements ?? 0,
+      icon: Megaphone,
+      color: "bg-[#D0DFF280]",
+    },
+    {
+      label: "Published",
+      value: stats?.publishedCount ?? 0,
+      icon: Eye,
+      color: "bg-green-100",
+    },
+    {
+      label: "Scheduled",
+      value: stats?.scheduledCount ?? 0,
+      icon: Calendar,
+      color: "bg-amber-100",
+    },
+    {
+      label: "Draft",
+      value: stats?.draftCount ?? 0,
+      icon: Megaphone,
+      color: "bg-gray-100",
+    },
+    {
+      label: "Total views",
+      value: stats?.totalViews ?? 0,
+      icon: Eye,
+      color: "bg-blue-100",
+    },
+    {
+      label: "Emails sent",
+      value: stats?.totalEmailsSent ?? 0,
+      icon: Mail,
+      color: "bg-blue-100",
+    },
+    {
+      label: "Avg views/ann.",
+      value: stats?.averageViewsPerAnnouncement ?? 0,
+      icon: Eye,
+      color: "bg-purple-100",
+    },
   ];
 
   return (
@@ -190,19 +228,27 @@ export default function AdminAnnouncementsPage() {
         addDisabled={!estateId}
       />
 
-      {getStatsStatus === "succeeded" && (
-        <AnnouncementsStatsGrid stats={statsCards} />
-      )}
+      {bootstrapping || (pageLoading && announcements.length === 0) ? (
+        <div className="py-12">
+          <Loader label="Loading announcements..." />
+        </div>
+      ) : (
+        <>
+          {getStatsStatus === "succeeded" && (
+            <AnnouncementsStatsGrid stats={statsCards} />
+          )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <AnnouncementsListSection
-          loading={getStatus === "isLoading"}
-          announcements={announcements}
-          onView={setViewingItem}
-          onEdit={setEditingItem}
-          onDelete={handleDelete}
-        />
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <AnnouncementsListSection
+              loading={getStatus === "isLoading"}
+              announcements={announcements}
+              onView={setViewingItem}
+              onEdit={setEditingItem}
+              onDelete={handleDelete}
+            />
+          </div>
+        </>
+      )}
 
       <AnnouncementFormModal
         visible={addModalOpen}
@@ -223,17 +269,20 @@ export default function AdminAnnouncementsPage() {
         loading={updateStatus === "isLoading"}
       />
 
-      <Modal
-        visible={!!viewingItem}
-        onClose={() => setViewingItem(null)}
-      >
+      <Modal visible={!!viewingItem} onClose={() => setViewingItem(null)}>
         {viewingItem && (
           <div className="p-2 md:p-4 overflow-x-hidden">
             <h2 className="font-heading font-bold text-lg text-foreground mb-2">
               {viewingItem.title || "Untitled"}
             </h2>
             <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground mb-3">
-              <span>{formatAnnouncementDate(viewingItem.scheduledFor ?? viewingItem.createdAt ?? viewingItem.updatedAt)}</span>
+              <span>
+                {formatAnnouncementDate(
+                  viewingItem.scheduledFor ??
+                    viewingItem.createdAt ??
+                    viewingItem.updatedAt,
+                )}
+              </span>
               <span>·</span>
               <span className="uppercase">{viewingItem.category ?? "—"}</span>
               <span>·</span>

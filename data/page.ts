@@ -1,15 +1,16 @@
-import {
-  FiHome,
-  FiSettings,
-  FiUsers,
-  FiMapPin,
-  FiLogOut,
-} from "react-icons/fi";
+import { FiSettings, FiUsers, FiMapPin, FiLogOut } from "react-icons/fi";
 import { BsBuildings } from "react-icons/bs";
 import { IoSpeedometerOutline } from "react-icons/io5";
 import { GrTransaction } from "react-icons/gr";
 import { LuReceipt } from "react-icons/lu";
-import { LayoutDashboard, Wrench, Bell, Store, BarChart } from "lucide-react";
+import {
+  LayoutDashboard,
+  Wrench,
+  Bell,
+  Store,
+  BarChart,
+  MessageCircle,
+} from "lucide-react";
 
 export const superAdminNav = [
   // {
@@ -52,6 +53,11 @@ export const superAdminNav = [
     icon: GrTransaction,
     path: "/dashboard/super-admin/transactions",
   },
+  {
+    label: "Contact Support Inbox",
+    icon: MessageCircle,
+    path: "/dashboard/super-admin/chat",
+  },
   //   {
   //     label: "Visitors Management",
   //     icon: FiUsers,
@@ -77,7 +83,12 @@ export const adminNav = [
     path: "/dashboard/admin/address",
     moduleKey: "address",
   },
-  { label: "User Management", icon: FiUsers, path: "/dashboard/admin/user", moduleKey: "users" },
+  {
+    label: "User Management",
+    icon: FiUsers,
+    path: "/dashboard/admin/user",
+    moduleKey: "users",
+  },
   {
     label: "Bills Management",
     icon: LuReceipt,
@@ -120,6 +131,11 @@ export const adminNav = [
     module: "announcements",
     moduleKey: "announcements",
   },
+  {
+    label: "Contact Support",
+    icon: MessageCircle,
+    path: "/dashboard/admin/support",
+  },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];
@@ -153,7 +169,7 @@ export const securityNav = [
 export const residentNav = [
   // { label: "Overview", icon: FiHome, path: "/dashboard/resident/dashboard" },
   {
-    label: "Tenant Management", 
+    label: "Tenant Management",
     icon: FiUsers,
     path: "/dashboard/resident/user",
     moduleKey: "users",
@@ -206,6 +222,11 @@ export const residentNav = [
     path: "/dashboard/resident/announcements",
     moduleKey: "announcements",
   },
+  {
+    label: "Contact Support",
+    icon: MessageCircle,
+    path: "/dashboard/resident/support",
+  },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
 ];
@@ -235,6 +256,11 @@ export const estateAdminNav = [
     icon: BarChart,
     path: "/dashboard/estate-admin/reports",
     moduleKey: "reporting",
+  },
+  {
+    label: "Contact Support",
+    icon: MessageCircle,
+    path: "/dashboard/estate-admin/support",
   },
   { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   { label: "Logout", icon: FiLogOut },
