@@ -12,6 +12,7 @@ import {
   type ResidentMarketplaceItem,
 } from "@/redux/slice/resident/marketplace/marketplace";
 import type { RootState, AppDispatch } from "@/redux/store";
+import Loader from "@/components/ui/Loader";
 
 const CATEGORIES = [
   "All",
@@ -28,6 +29,7 @@ export default function ResidentMarketplacePage() {
   const dispatch = useDispatch<AppDispatch>();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [bootstrapping, setBootstrapping] = useState(true);
 
   const { list, getListStatus } = useSelector((state: RootState) => {
     const s = (state as RootState).residentMarketplace;
@@ -72,9 +74,9 @@ export default function ResidentMarketplacePage() {
   }, [listings, search, categoryFilter]);
 
   useEffect(() => {
-    dispatch(getResidentMarketplaceList({ page: 1, limit: 100 })).catch(() =>
-      toast.error("Failed to load marketplace."),
-    );
+    dispatch(getResidentMarketplaceList({ page: 1, limit: 100 }))
+      .catch(() => toast.error("Failed to load marketplace."))
+      .finally(() => setBootstrapping(false));
   }, [dispatch]);
 
   return (
@@ -141,9 +143,9 @@ export default function ResidentMarketplacePage() {
         </div>
       </div>
 
-      {getListStatus === "isLoading" ? (
-        <div className="py-16 text-center">
-          <p className="text-muted-foreground">Loading marketplace...</p>
+      {bootstrapping || getListStatus === "isLoading" ? (
+        <div className="py-16">
+          <Loader label="Loading marketplace..." />
         </div>
       ) : filteredListings.length === 0 ? (
         <Card className="p-12 text-center">

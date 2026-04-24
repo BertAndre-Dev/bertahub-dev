@@ -15,10 +15,6 @@ function normalizeEstateId(
   return estateId?._id || estateId?.id || "";
 }
 
-function normalizeId(raw: unknown): string {
-  return typeof raw === "string" ? raw.trim() : "";
-}
-
 // create address entry
 export const createEntry = createAsyncThunk(
   "entry/createEntry",
@@ -47,16 +43,12 @@ export const updateEntry = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const normalizedEntryId = normalizeId(entryId);
-      if (!normalizedEntryId) {
-        return rejectWithValue({ message: "Entry id is required." });
-      }
       const payload = {
         ...data,
         estateId: normalizeEstateId(data.estateId),
       };
       const res = await axiosInstance.put(
-        `/api/v1/address-mgt/entry/${normalizedEntryId}`,
+        `/api/v1/address-mgt/entry/${entryId}`,
         payload
       );
       return res.data;
@@ -74,11 +66,7 @@ export const deleteEntry = createAsyncThunk(
     'entry/deleteEntry',
     async (entryId: string, { rejectWithValue }) => {
         try {
-            const normalizedEntryId = normalizeId(entryId);
-            if (!normalizedEntryId) {
-              return rejectWithValue({ message: "Entry id is required." });
-            }
-            const res = await axiosInstance.delete(`/api/v1/address-mgt/entry/${normalizedEntryId}`);
+            const res = await axiosInstance.delete(`/api/v1/address-mgt/entry/${entryId}`);
             return res.data;
         } catch (error: any) {
             return rejectWithValue({
@@ -94,11 +82,7 @@ export const getEntry = createAsyncThunk(
     'entry/getEntry',
     async (entryId: string, { rejectWithValue }) => {
         try {
-            const normalizedEntryId = normalizeId(entryId);
-            if (!normalizedEntryId) {
-              return rejectWithValue({ message: "Entry id is required." });
-            }
-            const res = await axiosInstance.get(`/api/v1/address-mgt/entry/${normalizedEntryId}`);
+            const res = await axiosInstance.get(`/api/v1/address-mgt/entry/${entryId}`);
             return res.data;
         } catch (error: any) {
             return rejectWithValue({
@@ -109,7 +93,7 @@ export const getEntry = createAsyncThunk(
 );
 
 
-// get all addres field entries with pagination
+// get all address field entries with pagination
 export const getEntriesByField = createAsyncThunk(
   'entry/getEntriesByField',
   async (
@@ -129,12 +113,8 @@ export const getEntriesByField = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const normalizedFieldId = normalizeId(fieldId);
-      if (!normalizedFieldId) {
-        return rejectWithValue({ message: "Field id is required." });
-      }
       const params = new URLSearchParams();
-      params.set("fieldId", normalizedFieldId);
+      params.set("fieldId", fieldId);
       if (page != null) params.set("page", String(page));
       if (limit != null) params.set("limit", String(limit));
       if (startDate) params.set("startDate", startDate);
@@ -157,11 +137,7 @@ export const getEntryStats = createAsyncThunk(
     'entry/getEntryStats',
     async (fieldId: string, { rejectWithValue }) => {
         try {
-            const normalizedFieldId = normalizeId(fieldId);
-            if (!normalizedFieldId) {
-              return rejectWithValue({ message: "Field id is required." });
-            }
-            const res = await axiosInstance.get(`/api/v1/address-mgt/entry/${normalizedFieldId}/stats/`);
+            const res = await axiosInstance.get(`/api/v1/address-mgt/entry/${fieldId}/stats/`);
             return res.data;
         } catch (error: any) {
             return rejectWithValue({

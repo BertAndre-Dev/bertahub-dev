@@ -18,6 +18,7 @@ import { RootState, AppDispatch } from "@/redux/store";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import Loader from "@/components/ui/Loader";
 
 const PAGE_SIZE = 10;
 
@@ -41,6 +42,7 @@ export default function AdminMaintenancePage() {
   const searchDebounced = useDebounce(search, 400);
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [bootstrapping, setBootstrapping] = useState(true);
 
   const { complaints, loading, pagination } = useSelector(
     (state: RootState) => {
@@ -109,6 +111,8 @@ export default function AdminMaintenancePage() {
         toast.error(
           (err as { message?: string })?.message ?? "Failed to load user.",
         );
+      } finally {
+        setBootstrapping(false);
       }
     })();
   }, [dispatch]);
@@ -184,10 +188,10 @@ export default function AdminMaintenancePage() {
       />
 
       <div className="space-y-4">
-        {loading ? (
-          <p className="text-muted-foreground py-8 text-center">
-            Loading maintenance requests...
-          </p>
+        {bootstrapping || loading ? (
+          <div className="py-12">
+            <Loader label="Loading maintenance requests..." />
+          </div>
         ) : filtered.length === 0 ? (
           <p className="text-muted-foreground py-8 text-center rounded-lg border border-border bg-muted/20">
             No maintenance requests found.

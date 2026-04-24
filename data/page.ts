@@ -10,6 +10,7 @@ import {
   Store,
   BarChart,
   MessageCircle,
+  Map as MapIcon,
 } from "lucide-react";
 
 export const superAdminNav = [
@@ -215,6 +216,11 @@ export const residentNav = [
     icon: Store,
     path: "/dashboard/resident/marketplace",
     moduleKey: "marketplace",
+  },
+  {
+    label: "Nearby Places",
+    icon: MapIcon,
+    path: "/dashboard/resident/map",
   },
   {
     label: "Announcements",

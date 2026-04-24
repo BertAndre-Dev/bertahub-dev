@@ -33,6 +33,7 @@ import AddBusinessForm from "@/components/super-admin/add-business-form/page";
 import type { AddBusinessFormPayload } from "@/components/super-admin/add-business-form/page";
 import SuspendRentModal from "@/components/resident/suspend-rent-modal/page";
 import { MarketplaceListingCard } from "@/components/super-admin/marketplace-listing-card";
+import Loader from "@/components/ui/Loader";
 
 export default function SuperAdminMarketplacePage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -48,6 +49,7 @@ export default function SuperAdminMarketplacePage() {
   const [endDate, setEndDate] = useState<string>("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
+  const [bootstrapping, setBootstrapping] = useState(true);
 
   const { list, pagination, getListStatus, createStatus, updateStatus } =
     useSelector((state: RootState) => {
@@ -94,7 +96,9 @@ export default function SuperAdminMarketplacePage() {
         startDate: shouldApplyDate ? startDate : undefined,
         endDate: shouldApplyDate ? endDate : undefined,
       }),
-    ).catch(() => toast.error("Failed to load marketplace."));
+    )
+      .catch(() => toast.error("Failed to load marketplace."))
+      .finally(() => setBootstrapping(false));
   }, [
     dispatch,
     page,
@@ -350,7 +354,7 @@ export default function SuperAdminMarketplacePage() {
         })}
       </div>
 
-      <div className="flex flex-row items-center justify-between gap-2 bg-white p-4 rounded-lg border border-border">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 xl:gap-2 bg-white p-4 rounded-lg border border-border">
         <Input
           type="text"
           placeholder="Search by company name, product name, category, etc..."
@@ -411,10 +415,10 @@ export default function SuperAdminMarketplacePage() {
             if (activeTab === "Edit Business") {
               return (
                 <div className="space-y-4">
-                  {getListStatus === "isLoading" ? (
-                    <p className="text-muted-foreground py-8 text-center">
-                      Loading marketplace...
-                    </p>
+                  {bootstrapping || getListStatus === "isLoading" ? (
+                    <div className="py-12">
+                      <Loader label="Loading marketplace..." />
+                    </div>
                   ) : filteredListings.length === 0 ? (
                     <p className="text-muted-foreground py-8 text-center">
                       {search.trim()
@@ -446,7 +450,7 @@ export default function SuperAdminMarketplacePage() {
                   emptyMessage={
                     search.trim()
                       ? "No businesses match your search."
-                      : getListStatus === "isLoading"
+                      : bootstrapping || getListStatus === "isLoading"
                         ? "Loading..."
                         : 'No businesses yet. Click "Add business" to create one.'
                   }
