@@ -7,9 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Modal from "@/components/modal/page";
 import WithdrawFundForm from "@/components/estate-admin/transactions/fund-wallet-form/page";
-import EstateWalletOverviewCard, {
-  WalletFilterExportBar,
-} from "@/components/estate-admin/wallet-overview-card/page";
+import EstateWalletOverviewCard from "@/components/estate-admin/wallet-overview-card/page";
 import {
   createWallet,
   getWallet,
@@ -24,8 +22,9 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import type { EstateCreditItem } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt-slice";
-import { generateTxRef } from "@/redux/slice/estate-admin/payment/payment";
 import { TransactionsFilterBar } from "@/components/super-admin/transactions-filter-bar";
+
+const LIMIT = 10;
 
 // Extend the type to include all fields from API
 interface ExtendedEstateCreditItem extends EstateCreditItem {
@@ -44,7 +43,6 @@ export default function EstateAdminWalletPage() {
   const [estateId, setEstateId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Estate");
   const [creditsPage, setCreditsPage] = useState(1);
-  const [limit] = useState(10);
 
   const [fromDate, setFromDate] = useState<string | null>(null);
   const [toDate, setToDate] = useState<string | null>(null);
@@ -77,7 +75,6 @@ export default function EstateAdminWalletPage() {
   );
   const loadingBanks = getBanksState === "isLoading";
 
-  // Fetch user, wallet, and estate credits on mount
   useEffect(() => {
     (async () => {
       try {
@@ -101,7 +98,6 @@ export default function EstateAdminWalletPage() {
           estateFromId || estateFromObj || fallbackEstateName || "Estate";
         setEstateName(name);
 
-        // `userId` is only needed for withdrawal; don't block credits fetch on it.
         if (id) setUserId(id);
 
         if (!estateIdFromUser) {
@@ -110,34 +106,25 @@ export default function EstateAdminWalletPage() {
         }
         setEstateId(estateIdFromUser);
 
-        const walletRes = await dispatch(getWallet(estateIdFromUser)).unwrap();
-        // if (!walletRes?.data?.id) {
-        //   toast.warning("No wallet found for this estate.");
-        // }
+        await dispatch(getWallet(estateIdFromUser)).unwrap();
 
         await dispatch(
           getEstateCredits({
             estateId: estateIdFromUser,
             page: 1,
-            limit,
+            limit: LIMIT,
           }),
         ).unwrap();
       } catch (err: any) {
         // When user does not have a wallet, do not show error toast
-        const errorMessage =
-          err?.message || err?.payload?.message || "Failed to load data.";
-        // toast.error(errorMessage);
       }
     })();
-  }, [dispatch, limit]);
-
-  // Fetch estate credits when page changes
+  }, [dispatch]); 
   useEffect(() => {
     if (!estateId || creditsPage === 1) return;
-    dispatch(getEstateCredits({ estateId, page: creditsPage, limit }));
-  }, [estateId, creditsPage, limit, dispatch]);
-
-  // Fetch banks so we can display bank name for the wallet and use in Create Wallet
+    dispatch(getEstateCredits({ estateId, page: creditsPage, limit: LIMIT }));
+  }, [estateId, creditsPage, dispatch]); 
+  
   useEffect(() => {
     dispatch(getBanks("NG"));
   }, [dispatch]);
@@ -182,8 +169,6 @@ export default function EstateAdminWalletPage() {
       ? (banks.find((b) => b.code === wallet.bankCode)?.name ?? "")
       : "";
 
-  // Withdrawal flow (create transaction + OTP + transfer) is handled inside WithdrawFundForm
-
   // Verify transaction when redirected back from payment
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -214,7 +199,7 @@ export default function EstateAdminWalletPage() {
           getEstateCredits({
             estateId: currentEstateId,
             page: creditsPage,
-            limit,
+            limit: LIMIT,
           }),
         );
 
@@ -231,7 +216,7 @@ export default function EstateAdminWalletPage() {
     };
     const timer = setTimeout(verifyTransactionAsync, 800);
     return () => clearTimeout(timer);
-  }, [dispatch, userId, estateId, creditsPage, limit]);
+  }, [dispatch, userId, estateId, creditsPage]);
 
   const creditsColumns: Array<{
     key: string;
@@ -260,14 +245,6 @@ export default function EstateAdminWalletPage() {
           ? Number(item.amount).toLocaleString()
           : "—",
     },
-    // {
-    //   key: "serviceCharge",
-    //   header: "Service Charge (₦)",
-    //   render: (item: ExtendedEstateCreditItem): React.ReactNode =>
-    //     typeof item.serviceCharge === "number"
-    //       ? Number(item.serviceCharge).toLocaleString()
-    //       : "—",
-    // },
     {
       key: "tx_ref",
       header: "Transaction Reference",
@@ -296,7 +273,7 @@ export default function EstateAdminWalletPage() {
   const pageNum =
     typeof pag?.page === "number" ? pag.page : Number(pag?.page) || creditsPage;
   const pageSize =
-    typeof pag?.limit === "number" ? pag.limit : Number(pag?.limit) || limit;
+    typeof pag?.limit === "number" ? pag.limit : Number(pag?.limit) || LIMIT;
 
   const handleCreditsFiltersChange = (filters: {
     fromDate: string | null;
@@ -356,11 +333,10 @@ export default function EstateAdminWalletPage() {
         </p>
       </div>
 
-      {/* Wallet overview (Figma: balances + bill stats + Withdraw Funds) */}
+      {/* Wallet overview */}
       <EstateWalletOverviewCard
         wallet={wallet}
         billStats={
-          // Replace with API data when estate bill summary is available
           { totalBills: 0, paidBills: 0, pendingBills: 0, serviceFee: 0 }
         }
         onWithdraw={handleOpenModal}
@@ -413,24 +389,9 @@ export default function EstateAdminWalletPage() {
               : undefined
           }
         />
-        {/* <div className="flex justify-end items-center gap-2 mt-4">
-          <Button
-            disabled={pageNum <= 1}
-            onClick={() => setCreditsPage((p) => p - 1)}
-          >
-            Prev
-          </Button>
-          <Button
-            disabled={
-              pageNum >= (creditsPagination?.pages ?? 1) || total <= pageSize
-            }
-            onClick={() => setCreditsPage((p) => p + 1)}
-          >
-            Next
-          </Button>
-        </div> */}
       </Card>
 
+      {/* Withdraw Modal */}
       <Modal visible={open} onClose={handleOpenModal}>
         <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto">
           {userId && wallet ? (
@@ -454,6 +415,7 @@ export default function EstateAdminWalletPage() {
         </div>
       </Modal>
 
+      {/* Create Wallet Modal */}
       <Modal
         visible={createWalletModalOpen}
         onClose={() => {

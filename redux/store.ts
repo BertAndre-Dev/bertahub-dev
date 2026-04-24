@@ -46,6 +46,8 @@ import adminExpenseHeadSliceReducer from '@/redux/slice/admin/expense-head/expen
 import adminExpenseEntrySliceReducer from '@/redux/slice/admin/expense-entry/expense-entry-slice';
 import estateAdminFinancialReportSliceReducer from '@/redux/slice/estate-admin/financial-report/financial-report-slice';
 import chatSliceReducer from "@/redux/slice/chat/chat-slice";
+import mapsSliceReducer from "@/redux/slice/maps/maps-slice";
+import { mapsApi } from "@/redux/api/mapsApi";
 
 
 const persistConfig = {
@@ -132,6 +134,8 @@ export const store = configureStore({
         adminExpenseEntry: persistedAdminExpenseEntrySliceReducer,
         estateAdminFinancialReport: estateAdminFinancialReportSliceReducer,
         chat: chatSliceReducer,
+        maps: mapsSliceReducer,
+        [mapsApi.reducerPath]: mapsApi.reducer,
     },
 
     middleware: (getDefaultMiddleware) =>
@@ -139,7 +143,7 @@ export const store = configureStore({
             serializableCheck: {
                 ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
             },
-        }),
+        }).concat(mapsApi.middleware),
 });
 
 
