@@ -20,8 +20,9 @@ export default function Loader({
       role="status"
       aria-label={label}
       aria-live="polite"
-      className={`${wrapperClassName} bg-primary/50 rounded-full p-2 flex items-center justify-center animate-breathe`}
+      className={wrapperClassName}
     >
+      <div className="bg-primary/50 rounded-full p-4 flex items-center justify-center animate-breathe">
         <Image
           src="/chatLogo2.svg"
           alt=""
@@ -30,6 +31,7 @@ export default function Loader({
           priority={fullScreen}
           className="animate-breathe select-none"
         />
+      </div>
     </div>
   );
 }
