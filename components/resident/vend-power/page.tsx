@@ -37,12 +37,12 @@ export default function VendPowerForm({
   const [successToken, setSuccessToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const kwh = useMemo(() => {
-    const price = Number(tariffPrice);
-    if (amount <= 0) return "0";
-    if (!Number.isFinite(price) || price <= 0) return "0";
-    return (amount / price).toFixed(2);
-  }, [amount, tariffPrice]);
+  // const kwh = useMemo(() => {
+  //   const price = Number(tariffPrice);
+  //   if (amount <= 0) return "0";
+  //   if (!Number.isFinite(price) || price <= 0) return "0";
+  //   return (amount / price).toFixed(2);
+  // }, [amount, tariffPrice]);
 
   const closeSuccessModal = useCallback(() => {
     setShowSuccessModal(false);
@@ -124,17 +124,17 @@ export default function VendPowerForm({
               onChange={(e) => setAmount(Number(e.target.value))}
               placeholder="Enter amount"
             />
-            <p className="text-sm text-muted-foreground mt-1">
+            {/* <p className="text-sm text-muted-foreground mt-1">
               Price per kWh:{" "}
               <strong>
                 {tariffPrice != null && Number.isFinite(Number(tariffPrice))
                   ? `₦${Number(tariffPrice).toLocaleString()}`
                   : "—"}
               </strong>
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            </p> */}
+            {/* <p className="text-sm text-muted-foreground mt-1">
               You will get <strong>{kwh} kWh</strong> for this amount.
-            </p>
+            </p> */}
           </div>
 
           <div className="pt-6">
