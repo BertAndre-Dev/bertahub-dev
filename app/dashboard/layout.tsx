@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { Menu, X, LogOut, Bell, Search } from "lucide-react";
+import { Menu, X, LogOut, Bell, Search, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   adminNav,
@@ -174,11 +174,52 @@ export default function DashboardLayout({
       }
     }
 
+    // Hardcode "Contact Support" entry (not dependent on module access)
+    const rolesWithSupport = new Set(["admin", "resident", "estate admin"]);
+    if (rolesWithSupport.has(role)) {
+      const supportPath =
+        role === "admin"
+          ? "/dashboard/admin/support"
+          : role === "resident"
+            ? "/dashboard/resident/support"
+            : role === "estate admin"
+              ? "/dashboard/estate-admin/support"
+              : "/dashboard/security/support";
+
+      const alreadyHasSupport =
+        navItems.some((item) => item.label === "Contact Support") ||
+        navItems.some((item) => item.path === supportPath);
+
+      if (!alreadyHasSupport) {
+        const supportItem = {
+          label: "Contact Support",
+          icon: MessageCircle,
+          path: supportPath,
+        };
+
+        const settingsIdx = navItems.findIndex((i) => i.label === "Settings");
+        if (settingsIdx >= 0) {
+          navItems = [
+            ...navItems.slice(0, settingsIdx),
+            supportItem,
+            ...navItems.slice(settingsIdx),
+          ];
+        } else {
+          navItems = [...navItems, supportItem];
+        }
+      }
+    }
+
     // Roles with module-scoped sidebar items.
     // IMPORTANT: super admin is excluded above (fully hardcoded).
     const rolesWithModules = new Set(["admin", "resident", "security", "estate admin"]);
     if (rolesWithModules.has(role)) {
-      const staticLabels = new Set<string>(["Settings", "Logout"]);
+      const staticLabels = new Set<string>([
+        "Settings",
+        "Contact Support",
+        "Nearby Places",
+        "Logout",
+      ]);
       if (role === "security") staticLabels.add("Activity Log");
 
       navItems = navItems.filter((item) => {
