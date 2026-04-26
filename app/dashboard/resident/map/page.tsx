@@ -97,6 +97,7 @@ export default function ResidentMapPage() {
 
   return (
     <div className="relative h-[calc(100vh-120px)] md:h-[calc(100vh-140px)]">
+      <h2 className="text-2xl font-bold text-center mt-4">Search for places nearby</h2>
       <div className="absolute inset-0">
         <MapView
           center={center}
