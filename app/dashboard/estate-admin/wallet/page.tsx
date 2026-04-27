@@ -23,7 +23,6 @@ import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import type { EstateCreditItem } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt-slice";
 import { TransactionsFilterBar } from "@/components/super-admin/transactions-filter-bar";
-import Loader from "@/components/ui/Loader";
 
 const LIMIT = 10;
 interface ExtendedEstateCreditItem extends EstateCreditItem {
@@ -369,11 +368,7 @@ export default function EstateAdminWalletPage() {
           columns={creditsColumns}
           data={filteredCreditsData}
           emptyMessage={
-            creditsLoading ? (
-              <Loader label="Loading estate credits..." />
-            ) : (
-              "No credits found."
-            )
+            creditsLoading ? "Loading estate credits..." : "No credits found."
           }
           showPagination
           paginationInfo={{
@@ -414,9 +409,7 @@ export default function EstateAdminWalletPage() {
               onClose={handleOpenModal}
             />
           ) : (
-            <div className="py-12">
-              <Loader label="Loading form..." />
-            </div>
+            <p className="text-center text-gray-500">Loading form...</p>
           )}
         </div>
       </Modal>
