@@ -329,13 +329,10 @@ export default function TransactionPage() {
     if (paidBillsPage > total) setPaidBillsPage(total);
   }, [filteredPaidBills.length, paidBillsPageSize, paidBillsPage]);
 
-  const paidBillsEmptyMessage = loadingPaidBills ? (
-    <Loader label="Loading paid bills..." />
-  ) : filteredPaidBills.length === 0 ? (
-    "No paid bills match the selected filters."
-  ) : (
-    "No paid bills found."
-  );
+  const paidBillsEmptyMessage =
+    filteredPaidBills.length === 0
+      ? "No paid bills match the selected filters."
+      : "No paid bills found.";
 
   // const totalBills = paidBillsData.reduce((sum: number, item: any) => sum + (item.amountPaid ?? 0), 0);
   // 🔹 Counts instead of amounts for stats (precomputed so they are available immediately)
@@ -692,77 +689,6 @@ export default function TransactionPage() {
 
       {/* Filter bar – Date range, Filter by Type, Filter by Status, Export (Figma) */}
       <Card className="p-4">
-        {/* <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background text-sm font-medium text-foreground hover:bg-muted/50"
-          >
-            <Calendar className="w-4 h-4" />
-            <span>{dateRangeLabel}</span>
-            <ChevronDown className="w-4 h-4" />
-          </button>
-          <Select
-            options={[
-              { label: "Filter by Type", value: "" },
-              { label: "Credit", value: "credit" },
-              { label: "Debit", value: "debit" },
-            ]}
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="w-[180px]"
-          />
-          <Select
-            options={[
-              { label: "Filter by Status", value: "" },
-              { label: "Successful", value: "successful" },
-              { label: "Pending", value: "pending" },
-            ]}
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-[180px]"
-          />
-          <div className="relative ml-auto" ref={exportRef}>
-            <Button
-              variant="outline"
-              onClick={() => setExportOpen((o) => !o)}
-              className="gap-1"
-            >
-              Export
-              <ChevronDown className="w-4 h-4" />
-            </Button>
-            {exportOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  aria-hidden
-                  onClick={() => setExportOpen(false)}
-                />
-                <div className="absolute right-0 top-full mt-1 z-20 min-w-[120px] rounded-md border border-border bg-background py-1 shadow-md">
-                  <button
-                    type="button"
-                    className="block w-full px-4 py-2 text-left text-sm hover:bg-muted/50"
-                    onClick={() => {
-                      setExportOpen(false);
-                      toast.info("PDF export – wire to your export logic.");
-                    }}
-                  >
-                    PDF
-                  </button>
-                  <button
-                    type="button"
-                    className="block w-full px-4 py-2 text-left text-sm hover:bg-muted/50"
-                    onClick={() => {
-                      setExportOpen(false);
-                      toast.info("CSV export – wire to your export logic.");
-                    }}
-                  >
-                    CSV
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div> */}
         <div className="mt-3">
           <input
             type="text"
@@ -798,16 +724,15 @@ export default function TransactionPage() {
 
         {activeTab === "history" && (
           <>
+            {loading && transactions.length === 0 && (
+              <div className="py-12">
+                <Loader label="Loading transactions..." />
+              </div>
+            )}
             <Table
               columns={columns}
               data={transactions}
-              emptyMessage={
-                loading ? (
-                  <Loader label="Loading transactions..." />
-                ) : (
-                  "No transactions found."
-                )
-              }
+              emptyMessage={loading ? "Loading transactions..." : "No transactions found."}
               showPagination
               paginationInfo={{
                 total: pagination?.total || transactions.length || 0,
@@ -851,16 +776,15 @@ export default function TransactionPage() {
 
         {activeTab === "vends" && (
           <>
+            {loadingVends && vendsData.length === 0 && (
+              <div className="py-12">
+                <Loader label="Loading vends..." />
+              </div>
+            )}
             <Table
               columns={vendsColumns}
               data={vendsData}
-              emptyMessage={
-                loadingVends ? (
-                  <Loader label="Loading vends..." />
-                ) : (
-                  "No vends found."
-                )
-              }
+              emptyMessage={loadingVends ? "Loading vends..." : "No vends found."}
               enableDateRangeFilter
               startDate={vendsStartDate}
               endDate={vendsEndDate}
@@ -933,6 +857,11 @@ export default function TransactionPage() {
               visible={true}
             />
             <div className="mt-4">
+              {loadingPaidBills && paginatedPaidBills.length === 0 && (
+                <div className="py-12">
+                  <Loader label="Loading paid bills..." />
+                </div>
+              )}
               <Table
                 columns={paidBillsColumns}
                 data={paginatedPaidBills}
