@@ -204,7 +204,15 @@ export default function TransactionPage() {
         setLoadingVends(false);
       }
     })();
-  }, [activeTab, estateId, vendsPage, dispatch, limit, vendsStartDate, vendsEndDate]);
+  }, [
+    activeTab,
+    estateId,
+    vendsPage,
+    dispatch,
+    limit,
+    vendsStartDate,
+    vendsEndDate,
+  ]);
 
   // 🔹 Fetch paid bills when tab is paid-bills (larger limit for client-side filtering)
   const PAID_BILLS_FETCH_LIMIT = 2000;
@@ -256,8 +264,7 @@ export default function TransactionPage() {
         if (freq !== filterFrequency.toLowerCase()) return false;
       }
       if (filterBill) {
-        const billName =
-          item.bill?.name ?? item.billName ?? "";
+        const billName = item.bill?.name ?? item.billName ?? "";
         if (billName !== filterBill) return false;
       }
       if (filterBillStatus) {
@@ -314,16 +321,17 @@ export default function TransactionPage() {
 
   // Keep paidBillsPage in bounds when filtered list shrinks
   useEffect(() => {
-    const total = Math.max(1, Math.ceil(filteredPaidBills.length / paidBillsPageSize));
+    const total = Math.max(
+      1,
+      Math.ceil(filteredPaidBills.length / paidBillsPageSize),
+    );
     if (paidBillsPage > total) setPaidBillsPage(total);
   }, [filteredPaidBills.length, paidBillsPageSize, paidBillsPage]);
 
   const paidBillsEmptyMessage =
-    loadingPaidBills
-      ? "Loading paid bills..."
-      : filteredPaidBills.length === 0
-        ? "No paid bills match the selected filters."
-        : "No paid bills found.";
+    filteredPaidBills.length === 0
+      ? "No paid bills match the selected filters."
+      : "No paid bills found.";
 
   // const totalBills = paidBillsData.reduce((sum: number, item: any) => sum + (item.amountPaid ?? 0), 0);
   // 🔹 Counts instead of amounts for stats (precomputed so they are available immediately)
@@ -468,16 +476,32 @@ export default function TransactionPage() {
               .filter(Boolean)
               .join(" ") || item.user.email
           : "-",
+      exportValue: (item: any) => {
+        const u = item?.user;
+        if (!u) return "";
+        const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+        return name || u.email || "";
+      },
     },
     {
       key: "email",
       header: "Email",
-      render: (item: any) => item.user?.email ?? "-",
+      render: (item: any) => {
+        const email = (item?.user?.email ?? "").toString();
+        if (!email) return "-";
+        return (
+          <span className="inline-block max-w-[180px] truncate align-bottom" title={email}>
+            {email}
+          </span>
+        );
+      },
+      exportValue: (item: any) => String(item?.user?.email ?? ""),
     },
     {
       key: "meterNumber",
       header: "Meter",
       render: (item: any) => item.meterNumber ?? "-",
+      exportValue: (item: any) => String(item?.meterNumber ?? ""),
     },
     {
       key: "amount",
@@ -485,9 +509,92 @@ export default function TransactionPage() {
       render: (item: any) => item.amount?.toLocaleString() ?? 0,
     },
     {
-      key: "transId",
-      header: "Trans ID",
-      render: (item: any) => item.transId ?? "-",
+      key: "energyValue",
+      header: "Value",
+      render: (item: any) => {
+        const value = item?.fullResponse?.energyList?.[0]?.value ?? null;
+        if (value == null || value === "") return "—";
+        const vNum = Number(value);
+        return Number.isFinite(vNum) ? String(vNum) : String(value);
+      },
+      exportValue: (item: any) => {
+        const value = item?.fullResponse?.energyList?.[0]?.value ?? "";
+        return value == null ? "" : String(value);
+      },
+    },
+    {
+      key: "energyUnit",
+      header: "Unit",
+      render: (item: any) => {
+        const unit = item?.fullResponse?.energyList?.[0]?.unit ?? null;
+        const u = String(unit ?? "").trim();
+        return u || "—";
+      },
+      exportValue: (item: any) => {
+        const unit = item?.fullResponse?.energyList?.[0]?.unit ?? "";
+        return String(unit ?? "").trim();
+      },
+    },
+    {
+      key: "taxRate",
+      header: "Tax Rate (%)",
+      render: (item: any) => {
+        const rate =
+          item?.fullResponse?.energyList?.[0]?.taxRate ??
+          item?.fullResponse?.energyList?.[0]?.tax_rate ??
+          null;
+        if (rate == null || rate === "") return "—";
+        const n = Number(rate);
+        return Number.isFinite(n) ? n.toFixed(2) : String(rate);
+      },
+      exportValue: (item: any) => {
+        const rate =
+          item?.fullResponse?.energyList?.[0]?.taxRate ??
+          item?.fullResponse?.energyList?.[0]?.tax_rate ??
+          "";
+        return rate == null ? "" : String(rate);
+      },
+    },
+    {
+      key: "netRate",
+      header: "Net Amount (₦)",
+      render: (item: any) => {
+        const e = item?.fullResponse?.energyList?.[0] ?? null;
+        const amountRaw = item?.amount ?? e?.amount ?? null;
+        const taxAmountRaw = e?.taxAmount ?? null;
+        const taxRateRaw = e?.taxRate ?? e?.tax_rate ?? null;
+
+        const amount = Number(amountRaw);
+        if (!Number.isFinite(amount)) return "—";
+
+        let taxAmount = Number(taxAmountRaw);
+        if (!Number.isFinite(taxAmount)) {
+          const taxRate = Number(taxRateRaw);
+          taxAmount = Number.isFinite(taxRate) ? (amount * taxRate) / 100 : 0;
+        }
+
+        const netAmount = amount - taxAmount;
+        if (!Number.isFinite(netAmount)) return "—";
+        return netAmount.toLocaleString();
+      },
+      exportValue: (item: any) => {
+        const e = item?.fullResponse?.energyList?.[0] ?? null;
+        const amountRaw = item?.amount ?? e?.amount ?? null;
+        const taxAmountRaw = e?.taxAmount ?? null;
+        const taxRateRaw = e?.taxRate ?? e?.tax_rate ?? null;
+
+        const amount = Number(amountRaw);
+        if (!Number.isFinite(amount)) return "";
+
+        let taxAmount = Number(taxAmountRaw);
+        if (!Number.isFinite(taxAmount)) {
+          const taxRate = Number(taxRateRaw);
+          taxAmount = Number.isFinite(taxRate) ? (amount * taxRate) / 100 : 0;
+        }
+
+        const netAmount = amount - taxAmount;
+        return Number.isFinite(netAmount) ? String(netAmount) : "";
+      },
     },
   ];
 
@@ -581,77 +688,6 @@ export default function TransactionPage() {
 
       {/* Filter bar – Date range, Filter by Type, Filter by Status, Export (Figma) */}
       <Card className="p-4">
-        {/* <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background text-sm font-medium text-foreground hover:bg-muted/50"
-          >
-            <Calendar className="w-4 h-4" />
-            <span>{dateRangeLabel}</span>
-            <ChevronDown className="w-4 h-4" />
-          </button>
-          <Select
-            options={[
-              { label: "Filter by Type", value: "" },
-              { label: "Credit", value: "credit" },
-              { label: "Debit", value: "debit" },
-            ]}
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="w-[180px]"
-          />
-          <Select
-            options={[
-              { label: "Filter by Status", value: "" },
-              { label: "Successful", value: "successful" },
-              { label: "Pending", value: "pending" },
-            ]}
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-[180px]"
-          />
-          <div className="relative ml-auto" ref={exportRef}>
-            <Button
-              variant="outline"
-              onClick={() => setExportOpen((o) => !o)}
-              className="gap-1"
-            >
-              Export
-              <ChevronDown className="w-4 h-4" />
-            </Button>
-            {exportOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  aria-hidden
-                  onClick={() => setExportOpen(false)}
-                />
-                <div className="absolute right-0 top-full mt-1 z-20 min-w-[120px] rounded-md border border-border bg-background py-1 shadow-md">
-                  <button
-                    type="button"
-                    className="block w-full px-4 py-2 text-left text-sm hover:bg-muted/50"
-                    onClick={() => {
-                      setExportOpen(false);
-                      toast.info("PDF export – wire to your export logic.");
-                    }}
-                  >
-                    PDF
-                  </button>
-                  <button
-                    type="button"
-                    className="block w-full px-4 py-2 text-left text-sm hover:bg-muted/50"
-                    onClick={() => {
-                      setExportOpen(false);
-                      toast.info("CSV export – wire to your export logic.");
-                    }}
-                  >
-                    CSV
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div> */}
         <div className="mt-3">
           <input
             type="text"
@@ -690,9 +726,7 @@ export default function TransactionPage() {
             <Table
               columns={columns}
               data={transactions}
-              emptyMessage={
-                loading ? "Loading transactions..." : "No transactions found."
-              }
+              emptyMessage={loading ? "Loading transactions..." : "No transactions found."}
               showPagination
               paginationInfo={{
                 total: pagination?.total || transactions.length || 0,
@@ -739,9 +773,7 @@ export default function TransactionPage() {
             <Table
               columns={vendsColumns}
               data={vendsData}
-              emptyMessage={
-                loadingVends ? "Loading vends..." : "No vends found."
-              }
+              emptyMessage={loadingVends ? "Loading vends..." : "No vends found."}
               enableDateRangeFilter
               startDate={vendsStartDate}
               endDate={vendsEndDate}
@@ -768,9 +800,13 @@ export default function TransactionPage() {
                           page: 1,
                           limit: 50000,
                           startDate:
-                            vendsStartDate && vendsEndDate ? vendsStartDate : undefined,
+                            vendsStartDate && vendsEndDate
+                              ? vendsStartDate
+                              : undefined,
                           endDate:
-                            vendsStartDate && vendsEndDate ? vendsEndDate : undefined,
+                            vendsStartDate && vendsEndDate
+                              ? vendsEndDate
+                              : undefined,
                         }),
                       ).unwrap();
                       return res?.data ?? [];
