@@ -23,10 +23,9 @@ import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import type { EstateCreditItem } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt-slice";
 import { TransactionsFilterBar } from "@/components/super-admin/transactions-filter-bar";
+import Loader from "@/components/ui/Loader";
 
 const LIMIT = 10;
-
-// Extend the type to include all fields from API
 interface ExtendedEstateCreditItem extends EstateCreditItem {
   serviceCharge?: number;
   source?: string;
@@ -119,12 +118,12 @@ export default function EstateAdminWalletPage() {
         // When user does not have a wallet, do not show error toast
       }
     })();
-  }, [dispatch]); 
+  }, [dispatch]);
   useEffect(() => {
     if (!estateId || creditsPage === 1) return;
     dispatch(getEstateCredits({ estateId, page: creditsPage, limit: LIMIT }));
-  }, [estateId, creditsPage, dispatch]); 
-  
+  }, [estateId, creditsPage, dispatch]);
+
   useEffect(() => {
     dispatch(getBanks("NG"));
   }, [dispatch]);
@@ -336,9 +335,12 @@ export default function EstateAdminWalletPage() {
       {/* Wallet overview */}
       <EstateWalletOverviewCard
         wallet={wallet}
-        billStats={
-          { totalBills: 0, paidBills: 0, pendingBills: 0, serviceFee: 0 }
-        }
+        billStats={{
+          totalBills: 0,
+          paidBills: 0,
+          pendingBills: 0,
+          serviceFee: 0,
+        }}
         onWithdraw={handleOpenModal}
         onCreateWallet={() => setCreateWalletModalOpen(true)}
         createWalletLoading={createWalletState === "isLoading"}
@@ -367,7 +369,11 @@ export default function EstateAdminWalletPage() {
           columns={creditsColumns}
           data={filteredCreditsData}
           emptyMessage={
-            creditsLoading ? "Loading estate credits..." : "No credits found."
+            creditsLoading ? (
+              <Loader label="Loading estate credits..." />
+            ) : (
+              "No credits found."
+            )
           }
           showPagination
           paginationInfo={{
@@ -403,14 +409,14 @@ export default function EstateAdminWalletPage() {
               bankCode={wallet.bankCode ?? ""}
               bankName={walletBankName}
               maxWithdrawableAmount={
-                wallet.withdrawableBalance ??
-                  wallet.temporaryBalance ??
-                  0
+                wallet.withdrawableBalance ?? wallet.temporaryBalance ?? 0
               }
               onClose={handleOpenModal}
             />
           ) : (
-            <p className="text-center text-gray-500">Loading form...</p>
+            <div className="py-12">
+              <Loader label="Loading form..." />
+            </div>
           )}
         </div>
       </Modal>
