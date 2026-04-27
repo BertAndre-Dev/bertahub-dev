@@ -20,11 +20,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import {
-  TrendingUp,
-  Lock,
-  MessageSquareText,
-} from "lucide-react";
+import { TrendingUp, Lock, MessageSquareText } from "lucide-react";
 import { FinancialReportBarChart } from "@/components/dashboard/estate-admin/reports/FinancialReportBarChart";
 import {
   buildChartSeries,
