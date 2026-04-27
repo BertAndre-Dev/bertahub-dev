@@ -24,7 +24,6 @@ import {
   TrendingUp,
   Lock,
   MessageSquareText,
-  MessageCircle,
 } from "lucide-react";
 import { FinancialReportBarChart } from "@/components/dashboard/estate-admin/reports/FinancialReportBarChart";
 import {
@@ -184,6 +183,10 @@ export default function ReportsPage() {
   const totalExpenses =
     report?.summary?.totalExpenses ?? report?.expenses?.totalExpenses ?? 0;
   const net = report?.summary?.netProfitLoss ?? totalRevenue - totalExpenses;
+  const isLoss = net < 0;
+  const netLabel = isLoss ? "Loss" : "Profit";
+  const netAmount = Math.abs(net);
+  const netDisplay = `${isLoss ? "-" : ""}${formatNaira(netAmount)}`;
 
   const revenueRows = useMemo(() => {
     const vending = report?.revenue?.vendingRevenue ?? 0;
@@ -228,15 +231,9 @@ export default function ReportsPage() {
             tone: "bg-[#D0DFF280]",
           },
           {
-            label: "Profit",
-            value: formatNaira(Math.max(0, net)),
+            label: netLabel,
+            value: netDisplay,
             icon: MessageSquareText,
-            tone: "bg-[#EDE9FE]",
-          },
-          {
-            label: "Loss",
-            value: formatNaira(Math.max(0, -net)),
-            icon: MessageCircle,
             tone: "bg-[#EDE9FE]",
           },
         ].map((c) => {
