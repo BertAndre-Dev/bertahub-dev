@@ -19,7 +19,6 @@ import {
   TransactionsFilterBar,
   type EstateTransactionsFilters,
 } from "@/components/estate-admin/transactions-filter-bar";
-import Loader from "@/components/ui/Loader";
 
 interface TransactionData {
   walletId: string;
@@ -724,11 +723,6 @@ export default function TransactionPage() {
 
         {activeTab === "history" && (
           <>
-            {loading && transactions.length === 0 && (
-              <div className="py-12">
-                <Loader label="Loading transactions..." />
-              </div>
-            )}
             <Table
               columns={columns}
               data={transactions}
@@ -776,11 +770,6 @@ export default function TransactionPage() {
 
         {activeTab === "vends" && (
           <>
-            {loadingVends && vendsData.length === 0 && (
-              <div className="py-12">
-                <Loader label="Loading vends..." />
-              </div>
-            )}
             <Table
               columns={vendsColumns}
               data={vendsData}
@@ -857,11 +846,6 @@ export default function TransactionPage() {
               visible={true}
             />
             <div className="mt-4">
-              {loadingPaidBills && paginatedPaidBills.length === 0 && (
-                <div className="py-12">
-                  <Loader label="Loading paid bills..." />
-                </div>
-              )}
               <Table
                 columns={paidBillsColumns}
                 data={paginatedPaidBills}
