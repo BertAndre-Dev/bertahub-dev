@@ -217,6 +217,7 @@ export default function DashboardLayout({
       const staticLabels = new Set<string>([
         "Settings",
         "Contact Support",
+        "Pay Bills",
         "Nearby Places",
         "Logout",
       ]);
