@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const API_ORIGIN = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "https://bertahubdev.com";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   images: {
     remotePatterns: [
       {

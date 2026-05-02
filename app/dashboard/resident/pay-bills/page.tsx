@@ -14,12 +14,26 @@ import {
   createTransaction,
   initializePayment,
 } from "@/redux/slice/resident/transaction/transaction";
-import { createBillPaymentPin } from "@/redux/slice/resident/set-pin/set-pin";
+import {
+  createBillPaymentPin,
+  updateBillPaymentPin,
+} from "@/redux/slice/resident/set-pin/set-pin";
+import {
+  getBillCategories,
+  getBillersByCategory,
+  getBillItemsByBiller,
+  payBillViaWallet,
+  getBillPaymentHistory,
+} from "@/redux/slice/resident/bills-payment/bills-payment";
 
 import FundWalletModal from "@/components/resident/transaction/fund-wallet-modal/page";
 import type { WalletData } from "@/redux/slice/resident/wallet-mgt/wallet-mgt-slice";
 import { ResidentWalletCard } from "@/components/resident/wallet/ResidentWalletCard";
 import { SetUpPinCard } from "@/components/resident/pay-bills/SetUpPinCard";
+import { UpdatePinCard } from "@/components/resident/pay-bills/UpdatePinCard";
+import { BillPaymentFormCard } from "@/components/resident/pay-bills/BillPaymentFormCard";
+import { BillPaymentHistoryCard } from "@/components/resident/pay-bills/BillPaymentHistoryCard";
+import type { ResidentBillsPaymentState } from "@/redux/slice/resident/bills-payment/bills-payment-slice";
 
 export default function PayBillsPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -32,6 +46,17 @@ export default function PayBillsPage() {
   const [residentType, setResidentType] = useState<string | null>(null);
   const [hasBillPaymentPin, setHasBillPaymentPin] = useState<boolean>(false);
 
+  const [country, setCountry] = useState("NG");
+  const [categoryCode, setCategoryCode] = useState("");
+  const [billerCode, setBillerCode] = useState("");
+  const [itemCode, setItemCode] = useState("");
+  const [customerId, setCustomerId] = useState("");
+  const [billRef, setBillRef] = useState("");
+  const [amount, setAmount] = useState<string>("");
+  const [pin, setPin] = useState("");
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyLimit = 10;
+
   const wallet = useSelector(
     (state: RootState) => state.wallet.wallet,
   ) as WalletData | null;
@@ -39,9 +64,14 @@ export default function PayBillsPage() {
     (state: RootState) => state.wallet.createWalletState,
   );
 
+  const billsPayment = useSelector(
+    (state: RootState) => state.residentBillsPayment,
+  ) as ResidentBillsPaymentState;
+
   const isOwner = residentType === "owner";
   const formatNaira = (value: number) => `₦${(value ?? 0).toLocaleString()}`;
 
+  // ── 1. On mount: load user + wallet ──────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
@@ -62,13 +92,47 @@ export default function PayBillsPage() {
         setResidentType(rType ?? null);
         setHasBillPaymentPin(Boolean(billPaymentPinHash));
 
-        // Fetch wallet
         await dispatch(getWallet(id)).unwrap();
       } catch (err: any) {
         toast.error(err?.message ?? "Failed to load data.");
       }
     })();
   }, [dispatch]);
+
+  // ── 2. Fetch categories when country changes ──────────────────────────────
+  useEffect(() => {
+    dispatch(getBillCategories({ country })).catch(() => {});
+  }, [dispatch, country]);
+
+  // ── 3. Fetch history when page changes (covers initial load too) ──────────
+  useEffect(() => {
+    dispatch(
+      getBillPaymentHistory({ page: historyPage, limit: historyLimit }),
+    ).catch(() => {});
+  }, [dispatch, historyPage]);
+
+  // ── 4. Fetch billers when category changes ────────────────────────────────
+  useEffect(() => {
+    if (!categoryCode) return;
+    dispatch(getBillersByCategory({ country, category_code: categoryCode }))
+      .unwrap()
+      .catch((e: any) => {
+        toast.error(e?.message ?? "Failed to load billers.");
+      });
+    setBillerCode("");
+    setItemCode("");
+  }, [dispatch, country, categoryCode]);
+
+  // ── 5. Fetch items when biller changes ────────────────────────────────────
+  useEffect(() => {
+    if (!billerCode) return;
+    dispatch(getBillItemsByBiller({ country, biller_code: billerCode }))
+      .unwrap()
+      .catch((e: any) => {
+        toast.error(e?.message ?? "Failed to load bill items.");
+      });
+    setItemCode("");
+  }, [dispatch, country, billerCode]);
 
   const handleCreateWalletDirect = async () => {
     if (!userId) return;
@@ -150,34 +214,116 @@ export default function PayBillsPage() {
     setHasBillPaymentPin(true);
   };
 
+  const handleUpdateBillPin = async ({ newPin }: { newPin: string }) => {
+    await dispatch(updateBillPaymentPin({ newPin })).unwrap();
+    toast.success("PIN updated successfully.");
+    setHasBillPaymentPin(true);
+    dispatch(getSignedInUser()).catch(() => {});
+  };
+
+  const handlePay = async () => {
+    if (!hasBillPaymentPin) {
+      toast.error("Please set up your bill payment PIN first.");
+      return;
+    }
+    if (!billerCode) return toast.error("Please select a biller.");
+    if (!itemCode) return toast.error("Please select a bill item/package.");
+    if (!customerId.trim())
+      return toast.error("Please enter customer identifier.");
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0)
+      return toast.error("Please enter a valid amount.");
+    const trimmedPin = pin.trim();
+    if (trimmedPin.length !== 4)
+      return toast.error("Enter your 4-digit PIN to proceed.");
+
+    const ref =
+      (globalThis.crypto as any)?.randomUUID?.() ??
+      `bill-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const callbackUrl = globalThis.window
+      ? `${globalThis.location.origin}/dashboard/resident/pay-bills`
+      : undefined;
+
+    try {
+      await dispatch(
+        payBillViaWallet({
+          country,
+          customer_id: customerId.trim(),
+          item_code: itemCode,
+          amount: amt,
+          biller_code: billerCode,
+          reference: ref,
+          callback_url: callbackUrl,
+          pin: trimmedPin,
+        }),
+      ).unwrap();
+      toast.success("Bill payment initiated.");
+      if (userId) dispatch(getWallet(userId)).catch(() => {});
+      setHistoryPage(1);
+      // historyPage is already 1 so the effect won't re-fire — dispatch manually
+      dispatch(
+        getBillPaymentHistory({ page: 1, limit: historyLimit }),
+      ).catch(() => {});
+      setPin("");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Payment failed.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Pay Bills</h1>
       <p className="text-sm text-muted-foreground">
         Pay your bills securely and conveniently.
       </p>
-      <div className="flex flex-col gap-4">
-      <ResidentWalletCard
-        wallet={wallet}
-        isOwner={isOwner}
-        formatNaira={formatNaira}
-        variant="fundOnly"
-        createWalletState={String(createWalletState)}
-        createWalletModalOpen={createWalletModalOpen}
-        onFundWalletClick={handleOpenModal}
-        onWithdrawClick={() => {}}
-        onTransferToBalanceClick={() => {}}
-        onCreateWalletClick={handleCreateWalletClick}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ResidentWalletCard
+          wallet={wallet}
+          isOwner={isOwner}
+          formatNaira={formatNaira}
+          variant="fundOnly"
+          createWalletState={String(createWalletState)}
+          createWalletModalOpen={createWalletModalOpen}
+          onFundWalletClick={handleOpenModal}
+          onWithdrawClick={() => {}}
+          onTransferToBalanceClick={() => {}}
+          onCreateWalletClick={handleCreateWalletClick}
+        />
+
+        {hasBillPaymentPin ? (
+          <UpdatePinCard onSubmitPin={handleUpdateBillPin} />
+        ) : (
+          <SetUpPinCard onSubmitPin={handleSubmitBillPin} />
+        )}
+      </div>
+
+      <BillPaymentFormCard
+        billsPayment={billsPayment}
+        country={country}
+        onCountryChange={setCountry}
+        categoryCode={categoryCode}
+        onCategoryChange={setCategoryCode}
+        billerCode={billerCode}
+        onBillerChange={setBillerCode}
+        itemCode={itemCode}
+        onItemChange={setItemCode}
+        customerId={customerId}
+        onCustomerIdChange={setCustomerId}
+        billRef={billRef}
+        onBillRefChange={setBillRef}
+        amount={amount}
+        onAmountChange={setAmount}
+        pin={pin}
+        onPinChange={setPin}
+        onPay={handlePay}
       />
 
-      <div className="flex flex-col gap-4">
-        
-      </div>
-
-
-      </div>
-
-      {!hasBillPaymentPin && <SetUpPinCard onSubmitPin={handleSubmitBillPin} />}
+      <BillPaymentHistoryCard
+        billsPayment={billsPayment}
+        historyPage={historyPage}
+        historyLimit={historyLimit}
+        onHistoryPageChange={setHistoryPage}
+      />
 
       <FundWalletModal
         visible={open}

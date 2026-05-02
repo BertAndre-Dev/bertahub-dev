@@ -8,7 +8,6 @@ export interface CreateBillPinPayload {
 }
 
 export interface UpdateBillPinPayload {
-  currentPin: string;
   newPin: string;
 }
 
@@ -56,11 +55,11 @@ export const updateBillPaymentPin = createAsyncThunk<
   { rejectValue: BillPinError }
 >(
   "residentBillPin/update",
-  async ({ currentPin, newPin }, { rejectWithValue }) => {
+  async ({ newPin }, { rejectWithValue }) => {
     try {
       const { data } = await axiosInstance.put(
         "/api/v1/user-mgt/bill-pin/update",
-        { currentPin, newPin },
+        { newPin },
       );
       return data;
     } catch (error) {

@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,21 +12,21 @@ type Props = {
   title?: string;
   description?: string;
   submitLabel?: string;
-  onSubmitPin?: (pin: string) => Promise<void> | void;
+  onSubmitPin?: (payload: { newPin: string }) => Promise<void> | void;
 };
 
 const PIN_LENGTH = 4;
-const EMPTY_PIN = (): string[] => Array(PIN_LENGTH).fill("");
+const EMPTY_PIN = (): string[] => new Array(PIN_LENGTH).fill("");
 
 // ─── Sub-component: PinInputRow ───────────────────────────────────────────────
 
-interface PinInputRowProps {
+type PinInputRowProps = Readonly<{
   label: string;
   digits: string[];
   onChange: (next: string[]) => void;
   hasError?: boolean;
   autoFocusFirst?: boolean;
-}
+}>;
 
 function PinInputRow({
   label,
@@ -38,7 +39,6 @@ function PinInputRow({
 
   useEffect(() => {
     if (autoFocusFirst) {
-      // Small delay so the element is painted before focus
       const t = setTimeout(() => refs.current[0]?.focus(), 60);
       return () => clearTimeout(t);
     }
@@ -62,12 +62,10 @@ function PinInputRow({
     if (e.key === "Backspace") {
       e.preventDefault();
       if (digits[idx]) {
-        // Clear current cell
         const next = [...digits];
         next[idx] = "";
         onChange(next);
       } else {
-        // Move back and clear previous
         const prev = idx - 1;
         if (prev >= 0) {
           const next = [...digits];
@@ -90,28 +88,23 @@ function PinInputRow({
       return;
     }
 
-    // Digit keys — handle here instead of onChange to avoid double-fire
     if (/^\d$/.test(e.key)) {
       e.preventDefault();
       const next = [...digits];
       next[idx] = e.key;
       onChange(next);
-      // Advance focus
       focusAt(idx + 1);
       return;
     }
 
-    // Block everything else (letters, symbols, etc.)
     if (e.key.length === 1) e.preventDefault();
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>, idx: number) {
-    // This fires on mobile/autofill — strip non-digits and take last char
-    const raw = e.target.value.replace(/\D/g, "");
+    const raw = e.target.value.replaceAll(/\D/g, "");
     if (!raw) return;
 
     if (raw.length > 1) {
-      // Handle paste into a single cell — fill across cells
       const chars = raw.slice(0, PIN_LENGTH - idx).split("");
       const next = [...digits];
       chars.forEach((ch, i) => {
@@ -135,7 +128,7 @@ function PinInputRow({
     e.preventDefault();
     const pasted = e.clipboardData
       .getData("text")
-      .replace(/\D/g, "")
+      .replaceAll(/\D/g, "")
       .slice(0, PIN_LENGTH);
     if (!pasted) return;
     const next = [...digits];
@@ -147,7 +140,6 @@ function PinInputRow({
   }
 
   function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
-    // Select all so the next keydown replaces the digit cleanly
     e.target.select();
   }
 
@@ -156,18 +148,17 @@ function PinInputRow({
       <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
-      <div className="flex gap-3">
+      <div className="flex gap-2">
         {digits.map((d, idx) => (
           <input
-            key={idx}
+            key={`${label}-${idx}`}
             ref={(el) => {
               refs.current[idx] = el;
             }}
             type="password"
             inputMode="numeric"
-            // Value is always 1 char or empty — never let React blank it mid-type
             value={d}
-            maxLength={2} // allow 2 so onChange sees old+new on mobile
+            maxLength={2}
             aria-label={`${label} digit ${idx + 1}`}
             className={`${baseClass} ${hasError ? errorClass : normalClass}`}
             onChange={(e) => handleChange(e, idx)}
@@ -184,44 +175,59 @@ function PinInputRow({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function SetUpPinCard({
-  title = "Set Up PIN",
-  description = "Set up a transaction PIN to securely and seamlessly pay for airtime, data, and bills.",
-  submitLabel = "Submit",
+export function UpdatePinCard({
+  title = "Update PIN",
+  description = "Choose a new 4-digit PIN for bill payments.",
+  submitLabel = "Update PIN",
   onSubmitPin,
 }: Readonly<Props>) {
-  const [pin, setPin] = useState<string[]>(EMPTY_PIN());
+  const [open, setOpen] = useState(false);
+  const [newPin, setNewPin] = useState<string[]>(EMPTY_PIN());
   const [confirmPin, setConfirmPin] = useState<string[]>(EMPTY_PIN());
   const [submitting, setSubmitting] = useState(false);
   const [mismatch, setMismatch] = useState(false);
 
-  const pinValue = pin.join("");
+  const newValue = newPin.join("");
   const confirmValue = confirmPin.join("");
-  const pinComplete = pin.every(Boolean);
-  const confirmComplete = confirmPin.every(Boolean);
-  const canSubmit = pinComplete && confirmComplete && !mismatch && !submitting;
 
-  // Only flag mismatch after confirm is fully filled to avoid premature red flash
+  const newComplete = newPin.every(Boolean);
+  const confirmComplete = confirmPin.every(Boolean);
+
+  const canSubmit = newComplete && confirmComplete && !mismatch && !submitting;
+
   useEffect(() => {
-    setMismatch(confirmComplete ? pinValue !== confirmValue : false);
-  }, [pinValue, confirmValue, confirmComplete]);
+    setMismatch(confirmComplete ? newValue !== confirmValue : false);
+  }, [newValue, confirmValue, confirmComplete]);
+
+  function handleReset() {
+    setOpen(false);
+    setNewPin(EMPTY_PIN());
+    setConfirmPin(EMPTY_PIN());
+    setMismatch(false);
+  }
 
   async function handleSubmit() {
     if (!onSubmitPin) return;
-    if (!pinComplete) return void toast.error("Please enter your 4-digit PIN.");
-    if (!confirmComplete) return void toast.error("Please confirm your PIN.");
-    if (pinValue !== confirmValue)
-      return void toast.error("PINs do not match. Please try again.");
+    if (!newComplete) {
+      toast.error("Please enter your new 4-digit PIN.");
+      return;
+    }
+    if (!confirmComplete) {
+      toast.error("Please confirm your new PIN.");
+      return;
+    }
+    if (newValue !== confirmValue) {
+      toast.error("PINs do not match. Please try again.");
+      return;
+    }
 
     try {
       setSubmitting(true);
-      await onSubmitPin(pinValue);
-      setPin(EMPTY_PIN());
-      setConfirmPin(EMPTY_PIN());
-      setMismatch(false);
+      await onSubmitPin({ newPin: newValue });
+      handleReset();
     } catch (err: any) {
       toast.error(
-        err?.message ?? err?.payload?.message ?? "Failed to set PIN.",
+        err?.message ?? err?.payload?.message ?? "Failed to update PIN.",
       );
     } finally {
       setSubmitting(false);
@@ -237,39 +243,64 @@ export function SetUpPinCard({
         </p>
       </div>
 
-      <div className="space-y-6 max-w-xs mx-auto">
-        <PinInputRow label="Enter PIN" digits={pin} onChange={setPin} />
+      {open ? (
+        <>
+          <div className="space-y-3 max-w-xs mx-auto">
+            <PinInputRow
+              label="New PIN"
+              digits={newPin}
+              onChange={setNewPin}
+              autoFocusFirst
+            />
 
-        {pinComplete && (
-          <>
-            <hr className="border-border" />
-            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-              <PinInputRow
-                label="Confirm PIN"
-                digits={confirmPin}
-                onChange={setConfirmPin}
-                hasError={mismatch}
-                autoFocusFirst
-              />
-              {mismatch && (
-                <p className="mt-2 text-xs text-red-500 animate-in fade-in duration-150">
-                  PINs do not match. Please re-enter.
-                </p>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+            {newComplete && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-6">
+                <hr className="border-border" />
+                <PinInputRow
+                  label="Confirm New PIN"
+                  digits={confirmPin}
+                  onChange={setConfirmPin}
+                  hasError={mismatch}
+                  autoFocusFirst
+                />
+                {mismatch && (
+                  <p className="text-xs text-red-500 animate-in fade-in duration-150">
+                    PINs do not match. Please re-enter.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
-      {pinComplete && (
-        <div className="mt-8 space-y-3 max-w-xs mx-auto animate-in fade-in duration-200">
+          <div className="mt-8 space-y-3 max-w-xs mx-auto animate-in fade-in duration-200">
+            <Button
+              type="button"
+              className="w-full h-12 text-sm font-medium"
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+            >
+              {submitting ? "Updating..." : submitLabel}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12 text-sm font-medium"
+              disabled={submitting}
+              onClick={handleReset}
+            >
+              Cancel
+            </Button>
+          </div>
+        </>
+      ) : (
+        <div className="max-w-xs mx-auto">
           <Button
             type="button"
             className="w-full h-12 text-sm font-medium"
-            onClick={handleSubmit}
-            disabled={!canSubmit}
+            onClick={() => setOpen(true)}
           >
-            {submitting ? "Submitting..." : submitLabel}
+            Update PIN
           </Button>
         </div>
       )}
