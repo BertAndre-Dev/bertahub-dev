@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,30 @@ export function ExpensesFiltersBar({
   onResetDates,
   onSearchChange,
 }: Readonly<ExpensesFiltersBarProps>) {
+  const didInitDefaultRangeRef = useRef(false);
+
+  useEffect(() => {
+    if (didInitDefaultRangeRef.current) return;
+    if (startDate || endDate) return;
+
+    didInitDefaultRangeRef.current = true;
+
+    const now = new Date();
+    const end = new Date(now);
+    const start = new Date(now);
+    start.setUTCDate(start.getUTCDate() - 30);
+
+    const toIso = (d: Date) =>
+      new Date(
+        Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      )
+        .toISOString()
+        .slice(0, 10);
+
+    onStartDateChange(toIso(start));
+    onEndDateChange(toIso(end));
+  }, [startDate, endDate, onStartDateChange, onEndDateChange]);
+
   return (
     <Card className="mt-0 p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

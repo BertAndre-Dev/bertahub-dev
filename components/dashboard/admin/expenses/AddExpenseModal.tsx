@@ -58,7 +58,7 @@ export function AddExpenseModal({
 }: Readonly<AddExpenseModalProps>) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto min-h-[30vh]">
         <DialogHeader>
           <DialogTitle>Add Expense</DialogTitle>
         </DialogHeader>

@@ -181,12 +181,12 @@ export const residentNav = [
     path: "/dashboard/resident/rent",
     moduleKey: "rent",
   },
-  // {
-  //   label: "Bills",
-  //   icon: LuReceipt,
-  //   path: "/dashboard/resident/pay-bills",
-  //   moduleKey: "bills",
-  // },
+  {
+    label: "Bills",
+    icon: LuReceipt,
+    path: "/dashboard/resident/pay-bills",
+    moduleKey: "bills",
+  },
   {
     label: "Bills Management",
     icon: LuReceipt,

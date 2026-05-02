@@ -132,7 +132,9 @@ function useIsolatedReport(
     )
       .unwrap()
       .then((res: any) => {
-        if (!abortRef.current) setData(res);
+        // Thunk resolves to `{ success, message, data }`; the UI expects the `data` payload.
+        const payload = res?.data ?? res;
+        if (!abortRef.current) setData(payload);
       })
       .catch((e: any) => {
         if (!abortRef.current)
@@ -360,7 +362,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {summaryCards.map((c) => {
           const Icon = "icon" in c ? c.icon : undefined;
           const hasDecoration = "icon" in c || "tone" in c;
