@@ -150,10 +150,10 @@ export default function AdminMaintenancePage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-3xl font-bold">Maintenance Request</h1>
-        <p className="text-muted-foreground mt-1">
-          Welcome back! Here&apos;s an overview on{" "}
+        <p className="text-muted-foreground mt-1 text-sm">
+          View and resolve maintenance requests from residents in {" "}
           <span className="text-[18px] font-bold underline uppercase text-black">
-            {estateName || "..."}
+            {estateName || ""}
           </span>
           .
         </p>

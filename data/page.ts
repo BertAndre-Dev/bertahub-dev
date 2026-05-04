@@ -10,6 +10,7 @@ import {
   Store,
   BarChart,
   MessageCircle,
+  MessagesSquare,
   Map as MapIcon,
 } from "lucide-react";
 
@@ -131,6 +132,11 @@ export const adminNav = [
     path: "/dashboard/admin/announcements",
     module: "announcements",
     moduleKey: "announcements",
+  },
+  {
+    label: "Community Chat",
+    icon: MessagesSquare,
+    path: "/dashboard/admin/community",
   },
   {
     label: "Contact Support",

@@ -55,7 +55,9 @@ export default function AdminUserPage() {
   const [selectedUser, setSelectedUser] = useState<AdminUserData | null>(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [suspendUserItem, setSuspendUserItem] = useState<AdminUserData | null>(null);
+  const [suspendUserItem, setSuspendUserItem] = useState<AdminUserData | null>(
+    null,
+  );
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -321,7 +323,7 @@ export default function AdminUserPage() {
         <div>
           <h1 className="font-heading text-3xl font-bold">User Management</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back! Here's is an overview on{" "}
+            View and manage residents and staff in{" "}
             <span className="text-[18px] font-bold underline uppercase text-black">
               {estateName}
             </span>

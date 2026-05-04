@@ -1,7 +1,34 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { WalletData } from "@/redux/slice/resident/wallet-mgt/wallet-mgt-slice";
+import { cn } from "@/lib/utils";
+
+function MaskableBalance({
+  show,
+  className,
+  children,
+}: Readonly<{
+  show: boolean;
+  className?: string;
+  children: React.ReactNode;
+}>) {
+  return (
+    <span
+      className={cn(
+        "inline-block tabular-nums transition-[filter] duration-200",
+        !show && "select-none blur-[10px]",
+        className,
+      )}
+      aria-hidden={!show}
+    >
+      {children}
+    </span>
+  );
+}
 
 type Props = {
   wallet: WalletData | null;
@@ -29,10 +56,31 @@ export function ResidentWalletCard({
   onTransferToBalanceClick,
   onCreateWalletClick,
 }: Readonly<Props>) {
+  const [showBalance, setShowBalance] = useState(true);
+
   return (
     <Card className="p-4 md:p-6 shadow-md">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg font-semibold">My Wallet</CardTitle>
+        {wallet ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+            onClick={() => setShowBalance((v) => !v)}
+            aria-label={
+              showBalance ? "Hide wallet balance" : "Show wallet balance"
+            }
+            aria-pressed={showBalance}
+          >
+            {showBalance ? (
+              <EyeOff className="size-7 cursor-pointer" aria-hidden />
+            ) : (
+              <Eye className="size-7 cursor-pointer" aria-hidden />
+            )}
+          </Button>
+        ) : null}
       </CardHeader>
 
       <CardContent>
@@ -41,9 +89,13 @@ export function ResidentWalletCard({
             {variant === "fundOnly" ? (
               <div className="flex flex-col md:flex-row gap-5 md:gap-0 items-start md:items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Wallet Balance</p>
+                  <p className="text-sm text-muted-foreground">
+                    Wallet Balance
+                  </p>
                   <p className="text-4xl font-bold mt-1">
-                    {formatNaira(wallet?.balance ?? 0)}
+                    <MaskableBalance show={showBalance}>
+                      {formatNaira(wallet?.balance ?? 0)}
+                    </MaskableBalance>
                   </p>
                 </div>
               </div>
@@ -60,7 +112,9 @@ export function ResidentWalletCard({
                     </span>
                   </p>
                   <p className="text-2xl md:text-3xl font-bold mt-1 text-primary">
-                    {formatNaira(wallet?.balance ?? 0)}
+                    <MaskableBalance show={showBalance}>
+                      {formatNaira(wallet?.balance ?? 0)}
+                    </MaskableBalance>
                   </p>
                 </div>
 
@@ -69,7 +123,11 @@ export function ResidentWalletCard({
                     Available Wallet Balance
                   </p>
                   <p className="text-2xl md:text-3xl font-bold mt-1">
-                    {formatNaira(wallet?.availableBalance ?? wallet?.balance ?? 0)}
+                    <MaskableBalance show={showBalance}>
+                      {formatNaira(
+                        wallet?.availableBalance ?? wallet?.balance ?? 0,
+                      )}
+                    </MaskableBalance>
                   </p>
                 </div>
 
@@ -84,16 +142,22 @@ export function ResidentWalletCard({
                     </span>
                   </p>
                   <p className="text-2xl md:text-3xl font-bold mt-1 text-primary">
-                    {formatNaira(wallet?.withdrawableBalance ?? 0)}
+                    <MaskableBalance show={showBalance}>
+                      {formatNaira(wallet?.withdrawableBalance ?? 0)}
+                    </MaskableBalance>
                   </p>
                 </div>
               </div>
             ) : (
               <div className="flex flex-col md:flex-row gap-5 md:gap-0 items-start md:items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Wallet Balance</p>
+                  <p className="text-sm text-muted-foreground">
+                    Wallet Balance
+                  </p>
                   <p className="text-4xl font-bold mt-1">
-                    {formatNaira(wallet?.balance ?? 0)}
+                    <MaskableBalance show={showBalance}>
+                      {formatNaira(wallet?.balance ?? 0)}
+                    </MaskableBalance>
                   </p>
                 </div>
               </div>
@@ -138,14 +202,16 @@ export function ResidentWalletCard({
           <Button
             onClick={onCreateWalletClick}
             disabled={
-              createWalletState === "isLoading" || (isOwner && createWalletModalOpen)
+              createWalletState === "isLoading" ||
+              (isOwner && createWalletModalOpen)
             }
           >
-            {createWalletState === "isLoading" ? "Creating wallet..." : "Create Wallet"}
+            {createWalletState === "isLoading"
+              ? "Creating wallet..."
+              : "Create Wallet"}
           </Button>
         )}
       </CardContent>
     </Card>
   );
 }
-

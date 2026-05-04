@@ -234,9 +234,9 @@ export default function AdminMeterManagement() {
           Estate Meter Management
         </h1>
         <p className="text-muted-foreground mt-1">
-          Welcome back! Here's is an overview on{" "}
+          Monitor and manage all energy meters in {" "}
           <span className="text-[18px] font-bold underline uppercase text-black">
-            {estateName}
+            {estateName || ""}
           </span>
           .
         </p>

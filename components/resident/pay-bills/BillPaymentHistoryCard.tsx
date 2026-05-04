@@ -39,7 +39,14 @@ const HISTORY_COLUMNS = [
     render: (item: BillHistoryRow) => {
       const raw = firstPrimitive(
         item,
-        ["createdAt", "created_at", "date", "time"],
+        [
+          "createdAt",
+          "created_at",
+          "transaction_date",
+          "transactionDate",
+          "date",
+          "time",
+        ],
         "",
       );
       if (!raw || raw === "—") return "-";
@@ -47,7 +54,11 @@ const HISTORY_COLUMNS = [
       return Number.isNaN(d.getTime()) ? raw : d.toLocaleString();
     },
     exportValue: (item: BillHistoryRow) =>
-      firstPrimitive(item, ["createdAt", "created_at", "date"], ""),
+      firstPrimitive(
+        item,
+        ["createdAt", "created_at", "transaction_date", "date"],
+        "",
+      ),
   },
   {
     key: "product",
@@ -55,7 +66,7 @@ const HISTORY_COLUMNS = [
     render: (item: BillHistoryRow) =>
       firstPrimitive(
         item,
-        ["product", "category", "category_code", "service_type"],
+        ["product", "category", "category_code", "service_type", "network"],
         "-",
       ),
   },
@@ -63,14 +74,18 @@ const HISTORY_COLUMNS = [
     key: "biller",
     header: "Biller",
     render: (item: BillHistoryRow) =>
-      firstPrimitive(item, ["biller_name", "biller", "biller_code"], "-"),
+      firstPrimitive(
+        item,
+        ["biller_name", "biller", "biller_code", "network"],
+        "-",
+      ),
   },
-  {
-    key: "customer",
-    header: "Customer",
-    render: (item: BillHistoryRow) =>
-      firstPrimitive(item, ["customer", "customer_id", "bill_ref"], "-"),
-  },
+  // {
+  //   key: "customer",
+  //   header: "Customer",
+  //   render: (item: BillHistoryRow) =>
+  //     firstPrimitive(item, ["customer", "customer_id", "bill_ref"], "-"),
+  // },
   {
     key: "amount",
     header: "Amount",
@@ -86,44 +101,54 @@ const HISTORY_COLUMNS = [
       return Number.isFinite(amt) ? amt : "";
     },
   },
-  {
-    key: "status",
-    header: "Status",
-    render: (item: BillHistoryRow) => {
-      const statusRaw = firstPrimitive(
-        item,
-        ["status", "paymentStatus", "state"],
-        "",
-      );
-      const status = statusRaw.toLowerCase();
-      if (!status || status === "—") return "-";
-      let cls = "text-yellow-600 font-medium";
-      if (status === "successful") cls = "text-green-600 font-medium";
-      else if (status === "failed") cls = "text-red-600 font-medium";
-      return <span className={cls}>{status}</span>;
-    },
-    exportValue: (item: BillHistoryRow) =>
-      firstPrimitive(item, ["status", "paymentStatus", "state"], ""),
-  },
-  {
-    key: "reference",
-    header: "Reference",
-    render: (item: BillHistoryRow) =>
-      firstPrimitive(item, ["reference", "tx_ref", "id"], "-"),
-  },
+  // {
+  //   key: "reference",
+  //   header: "Reference",
+  //   render: (item: BillHistoryRow) =>
+  //     firstPrimitive(item, ["reference", "tx_ref", "id"], "-"),
+  // },
 ];
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+/** Unwraps API shapes: top-level array, or nested `{ data: { data: [], total, ... } }`. */
 function extractHistoryRows(
   history: Record<string, unknown> | null,
 ): BillHistoryRow[] {
   if (!history) return [];
-  const d = history.data;
-  if (Array.isArray(d)) return d as BillHistoryRow[];
+
+  const innerData = history.data;
+  if (Array.isArray(innerData)) return innerData as BillHistoryRow[];
+
+  if (isRecord(innerData)) {
+    const nested = innerData.data;
+    if (Array.isArray(nested)) return nested as BillHistoryRow[];
+  }
+
   const alt = history.history;
   if (Array.isArray(alt)) return alt as BillHistoryRow[];
   const tx = history.transactions;
   if (Array.isArray(tx)) return tx as BillHistoryRow[];
   return [];
+}
+
+function extractHistoryPagination(
+  history: Record<string, unknown> | null,
+): Record<string, unknown> {
+  if (!history) return {};
+  const topPagination =
+    (history.pagination as Record<string, unknown>) ??
+    (history.meta as Record<string, unknown>);
+  if (isRecord(topPagination) && Object.keys(topPagination).length > 0) {
+    return topPagination;
+  }
+  const inner = history.data;
+  if (isRecord(inner) && Array.isArray(inner.data)) {
+    return inner;
+  }
+  return {};
 }
 
 export type BillPaymentHistoryCardProps = Readonly<{
@@ -148,23 +173,27 @@ export function BillPaymentHistoryCard({
     [historyPayload],
   );
 
-  const paginationRaw = useMemo(() => {
-    const h = historyPayload as Record<string, unknown> | null;
-    return (
-      (h?.pagination as Record<string, unknown>) ??
-      (h?.meta as Record<string, unknown>) ??
-      {}
-    );
-  }, [historyPayload]);
+  const paginationRaw = useMemo(
+    () => extractHistoryPagination(historyPayload),
+    [historyPayload],
+  );
 
   const historyTotal =
     Number(paginationRaw?.total ?? paginationRaw?.totalItems) ||
     historyRows.length ||
     0;
   const historyCurrent =
-    Number(paginationRaw?.page ?? paginationRaw?.currentPage) || historyPage;
+    Number(
+      paginationRaw?.page ??
+        paginationRaw?.currentPage ??
+        paginationRaw?.current_page,
+    ) || historyPage;
   const historyPageSize =
-    Number(paginationRaw?.limit ?? paginationRaw?.pageSize) || historyLimit;
+    Number(
+      paginationRaw?.limit ??
+        paginationRaw?.pageSize ??
+        paginationRaw?.page_size,
+    ) || historyLimit;
 
   return (
     <Card className="p-6">
@@ -197,14 +226,7 @@ export function BillPaymentHistoryCard({
             const res = await dispatch(
               getBillPaymentHistory({ page: 1, limit: 50000 }),
             ).unwrap();
-            const payload = (res ?? {}) as Record<string, unknown>;
-            const d = payload?.data;
-            if (Array.isArray(d)) return d as BillHistoryRow[];
-            if (Array.isArray(payload?.history))
-              return payload.history as BillHistoryRow[];
-            if (Array.isArray(payload?.transactions))
-              return payload.transactions as BillHistoryRow[];
-            return [];
+            return extractHistoryRows((res ?? {}) as Record<string, unknown>);
           }}
         />
       </CardContent>

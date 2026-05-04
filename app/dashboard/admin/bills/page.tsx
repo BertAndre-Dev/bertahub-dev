@@ -486,7 +486,7 @@ export default function BillPage() {
         <div>
           <h1 className="font-heading text-3xl font-bold">Bills Management</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back! Here's is an overview on{" "}
+            Create, track, and manage estate bills and payments in{" "}
             <span className="text-[18px] font-bold underline uppercase text-black">
               {estateName}
             </span>

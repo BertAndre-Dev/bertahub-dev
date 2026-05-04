@@ -39,7 +39,7 @@ const AddressPage = () => {
       <div>
         <h1 className="font-heading text-3xl font-bold">Address Management</h1>
         <p className="text-muted-foreground mt-1">
-          Welcome back! Here's is an overview on{" "}
+          Here you can manage and update property addresses within {" "}
           <span className="text-[18px] font-bold underline uppercase text-black">
             {estateName}
           </span>

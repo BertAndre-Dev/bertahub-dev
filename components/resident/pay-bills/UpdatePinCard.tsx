@@ -12,7 +12,10 @@ type Props = {
   title?: string;
   description?: string;
   submitLabel?: string;
-  onSubmitPin?: (payload: { newPin: string }) => Promise<void> | void;
+  onSubmitPin?: (payload: {
+    currentPin: string;
+    newPin: string;
+  }) => Promise<void> | void;
 };
 
 const PIN_LENGTH = 4;
@@ -177,23 +180,31 @@ function PinInputRow({
 
 export function UpdatePinCard({
   title = "Update PIN",
-  description = "Choose a new 4-digit PIN for bill payments.",
+  description = "Enter your current PIN, then choose a new 4-digit bill payment PIN.",
   submitLabel = "Update PIN",
   onSubmitPin,
 }: Readonly<Props>) {
   const [open, setOpen] = useState(false);
+  const [currentPin, setCurrentPin] = useState<string[]>(EMPTY_PIN());
   const [newPin, setNewPin] = useState<string[]>(EMPTY_PIN());
   const [confirmPin, setConfirmPin] = useState<string[]>(EMPTY_PIN());
   const [submitting, setSubmitting] = useState(false);
   const [mismatch, setMismatch] = useState(false);
 
+  const currentValue = currentPin.join("");
   const newValue = newPin.join("");
   const confirmValue = confirmPin.join("");
 
+  const currentComplete = currentPin.every(Boolean);
   const newComplete = newPin.every(Boolean);
   const confirmComplete = confirmPin.every(Boolean);
 
-  const canSubmit = newComplete && confirmComplete && !mismatch && !submitting;
+  const canSubmit =
+    currentComplete &&
+    newComplete &&
+    confirmComplete &&
+    !mismatch &&
+    !submitting;
 
   useEffect(() => {
     setMismatch(confirmComplete ? newValue !== confirmValue : false);
@@ -201,6 +212,7 @@ export function UpdatePinCard({
 
   function handleReset() {
     setOpen(false);
+    setCurrentPin(EMPTY_PIN());
     setNewPin(EMPTY_PIN());
     setConfirmPin(EMPTY_PIN());
     setMismatch(false);
@@ -208,6 +220,10 @@ export function UpdatePinCard({
 
   async function handleSubmit() {
     if (!onSubmitPin) return;
+    if (!currentComplete) {
+      toast.error("Please enter your current 4-digit PIN.");
+      return;
+    }
     if (!newComplete) {
       toast.error("Please enter your new 4-digit PIN.");
       return;
@@ -220,10 +236,14 @@ export function UpdatePinCard({
       toast.error("PINs do not match. Please try again.");
       return;
     }
+    if (newValue === currentValue) {
+      toast.error("New PIN must be different from your current PIN.");
+      return;
+    }
 
     try {
       setSubmitting(true);
-      await onSubmitPin({ newPin: newValue });
+      await onSubmitPin({ currentPin: currentValue, newPin: newValue });
       handleReset();
     } catch (err: any) {
       toast.error(
@@ -235,7 +255,7 @@ export function UpdatePinCard({
   }
 
   return (
-    <Card className="p-8 w-full text-center h-[230px] min-h-[220px] overflow-y-auto">
+    <Card className="w-full h-[230px] min-h-[220px] overflow-y-auto p-8 text-center">
       <div className="mb-8 max-w-xs mx-auto">
         <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
         <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
@@ -245,12 +265,19 @@ export function UpdatePinCard({
 
       {open ? (
         <>
-          <div className="space-y-3 max-w-xs mx-auto">
+          <div className="mx-auto max-w-xs space-y-6">
+            <PinInputRow
+              label="Current PIN"
+              digits={currentPin}
+              onChange={setCurrentPin}
+              autoFocusFirst
+            />
+
             <PinInputRow
               label="New PIN"
               digits={newPin}
               onChange={setNewPin}
-              autoFocusFirst
+              autoFocusFirst={currentComplete}
             />
 
             {newComplete && (
