@@ -188,7 +188,7 @@ export const residentNav = [
     moduleKey: "rent",
   },
   {
-    label: "Bills",
+    label: "Pay Bills",
     icon: LuReceipt,
     path: "/dashboard/resident/pay-bills",
     moduleKey: "bills",
