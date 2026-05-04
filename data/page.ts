@@ -10,6 +10,7 @@ import {
   Store,
   BarChart,
   MessageCircle,
+  MessagesSquare,
   Map as MapIcon,
 } from "lucide-react";
 
@@ -133,6 +134,11 @@ export const adminNav = [
     moduleKey: "announcements",
   },
   {
+    label: "Community Chat",
+    icon: MessagesSquare,
+    path: "/dashboard/admin/community",
+  },
+  {
     label: "Contact Support",
     icon: MessageCircle,
     path: "/dashboard/admin/support",
@@ -182,7 +188,7 @@ export const residentNav = [
     moduleKey: "rent",
   },
   {
-    label: "Bills",
+    label: "Pay Bills",
     icon: LuReceipt,
     path: "/dashboard/resident/pay-bills",
     moduleKey: "bills",

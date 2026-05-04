@@ -214,8 +214,14 @@ export default function PayBillsPage() {
     setHasBillPaymentPin(true);
   };
 
-  const handleUpdateBillPin = async ({ newPin }: { newPin: string }) => {
-    await dispatch(updateBillPaymentPin({ newPin })).unwrap();
+  const handleUpdateBillPin = async ({
+    currentPin,
+    newPin,
+  }: {
+    currentPin: string;
+    newPin: string;
+  }) => {
+    await dispatch(updateBillPaymentPin({ currentPin, newPin })).unwrap();
     toast.success("PIN updated successfully.");
     setHasBillPaymentPin(true);
     dispatch(getSignedInUser()).catch(() => {});

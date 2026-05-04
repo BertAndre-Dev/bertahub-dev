@@ -433,7 +433,7 @@ export function BillPaymentFormCard({
         </FieldHint>
       </div>
 
-      <div>
+      {/* <div>
         <FieldLabel htmlFor="bills-ref">
           Bill Reference{" "}
           <span className="text-muted-foreground font-normal">(optional)</span>
@@ -445,7 +445,7 @@ export function BillPaymentFormCard({
           placeholder="e.g. 0025401100"
         />
         <FieldHint>Used for validation — leave blank if unsure.</FieldHint>
-      </div>
+      </div> */}
 
       <div>
         <FieldLabel htmlFor="bills-amount">Amount</FieldLabel>
@@ -607,9 +607,9 @@ export function BillPaymentFormCard({
           <p className="font-semibold mb-2 text-foreground">
             Validation Result
           </p>
-          <pre className="whitespace-pre-wrap break-all text-xs text-muted-foreground">
+          {/* <pre className="whitespace-pre-wrap break-all text-xs text-muted-foreground">
             {JSON.stringify(billsPayment.validation, null, 2)}
-          </pre>
+          </pre> */}
         </div>
       )}
       {Boolean(billsPayment.payment) && (
@@ -639,9 +639,6 @@ export function BillPaymentFormCard({
               Payment Successful
             </p>
           </div>
-          <pre className="whitespace-pre-wrap break-all text-xs text-emerald-700 dark:text-emerald-400">
-            {JSON.stringify(billsPayment.payment, null, 2)}
-          </pre>
         </div>
       )}
     </>
