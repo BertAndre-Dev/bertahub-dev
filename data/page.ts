@@ -1,17 +1,28 @@
-import { FiSettings, FiUsers, FiMapPin, FiLogOut } from "react-icons/fi";
+import { FiSettings, FiMapPin, FiLogOut } from "react-icons/fi";
 import { BsBuildings } from "react-icons/bs";
 import { IoSpeedometerOutline } from "react-icons/io5";
-import { GrTransaction } from "react-icons/gr";
-import { LuReceipt } from "react-icons/lu";
 import {
-  LayoutDashboard,
-  Wrench,
-  Bell,
-  Store,
+  ArrowLeftRight,
+  Banknote,
   BarChart,
+  Bell,
+  CarFront,
+  ClipboardList,
+  CircleDollarSign,
+  CreditCard,
+  History,
+  Home,
+  Inbox,
+  Map as MapIcon,
   MessageCircle,
   MessagesSquare,
-  Map as MapIcon,
+  Store,
+  UserCheck,
+  UserCog,
+  UserPlus,
+  UsersRound,
+  Wallet,
+  Wrench,
 } from "lucide-react";
 
 export const superAdminNav = [
@@ -37,7 +48,7 @@ export const superAdminNav = [
   //   },
   {
     label: "User Management",
-    icon: FiUsers,
+    icon: UserCog,
     path: "/dashboard/super-admin/user",
   },
   // {
@@ -52,12 +63,12 @@ export const superAdminNav = [
   },
   {
     label: "Transactions",
-    icon: GrTransaction,
+    icon: ArrowLeftRight,
     path: "/dashboard/super-admin/transactions",
   },
   {
     label: "Contact Support Inbox",
-    icon: MessageCircle,
+    icon: Inbox,
     path: "/dashboard/super-admin/chat",
   },
   //   {
@@ -87,13 +98,13 @@ export const adminNav = [
   },
   {
     label: "User Management",
-    icon: FiUsers,
+    icon: UserCog,
     path: "/dashboard/admin/user",
     moduleKey: "users",
   },
   {
     label: "Bills Management",
-    icon: LuReceipt,
+    icon: Banknote,
     path: "/dashboard/admin/bills",
     module: "bills",
     moduleKey: "bills",
@@ -107,14 +118,14 @@ export const adminNav = [
   },
   {
     label: "Visitors Management",
-    icon: FiUsers,
+    icon: UserPlus,
     path: "/dashboard/admin/visitor",
     module: "visitor",
     moduleKey: "visitor",
   },
   {
     label: "Expenses",
-    icon: LuReceipt,
+    icon: CircleDollarSign,
     path: "/dashboard/admin/expenses",
     moduleKey: "expense",
     module: "expense",
@@ -150,7 +161,7 @@ export const adminNav = [
 export const securityNav = [
   {
     label: "Visitor Management",
-    icon: LayoutDashboard,
+    icon: UserCheck,
     path: "/dashboard/security/visitor-management",
     moduleKey: "visitor",
   },
@@ -161,7 +172,7 @@ export const securityNav = [
   // },
   {
     label: "Activity Log",
-    icon: GrTransaction,
+    icon: History,
     path: "/dashboard/security/activity-log",
   },
   // {
@@ -177,25 +188,25 @@ export const residentNav = [
   // { label: "Overview", icon: FiHome, path: "/dashboard/resident/dashboard" },
   {
     label: "Tenant Management",
-    icon: FiUsers,
+    icon: UsersRound,
     path: "/dashboard/resident/user",
     moduleKey: "users",
   },
   {
     label: "Rent Management",
-    icon: LuReceipt,
+    icon: Home,
     path: "/dashboard/resident/rent",
     moduleKey: "rent",
   },
   {
     label: "Pay Bills",
-    icon: LuReceipt,
+    icon: CreditCard,
     path: "/dashboard/resident/pay-bills",
     moduleKey: "bills",
   },
   {
     label: "Bills Management",
-    icon: LuReceipt,
+    icon: ClipboardList,
     path: "/dashboard/resident/bills",
     moduleKey: "bills",
   },
@@ -207,13 +218,13 @@ export const residentNav = [
   },
   {
     label: "Wallet",
-    icon: GrTransaction,
+    icon: Wallet,
     path: "/dashboard/resident/transaction",
     moduleKey: "wallet",
   },
   {
     label: "Visitor Management",
-    icon: FiUsers,
+    icon: CarFront,
     path: "/dashboard/resident/visitor",
     moduleKey: "visitor",
   },
@@ -257,14 +268,14 @@ export const estateAdminNav = [
   // },
   {
     label: "Transactions",
-    icon: GrTransaction,
+    icon: ArrowLeftRight,
     path: "/dashboard/estate-admin/transactions",
     module: "transactions",
     moduleKey: "transactions",
   },
   {
     label: "Wallet",
-    icon: LuReceipt,
+    icon: Wallet,
     path: "/dashboard/estate-admin/wallet",
     module: "wallet",
     moduleKey: "wallet",

@@ -242,7 +242,9 @@ export function BillPaymentFormCard({
 
   const categoriesUnique = useMemo(
     () =>
-      dedupeByResolvedCode(billsPayment.categories ?? [], resolveCategoryCode),
+      dedupeByResolvedCode(billsPayment.categories ?? [], resolveCategoryCode)
+        // Hide Utility Bills from the dropdown (API may still return it)
+        .filter((c) => resolveCategoryCode(c) !== "UTILITYBILLS"),
     [billsPayment.categories],
   );
   const billersUnique = useMemo(
