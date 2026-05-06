@@ -186,7 +186,7 @@ function PinInputRow({
 
 export function SetUpPinCard({
   title = "Set Up PIN",
-  description = "Set up a transaction PIN to securely and seamlessly pay for airtime, data, and bills.",
+  description = "Set up a transaction PIN to securely and seamlessly pay for airtime, data, and other bills.",
   submitLabel = "Submit",
   onSubmitPin,
 }: Readonly<Props>) {
@@ -229,7 +229,7 @@ export function SetUpPinCard({
   }
 
   return (
-    <Card className="p-8 w-full text-center h-[230px] min-h-[220px] overflow-y-auto">
+    <Card className="p-8 w-full text-center h-[430px] min-h-[220px] overflow-y-auto">
       <div className="mb-8 max-w-xs mx-auto">
         <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
         <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">

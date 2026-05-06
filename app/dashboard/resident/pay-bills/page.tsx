@@ -227,6 +227,21 @@ export default function PayBillsPage() {
     dispatch(getSignedInUser()).catch(() => {});
   };
 
+  // ── PIN-first flow: user must set PIN before seeing full Pay Bills UI ──
+  if (!hasBillPaymentPin) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Pay Bills</h1>
+        <p className="text-sm text-muted-foreground">
+          Set up your 4-digit bill payment PIN to continue.
+        </p>
+        <div className="w-full">
+          <SetUpPinCard onSubmitPin={handleSubmitBillPin} />
+        </div>
+      </div>
+    );
+  }
+
   const handlePay = async () => {
     if (!hasBillPaymentPin) {
       toast.error("Please set up your bill payment PIN first.");
@@ -296,11 +311,7 @@ export default function PayBillsPage() {
           onCreateWalletClick={handleCreateWalletClick}
         />
 
-        {hasBillPaymentPin ? (
-          <UpdatePinCard onSubmitPin={handleUpdateBillPin} />
-        ) : (
-          <SetUpPinCard onSubmitPin={handleSubmitBillPin} />
-        )}
+        <UpdatePinCard onSubmitPin={handleUpdateBillPin} />
       </div>
 
       <BillPaymentFormCard
