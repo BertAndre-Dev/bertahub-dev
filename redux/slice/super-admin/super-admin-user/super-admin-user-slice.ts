@@ -4,6 +4,7 @@ import {
     suspendUser,
     deleteUser,
     getAllUsersByEstate,
+    getAllUsersByCompany,
     getUser,
 } from './super-admin-user';
 
@@ -47,6 +48,7 @@ export interface UserState {
     suspendUserState: "idle" | "isLoading" | "succeeded" | "failed";
     deleteUserState: "idle" | "isLoading" | "succeeded" | "failed";
     getAllUsersByEstateState: "idle" | "isLoading" | "succeeded" | "failed";
+    getAllUsersByCompanyState: "idle" | "isLoading" | "succeeded" | "failed";
     getUserState: "idle" | "isLoading" | "succeeded" | "failed";
     status: "idle" | "isLoading" | "succeeded" | "failed";
     user: SuperAdminUserDetails | null;
@@ -60,6 +62,7 @@ const initialState: UserState = {
     suspendUserState: "idle",
     deleteUserState: "idle",
     getAllUsersByEstateState: "idle",
+    getAllUsersByCompanyState: "idle",
     getUserState: "idle",
     status: "idle",
     user: null,
@@ -105,6 +108,34 @@ const superAdminUserSlice = createSlice({
                 state.getAllUsersByEstateState = "failed";
                 state.status = "failed";
                 state.error = action.error.message || "Failed to fetch estates user";
+            });
+
+        builder
+            .addCase(getAllUsersByCompany.pending, (state) => {
+                state.getAllUsersByCompanyState = "isLoading";
+                state.status = "isLoading";
+            })
+            .addCase(getAllUsersByCompany.fulfilled, (state, action) => {
+                state.getAllUsersByCompanyState = "succeeded";
+                state.status = "succeeded";
+
+                const pagination = action.payload?.pagination;
+                state.allSuperAdminUsers = {
+                    success: action.payload?.success ?? true,
+                    message: action.payload?.message ?? "Company users retrieved successfully",
+                    data: action.payload?.data || [],
+                    pagination: {
+                        total: pagination?.total ?? (action.payload?.data?.length ?? 0),
+                        currentPage: Number(pagination?.currentPage) || 1,
+                        totalPages: Number(pagination?.totalPages) || 1,
+                        pageSize: Number(pagination?.pageSize) || 10,
+                    },
+                };
+            })
+            .addCase(getAllUsersByCompany.rejected, (state, action) => {
+                state.getAllUsersByCompanyState = "failed";
+                state.status = "failed";
+                state.error = action.error.message || "Failed to fetch company users";
             });
         
         builder

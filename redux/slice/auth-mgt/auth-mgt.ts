@@ -5,7 +5,8 @@ import { clearCsrfToken, fetchCsrfToken } from "@/utils/csrf";
 
 
 export interface InvitedUserData {
-    estateId: string;
+    estateId?: string;
+    companyId: string;
     firstName: string;
     lastName: string;
     email: string;

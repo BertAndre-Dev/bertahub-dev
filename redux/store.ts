@@ -46,7 +46,10 @@ import residentAnnouncementsSliceReducer from "@/redux/slice/resident/announceme
 import adminExpenseHeadSliceReducer from "@/redux/slice/admin/expense-head/expense-head-slice";
 import adminExpenseEntrySliceReducer from "@/redux/slice/admin/expense-entry/expense-entry-slice";
 import estateAdminFinancialReportSliceReducer from "@/redux/slice/estate-admin/financial-report/financial-report-slice";
+import superAdminCompanySliceReducer from "@/redux/slice/super-admin/company-mgt/company-slice";
+import companyMarketplaceSliceReducer from "@/redux/slice/company/marketplace/company-marketplace-slice";
 import chatSliceReducer from "@/redux/slice/chat/chat-slice";
+import communityGroupSliceReducer from "@/redux/slice/community-group/community-group-slice";
 import mapsSliceReducer from "@/redux/slice/maps/maps-slice";
 import { mapsApi } from "@/redux/api/mapsApi";
 import residentBillsPaymentSliceReducer from "@/redux/slice/resident/bills-payment/bills-payment-slice";
@@ -160,6 +163,16 @@ const persistedResidentBillsPaymentSliceReducer = persistReducer(
   residentBillsPaymentSliceReducer,
 );
 
+const persistedSuperAdminCompanySliceReducer = persistReducer(
+  persistConfig,
+  superAdminCompanySliceReducer,
+);
+
+const persistedCompanyMarketplaceSliceReducer = persistReducer(
+  persistConfig,
+  companyMarketplaceSliceReducer,
+);
+
 export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
@@ -202,12 +215,15 @@ export const store = configureStore({
     residentInvitedTenants: residentInvitedTenantsSliceReducer,
     adminAnnouncements: adminAnnouncementsSliceReducer,
     superAdminMarketplace: superAdminMarketplaceSliceReducer,
+    superAdminCompany: persistedSuperAdminCompanySliceReducer,
+    companyMarketplace: persistedCompanyMarketplaceSliceReducer,
     residentMarketplace: residentMarketplaceSliceReducer,
     residentAnnouncements: residentAnnouncementsSliceReducer,
     adminExpenseHead: persistedAdminExpenseHeadSliceReducer,
     adminExpenseEntry: persistedAdminExpenseEntrySliceReducer,
     estateAdminFinancialReport: estateAdminFinancialReportSliceReducer,
     chat: chatSliceReducer,
+    communityGroup: communityGroupSliceReducer,
     maps: mapsSliceReducer,
     [mapsApi.reducerPath]: mapsApi.reducer,
   },

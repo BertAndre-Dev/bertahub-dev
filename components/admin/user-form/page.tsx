@@ -20,10 +20,11 @@ type InviteUserFormProps = {
 
 interface InviteUserFormData {
   estateId: string;
+  companyId: string;
   firstName: string;
   lastName: string;
   email: string;
-  role: "resident" | "security" | "";
+  role: "resident" | "security" | "company" | "";
   residentType: string;
   addressIds: string[];
 }
@@ -31,6 +32,7 @@ interface InviteUserFormData {
 const roleOptions = [
   { label: "Resident", value: "resident" },
   { label: "Security", value: "security" },
+  { label: "Company", value: "company" },
 ];
 
 // Admins can only invite residents as OWNERS. Tenants must be invited by owners.
@@ -41,6 +43,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
 
   const [formData, setFormData] = useState<InviteUserFormData>({
     estateId: "",
+    companyId: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -69,11 +72,24 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
             ? rawEstateId
             : rawEstateId?._id || rawEstateId?.id || "";
 
+        const rawCompanyId = (data as any)?.companyId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
+        const companyId =
+          typeof rawCompanyId === "string"
+            ? rawCompanyId
+            : rawCompanyId?._id || rawCompanyId?.id || (data as any)?.company?._id || (data as any)?.company?.id || "";
+
         if (!estateId) {
           return toast.error("No estate linked to your account.");
         }
 
-        setFormData((prev) => ({ ...prev, estateId }));
+        if (!companyId) {
+          return toast.error("No company linked to your account.");
+        }
+
+        setFormData((prev) => ({ ...prev, estateId, companyId }));
 
         const fieldRes = await dispatch(getFieldByEstate(estateId)).unwrap();
         const fields = fieldRes?.data || [];
@@ -128,6 +144,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
 
     const payload = {
       estateId: formData.estateId,
+      companyId: formData.companyId,
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,

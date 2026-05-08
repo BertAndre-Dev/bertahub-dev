@@ -8,6 +8,7 @@ import axiosInstance from "@/utils/axiosInstance";
  */
 export interface InviteTenantPayload {
   estateId: string;
+  companyId: string;
   firstName: string;
   lastName: string;
   email: string;

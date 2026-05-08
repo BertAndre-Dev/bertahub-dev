@@ -270,6 +270,7 @@ type InviteTenantFormProps = {
 
 interface FormData {
   estateId: string;
+  companyId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -280,6 +281,7 @@ export default function InviteTenantForm({ close }: InviteTenantFormProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [formData, setFormData] = useState<FormData>({
     estateId: "",
+    companyId: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -319,6 +321,7 @@ export default function InviteTenantForm({ close }: InviteTenantFormProps) {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
         const rawEstate = userRes?.data?.estateId ?? userRes?.data?.estate;
+        const rawCompany = userRes?.data?.companyId ?? (userRes?.data as any)?.company;
 
         let estateId = "";
         if (typeof rawEstate === "string") {
@@ -327,11 +330,25 @@ export default function InviteTenantForm({ close }: InviteTenantFormProps) {
           estateId = (rawEstate as { id?: string }).id ?? "";
         }
 
+        let companyId = "";
+        if (typeof rawCompany === "string") {
+          companyId = rawCompany;
+        } else if (rawCompany && typeof rawCompany === "object") {
+          companyId =
+            (rawCompany as { id?: string; _id?: string })._id ??
+            (rawCompany as { id?: string; _id?: string }).id ??
+            "";
+        }
+
         if (!estateId) {
           toast.error("No estate linked to your account.");
           return;
         }
-        setFormData((prev) => ({ ...prev, estateId }));
+        if (!companyId) {
+          toast.error("No company linked to your account.");
+          return;
+        }
+        setFormData((prev) => ({ ...prev, estateId, companyId }));
 
         await dispatch(
           getOwnerAddressesByEstate({ estateId, page: 1, limit: 200 }),
@@ -360,6 +377,7 @@ export default function InviteTenantForm({ close }: InviteTenantFormProps) {
       const res = await dispatch(
         inviteTenant({
           estateId: formData.estateId,
+          companyId: formData.companyId,
           firstName: formData.firstName.trim(),
           lastName: formData.lastName.trim(),
           email: formData.email.trim(),

@@ -13,6 +13,7 @@ import {
   History,
   Home,
   Inbox,
+  Building2,
   Map as MapIcon,
   MessageCircle,
   MessagesSquare,
@@ -35,6 +36,11 @@ export const superAdminNav = [
     label: "Estate Management",
     icon: BsBuildings,
     path: "/dashboard/super-admin/estate",
+  },
+  {
+    label: "Company Management",
+    icon: Building2,
+    path: "/dashboard/super-admin/company",
   },
   {
     label: "Market Place",
@@ -76,6 +82,29 @@ export const superAdminNav = [
   //     icon: FiUsers,
   //     path: "/dashboard/super-admin/visitors",
   //   },
+  {
+    label: "Settings",
+    icon: FiSettings,
+    path: "/dashboard/settings",
+  },
+  {
+    label: "Logout",
+    icon: FiLogOut,
+    // path: "/auth/logout"
+  },
+];
+    
+export const companyNav = [
+  {
+    label: "Asset Management",
+    icon: Building2,
+    path: "/dashboard/company/asset",
+  },
+  // {
+  //   label: "Marketplace",
+  //   icon: Store,
+  //   path: "/dashboard/company/marketplace",
+  // },
   {
     label: "Settings",
     icon: FiSettings,

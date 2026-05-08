@@ -19,20 +19,23 @@ const EMPTY_PIN = (): string[] => Array(PIN_LENGTH).fill("");
 
 // ─── Sub-component: PinInputRow ───────────────────────────────────────────────
 
-interface PinInputRowProps {
+export interface PinInputRowProps {
   label: string;
   digits: string[];
   onChange: (next: string[]) => void;
   hasError?: boolean;
   autoFocusFirst?: boolean;
+  /** Omit the label row (e.g. authorise-PIN step where the parent shows the title). */
+  hideLabel?: boolean;
 }
 
-function PinInputRow({
+export function PinInputRow({
   label,
   digits,
   onChange,
   hasError = false,
   autoFocusFirst = false,
+  hideLabel = false,
 }: PinInputRowProps) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -153,9 +156,11 @@ function PinInputRow({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-        {label}
-      </p>
+      {!hideLabel ? (
+        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          {label}
+        </p>
+      ) : null}
       <div className="flex gap-3">
         {digits.map((d, idx) => (
           <input
@@ -229,7 +234,7 @@ export function SetUpPinCard({
   }
 
   return (
-    <Card className="p-8 w-full text-center h-[430px] min-h-[220px] overflow-y-auto">
+    <Card className="p-8 w-full text-center overflow-y-auto">
       <div className="mb-8 max-w-xs mx-auto">
         <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
         <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
