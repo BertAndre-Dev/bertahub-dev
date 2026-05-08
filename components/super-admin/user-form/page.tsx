@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAllEstates } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt";
 import { iniviteUser } from "@/redux/slice/auth-mgt/auth-mgt"; // keep name you used
+import { getCompanies } from "@/redux/slice/super-admin/company-mgt/company";
 import { toast } from "react-toastify";
 import type { AppDispatch, RootState } from "@/redux/store";
 
@@ -18,6 +19,7 @@ type InviteUserFormProps = {
 
 interface InviteUserFormData {
   estateId: string;
+  companyId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -29,6 +31,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [formData, setFormData] = useState<InviteUserFormData>({
     estateId: "",
+    companyId: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -36,7 +39,9 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
   });
 
   const [estates, setEstates] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [loadingEstates, setLoadingEstates] = useState(false);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // ✅ FIXED: Properly select estate slice
@@ -74,14 +79,36 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
+  useEffect(() => {
+    const loadCompanies = async () => {
+      setLoadingCompanies(true);
+      try {
+        const res: any = await dispatch(getCompanies({ page: 1, limit: 200 })).unwrap();
+        const data = res?.data ?? [];
+        setCompanies(Array.isArray(data) ? data : []);
+      } catch {
+        toast.error("Failed to fetch companies");
+      } finally {
+        setLoadingCompanies(false);
+      }
+    };
+    loadCompanies();
+  }, [dispatch]);
+
   const roleOptions = [
     { value: "estate admin", label: "Estate Admin" },
     { value: "admin", label: "Admin" },
+    { value: "company", label: "Company" },
   ];
 
   const estateOptions = estates.map((est: any) => ({
     value: est.id ?? est._id,
     label: est.name,
+  }));
+
+  const companyOptions = companies.map((c: any) => ({
+    value: c.id ?? c._id,
+    label: c.name,
   }));
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,6 +122,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
   const resetForm = () =>
     setFormData({
       estateId: "",
+      companyId: "",
       firstName: "",
       lastName: "",
       email: "",
@@ -105,6 +133,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
     e.preventDefault();
 
     if (!formData.estateId) return toast.error("Please select an estate.");
+    if (!formData.companyId) return toast.error("Please select a company.");
     if (!formData.role) return toast.error("Please select a role.");
     if (!formData.email) return toast.error("Please provide an email.");
     if (!formData.firstName) return toast.error("Please provide first name.");
@@ -113,7 +142,12 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
     setSubmitting(true);
     try {
       const payload = {
-        ...formData,
+        estateId: formData.estateId,
+        companyId: formData.companyId,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        role: formData.role,
         residentType: "owner",
         addressIds: [] as string[],
       };
@@ -197,6 +231,20 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
               onChange={(opt) => handleSelectChange("estateId", opt)}
               isLoading={loadingEstates}
               placeholder="Select estate"
+              isClearable
+            />
+          </div>
+
+          <div>
+            <Label>Company</Label>
+            <Select
+              options={companyOptions}
+              value={
+                companyOptions.find((o) => o.value === formData.companyId) ?? null
+              }
+              onChange={(opt) => handleSelectChange("companyId", opt)}
+              isLoading={loadingCompanies}
+              placeholder="Select company"
               isClearable
             />
           </div>

@@ -25,6 +25,10 @@ import {
   payBillViaWallet,
   getBillPaymentHistory,
 } from "@/redux/slice/resident/bills-payment/bills-payment";
+import {
+  clearPayment,
+  resetBillsPaymentError,
+} from "@/redux/slice/resident/bills-payment/bills-payment-slice";
 
 import FundWalletModal from "@/components/resident/transaction/fund-wallet-modal/page";
 import type { WalletData } from "@/redux/slice/resident/wallet-mgt/wallet-mgt-slice";
@@ -33,7 +37,30 @@ import { SetUpPinCard } from "@/components/resident/pay-bills/SetUpPinCard";
 import { UpdatePinCard } from "@/components/resident/pay-bills/UpdatePinCard";
 import { BillPaymentFormCard } from "@/components/resident/pay-bills/BillPaymentFormCard";
 import { BillPaymentHistoryCard } from "@/components/resident/pay-bills/BillPaymentHistoryCard";
+import { BillPaymentResultModal } from "@/components/resident/pay-bills/BillPaymentResultModal";
 import type { ResidentBillsPaymentState } from "@/redux/slice/resident/bills-payment/bills-payment-slice";
+
+function pickPaymentReference(payload: unknown): string | undefined {
+  if (payload == null || typeof payload !== "object") return undefined;
+  const root = payload as Record<string, unknown>;
+  const data =
+    root.data != null && typeof root.data === "object"
+      ? (root.data as Record<string, unknown>)
+      : root;
+  const keys = [
+    "reference",
+    "ref",
+    "transaction_ref",
+    "tx_ref",
+    "request_reference",
+    "requestReference",
+  ];
+  for (const k of keys) {
+    const v = data[k];
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return undefined;
+}
 
 export default function PayBillsPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -56,6 +83,25 @@ export default function PayBillsPage() {
   const [pin, setPin] = useState("");
   const [historyPage, setHistoryPage] = useState(1);
   const historyLimit = 10;
+
+  const [payResultModal, setPayResultModal] = useState<{
+    open: boolean;
+    success: boolean;
+    title: string;
+    message: string;
+    reference?: string;
+  }>({
+    open: false,
+    success: false,
+    title: "",
+    message: "",
+  });
+
+  const closePayResultModal = () => {
+    setPayResultModal((prev) => ({ ...prev, open: false }));
+    dispatch(resetBillsPaymentError());
+    dispatch(clearPayment());
+  };
 
   const wallet = useSelector(
     (state: RootState) => state.wallet.wallet,
@@ -266,7 +312,7 @@ export default function PayBillsPage() {
       : undefined;
 
     try {
-      await dispatch(
+      const payPayload = await dispatch(
         payBillViaWallet({
           country,
           customer_id: customerId.trim(),
@@ -278,16 +324,37 @@ export default function PayBillsPage() {
           pin: trimmedPin,
         }),
       ).unwrap();
-      toast.success("Bill payment initiated.");
+
+      const apiRef = pickPaymentReference(payPayload);
+      setPayResultModal({
+        open: true,
+        success: true,
+        title: "Payment successful",
+        message:
+          "Your bill payment was processed. Wallet balance and history will update shortly.",
+        reference: apiRef ?? ref,
+      });
+
       if (userId) dispatch(getWallet(userId)).catch(() => {});
       setHistoryPage(1);
-      // historyPage is already 1 so the effect won't re-fire — dispatch manually
       dispatch(
         getBillPaymentHistory({ page: 1, limit: historyLimit }),
       ).catch(() => {});
       setPin("");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Payment failed.");
+    } catch (e: unknown) {
+      const msg =
+        e &&
+        typeof e === "object" &&
+        "message" in e &&
+        typeof (e as { message?: string }).message === "string"
+          ? (e as { message: string }).message
+          : "Payment failed. Please try again.";
+      setPayResultModal({
+        open: true,
+        success: false,
+        title: "Payment unsuccessful",
+        message: msg,
+      });
     }
   };
 
@@ -348,6 +415,15 @@ export default function PayBillsPage() {
         userId={userId}
         walletId={wallet?.id ?? null}
         onSubmit={handleFundWallet}
+      />
+
+      <BillPaymentResultModal
+        open={payResultModal.open}
+        onClose={closePayResultModal}
+        success={payResultModal.success}
+        title={payResultModal.title}
+        message={payResultModal.message}
+        reference={payResultModal.reference}
       />
     </div>
   );

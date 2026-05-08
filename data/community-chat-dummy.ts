@@ -1,4 +1,6 @@
-/** Dummy data for admin Community Chat until API is wired. */
+/** Dummy data for admin Community Chat; list UI also maps live API groups. */
+
+import type { ChatGroup } from "@/types/community-group";
 
 export const COMMUNITY_ESTATE_NAME = "EZRA COURT";
 
@@ -150,3 +152,58 @@ export const DUMMY_RESIDENT_OPTIONS = [
   { label: "Block A — floor 2", value: "block-a-2" },
   { label: "Block B — all", value: "block-b" },
 ];
+
+function formatGroupTime(iso?: string): string {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+    if (d >= startOfToday) {
+      return d.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+    const startOfYesterday = new Date(startOfToday);
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+    if (d >= startOfYesterday && d < startOfToday) return "Yesterday";
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  } catch {
+    return "—";
+  }
+}
+
+function formatCreatedAtLabel(iso?: string): string {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "—";
+  }
+}
+
+/** Map a chat group from the API to sidebar / window display model. */
+export function chatGroupToCommunity(g: ChatGroup): CommunityChatGroup {
+  const about = (g.description ?? "").trim() || "No description yet.";
+  return {
+    id: g._id,
+    name: g.name,
+    lastMsg: (g.lastMessagePreview ?? "").trim() || "No messages yet",
+    time: formatGroupTime(g.updatedAt ?? g.createdAt),
+    unread: g.unreadCount ?? 0,
+    memberCount: g.memberCount ?? 0,
+    createdAtLabel: formatCreatedAtLabel(g.createdAt),
+    about,
+  };
+}

@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { PinInputRow } from "@/components/resident/pay-bills/SetUpPinCard";
 
 // ─── resolver helpers ────────────────────────────────────────────────────────
 
@@ -263,6 +264,11 @@ export function BillPaymentFormCard({
     (b) => resolveBillerCode(b) === billerCode,
   );
   const selectedItem = itemsUnique.find((i) => resolveItemCode(i) === itemCode);
+
+  const pinDigits = useMemo(
+    () => Array.from({ length: 4 }, (_, i) => pin[i] ?? ""),
+    [pin],
+  );
 
   const step1Valid = Boolean(categoryCode && billerCode && itemCode);
   const step2Valid = Boolean(customerId.trim() && amount && Number(amount) > 0);
@@ -525,51 +531,20 @@ export function BillPaymentFormCard({
         />
       </div>
 
-      {/* PIN input */}
+      {/* PIN — one digit per box */}
       <div>
-        <FieldLabel htmlFor="bills-pin">
+        <p className="text-sm font-medium text-foreground block mb-1.5">
           Enter your 4-digit PIN to authorise
-        </FieldLabel>
-        <Input
-          id="bills-pin"
-          value={pin}
-          onChange={(e) =>
-            onPinChange(e.target.value.replaceAll(/[^\d]/g, "").slice(0, 4))
-          }
-          inputMode="numeric"
-          placeholder="• • • •"
-          type="password"
-          maxLength={4}
-          className="tracking-[0.4em] text-center text-xl font-semibold max-w-[160px]"
-        />
+        </p>
+          <PinInputRow
+            label="PIN"
+            hideLabel
+            digits={pinDigits}
+            onChange={(next) => onPinChange(next.join(""))}
+            autoFocusFirst
+          />
         <FieldHint>This is the PIN you set up for bill payments.</FieldHint>
       </div>
-
-      {/* errors */}
-      {billsPayment.error && (
-        <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2.5 border border-destructive/20">
-          <svg
-            className="w-4 h-4 flex-shrink-0 mt-0.5"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
-            <circle
-              cx="8"
-              cy="8"
-              r="7"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-            <path
-              d="M8 5v3.5M8 11h.01"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-          {billsPayment.error}
-        </div>
-      )}
 
       <div className="flex gap-3 pt-2">
         <Button
@@ -601,51 +576,6 @@ export function BillPaymentFormCard({
     </div>
   );
 
-  // ── payment result banners ──
-  const renderResult = () => (
-    <>
-      {Boolean(billsPayment.validation) && (
-        <div className="rounded-xl border bg-muted/30 p-4 text-sm mt-4">
-          <p className="font-semibold mb-2 text-foreground">
-            Validation Result
-          </p>
-          {/* <pre className="whitespace-pre-wrap break-all text-xs text-muted-foreground">
-            {JSON.stringify(billsPayment.validation, null, 2)}
-          </pre> */}
-        </div>
-      )}
-      {Boolean(billsPayment.payment) && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40 p-4 text-sm mt-4">
-          <div className="flex items-center gap-2 mb-2">
-            <svg
-              className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
-              viewBox="0 0 16 16"
-              fill="none"
-            >
-              <circle
-                cx="8"
-                cy="8"
-                r="7"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M5 8l2.5 2.5L11 5.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <p className="font-semibold text-emerald-800 dark:text-emerald-300">
-              Payment Successful
-            </p>
-          </div>
-        </div>
-      )}
-    </>
-  );
-
   return (
     <Card className="p-6">
       <CardHeader className="px-0 md:px-0 pb-2">
@@ -661,8 +591,6 @@ export function BillPaymentFormCard({
         {step === 1 && renderStep1()}
         {step === 2 && renderStep2()}
         {step === 3 && renderStep3()}
-
-        {renderResult()}
       </CardContent>
     </Card>
   );

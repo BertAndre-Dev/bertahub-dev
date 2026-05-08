@@ -13,6 +13,7 @@ import {
   securityNav,
   residentNav,
   estateAdminNav,
+  companyNav
 } from "@/data/page";
 import { AppDispatch, RootState } from "@/redux/store";
 import {
@@ -152,6 +153,8 @@ export default function DashboardLayout({
     let navItems =
       role === "super admin"
         ? superAdminNav
+        : role === "company"
+          ? companyNav
         : role === "admin"
           ? adminNav
           : role === "estate admin"

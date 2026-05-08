@@ -34,6 +34,8 @@ interface AdminUserData {
     data: Record<string, string>;
   }[];
   role: string;
+  residentType: string;
+  serviceCharge: boolean;
   isActive?: boolean;
   invitationStatus?: string;
 }
@@ -262,6 +264,7 @@ export default function AdminUserPage() {
     { key: "email", header: "Email" },
     ...getAddressColumns(allAdminUsers),
     { key: "role", header: "Role" },
+    { key: "residentType", header: "Resident Type" },
     {
       key: "invitationStatus",
       header: "Invitation Status",
@@ -276,6 +279,7 @@ export default function AdminUserPage() {
           {item.invitationStatus === "completed"
             ? "Completed"
             : "Not Completed"}
+            {/* {item.serviceCharge ? "Yes" : "No"} */}
         </span>
       ),
     },
