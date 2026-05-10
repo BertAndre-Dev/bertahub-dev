@@ -48,6 +48,7 @@ import adminExpenseEntrySliceReducer from "@/redux/slice/admin/expense-entry/exp
 import estateAdminFinancialReportSliceReducer from "@/redux/slice/estate-admin/financial-report/financial-report-slice";
 import superAdminCompanySliceReducer from "@/redux/slice/super-admin/company-mgt/company-slice";
 import companyMarketplaceSliceReducer from "@/redux/slice/company/marketplace/company-marketplace-slice";
+import companyAssetSliceReducer from "@/redux/slice/company/asset-mgt/company-asset-slice";
 import chatSliceReducer from "@/redux/slice/chat/chat-slice";
 import communityGroupSliceReducer from "@/redux/slice/community-group/community-group-slice";
 import mapsSliceReducer from "@/redux/slice/maps/maps-slice";
@@ -173,6 +174,11 @@ const persistedCompanyMarketplaceSliceReducer = persistReducer(
   companyMarketplaceSliceReducer,
 );
 
+const persistedCompanyAssetSliceReducer = persistReducer(
+  persistConfig,
+  companyAssetSliceReducer,
+);
+
 export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
@@ -217,6 +223,7 @@ export const store = configureStore({
     superAdminMarketplace: superAdminMarketplaceSliceReducer,
     superAdminCompany: persistedSuperAdminCompanySliceReducer,
     companyMarketplace: persistedCompanyMarketplaceSliceReducer,
+    companyAsset: persistedCompanyAssetSliceReducer,
     residentMarketplace: residentMarketplaceSliceReducer,
     residentAnnouncements: residentAnnouncementsSliceReducer,
     adminExpenseHead: persistedAdminExpenseHeadSliceReducer,
