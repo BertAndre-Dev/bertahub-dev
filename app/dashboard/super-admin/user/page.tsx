@@ -23,10 +23,8 @@ import {
   activateUser,
   suspendUser,
   deleteUser,
-  getAllUsersByCompany,
 } from "@/redux/slice/super-admin/super-admin-user/super-admin-user";
 import { getAllEstates } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt";
-import { getCompanies } from "@/redux/slice/super-admin/company-mgt/company";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
@@ -58,11 +56,6 @@ interface EstateOption {
   value: string;
 }
 
-interface CompanyOption {
-  label: string;
-  value: string;
-}
-
 export default function SuperAdminUserPage() {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -90,17 +83,8 @@ export default function SuperAdminUserPage() {
     };
   });
 
-  const { allCompanies } = useSelector((state: RootState) => {
-    const s: any = (state as any).superAdminCompany;
-    return { allCompanies: (s?.list ?? []) as any[] };
-  });
-
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"estate" | "company">("estate");
   const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(
-    null,
-  );
-  const [selectedCompany, setSelectedCompany] = useState<CompanyOption | null>(
     null,
   );
   const [startDate, setStartDate] = useState("");
@@ -122,15 +106,6 @@ export default function SuperAdminUserPage() {
       })
       .filter((x): x is EstateOption => Boolean(x)) || [];
 
-  const companyOptions: CompanyOption[] =
-    (allCompanies ?? [])
-      .map((c: any) => {
-        const value = String(c?._id || c?.id || "").trim();
-        if (!value) return null;
-        return { label: c?.name ?? "Unnamed company", value };
-      })
-      .filter((x): x is CompanyOption => Boolean(x)) || [];
-
   // ✅ Fetch all estates on mount
   useEffect(() => {
     dispatch(
@@ -140,32 +115,17 @@ export default function SuperAdminUserPage() {
       .catch(() => toast.error("Failed to fetch estates"));
   }, [dispatch]);
 
-  // Fetch companies on mount (for company view)
-  useEffect(() => {
-    dispatch(getCompanies({ page: 1, limit: 200 }))
-      .unwrap()
-      .catch(() => toast.error("Failed to fetch companies"));
-  }, [dispatch]);
-
   // ✅ Default to the first estate as soon as estates load
   useEffect(() => {
-    if (view !== "estate") return;
     if (selectedEstate?.value) return;
     if (!estateOptions.length) return;
     setSelectedEstate(estateOptions[0]);
-  }, [estateOptions, selectedEstate?.value, view]);
-
-  useEffect(() => {
-    if (view !== "company") return;
-    if (selectedCompany?.value) return;
-    if (!companyOptions.length) return;
-    setSelectedCompany(companyOptions[0]);
-  }, [companyOptions, selectedCompany?.value, view]);
+  }, [estateOptions, selectedEstate?.value]);
 
   // ✅ Fetch users for the selected estate
   useEffect(() => {
-    const shouldApplyDate = Boolean(startDate && endDate);
-    if (view === "estate" && selectedEstate?.value) {
+    if (selectedEstate?.value) {
+      const shouldApplyDate = Boolean(startDate && endDate);
       dispatch(
         getAllUsersByEstate({
           estateId: selectedEstate.value,
@@ -178,22 +138,7 @@ export default function SuperAdminUserPage() {
         .unwrap()
         .catch(() => toast.error("Failed to fetch users for selected estate"));
     }
-
-    if (view === "company" && selectedCompany?.value) {
-      const shouldApplyDate = Boolean(startDate && endDate);
-      dispatch(
-        getAllUsersByCompany({
-          companyId: selectedCompany.value,
-          page: 1,
-          limit: Number(pagination?.pageSize) || 10,
-          startDate: shouldApplyDate ? startDate : undefined,
-          endDate: shouldApplyDate ? endDate : undefined,
-        }),
-      )
-        .unwrap()
-        .catch(() => toast.error("Failed to fetch users for selected company"));
-    }
-  }, [selectedEstate, selectedCompany, dispatch, startDate, endDate, view]);
+  }, [selectedEstate, dispatch, startDate, endDate]);
 
   const handleEstateModal = (user?: SuperAdminUserData) => {
     setSelectedUser(user || null);
@@ -237,18 +182,10 @@ export default function SuperAdminUserPage() {
       onConfirm: async () => {
         await dispatch(deleteUser(id)).unwrap();
         toast.success(`${name} deleted successfully!`);
-        if (view === "estate" && selectedEstate?.value)
+        if (selectedEstate?.value)
           await dispatch(
             getAllUsersByEstate({
               estateId: selectedEstate.value,
-              page: 1,
-              limit: Number(pagination?.pageSize) || 10,
-            }),
-          ).unwrap();
-        if (view === "company" && selectedCompany?.value)
-          await dispatch(
-            getAllUsersByCompany({
-              companyId: selectedCompany.value,
               page: 1,
               limit: Number(pagination?.pageSize) || 10,
             }),
@@ -332,53 +269,17 @@ export default function SuperAdminUserPage() {
         </div>
 
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          {/* View switcher */}
-          {/* <div className="flex gap-2 border-b border-border overflow-x-auto">
-            {[
-              { id: "estate" as const, label: "Estate" },
-              { id: "company" as const, label: "Company" },
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setView(t.id);
-                  setStartDate("");
-                  setEndDate("");
-                }}
-                className={`px-4 py-3 text-sm font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap ${
-                  view === t.id
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div> */}
-
-          {view === "estate" ? (
-            <div className="w-56">
-              <Select
-                options={estateOptions}
-                placeholder="Filter by estate"
-                value={selectedEstate}
-                onChange={(option) => setSelectedEstate(option)}
-                isSearchable
-                className="rounded-full"
-              />
-            </div>
-          ) : (
-            <div className="w-56">
-              <Select
-                options={companyOptions}
-                placeholder="Filter by company"
-                value={selectedCompany}
-                onChange={(option) => setSelectedCompany(option)}
-                isSearchable
-                className="rounded-full"
-              />
-            </div>
-          )}
+          {/* ✅ Estate Dropdown */}
+          <div className="w-48">
+            <Select
+              options={estateOptions}
+              placeholder="Filter by estate"
+              value={selectedEstate}
+              onChange={(option) => setSelectedEstate(option)}
+              isSearchable
+              className="rounded-full"
+            />
+          </div>
 
           <Button
             onClick={() => handleEstateModal()}
@@ -451,9 +352,7 @@ export default function SuperAdminUserPage() {
           emptyMessage={
             loading
               ? <Loader label="Loading users..." />
-              : view === "estate"
-                ? "No users found for this estate"
-                : "No users found for this company"
+              : "No users found for this estate"
           }
           enableDateRangeFilter
           startDate={startDate}
@@ -469,40 +368,25 @@ export default function SuperAdminUserPage() {
             pageSize: Number(pagination?.pageSize) || 10,
           }}
           onPageChange={(page) => {
+            if (!selectedEstate?.value) return; // ✅ Prevent null access
             const shouldApplyDate = Boolean(startDate && endDate);
 
-            if (view === "estate") {
-              if (!selectedEstate?.value) return;
-              dispatch(
-                getAllUsersByEstate({
-                  estateId: selectedEstate.value,
-                  page,
-                  limit: Number(pagination?.pageSize) || 10,
-                  startDate: shouldApplyDate ? startDate : undefined,
-                  endDate: shouldApplyDate ? endDate : undefined,
-                }),
-              )
-                .unwrap()
-                .catch(() => toast.error("Failed to change page"));
-            } else {
-              if (!selectedCompany?.value) return;
-              dispatch(
-                getAllUsersByCompany({
-                  companyId: selectedCompany.value,
-                  page,
-                  limit: Number(pagination?.pageSize) || 10,
-                  startDate: shouldApplyDate ? startDate : undefined,
-                  endDate: shouldApplyDate ? endDate : undefined,
-                }),
-              )
-                .unwrap()
-                .catch(() => toast.error("Failed to change page"));
-            }
+            dispatch(
+              getAllUsersByEstate({
+                estateId: selectedEstate.value,
+                page,
+                limit: Number(pagination?.pageSize) || 10,
+                startDate: shouldApplyDate ? startDate : undefined,
+                endDate: shouldApplyDate ? endDate : undefined,
+              }),
+            )
+              .unwrap()
+              .catch(() => toast.error("Failed to change page"));
           }}
           enableExport
           exportFileName="users"
           onExportRequest={
-            view === "estate" && selectedEstate?.value
+            selectedEstate?.value
               ? async () => {
                   const shouldApplyDate = Boolean(startDate && endDate);
                   const res = await dispatch(
@@ -516,20 +400,6 @@ export default function SuperAdminUserPage() {
                   ).unwrap();
                   return res?.data ?? [];
                 }
-              : view === "company" && selectedCompany?.value
-                ? async () => {
-                    const shouldApplyDate = Boolean(startDate && endDate);
-                    const res = await dispatch(
-                      getAllUsersByCompany({
-                        companyId: selectedCompany.value,
-                        page: 1,
-                        limit: 50000,
-                        startDate: shouldApplyDate ? startDate : undefined,
-                        endDate: shouldApplyDate ? endDate : undefined,
-                      }),
-                    ).unwrap();
-                    return res?.data ?? [];
-                  }
               : undefined
           }
         />
