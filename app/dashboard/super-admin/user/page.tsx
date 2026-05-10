@@ -333,7 +333,7 @@ export default function SuperAdminUserPage() {
 
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           {/* View switcher */}
-          <div className="flex gap-2 border-b border-border overflow-x-auto">
+          {/* <div className="flex gap-2 border-b border-border overflow-x-auto">
             {[
               { id: "estate" as const, label: "Estate" },
               { id: "company" as const, label: "Company" },
@@ -354,7 +354,7 @@ export default function SuperAdminUserPage() {
                 {t.label}
               </button>
             ))}
-          </div>
+          </div> */}
 
           {view === "estate" ? (
             <div className="w-56">
