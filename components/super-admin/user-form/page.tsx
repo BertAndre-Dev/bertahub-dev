@@ -83,7 +83,9 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
     const loadCompanies = async () => {
       setLoadingCompanies(true);
       try {
-        const res: any = await dispatch(getCompanies({ page: 1, limit: 200 })).unwrap();
+        const res: any = await dispatch(
+          getCompanies({ page: 1, limit: 200 }),
+        ).unwrap();
         const data = res?.data ?? [];
         setCompanies(Array.isArray(data) ? data : []);
       } catch {
@@ -132,8 +134,6 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.estateId) return toast.error("Please select an estate.");
-    if (!formData.companyId) return toast.error("Please select a company.");
     if (!formData.role) return toast.error("Please select a role.");
     if (!formData.email) return toast.error("Please provide an email.");
     if (!formData.firstName) return toast.error("Please provide first name.");
@@ -141,9 +141,11 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
 
     setSubmitting(true);
     try {
+      const estateId = formData.estateId?.trim();
+      const companyId = formData.companyId?.trim();
       const payload = {
-        estateId: formData.estateId,
-        companyId: formData.companyId,
+        ...(estateId ? { estateId } : {}),
+        ...(companyId ? { companyId } : {}),
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -222,7 +224,12 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
           {renderTextFields()}
 
           <div>
-            <Label>Estate</Label>
+            <Label>
+              Estate{" "}
+              <span className="text-muted-foreground text-xs font-normal">
+                (optional)
+              </span>
+            </Label>
             <Select
               options={estateOptions}
               value={
@@ -236,11 +243,17 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
           </div>
 
           <div>
-            <Label>Company</Label>
+            <Label>
+              Company{" "}
+              <span className="text-muted-foreground text-xs font-normal">
+                (optional)
+              </span>
+            </Label>
             <Select
               options={companyOptions}
               value={
-                companyOptions.find((o) => o.value === formData.companyId) ?? null
+                companyOptions.find((o) => o.value === formData.companyId) ??
+                null
               }
               onChange={(opt) => handleSelectChange("companyId", opt)}
               isLoading={loadingCompanies}

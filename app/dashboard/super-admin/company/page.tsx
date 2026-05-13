@@ -14,7 +14,7 @@ import type { AppDispatch, RootState } from "@/redux/store";
 import { CompanyStatsCards } from "./components/CompanyStatsCards";
 import { CompanyFormModal } from "./components/CompanyFormModal";
 import { CompanyStatusModal } from "./components/CompanyStatusModal";
-
+import Loader from "@/components/ui/Loader";
 import {
   activateCompany,
   createCompany,
@@ -142,9 +142,13 @@ export default function SuperAdminCompanyPage() {
   );
 
   const [open, setOpen] = useState(false);
-  const [editingCompany, setEditingCompany] = useState<CompanyItem | null>(null);
+  const [editingCompany, setEditingCompany] = useState<CompanyItem | null>(
+    null,
+  );
   const [statusItem, setStatusItem] = useState<CompanyItem | null>(null);
-  const [statusMode, setStatusMode] = useState<"suspend" | "activate">("suspend");
+  const [statusMode, setStatusMode] = useState<"suspend" | "activate">(
+    "suspend",
+  );
   const [statusSubmitting, setStatusSubmitting] = useState(false);
 
   const [page, setPage] = useState(1);
@@ -419,93 +423,106 @@ export default function SuperAdminCompanyPage() {
     [modules],
   );
 
-  const emptyMessage = loading ? "Loading companies..." : "No companies found.";
+  const emptyMessage = "No companies found.";
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">
-            Company Management
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Create and manage companies, including enabled modules.
-          </p>
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading companies..." />
+        </div>
+      )}
+
+      <div
+        className={[
+          "space-y-6",
+          loading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+        ].join(" ")}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-heading text-3xl font-bold">
+              Company Management
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Create and manage companies, including enabled modules.
+            </p>
+          </div>
+
+          <Button
+            onClick={openCreate}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Create Company
+          </Button>
         </div>
 
-        <Button
-          onClick={openCreate}
-          className="flex items-center gap-2 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          Create Company
-        </Button>
-      </div>
+        <CompanyStatsCards companies={list ?? []} />
 
-      <CompanyStatsCards companies={list ?? []} />
+        <Card className="p-4">
+          <Table
+            columns={columns as any}
+            data={list ?? []}
+            emptyMessage={emptyMessage}
+            enableSearch
+            onSearch={(value) => {
+              setSearchCommitted(value);
+              setPage(1);
+            }}
+            enableDateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onDateRangeChange={({ startDate, endDate }) => {
+              setStartDate(startDate);
+              setEndDate(endDate);
+              setPage(1);
+            }}
+            showPagination
+            paginationInfo={{
+              total: pagination?.total ?? 0,
+              current: pagination?.currentPage ?? page,
+              pageSize: pagination?.pageSize ?? effectivePageSize,
+            }}
+            onPageChange={(p) => setPage(p)}
+            enableExport
+            exportFileName="companies"
+            onExportRequest={async () => {
+              const shouldApplyDate = Boolean(startDate && endDate);
+              const res: any = await dispatch(
+                getCompanies({
+                  page: 1,
+                  limit: 99999,
+                  search: searchCommitted || undefined,
+                  startDate: shouldApplyDate ? startDate : undefined,
+                  endDate: shouldApplyDate ? endDate : undefined,
+                }),
+              ).unwrap();
+              return (res?.data ?? []) as CompanyItem[];
+            }}
+          />
+        </Card>
 
-      <Card className="p-4">
-        <Table
-          columns={columns as any}
-          data={list ?? []}
-          emptyMessage={emptyMessage}
-          enableSearch
-          onSearch={(value) => {
-            setSearchCommitted(value);
-            setPage(1);
-          }}
-          enableDateRangeFilter
-          startDate={startDate}
-          endDate={endDate}
-          onDateRangeChange={({ startDate, endDate }) => {
-            setStartDate(startDate);
-            setEndDate(endDate);
-            setPage(1);
-          }}
-          showPagination
-          paginationInfo={{
-            total: pagination?.total ?? 0,
-            current: pagination?.currentPage ?? page,
-            pageSize: pagination?.pageSize ?? effectivePageSize,
-          }}
-          onPageChange={(p) => setPage(p)}
-          enableExport
-          exportFileName="companies"
-          onExportRequest={async () => {
-            const shouldApplyDate = Boolean(startDate && endDate);
-            const res: any = await dispatch(
-              getCompanies({
-                page: 1,
-                limit: 99999,
-                search: searchCommitted || undefined,
-                startDate: shouldApplyDate ? startDate : undefined,
-                endDate: shouldApplyDate ? endDate : undefined,
-              }),
-            ).unwrap();
-            return (res?.data ?? []) as CompanyItem[];
-          }}
+        <CompanyFormModal
+          open={open}
+          onClose={closeModal}
+          mode={editingCompany ? "update" : "create"}
+          form={form}
+          setForm={setForm}
+          modules={modules}
+          modulesLoading={modulesLoading}
+          onSubmit={handleSubmit}
         />
-      </Card>
 
-      <CompanyFormModal
-        open={open}
-        onClose={closeModal}
-        mode={editingCompany ? "update" : "create"}
-        form={form}
-        setForm={setForm}
-        modules={modules}
-        modulesLoading={modulesLoading}
-        onSubmit={handleSubmit}
-      />
-
-      <CompanyStatusModal
-        visible={Boolean(statusItem)}
-        onClose={closeStatusModal}
-        companyName={statusItem?.name ?? "this company"}
-        mode={statusMode}
-        loading={statusSubmitting}
-        onConfirm={handleConfirmStatus}
-      />
+        <CompanyStatusModal
+          visible={Boolean(statusItem)}
+          onClose={closeStatusModal}
+          companyName={statusItem?.name ?? "this company"}
+          mode={statusMode}
+          loading={statusSubmitting}
+          onConfirm={handleConfirmStatus}
+        />
+      </div>
     </div>
   );
 }

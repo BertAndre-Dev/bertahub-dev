@@ -5,6 +5,12 @@ export interface ChatGroup {
   name: string;
   description?: string;
   profileImage?: string;
+  estateId?: string;
+  createdBy?: string;
+  /** Member user IDs (list/detail API). */
+  members?: string[];
+  admins?: string[];
+  status?: string;
   createdAt?: string;
   updatedAt?: string;
   memberCount?: number;
@@ -34,4 +40,69 @@ export interface UpdateChatGroupPayload {
   name?: string;
   description?: string;
   profileImage?: string;
+}
+
+export type ChatGroupRoleToAdd =
+  | "RESIDENT"
+  | "ADMIN"
+  | "SECURITY"
+  | "ESTATE_ADMIN";
+
+export interface AddGroupMembersPayload {
+  groupId: string;
+  memberIds?: string[];
+  addAllSameRole?: boolean;
+  roleToAdd?: ChatGroupRoleToAdd;
+}
+
+export interface RemoveGroupMembersPayload {
+  groupId: string;
+  memberIds: string[];
+}
+
+export interface PromoteGroupAdminPayload {
+  groupId: string;
+  userId: string;
+}
+
+export type GroupMessageType = "text" | "image" | "video" | "file" | string;
+
+export interface GroupMessage {
+  _id: string;
+  groupId?: string;
+  content: string;
+  messageType: GroupMessageType;
+  senderId: string;
+  senderName: string;
+  createdAt: string;
+  updatedAt?: string;
+  attachments?: string[];
+  replyTo?: string;
+  isEdited?: boolean;
+  isDeleted?: boolean;
+  readBy?: string[];
+}
+
+export interface GroupMessagesListResponse {
+  success: boolean;
+  data: GroupMessage[];
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+}
+
+export interface SendGroupMessagePayload {
+  groupId: string;
+  content: string;
+  messageType?: GroupMessageType;
+  attachments?: string[];
+  replyTo?: string;
+}
+
+export interface EditGroupMessagePayload {
+  messageId: string;
+  content: string;
 }

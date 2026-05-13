@@ -2,6 +2,7 @@
 
 import { MoreVertical, Search, Users } from "lucide-react";
 import type { CommunityChatGroup } from "@/data/community-chat-dummy";
+import { formatGroupStatus } from "@/data/community-chat-dummy";
 
 type Props = {
   group: CommunityChatGroup;
@@ -16,7 +17,15 @@ export function CommunityChatHeader({ group, onOpenGroupInfo }: Props) {
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold">{group.name}</p>
-        <p className="text-sm text-white/90">{group.memberCount} members</p>
+        <p className="text-sm text-white/90">
+          {group.memberCount} member{group.memberCount === 1 ? "" : "s"}
+          {group.status ? (
+            <span className="text-white/80">
+              {" "}
+              · {formatGroupStatus(group.status)}
+            </span>
+          ) : null}
+        </p>
       </div>
       <button
         type="button"

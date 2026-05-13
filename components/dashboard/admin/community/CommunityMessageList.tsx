@@ -28,11 +28,21 @@ function formatSeparatorLabel(isoDate: string): string {
   });
 }
 
-type Props = {
+type Props = Readonly<{
   messages: CommunityMessage[];
-};
+  currentUserId?: string | null;
+  onEditMessage?: (messageId: string) => void;
+  onDeleteMessage?: (messageId: string) => void;
+  messageActionsDisabled?: boolean;
+}>;
 
-export function CommunityMessageList({ messages }: Props) {
+export function CommunityMessageList({
+  messages,
+  currentUserId,
+  onEditMessage,
+  onDeleteMessage,
+  messageActionsDisabled,
+}: Props) {
   const sections = useMemo(() => {
     const map = new Map<string, CommunityMessage[]>();
     for (const m of messages) {
@@ -60,7 +70,14 @@ export function CommunityMessageList({ messages }: Props) {
           </div>
           <div className="space-y-4">
             {items.map((msg) => (
-              <CommunityMessageBubble key={msg.id} message={msg} />
+              <CommunityMessageBubble
+                key={msg.id}
+                message={msg}
+                currentUserId={currentUserId}
+                onEditMessage={onEditMessage}
+                onDeleteMessage={onDeleteMessage}
+                messageActionsDisabled={messageActionsDisabled}
+              />
             ))}
           </div>
         </div>

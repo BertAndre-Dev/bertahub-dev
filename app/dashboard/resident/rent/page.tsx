@@ -28,7 +28,11 @@ import CreateRentForm from "@/components/resident/rent/create-rent-form/page";
 import UpdateRentForm from "@/components/resident/rent/update-rent-form/page";
 import ViewRentModal from "@/components/resident/rent/view-rent-modal/page";
 import SelectRentToPayModal from "@/components/resident/rent/select-rent-to-pay-modal/page";
-import { formatDate, formatAddress, formatTenant } from "@/components/resident/rent/utils";
+import {
+  formatDate,
+  formatAddress,
+  formatTenant,
+} from "@/components/resident/rent/utils";
 import {
   Eye,
   Pencil,
@@ -153,9 +157,7 @@ export default function ResidentRentPage() {
     if (createModalOpen && isOwner) {
       (async () => {
         try {
-          await dispatch(
-            getInvitedTenants({ page: 1, limit: 200 }),
-          ).unwrap();
+          await dispatch(getInvitedTenants({ page: 1, limit: 200 })).unwrap();
         } catch {
           toast.error("Failed to load tenants.");
         }
@@ -174,9 +176,7 @@ export default function ResidentRentPage() {
         startDate: shouldApplyDate ? startDate : undefined,
         endDate: shouldApplyDate ? endDate : undefined,
       } as any),
-    ).catch(() =>
-      toast.error("Failed to load rents."),
-    );
+    ).catch(() => toast.error("Failed to load rents."));
   };
 
   const handleViewRent = (id: string) => {
@@ -196,9 +196,7 @@ export default function ResidentRentPage() {
         startDate: shouldApplyDate ? startDate : undefined,
         endDate: shouldApplyDate ? endDate : undefined,
       } as any),
-    ).catch(() =>
-      toast.error("Failed to refresh rents."),
-    );
+    ).catch(() => toast.error("Failed to refresh rents."));
   };
 
   const handleDeleteRent = (item: RentItem) => {
@@ -439,161 +437,176 @@ export default function ResidentRentPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">Rent Management</h1>
-          <p className="text-muted-foreground mt-1">
-            {isOwner
-              ? "Create and view rent records for your properties."
-              : "View your rent records."}
-          </p>
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading rents..." />
         </div>
-        {isOwner ? (
-          <Button onClick={() => setCreateModalOpen(true)} className="shrink-0">
-            Create Rent
-          </Button>
-        ) : (
-          <Button
-            onClick={handlePayRentClick}
-            className="shrink-0 flex items-center gap-2"
-            disabled={rentsWithBalance.length === 0}
-          >
-            <Banknote className="h-4 w-4" />
-            Pay Rent
-          </Button>
-        )}
-      </div>
+      )}
 
-      <SelectRentToPayModal
-        visible={selectRentModalOpen}
-        onClose={() => setSelectRentModalOpen(false)}
-        rentsWithBalance={rentsWithBalance}
-        onSelect={handleSelectRentPay}
-      />
-
-      <Card className="p-4">
-        <Table
-          columns={columns}
-          data={list}
-          emptyMessage={
-            loading ? <Loader label="Loading rents..." /> : "No rent records found."
-          }
-          enableDateRangeFilter
-          startDate={startDate}
-          endDate={endDate}
-          onDateRangeChange={({ startDate, endDate }) => {
-            setStartDate(startDate);
-            setEndDate(endDate);
-          }}
-          showPagination
-          paginationInfo={{
-            total: (isOwner ? pagination : tenantPagination)?.total ?? 0,
-            current:
-              (isOwner ? pagination : tenantPagination)?.currentPage ??
-              currentPage,
-            pageSize:
-              (isOwner ? pagination : tenantPagination)?.pageSize ?? PAGE_SIZE,
-          }}
-          onPageChange={handlePageChange}
-          enableExport
-          exportFileName="rents"
-          onExportRequest={
-            isOwner
-              ? async () => {
-                  const shouldApplyDate = Boolean(startDate && endDate);
-                  const res = await dispatch(
-                    getOwnerRents({
-                      page: 1,
-                      limit: 50000,
-                      startDate: shouldApplyDate ? startDate : undefined,
-                      endDate: shouldApplyDate ? endDate : undefined,
-                    }),
-                  ).unwrap();
-                  return res?.data ?? [];
-                }
-              : async () => {
-                  const shouldApplyDate = Boolean(startDate && endDate);
-                  const res = await dispatch(
-                    getTenantRents({
-                      page: 1,
-                      limit: 50000,
-                      startDate: shouldApplyDate ? startDate : undefined,
-                      endDate: shouldApplyDate ? endDate : undefined,
-                    }),
-                  ).unwrap();
-                  return res?.data ?? [];
-                }
-          }
-        />
-      </Card>
-
-      {/* Create Rent Modal */}
-      <Modal
-        visible={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
+      <div
+        className={[
+          "space-y-6",
+          loading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+        ].join(" ")}
       >
-        <CreateRentForm
-          tenantList={tenantList}
-          tenantListLoading={tenantListLoading}
-          createLoading={createRentStatus === "isLoading"}
-          onClose={() => setCreateModalOpen(false)}
-          onSuccess={() => {
-            setCreateModalOpen(false);
-            dispatch(getOwnerRents({ page: currentPage, limit: PAGE_SIZE }));
-          }}
-        />
-      </Modal>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="font-heading text-3xl font-bold">Rent Management</h1>
+            <p className="text-muted-foreground mt-1">
+              {isOwner
+                ? "Create and view rent records for your properties."
+                : "View your rent records."}
+            </p>
+          </div>
+          {isOwner ? (
+            <Button
+              onClick={() => setCreateModalOpen(true)}
+              className="shrink-0"
+            >
+              Create Rent
+            </Button>
+          ) : (
+            <Button
+              onClick={handlePayRentClick}
+              className="shrink-0 flex items-center gap-2"
+              disabled={rentsWithBalance.length === 0}
+            >
+              <Banknote className="h-4 w-4" />
+              Pay Rent
+            </Button>
+          )}
+        </div>
 
-      {/* Edit Rent Modal */}
-      <Modal visible={!!editRentId} onClose={() => setEditRentId(null)}>
-        {editRentId ? (
-          <UpdateRentForm
-            rent={list.find((r) => r.id === editRentId) ?? null}
-            onClose={() => setEditRentId(null)}
+        <SelectRentToPayModal
+          visible={selectRentModalOpen}
+          onClose={() => setSelectRentModalOpen(false)}
+          rentsWithBalance={rentsWithBalance}
+          onSelect={handleSelectRentPay}
+        />
+
+        <Card className="p-4">
+          <Table
+            columns={columns}
+            data={list}
+            emptyMessage="No rent records found."
+            enableDateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onDateRangeChange={({ startDate, endDate }) => {
+              setStartDate(startDate);
+              setEndDate(endDate);
+            }}
+            showPagination
+            paginationInfo={{
+              total: (isOwner ? pagination : tenantPagination)?.total ?? 0,
+              current:
+                (isOwner ? pagination : tenantPagination)?.currentPage ??
+                currentPage,
+              pageSize:
+                (isOwner ? pagination : tenantPagination)?.pageSize ??
+                PAGE_SIZE,
+            }}
+            onPageChange={handlePageChange}
+            enableExport
+            exportFileName="rents"
+            onExportRequest={
+              isOwner
+                ? async () => {
+                    const shouldApplyDate = Boolean(startDate && endDate);
+                    const res = await dispatch(
+                      getOwnerRents({
+                        page: 1,
+                        limit: 50000,
+                        startDate: shouldApplyDate ? startDate : undefined,
+                        endDate: shouldApplyDate ? endDate : undefined,
+                      }),
+                    ).unwrap();
+                    return res?.data ?? [];
+                  }
+                : async () => {
+                    const shouldApplyDate = Boolean(startDate && endDate);
+                    const res = await dispatch(
+                      getTenantRents({
+                        page: 1,
+                        limit: 50000,
+                        startDate: shouldApplyDate ? startDate : undefined,
+                        endDate: shouldApplyDate ? endDate : undefined,
+                      }),
+                    ).unwrap();
+                    return res?.data ?? [];
+                  }
+            }
+          />
+        </Card>
+
+        {/* Create Rent Modal */}
+        <Modal
+          visible={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+        >
+          <CreateRentForm
+            tenantList={tenantList}
+            tenantListLoading={tenantListLoading}
+            createLoading={createRentStatus === "isLoading"}
+            onClose={() => setCreateModalOpen(false)}
             onSuccess={() => {
-              setEditRentId(null);
-              refreshList();
+              setCreateModalOpen(false);
+              dispatch(getOwnerRents({ page: currentPage, limit: PAGE_SIZE }));
             }}
           />
-        ) : null}
-      </Modal>
+        </Modal>
 
-      {/* View Rent Detail Modal */}
-      <Modal
-        visible={!!viewRentId}
-        onClose={() => {
-          setViewRentId(null);
-          dispatch(clearCurrentRent());
-        }}
-      >
-        <ViewRentModal
-          rent={currentRent}
-          loading={getRentByIdStatus === "isLoading"}
+        {/* Edit Rent Modal */}
+        <Modal visible={!!editRentId} onClose={() => setEditRentId(null)}>
+          {editRentId ? (
+            <UpdateRentForm
+              rent={list.find((r) => r.id === editRentId) ?? null}
+              onClose={() => setEditRentId(null)}
+              onSuccess={() => {
+                setEditRentId(null);
+                refreshList();
+              }}
+            />
+          ) : null}
+        </Modal>
+
+        {/* View Rent Detail Modal */}
+        <Modal
+          visible={!!viewRentId}
           onClose={() => {
             setViewRentId(null);
             dispatch(clearCurrentRent());
           }}
+        >
+          <ViewRentModal
+            rent={currentRent}
+            loading={getRentByIdStatus === "isLoading"}
+            onClose={() => {
+              setViewRentId(null);
+              dispatch(clearCurrentRent());
+            }}
+          />
+        </Modal>
+
+        {/* Suspend Rent Modal (reusable: tenant name + required reason) */}
+        <SuspendRentModal
+          visible={!!suspendRentItem}
+          onClose={() => setSuspendRentItem(null)}
+          tenantName={suspendRentItem ? formatTenant(suspendRentItem) : ""}
+          onConfirm={handleSuspendConfirm}
+          loading={suspendSubmitting}
         />
-      </Modal>
 
-      {/* Suspend Rent Modal (reusable: tenant name + required reason) */}
-      <SuspendRentModal
-        visible={!!suspendRentItem}
-        onClose={() => setSuspendRentItem(null)}
-        tenantName={suspendRentItem ? formatTenant(suspendRentItem) : ""}
-        onConfirm={handleSuspendConfirm}
-        loading={suspendSubmitting}
-      />
-
-      <PayRentModal
-        visible={!!payRentItem}
-        onClose={() => setPayRentItem(null)}
-        rent={payRentItem}
-        walletId={walletId}
-        onConfirm={handlePayRentConfirm}
-        loading={payRentStatus === "isLoading"}
-      />
+        <PayRentModal
+          visible={!!payRentItem}
+          onClose={() => setPayRentItem(null)}
+          rent={payRentItem}
+          walletId={walletId}
+          onConfirm={handlePayRentConfirm}
+          loading={payRentStatus === "isLoading"}
+        />
+      </div>
     </div>
   );
 }

@@ -39,6 +39,7 @@ import { BillPaymentFormCard } from "@/components/resident/pay-bills/BillPayment
 import { BillPaymentHistoryCard } from "@/components/resident/pay-bills/BillPaymentHistoryCard";
 import { BillPaymentResultModal } from "@/components/resident/pay-bills/BillPaymentResultModal";
 import type { ResidentBillsPaymentState } from "@/redux/slice/resident/bills-payment/bills-payment-slice";
+import Loader from "@/components/ui/Loader";
 
 function pickPaymentReference(payload: unknown): string | undefined {
   if (payload == null || typeof payload !== "object") return undefined;
@@ -113,6 +114,14 @@ export default function PayBillsPage() {
   const billsPayment = useSelector(
     (state: RootState) => state.residentBillsPayment,
   ) as ResidentBillsPaymentState;
+
+  const pageLoading =
+    String(createWalletState) === "isLoading" ||
+    billsPayment?.getCategoriesStatus === "isLoading" ||
+    billsPayment?.getBillersStatus === "isLoading" ||
+    billsPayment?.getItemsStatus === "isLoading" ||
+    billsPayment?.payStatus === "isLoading" ||
+    billsPayment?.historyStatus === "isLoading";
 
   const isOwner = residentType === "owner";
   const formatNaira = (value: number) => `₦${(value ?? 0).toLocaleString()}`;
@@ -276,13 +285,28 @@ export default function PayBillsPage() {
   // ── PIN-first flow: user must set PIN before seeing full Pay Bills UI ──
   if (!hasBillPaymentPin) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Pay Bills</h1>
-        <p className="text-sm text-muted-foreground">
-          Set up your 4-digit bill payment PIN to continue.
-        </p>
-        <div className="w-full">
-          <SetUpPinCard onSubmitPin={handleSubmitBillPin} />
+      <div className="relative">
+        {pageLoading && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+            <Loader label="Loading pay bills..." />
+          </div>
+        )}
+
+        <div
+          className={[
+            "space-y-6",
+            pageLoading
+              ? "blur-sm opacity-60 pointer-events-none select-none"
+              : "",
+          ].join(" ")}
+        >
+          <h1 className="text-2xl font-bold">Pay Bills</h1>
+          <p className="text-sm text-muted-foreground">
+            Set up your 4-digit bill payment PIN to continue.
+          </p>
+          <div className="w-full">
+            <SetUpPinCard onSubmitPin={handleSubmitBillPin} />
+          </div>
         </div>
       </div>
     );
@@ -337,9 +361,9 @@ export default function PayBillsPage() {
 
       if (userId) dispatch(getWallet(userId)).catch(() => {});
       setHistoryPage(1);
-      dispatch(
-        getBillPaymentHistory({ page: 1, limit: historyLimit }),
-      ).catch(() => {});
+      dispatch(getBillPaymentHistory({ page: 1, limit: historyLimit })).catch(
+        () => {},
+      );
       setPin("");
     } catch (e: unknown) {
       const msg =
@@ -359,72 +383,87 @@ export default function PayBillsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Pay Bills</h1>
-      <p className="text-sm text-muted-foreground">
-        Pay your bills securely and conveniently.
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ResidentWalletCard
-          wallet={wallet}
-          isOwner={isOwner}
-          formatNaira={formatNaira}
-          variant="fundOnly"
-          createWalletState={String(createWalletState)}
-          createWalletModalOpen={createWalletModalOpen}
-          onFundWalletClick={handleOpenModal}
-          onWithdrawClick={() => {}}
-          onTransferToBalanceClick={() => {}}
-          onCreateWalletClick={handleCreateWalletClick}
+    <div className="relative">
+      {pageLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading pay bills..." />
+        </div>
+      )}
+
+      <div
+        className={[
+          "space-y-6",
+          pageLoading
+            ? "blur-sm opacity-60 pointer-events-none select-none"
+            : "",
+        ].join(" ")}
+      >
+        <h1 className="text-2xl font-bold">Pay Bills</h1>
+        <p className="text-sm text-muted-foreground">
+          Pay your bills securely and conveniently.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ResidentWalletCard
+            wallet={wallet}
+            isOwner={isOwner}
+            formatNaira={formatNaira}
+            variant="fundOnly"
+            createWalletState={String(createWalletState)}
+            createWalletModalOpen={createWalletModalOpen}
+            onFundWalletClick={handleOpenModal}
+            onWithdrawClick={() => {}}
+            onTransferToBalanceClick={() => {}}
+            onCreateWalletClick={handleCreateWalletClick}
+          />
+
+          <UpdatePinCard onSubmitPin={handleUpdateBillPin} />
+        </div>
+
+        <BillPaymentFormCard
+          billsPayment={billsPayment}
+          country={country}
+          onCountryChange={setCountry}
+          categoryCode={categoryCode}
+          onCategoryChange={setCategoryCode}
+          billerCode={billerCode}
+          onBillerChange={setBillerCode}
+          itemCode={itemCode}
+          onItemChange={setItemCode}
+          customerId={customerId}
+          onCustomerIdChange={setCustomerId}
+          billRef={billRef}
+          onBillRefChange={setBillRef}
+          amount={amount}
+          onAmountChange={setAmount}
+          pin={pin}
+          onPinChange={setPin}
+          onPay={handlePay}
         />
 
-        <UpdatePinCard onSubmitPin={handleUpdateBillPin} />
+        <BillPaymentHistoryCard
+          billsPayment={billsPayment}
+          historyPage={historyPage}
+          historyLimit={historyLimit}
+          onHistoryPageChange={setHistoryPage}
+        />
+
+        <FundWalletModal
+          visible={open}
+          onClose={handleOpenModal}
+          userId={userId}
+          walletId={wallet?.id ?? null}
+          onSubmit={handleFundWallet}
+        />
+
+        <BillPaymentResultModal
+          open={payResultModal.open}
+          onClose={closePayResultModal}
+          success={payResultModal.success}
+          title={payResultModal.title}
+          message={payResultModal.message}
+          reference={payResultModal.reference}
+        />
       </div>
-
-      <BillPaymentFormCard
-        billsPayment={billsPayment}
-        country={country}
-        onCountryChange={setCountry}
-        categoryCode={categoryCode}
-        onCategoryChange={setCategoryCode}
-        billerCode={billerCode}
-        onBillerChange={setBillerCode}
-        itemCode={itemCode}
-        onItemChange={setItemCode}
-        customerId={customerId}
-        onCustomerIdChange={setCustomerId}
-        billRef={billRef}
-        onBillRefChange={setBillRef}
-        amount={amount}
-        onAmountChange={setAmount}
-        pin={pin}
-        onPinChange={setPin}
-        onPay={handlePay}
-      />
-
-      <BillPaymentHistoryCard
-        billsPayment={billsPayment}
-        historyPage={historyPage}
-        historyLimit={historyLimit}
-        onHistoryPageChange={setHistoryPage}
-      />
-
-      <FundWalletModal
-        visible={open}
-        onClose={handleOpenModal}
-        userId={userId}
-        walletId={wallet?.id ?? null}
-        onSubmit={handleFundWallet}
-      />
-
-      <BillPaymentResultModal
-        open={payResultModal.open}
-        onClose={closePayResultModal}
-        success={payResultModal.success}
-        title={payResultModal.title}
-        message={payResultModal.message}
-        reference={payResultModal.reference}
-      />
     </div>
   );
 }

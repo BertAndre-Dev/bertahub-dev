@@ -165,104 +165,113 @@ export default function BillPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-3xl font-bold">Estate Bills</h1>
-        <Button
-          onClick={() =>
-            toast.info("To pay a bill, click any payable bill card.")
-          }
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          How to Pay
-        </Button>
-      </div>
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading bills..." />
+        </div>
+      )}
 
-      {/* <SwitchAddress
-        addresses={addressOptions}
-        value={selectedAddressId}
-        onChange={setSelectedAddressId}
-      /> */}
+      <div
+        className={[
+          "space-y-6",
+          loading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+        ].join(" ")}
+      >
+        <div className="flex items-center justify-between">
+          <h1 className="font-heading text-3xl font-bold">Estate Bills</h1>
+          <Button
+            onClick={() =>
+              toast.info("To pay a bill, click any payable bill card.")
+            }
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            How to Pay
+          </Button>
+        </div>
 
-      {/* Payable bills - cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {loading ? (
-          <div className="py-12">
-            <Loader label="Loading bills..." />
-          </div>
-        ) : payableBills.length === 0 ? (
-          <p className="text-muted-foreground">
-            No payable bills for this estate.
-          </p>
-        ) : (
-          payableBills.map((b) => (
-            <Card
-              key={b.id}
-              className="p-4 cursor-pointer hover:shadow-md"
-              onClick={() => b.id && handleOpenModal(b.id)}
-            >
-              <div className="flex flex-col">
-                <div>
-                  <h3 className="text-sm font-semibold capitalize text-blue-600">
-                    {b.name}
-                  </h3>
+        {/* <SwitchAddress
+          addresses={addressOptions}
+          value={selectedAddressId}
+          onChange={setSelectedAddressId}
+        /> */}
+
+        {/* Payable bills - cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {!loading && payableBills.length === 0 ? (
+            <p className="text-muted-foreground">
+              No payable bills for this estate.
+            </p>
+          ) : (
+            payableBills.map((b) => (
+              <Card
+                key={b.id}
+                className="p-4 cursor-pointer hover:shadow-md"
+                onClick={() => b.id && handleOpenModal(b.id)}
+              >
+                <div className="flex flex-col">
+                  <div>
+                    <h3 className="text-sm font-semibold capitalize text-blue-600">
+                      {b.name}
+                    </h3>
+                  </div>
+                  <div className="">
+                    <p className="text-md font-bold mt-1 capitalize">
+                      ₦{Number(b.yearlyAmount ?? 0).toLocaleString()}/annum
+                    </p>
+                  </div>
                 </div>
-                <div className="">
-                  <p className="text-md font-bold mt-1 capitalize">
-                    ₦{Number(b.yearlyAmount ?? 0).toLocaleString()}/annum
-                  </p>
-                </div>
-              </div>
-            </Card>
-          ))
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* Paid bills table */}
+        <Card className="p-4">
+          <h2 className="font-semibold mb-4">Your Paid Bills</h2>
+          <Table
+            columns={columns}
+            data={paidBills || []}
+            emptyMessage="You haven't paid any bills yet."
+            showPagination
+            paginationInfo={{
+              total: paidPagination?.total || paidBills.length || 0,
+              current: Number(paidPagination?.page) || 1,
+              pageSize: Number(paidPagination?.limit) || 10,
+            }}
+            enableExport
+            exportFileName="paid-bills"
+            onExportRequest={
+              userId
+                ? async () => {
+                    const res = await dispatch(
+                      getResidentBills({
+                        residentId: userId,
+                        page: 1,
+                        limit: 50000,
+                      }),
+                    ).unwrap();
+                    return res?.data ?? [];
+                  }
+                : undefined
+            }
+          />
+        </Card>
+
+        {open && selectedBillId && (
+          <Modal visible={open} onClose={handleCloseModal}>
+            <BillsForm
+              billId={selectedBillId}
+              addressOptions={addressOptions}
+              selectedAddressId={selectedAddressId}
+              onSelectedAddressChange={setSelectedAddressId}
+              onSubmitSuccess={refreshLists}
+              onClose={handleCloseModal}
+            />
+          </Modal>
         )}
       </div>
-
-      {/* Paid bills table */}
-      <Card className="p-4">
-        <h2 className="font-semibold mb-4">Your Paid Bills</h2>
-        <Table
-          columns={columns}
-          data={paidBills || []}
-          emptyMessage={
-            loading
-              ? <Loader label="Loading paid bills..." />
-              : "You haven't paid any bills yet."
-          }
-          showPagination
-          paginationInfo={{
-            total: paidPagination?.total || paidBills.length || 0,
-            current: Number(paidPagination?.page) || 1,
-            pageSize: Number(paidPagination?.limit) || 10,
-          }}
-          enableExport
-          exportFileName="paid-bills"
-          onExportRequest={
-            userId
-              ? async () => {
-                  const res = await dispatch(
-                    getResidentBills({ residentId: userId, page: 1, limit: 50000 }),
-                  ).unwrap();
-                  return res?.data ?? [];
-                }
-              : undefined
-          }
-        />
-      </Card>
-
-      {open && selectedBillId && (
-        <Modal visible={open} onClose={handleCloseModal}>
-          <BillsForm
-            billId={selectedBillId}
-            addressOptions={addressOptions}
-            selectedAddressId={selectedAddressId}
-            onSelectedAddressChange={setSelectedAddressId}
-            onSubmitSuccess={refreshLists}
-            onClose={handleCloseModal}
-          />
-        </Modal>
-      )}
     </div>
   );
 }

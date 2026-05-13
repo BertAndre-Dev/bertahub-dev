@@ -3,13 +3,34 @@
 import { useEffect, useState } from "react";
 import { ChevronRight, Pencil, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
 import type {
   CommunityChatGroup,
   CommunityMember,
 } from "@/data/community-chat-dummy";
+import { formatGroupStatus } from "@/data/community-chat-dummy";
+import type { ChatGroupRoleToAdd } from "@/types/community-group";
 import { GroupMemberRow } from "./GroupMemberRow";
 
-type Props = {
+const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
+
+function parseObjectIds(raw: string): string[] {
+  return raw
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter((id) => OBJECT_ID_RE.test(id));
+}
+
+const ROLE_OPTIONS: { label: string; value: ChatGroupRoleToAdd }[] = [
+  { label: "Residents", value: "RESIDENT" },
+  { label: "Admins", value: "ADMIN" },
+  { label: "Security", value: "SECURITY" },
+  { label: "Estate admins", value: "ESTATE_ADMIN" },
+];
+
+type Props = Readonly<{
   open: boolean;
   onClose: () => void;
   group: CommunityChatGroup;
@@ -23,7 +44,18 @@ type Props = {
   }) => void | Promise<void>;
   updateLoading?: boolean;
   detailLoading?: boolean;
-};
+  /** Show add/remove members and promote (group admins). */
+  showMemberAdminTools?: boolean;
+  /** Allow editing group name / description (estate admins). */
+  canUpdateGroupProfile?: boolean;
+  /** Show delete group (creator). */
+  canDeleteGroup?: boolean;
+  membersActionLoading?: boolean;
+  onAddMembersByIds?: (memberIds: string[]) => void | Promise<void>;
+  onAddAllSameRole?: (roleToAdd: ChatGroupRoleToAdd) => void | Promise<void>;
+  onRemoveMembersByIds?: (memberIds: string[]) => void | Promise<void>;
+  onPromoteMember?: (userId: string) => void | Promise<void>;
+}>;
 
 export function GroupInfoModal({
   open,
@@ -36,10 +68,22 @@ export function GroupInfoModal({
   onUpdateGroup,
   updateLoading = false,
   detailLoading = false,
+  showMemberAdminTools = false,
+  canUpdateGroupProfile = true,
+  canDeleteGroup = true,
+  membersActionLoading = false,
+  onAddMembersByIds,
+  onAddAllSameRole,
+  onRemoveMembersByIds,
+  onPromoteMember,
 }: Props) {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(group.name);
   const [editAbout, setEditAbout] = useState(group.about);
+  const [addIdsRaw, setAddIdsRaw] = useState("");
+  const [removeIdsRaw, setRemoveIdsRaw] = useState("");
+  const [promoteUserId, setPromoteUserId] = useState("");
+  const [roleToAdd, setRoleToAdd] = useState<ChatGroupRoleToAdd>("RESIDENT");
 
   useEffect(() => {
     if (!open) {
@@ -48,11 +92,15 @@ export function GroupInfoModal({
     }
     setEditName(group.name);
     setEditAbout(group.about);
+    setAddIdsRaw("");
+    setRemoveIdsRaw("");
+    setPromoteUserId("");
   }, [open, group.name, group.about]);
 
   if (!open) return null;
 
-  const showBusy = detailLoading || updateLoading;
+  const showBusy =
+    detailLoading || updateLoading || membersActionLoading;
 
   return (
     <div
@@ -88,7 +136,7 @@ export function GroupInfoModal({
             <Users className="size-8" />
           </div>
           <div className="min-w-0">
-            {editing ? (
+            {editing && canUpdateGroupProfile ? (
               <>
                 <label className="sr-only" htmlFor="edit-group-name">
                   Group name
@@ -110,11 +158,35 @@ export function GroupInfoModal({
             <p className="mt-1 text-xs text-muted-foreground">
               Created at {group.createdAtLabel}
             </p>
+            {group.status ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Status:{" "}
+                <span className="font-medium text-foreground">
+                  {formatGroupStatus(group.status)}
+                </span>
+              </p>
+            ) : null}
+            {group.estateId ? (
+              <p className="mt-2 break-all font-mono text-[11px] leading-relaxed text-muted-foreground">
+                <span className="font-sans text-xs font-medium text-muted-foreground">
+                  Estate:{" "}
+                </span>
+                {group.estateId}
+              </p>
+            ) : null}
+            {group.createdBy ? (
+              <p className="mt-1 break-all font-mono text-[11px] leading-relaxed text-muted-foreground">
+                <span className="font-sans text-xs font-medium text-muted-foreground">
+                  Created by:{" "}
+                </span>
+                {group.createdBy}
+              </p>
+            ) : null}
           </div>
         </div>
 
         <div className="mt-6 flex items-start gap-2 border-b border-border pb-4">
-          {editing ? (
+          {editing && canUpdateGroupProfile ? (
             <textarea
               value={editAbout}
               onChange={(e) => setEditAbout(e.target.value)}
@@ -127,26 +199,28 @@ export function GroupInfoModal({
               {group.about}
             </p>
           )}
-          <button
-            type="button"
-            className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-50"
-            aria-label={editing ? "Cancel edit" : "Edit description"}
-            disabled={showBusy}
-            onClick={() => {
-              if (editing) {
-                setEditName(group.name);
-                setEditAbout(group.about);
-                setEditing(false);
-              } else {
-                setEditing(true);
-              }
-            }}
-          >
-            <Pencil className="size-4" />
-          </button>
+          {canUpdateGroupProfile ? (
+            <button
+              type="button"
+              className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-50"
+              aria-label={editing ? "Cancel edit" : "Edit description"}
+              disabled={showBusy}
+              onClick={() => {
+                if (editing) {
+                  setEditName(group.name);
+                  setEditAbout(group.about);
+                  setEditing(false);
+                } else {
+                  setEditing(true);
+                }
+              }}
+            >
+              <Pencil className="size-4" />
+            </button>
+          ) : null}
         </div>
 
-        {editing ? (
+        {editing && canUpdateGroupProfile ? (
           <div className="mt-3 flex justify-end gap-2">
             <Button
               type="button"
@@ -184,33 +258,135 @@ export function GroupInfoModal({
           </div>
         ) : null}
 
+        {showMemberAdminTools ? (
+          <div className="mt-6 space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+            <h3 className="text-sm font-semibold text-foreground">
+              Manage members
+            </h3>
+            <div>
+              <Label htmlFor="add-member-ids">Add by user IDs</Label>
+              <Textarea
+                id="add-member-ids"
+                value={addIdsRaw}
+                onChange={(e) => setAddIdsRaw(e.target.value)}
+                placeholder="Comma or space separated MongoDB user IDs"
+                className="mt-1 min-h-[72px] text-xs font-mono"
+                disabled={showBusy}
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="mt-2"
+                disabled={showBusy || parseObjectIds(addIdsRaw).length === 0}
+                onClick={() =>
+                  onAddMembersByIds?.(parseObjectIds(addIdsRaw))
+                }
+              >
+                Add members
+              </Button>
+            </div>
+            <div>
+              <Label htmlFor="add-all-role">Add all active users by role</Label>
+              <Select
+                id="add-all-role"
+                value={roleToAdd}
+                onChange={(e) =>
+                  setRoleToAdd(e.target.value as ChatGroupRoleToAdd)
+                }
+                options={ROLE_OPTIONS}
+                className="mt-1 h-10"
+                disabled={showBusy}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="mt-2"
+                disabled={showBusy}
+                onClick={() => onAddAllSameRole?.(roleToAdd)}
+              >
+                Add all with this role
+              </Button>
+            </div>
+            <div>
+              <Label htmlFor="remove-member-ids">Remove by user IDs</Label>
+              <Textarea
+                id="remove-member-ids"
+                value={removeIdsRaw}
+                onChange={(e) => setRemoveIdsRaw(e.target.value)}
+                placeholder="Comma or space separated user IDs"
+                className="mt-1 min-h-[72px] text-xs font-mono"
+                disabled={showBusy}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="mt-2"
+                disabled={showBusy || parseObjectIds(removeIdsRaw).length === 0}
+                onClick={() =>
+                  onRemoveMembersByIds?.(parseObjectIds(removeIdsRaw))
+                }
+              >
+                Remove members
+              </Button>
+            </div>
+            <div>
+              <Label htmlFor="promote-user-id">Promote to group admin</Label>
+              <input
+                id="promote-user-id"
+                value={promoteUserId}
+                onChange={(e) => setPromoteUserId(e.target.value.trim())}
+                placeholder="User ID"
+                className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm font-mono"
+                disabled={showBusy}
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="mt-2"
+                disabled={showBusy || !OBJECT_ID_RE.test(promoteUserId)}
+                onClick={() => onPromoteMember?.(promoteUserId)}
+              >
+                Promote
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-4">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold">
               Members ({memberTotal})
             </h3>
-            <button
-              type="button"
-              className="text-sm font-medium text-[#0052CC] hover:underline"
-            >
-              + Add Members
-            </button>
           </div>
           <div className="rounded-lg border border-border px-3">
-            {members.map((m) => (
-              <GroupMemberRow key={m.id} member={m} />
-            ))}
+            {!detailLoading && members.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                No members in this group response.
+              </p>
+            ) : (
+              members.map((m) => <GroupMemberRow key={m.id} member={m} />)
+            )}
           </div>
-          <button
-            type="button"
-            className="mt-3 flex w-full items-center justify-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
-          >
-            View all Members
-            <ChevronRight className="size-4" />
-          </button>
+          {memberTotal > members.length ? (
+            <button
+              type="button"
+              className="mt-3 flex w-full items-center justify-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              View all Members
+              <ChevronRight className="size-4" />
+            </button>
+          ) : null}
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-3">
+        <div
+          className={
+            canDeleteGroup
+              ? "mt-8 grid grid-cols-2 gap-3"
+              : "mt-8 grid grid-cols-1 gap-3"
+          }
+        >
           <Button
             type="button"
             variant="outline"
@@ -223,15 +399,17 @@ export function GroupInfoModal({
           >
             Exit Group
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 rounded-lg border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-            disabled={showBusy}
-            onClick={() => onDeleteGroup?.()}
-          >
-            Delete Group
-          </Button>
+          {canDeleteGroup ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 rounded-lg border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+              disabled={showBusy}
+              onClick={() => onDeleteGroup?.()}
+            >
+              Delete Group
+            </Button>
+          ) : null}
         </div>
       </div>
     </div>
