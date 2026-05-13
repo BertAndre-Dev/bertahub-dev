@@ -40,8 +40,7 @@ function ResidentAnnouncementCard({
 }) {
   const title = item.title ?? "";
   const content = item.content ?? item.description ?? "";
-  const date =
-    item.scheduledFor ?? item.createdAt ?? item.updatedAt;
+  const date = item.scheduledFor ?? item.createdAt ?? item.updatedAt;
   const category = item.category ?? "—";
   const priority = item.priority ?? "—";
 
@@ -87,7 +86,8 @@ export default function ResidentAnnouncementsPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [estateId, setEstateId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Estate");
-  const [viewingItem, setViewingItem] = useState<ResidentAnnouncementItem | null>(null);
+  const [viewingItem, setViewingItem] =
+    useState<ResidentAnnouncementItem | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
 
   const { list, getListStatus } = useSelector((state: RootState) => {
@@ -121,10 +121,12 @@ export default function ResidentAnnouncementsPage() {
         setEstateId(eId);
         setEstateName(name);
         if (eId) {
-          dispatch(getResidentAnnouncements({ estateId: eId })).catch((err: unknown) => {
-            const e = err as { message?: string };
-            toast.error(e?.message ?? "Failed to load announcements.");
-          });
+          dispatch(getResidentAnnouncements({ estateId: eId })).catch(
+            (err: unknown) => {
+              const e = err as { message?: string };
+              toast.error(e?.message ?? "Failed to load announcements.");
+            },
+          );
         }
       } catch {
         // keep default
@@ -134,74 +136,100 @@ export default function ResidentAnnouncementsPage() {
     })();
   }, [dispatch]);
 
-  return (
-    <div className="space-y-6 pb-8">
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0150AC] to-[#0A387E] text-white p-6 sm:p-8">
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-white/20">
-            <Megaphone className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="font-heading text-2xl sm:text-3xl font-bold">
-              Announcements
-            </h1>
-            <p className="text-white/90 text-sm mt-1">
-              Updates and notices for {estateName}
-            </p>
-          </div>
-        </div>
-      </div>
+  const pageLoading = bootstrapping || getListStatus === "isLoading";
 
-      {bootstrapping || getListStatus === "isLoading" ? (
-        <div className="py-12">
+  return (
+    <div className="relative">
+      {pageLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
           <Loader label="Loading announcements..." />
-        </div>
-      ) : announcements.length === 0 ? (
-        <Card className="p-12 text-center">
-          <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">
-            No announcements yet. Check back later.
-          </p>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {announcements.map((item) => (
-            <ResidentAnnouncementCard
-              key={item.id}
-              item={item}
-              onView={setViewingItem}
-            />
-          ))}
         </div>
       )}
 
-      <Modal visible={!!viewingItem} onClose={() => setViewingItem(null)}>
-        {viewingItem && (
-          <div className="pr-8">
-            <h2 className="font-heading font-bold text-lg text-foreground mb-2">
-              {viewingItem.title || "Untitled"}
-            </h2>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-3">
-              <span>{formatDate(viewingItem.scheduledFor ?? viewingItem.createdAt ?? viewingItem.updatedAt)}</span>
-              <span>·</span>
-              <span className="capitalize">{viewingItem.category ?? "—"}</span>
-              <span>·</span>
-              <span className="capitalize">Priority: {viewingItem.priority ?? "—"}</span>
+      <div
+        className={[
+          "space-y-6 pb-8",
+          pageLoading
+            ? "blur-sm opacity-60 pointer-events-none select-none"
+            : "",
+        ].join(" ")}
+      >
+        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0150AC] to-[#0A387E] text-white p-6 sm:p-8">
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-white/20">
+              <Megaphone className="w-6 h-6" />
             </div>
-            <div
-              className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 text-foreground"
-              dangerouslySetInnerHTML={{
-                __html: viewingItem.content ?? viewingItem.description ?? "<span>No content.</span>",
-              }}
-            />
-            <div className="mt-6">
-              <Button variant="outline" onClick={() => setViewingItem(null)}>
-                Close
-              </Button>
+            <div>
+              <h1 className="font-heading text-2xl sm:text-3xl font-bold">
+                Announcements
+              </h1>
+              <p className="text-white/90 text-sm mt-1">
+                Updates and notices for {estateName}
+              </p>
             </div>
           </div>
+        </div>
+
+        {announcements.length === 0 ? (
+          <Card className="p-12 text-center">
+            <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">
+              No announcements yet. Check back later.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {announcements.map((item) => (
+              <ResidentAnnouncementCard
+                key={item.id}
+                item={item}
+                onView={setViewingItem}
+              />
+            ))}
+          </div>
         )}
-      </Modal>
+
+        <Modal visible={!!viewingItem} onClose={() => setViewingItem(null)}>
+          {viewingItem && (
+            <div className="pr-8">
+              <h2 className="font-heading font-bold text-lg text-foreground mb-2">
+                {viewingItem.title || "Untitled"}
+              </h2>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-3">
+                <span>
+                  {formatDate(
+                    viewingItem.scheduledFor ??
+                      viewingItem.createdAt ??
+                      viewingItem.updatedAt,
+                  )}
+                </span>
+                <span>·</span>
+                <span className="capitalize">
+                  {viewingItem.category ?? "—"}
+                </span>
+                <span>·</span>
+                <span className="capitalize">
+                  Priority: {viewingItem.priority ?? "—"}
+                </span>
+              </div>
+              <div
+                className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 text-foreground"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    viewingItem.content ??
+                    viewingItem.description ??
+                    "<span>No content.</span>",
+                }}
+              />
+              <div className="mt-6">
+                <Button variant="outline" onClick={() => setViewingItem(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
+      </div>
     </div>
   );
 }

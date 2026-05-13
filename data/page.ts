@@ -281,6 +281,11 @@ export const residentNav = [
     moduleKey: "announcements",
   },
   {
+    label: "Community Chat",
+    icon: MessagesSquare,
+    path: "/dashboard/resident/community",
+  },
+  {
     label: "Contact Support",
     icon: MessageCircle,
     path: "/dashboard/resident/support",

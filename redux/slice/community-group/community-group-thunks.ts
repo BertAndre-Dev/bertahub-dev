@@ -2,9 +2,16 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 
 import axiosInstance from "@/utils/axiosInstance";
 import type {
+  AddGroupMembersPayload,
   ChatGroup,
   ChatGroupsListResponse,
   CreateChatGroupPayload,
+  EditGroupMessagePayload,
+  GroupMessage,
+  GroupMessagesListResponse,
+  PromoteGroupAdminPayload,
+  RemoveGroupMembersPayload,
+  SendGroupMessagePayload,
   UpdateChatGroupPayload,
 } from "@/types/community-group";
 
@@ -36,6 +43,11 @@ type ApiChatGroup = {
   name?: string;
   description?: string;
   profileImage?: string;
+  estateId?: string;
+  createdBy?: string;
+  members?: string[];
+  admins?: string[];
+  status?: string;
   createdAt?: string;
   updatedAt?: string;
   memberCount?: number;
@@ -62,14 +74,40 @@ function normalizePagination(p: ApiPagination | undefined): {
   return { total, page, limit, pages };
 }
 
+/** API often omits page/limit on pagination; keep the request values. */
+function mergeApiPagination(
+  api: ApiPagination | undefined,
+  requestedPage: number,
+  requestedLimit: number,
+): { total: number; page: number; limit: number; pages: number } {
+  const base = normalizePagination(api);
+  const page =
+    typeof api?.page === "number" ? api.page : requestedPage;
+  const limit =
+    typeof api?.limit === "number" ? api.limit : requestedLimit;
+  let { pages, total } = base;
+  if ((!pages || pages < 1) && total > 0 && limit > 0) {
+    pages = Math.max(1, Math.ceil(total / limit));
+  }
+  return { total, page, limit, pages };
+}
+
 function normalizeGroup(raw: ApiChatGroup): ChatGroup {
   const _id = (raw._id ?? raw.id ?? "").toString();
-  const memberRaw = raw.memberCount ?? raw.membersCount;
+  const fromMembers = Array.isArray(raw.members) ? raw.members.length : 0;
+  const memberRaw = raw.memberCount ?? raw.membersCount ?? fromMembers;
   return {
     _id,
     name: (raw.name ?? "").toString() || "Untitled group",
     description: raw.description,
     profileImage: raw.profileImage,
+    estateId:
+      typeof raw.estateId === "string" ? raw.estateId : undefined,
+    createdBy:
+      typeof raw.createdBy === "string" ? raw.createdBy : undefined,
+    members: Array.isArray(raw.members) ? [...raw.members] : undefined,
+    admins: Array.isArray(raw.admins) ? [...raw.admins] : undefined,
+    status: typeof raw.status === "string" ? raw.status : undefined,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
     memberCount:
@@ -132,9 +170,11 @@ export const getChatGroups = createAsyncThunk<
     return {
       success: body.success ?? true,
       data: list.map(normalizeGroup),
-      pagination: body.pagination
-        ? normalizePagination(body.pagination)
-        : undefined,
+      pagination: mergeApiPagination(
+        body.pagination ?? { total: list.length, pages: 1 },
+        page,
+        limit,
+      ),
     };
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
@@ -213,6 +253,302 @@ export const deleteChatGroup = createAsyncThunk<
     const err = error as { response?: { data?: { message?: string } } };
     return rejectWithValue({
       message: err?.response?.data?.message || "Failed to delete group.",
+    });
+  }
+});
+
+// ─── Group messages & members (REST) ─────────────────────────────────────────
+
+type ApiUser = {
+  id?: string;
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+};
+
+type ApiGroupMessage = {
+  id?: string;
+  _id?: string;
+  /** List/send response uses chatGroupId */
+  chatGroupId?: string;
+  groupId?: string;
+  content?: string;
+  messageType?: string;
+  senderId?: string | ApiUser;
+  /** Plain string senderId responses include this (e.g. send message, history) */
+  senderName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  attachments?: string[];
+  replyTo?: string;
+  isEdited?: boolean;
+  isDeleted?: boolean;
+  readBy?: string[];
+};
+
+function normalizeSender(u: string | ApiUser | undefined): {
+  senderId: string;
+  senderName: string;
+} {
+  if (u == null) return { senderId: "", senderName: "" };
+  if (typeof u === "string") {
+    return { senderId: u.trim(), senderName: "" };
+  }
+  const id = (u._id ?? u.id ?? "").toString();
+  const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+  return {
+    senderId: id,
+    senderName: name || (u.email ?? "").toString() || "",
+  };
+}
+
+export function normalizeGroupMessage(raw: ApiGroupMessage): GroupMessage {
+  const _id = (raw._id ?? raw.id ?? "").toString();
+  const explicitName =
+    typeof raw.senderName === "string" ? raw.senderName.trim() : "";
+  const fromSender = normalizeSender(raw.senderId);
+  const senderId = fromSender.senderId;
+  const senderName =
+    explicitName || fromSender.senderName || "Someone";
+
+  return {
+    _id,
+    groupId: (raw.chatGroupId ?? raw.groupId)?.toString(),
+    content: (raw.content ?? "").toString(),
+    messageType: (raw.messageType ?? "text").toString(),
+    senderId,
+    senderName,
+    createdAt: raw.createdAt ?? new Date().toISOString(),
+    updatedAt: raw.updatedAt,
+    attachments: Array.isArray(raw.attachments) ? raw.attachments : undefined,
+    replyTo:
+      typeof raw.replyTo === "string"
+        ? raw.replyTo
+        : raw.replyTo != null
+          ? String(raw.replyTo)
+          : undefined,
+    isEdited: Boolean(raw.isEdited),
+    isDeleted: Boolean(raw.isDeleted),
+    readBy: Array.isArray(raw.readBy) ? raw.readBy.map(String) : undefined,
+  };
+}
+
+// POST /api/v1/chat/groups/{groupId}/members
+export const addGroupMembers = createAsyncThunk<
+  ApiResponse<unknown>,
+  AddGroupMembersPayload,
+  { rejectValue: RejectValue }
+>("communityGroup/addGroupMembers", async (payload, { rejectWithValue }) => {
+  try {
+    const id = payload.groupId?.trim();
+    if (!id || !isValidObjectId(id)) {
+      return rejectWithValue(invalidIdMessage("groupId"));
+    }
+    const body: Record<string, unknown> = {};
+    if (payload.memberIds?.length) body.memberIds = payload.memberIds;
+    if (payload.addAllSameRole === true) {
+      body.addAllSameRole = true;
+      if (payload.roleToAdd) body.roleToAdd = payload.roleToAdd;
+    }
+    if (!payload.memberIds?.length && payload.addAllSameRole !== true) {
+      return rejectWithValue({
+        message: "Provide member IDs or enable add all same role.",
+      });
+    }
+    const res = await axiosInstance.post(
+      `/api/v1/chat/groups/${id}/members`,
+      body,
+    );
+    return (res.data ?? { success: true }) as ApiResponse<unknown>;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue({
+      message: err?.response?.data?.message || "Failed to add members.",
+    });
+  }
+});
+
+// DELETE /api/v1/chat/groups/{groupId}/members
+export const removeGroupMembers = createAsyncThunk<
+  ApiResponse<unknown>,
+  RemoveGroupMembersPayload,
+  { rejectValue: RejectValue }
+>("communityGroup/removeGroupMembers", async (payload, { rejectWithValue }) => {
+  try {
+    const id = payload.groupId?.trim();
+    if (!id || !isValidObjectId(id)) {
+      return rejectWithValue(invalidIdMessage("groupId"));
+    }
+    if (!payload.memberIds?.length) {
+      return rejectWithValue({ message: "At least one member ID is required." });
+    }
+    const res = await axiosInstance.delete(
+      `/api/v1/chat/groups/${id}/members`,
+      { data: { memberIds: payload.memberIds } },
+    );
+    return (res.data ?? { success: true }) as ApiResponse<unknown>;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue({
+      message: err?.response?.data?.message || "Failed to remove members.",
+    });
+  }
+});
+
+// POST /api/v1/chat/groups/{groupId}/promote-admin
+export const promoteGroupAdmin = createAsyncThunk<
+  ApiResponse<unknown>,
+  PromoteGroupAdminPayload,
+  { rejectValue: RejectValue }
+>("communityGroup/promoteGroupAdmin", async (payload, { rejectWithValue }) => {
+  try {
+    const id = payload.groupId?.trim();
+    if (!id || !isValidObjectId(id)) {
+      return rejectWithValue(invalidIdMessage("groupId"));
+    }
+    const uid = payload.userId?.trim();
+    if (!uid || !isValidObjectId(uid)) {
+      return rejectWithValue(invalidIdMessage("userId"));
+    }
+    const res = await axiosInstance.post(
+      `/api/v1/chat/groups/${id}/promote-admin`,
+      { userId: uid },
+    );
+    return (res.data ?? { success: true }) as ApiResponse<unknown>;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue({
+      message: err?.response?.data?.message || "Failed to promote member.",
+    });
+  }
+});
+
+// GET /api/v1/chat/groups/{groupId}/messages?page=&limit=
+export const getGroupMessages = createAsyncThunk<
+  GroupMessagesListResponse,
+  { groupId: string; page?: number; limit?: number },
+  { rejectValue: RejectValue }
+>("communityGroup/getGroupMessages", async (params, { rejectWithValue }) => {
+  try {
+    const id = params.groupId?.trim();
+    if (!id || !isValidObjectId(id)) {
+      return rejectWithValue(invalidIdMessage("groupId"));
+    }
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 50;
+    const res = await axiosInstance.get(`/api/v1/chat/groups/${id}/messages`, {
+      params: { page, limit },
+    });
+    const body = res.data as {
+      success?: boolean;
+      data?: ApiGroupMessage[];
+      pagination?: ApiPagination;
+    };
+    const list = Array.isArray(body.data) ? body.data : [];
+    return {
+      success: body.success ?? true,
+      data: list.map(normalizeGroupMessage),
+      pagination: mergeApiPagination(
+        body.pagination ?? { total: list.length, pages: 1 },
+        page,
+        limit,
+      ),
+    };
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue({
+      message: err?.response?.data?.message || "Failed to load messages.",
+    });
+  }
+});
+
+// POST /api/v1/chat/groups/{groupId}/messages
+export const sendGroupMessage = createAsyncThunk<
+  ApiResponse<GroupMessage>,
+  SendGroupMessagePayload,
+  { rejectValue: RejectValue }
+>("communityGroup/sendGroupMessage", async (payload, { rejectWithValue }) => {
+  try {
+    const id = payload.groupId?.trim();
+    if (!id || !isValidObjectId(id)) {
+      return rejectWithValue(invalidIdMessage("groupId"));
+    }
+    if (!payload.content?.trim() && !payload.attachments?.length) {
+      return rejectWithValue({ message: "Message content or attachment required." });
+    }
+    const body: Record<string, unknown> = {
+      content: payload.content?.trim() ?? "",
+      messageType: payload.messageType ?? "text",
+    };
+    if (payload.attachments?.length) body.attachments = payload.attachments;
+    if (payload.replyTo?.trim()) body.replyTo = payload.replyTo.trim();
+    const res = await axiosInstance.post(
+      `/api/v1/chat/groups/${id}/messages`,
+      body,
+    );
+    const raw = res.data as ApiResponse<ApiGroupMessage>;
+    const data = raw.data ? normalizeGroupMessage(raw.data) : null;
+    if (!data) {
+      return rejectWithValue({ message: "Invalid response from server." });
+    }
+    return { ...raw, data };
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue({
+      message: err?.response?.data?.message || "Failed to send message.",
+    });
+  }
+});
+
+// PUT /api/v1/chat/messages/{messageId}
+export const editGroupMessage = createAsyncThunk<
+  ApiResponse<GroupMessage>,
+  EditGroupMessagePayload,
+  { rejectValue: RejectValue }
+>("communityGroup/editGroupMessage", async (payload, { rejectWithValue }) => {
+  try {
+    const mid = payload.messageId?.trim();
+    if (!mid || !isValidObjectId(mid)) {
+      return rejectWithValue(invalidIdMessage("messageId"));
+    }
+    if (!payload.content?.trim()) {
+      return rejectWithValue({ message: "Content is required." });
+    }
+    const res = await axiosInstance.put(`/api/v1/chat/messages/${mid}`, {
+      content: payload.content.trim(),
+    });
+    const raw = res.data as ApiResponse<ApiGroupMessage>;
+    const data = raw.data ? normalizeGroupMessage(raw.data) : null;
+    if (!data) {
+      return rejectWithValue({ message: "Invalid response from server." });
+    }
+    return { ...raw, data };
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue({
+      message: err?.response?.data?.message || "Failed to edit message.",
+    });
+  }
+});
+
+// DELETE /api/v1/chat/messages/{messageId}
+export const deleteGroupMessage = createAsyncThunk<
+  ApiResponse<unknown>,
+  { messageId: string },
+  { rejectValue: RejectValue }
+>("communityGroup/deleteGroupMessage", async ({ messageId }, { rejectWithValue }) => {
+  try {
+    const id = messageId?.trim();
+    if (!id || !isValidObjectId(id)) {
+      return rejectWithValue(invalidIdMessage("messageId"));
+    }
+    const res = await axiosInstance.delete(`/api/v1/chat/messages/${id}`);
+    return (res.data ?? { success: true }) as ApiResponse<unknown>;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue({
+      message: err?.response?.data?.message || "Failed to delete message.",
     });
   }
 });

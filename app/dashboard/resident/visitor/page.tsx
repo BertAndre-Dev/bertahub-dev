@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import SwitchAddress from "@/components/resident/switch-address/page";
 import { VisitorPageHeader } from "@/components/resident/visitor-management/VisitorPageHeader";
 import { VisitorsTableCard } from "@/components/resident/visitor-management/VisitorsTableCard";
@@ -23,6 +22,7 @@ import {
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
+import Loader from "@/components/ui/Loader";
 
 export default function VisitorPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -36,12 +36,10 @@ export default function VisitorPage() {
   const [visitors, setVisitors] = useState<ResidentVisitorData[]>([]);
   const [pagination, setPagination] = useState<any>({});
   const [loading, setLoading] = useState<boolean>(true);
-  const [viewingVisitor, setViewingVisitor] = useState<ResidentVisitorData | null>(
-    null,
-  );
-  const [visitorToDelete, setVisitorToDelete] = useState<ResidentVisitorData | null>(
-    null,
-  );
+  const [viewingVisitor, setViewingVisitor] =
+    useState<ResidentVisitorData | null>(null);
+  const [visitorToDelete, setVisitorToDelete] =
+    useState<ResidentVisitorData | null>(null);
 
   // User meta
   const [userId, setUserId] = useState<string>("");
@@ -188,14 +186,6 @@ export default function VisitorPage() {
     setViewingVisitor(null);
   };
 
-  const handleOpenDeleteModal = (
-    visitor: ResidentVisitorData,
-    e?: React.MouseEvent,
-  ) => {
-    if (e) e.stopPropagation();
-    setVisitorToDelete(visitor);
-  };
-
   const handleCloseDeleteModal = () => setVisitorToDelete(null);
 
   const handleConfirmDelete = async () => {
@@ -256,77 +246,90 @@ export default function VisitorPage() {
   }, [addressOptions, selectedAddressId]);
 
   return (
-    <div className="space-y-6">
-      <VisitorPageHeader onAddVisitor={() => handleOpenModal("create")} />
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading visitors..." />
+        </div>
+      )}
 
-      <SwitchAddress
-        addresses={addressOptions}
-        value={selectedAddressId}
-        onChange={setSelectedAddressId}
-      />
+      <div
+        className={[
+          "space-y-6",
+          loading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+        ].join(" ")}
+      >
+        <VisitorPageHeader onAddVisitor={() => handleOpenModal("create")} />
 
-      <VisitorsTableCard
-        visitors={displayedVisitors || []}
-        loading={loading}
-        startDate={startDate}
-        endDate={endDate}
-        onDateRangeChange={({ startDate, endDate }) => {
-          setStartDate(startDate);
-          setEndDate(endDate);
-        }}
-        paginationInfo={{
-          total:
-            addressOptions.length > 1
-              ? displayedVisitors.length
-              : pagination?.total || visitors.length || 0,
-          current: Number(pagination?.page) || 1,
-          pageSize: Number(pagination?.limit) || 10,
-        }}
-        onPageChange={handlePageChange}
-        onExportRequest={
-          userId
-            ? async () => {
-                const shouldApplyDate = Boolean(startDate && endDate);
-                const res = await dispatch(
-                  getVisitorsByResident({
-                    residentId: userId,
-                    page: 1,
-                    limit: 50000,
-                    startDate: shouldApplyDate ? startDate : undefined,
-                    endDate: shouldApplyDate ? endDate : undefined,
-                  }),
-                ).unwrap();
-                return res?.data ?? [];
-              }
-            : undefined
-        }
-        onView={(id) => handleOpenModal("view", id)}
-        onEdit={(id) => handleOpenModal("edit", id)}
-        onDelete={(visitor) => setVisitorToDelete(visitor)}
-      />
+        <SwitchAddress
+          addresses={addressOptions}
+          value={selectedAddressId}
+          onChange={setSelectedAddressId}
+        />
 
-      <VisitorUpsertModal
-        open={open && (mode === "create" || mode === "edit")}
-        mode={mode === "edit" ? "edit" : "create"}
-        selectedVisitorId={selectedVisitorId}
-        residentId={userId}
-        estateId={estateId}
-        addressId={selectedAddressForForm ?? ""}
-        onSubmitSuccess={refreshVisitors}
-        onClose={handleCloseModal}
-      />
+        <VisitorsTableCard
+          visitors={displayedVisitors || []}
+          loading={false}
+          startDate={startDate}
+          endDate={endDate}
+          onDateRangeChange={({ startDate, endDate }) => {
+            setStartDate(startDate);
+            setEndDate(endDate);
+          }}
+          paginationInfo={{
+            total:
+              addressOptions.length > 1
+                ? displayedVisitors.length
+                : pagination?.total || visitors.length || 0,
+            current: Number(pagination?.page) || 1,
+            pageSize: Number(pagination?.limit) || 10,
+          }}
+          onPageChange={handlePageChange}
+          onExportRequest={
+            userId
+              ? async () => {
+                  const shouldApplyDate = Boolean(startDate && endDate);
+                  const res = await dispatch(
+                    getVisitorsByResident({
+                      residentId: userId,
+                      page: 1,
+                      limit: 50000,
+                      startDate: shouldApplyDate ? startDate : undefined,
+                      endDate: shouldApplyDate ? endDate : undefined,
+                    }),
+                  ).unwrap();
+                  return res?.data ?? [];
+                }
+              : undefined
+          }
+          onView={(id) => handleOpenModal("view", id)}
+          onEdit={(id) => handleOpenModal("edit", id)}
+          onDelete={(visitor) => setVisitorToDelete(visitor)}
+        />
 
-      <DeleteVisitorModal
-        visitor={visitorToDelete}
-        onClose={handleCloseDeleteModal}
-        onConfirm={handleConfirmDelete}
-      />
+        <VisitorUpsertModal
+          open={open && (mode === "create" || mode === "edit")}
+          mode={mode === "edit" ? "edit" : "create"}
+          selectedVisitorId={selectedVisitorId}
+          residentId={userId}
+          estateId={estateId}
+          addressId={selectedAddressForForm ?? ""}
+          onSubmitSuccess={refreshVisitors}
+          onClose={handleCloseModal}
+        />
 
-      <VisitorViewModal
-        open={viewModalOpen}
-        visitor={viewingVisitor}
-        onClose={handleCloseModal}
-      />
+        <DeleteVisitorModal
+          visitor={visitorToDelete}
+          onClose={handleCloseDeleteModal}
+          onConfirm={handleConfirmDelete}
+        />
+
+        <VisitorViewModal
+          open={viewModalOpen}
+          visitor={viewingVisitor}
+          onClose={handleCloseModal}
+        />
+      </div>
     </div>
   );
 }

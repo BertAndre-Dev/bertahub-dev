@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 import { CommunityPageHeader } from "@/components/dashboard/admin/community/CommunityPageHeader";
 import { CommunityChatSidebar } from "@/components/dashboard/admin/community/CommunityChatSidebar";
 import { CommunityChatWindow } from "@/components/dashboard/admin/community/CommunityChatWindow";
-import { CreateGroupChatModal } from "@/components/dashboard/admin/community/CreateGroupChatModal";
 import { GroupInfoModal } from "@/components/dashboard/admin/community/GroupInfoModal";
 import {
   chatGroupToCommunity,
@@ -21,37 +20,28 @@ import {
   clearGroupMessages,
 } from "@/redux/slice/community-group/community-group-slice";
 import {
-  addGroupMembers,
-  createChatGroup,
-  deleteChatGroup,
   deleteGroupMessage,
   editGroupMessage,
   getChatGroupById,
   getChatGroups,
   getGroupMessages,
-  promoteGroupAdmin,
-  removeGroupMembers,
   sendGroupMessage,
-  updateChatGroup,
 } from "@/redux/slice/community-group/community-group-thunks";
-import type { ChatGroup, ChatGroupRoleToAdd } from "@/types/community-group";
+import type { ChatGroup } from "@/types/community-group";
 import type { RootState, AppDispatch } from "@/redux/store";
 
-export default function AdminCommunityChatPage() {
+export default function ResidentCommunityChatPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [draftByGroup, setDraftByGroup] = useState<Record<string, string>>({});
-  const [createOpen, setCreateOpen] = useState(false);
   const [groupInfoOpen, setGroupInfoOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const {
     groups,
     listLoading,
-    createLoading,
-    updateLoading,
     groupDetail,
     detailLoading,
     groupMessages,
@@ -59,14 +49,11 @@ export default function AdminCommunityChatPage() {
     sendMessageLoading,
     editMessageLoading,
     deleteMessageLoading,
-    membersActionLoading,
   } = useSelector((state: RootState) => {
     const s = state.communityGroup;
     return {
       groups: s.groups,
       listLoading: s.listLoading,
-      createLoading: s.createLoading,
-      updateLoading: s.updateLoading,
       groupDetail: s.groupDetail,
       detailLoading: s.detailLoading,
       groupMessages: s.groupMessages,
@@ -74,7 +61,6 @@ export default function AdminCommunityChatPage() {
       sendMessageLoading: s.sendMessageLoading,
       editMessageLoading: s.editMessageLoading,
       deleteMessageLoading: s.deleteMessageLoading,
-      membersActionLoading: s.membersActionLoading,
     };
   });
 
@@ -249,7 +235,7 @@ export default function AdminCommunityChatPage() {
   const messages = useMemo(
     () =>
       groupMessages.map((m) =>
-        groupMessageToCommunity(m, currentUserId, "You (Facility Manager)"),
+        groupMessageToCommunity(m, currentUserId, "You"),
       ),
     [groupMessages, currentUserId],
   );
@@ -320,172 +306,20 @@ export default function AdminCommunityChatPage() {
     [dispatch],
   );
 
-  const handleCreateGroup = async (payload: {
-    name: string;
-    description: string;
-    profileImage?: string;
-  }) => {
-    try {
-      const res = await dispatch(
-        createChatGroup({
-          name: payload.name,
-          description: payload.description || undefined,
-          profileImage: payload.profileImage,
-        }),
-      ).unwrap();
-      toast.success("Group created.");
-      setCreateOpen(false);
-      if (res.data?._id) setSelectedId(res.data._id);
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Could not create group.";
-      toast.error(msg);
-    }
-  };
-
-  const handleUpdateGroup = async (p: { name: string; description: string }) => {
-    if (!selectedId) return;
-    try {
-      await dispatch(
-        updateChatGroup({
-          groupId: selectedId,
-          name: p.name,
-          description: p.description,
-        }),
-      ).unwrap();
-      toast.success("Group updated.");
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Could not update group.";
-      toast.error(msg);
-      throw e;
-    }
-  };
-
-  const handleDeleteGroup = () => {
-    if (!selectedId || !selectedGroupUi) return;
-    confirmDeleteToast({
-      name: selectedGroupUi.name,
-      onConfirm: async () => {
-        await dispatch(deleteChatGroup({ groupId: selectedId })).unwrap();
-        toast.success("Group deleted.");
-        setGroupInfoOpen(false);
-      },
-    });
-  };
-
-  const refreshGroupMeta = async () => {
-    if (!selectedId) return;
-    await dispatch(getChatGroupById({ groupId: selectedId })).unwrap();
-    await dispatch(
-      getChatGroups({
-        page: 1,
-        limit: 50,
-        search: debouncedSearch.trim() || undefined,
-      }),
-    ).unwrap();
-  };
-
-  const handleAddMembersByIds = async (memberIds: string[]) => {
-    if (!selectedId || !memberIds.length) return;
-    try {
-      await dispatch(addGroupMembers({ groupId: selectedId, memberIds })).unwrap();
-      toast.success("Members added.");
-      await refreshGroupMeta();
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Failed to add members.";
-      toast.error(msg);
-    }
-  };
-
-  const handleAddAllSameRole = async (roleToAdd: ChatGroupRoleToAdd) => {
-    if (!selectedId) return;
-    try {
-      await dispatch(
-        addGroupMembers({
-          groupId: selectedId,
-          addAllSameRole: true,
-          roleToAdd,
-        }),
-      ).unwrap();
-      toast.success("Members added.");
-      await refreshGroupMeta();
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Failed to add members.";
-      toast.error(msg);
-    }
-  };
-
-  const handleRemoveMembersByIds = async (memberIds: string[]) => {
-    if (!selectedId || !memberIds.length) return;
-    try {
-      await dispatch(
-        removeGroupMembers({ groupId: selectedId, memberIds }),
-      ).unwrap();
-      toast.success("Members removed.");
-      await refreshGroupMeta();
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Failed to remove members.";
-      toast.error(msg);
-    }
-  };
-
-  const handlePromoteMember = async (userId: string) => {
-    if (!selectedId) return;
-    try {
-      await dispatch(promoteGroupAdmin({ groupId: selectedId, userId })).unwrap();
-      toast.success("Member promoted.");
-      await refreshGroupMeta();
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Failed to promote member.";
-      toast.error(msg);
-    }
-  };
-
   const emptySidebar =
     !listLoading && displayGroups.length === 0 && !debouncedSearch.trim();
 
   let emptyPanelTitle = "No group selected.";
   if (listLoading) emptyPanelTitle = "Loading groups…";
-  else if (emptySidebar) emptyPanelTitle = "No community groups yet.";
+  else if (emptySidebar)
+    emptyPanelTitle = "You are not in any community groups yet.";
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-6">
-      <CommunityPageHeader onCreateGroup={() => setCreateOpen(true)} />
+      <CommunityPageHeader
+        showCreateGroup={false}
+        subtitle="Chat with neighbours in your estate community groups."
+      />
 
       <div className="grid min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-[minmax(260px,340px)_1fr] lg:gap-6">
         <CommunityChatSidebar
@@ -524,19 +358,12 @@ export default function AdminCommunityChatPage() {
             </p>
             {!listLoading && emptySidebar ? (
               <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                Create a group so residents can chat within your estate.
+                When your estate admin adds you to a group, it will appear here.
               </p>
             ) : null}
           </div>
         )}
       </div>
-
-      <CreateGroupChatModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        isSubmitting={createLoading === "isLoading"}
-        onCreate={handleCreateGroup}
-      />
 
       {selectedGroupUi ? (
         <GroupInfoModal
@@ -546,20 +373,12 @@ export default function AdminCommunityChatPage() {
           members={infoModalMembers}
           memberTotal={selectedGroupUi.memberCount}
           detailLoading={detailLoading === "isLoading"}
-          updateLoading={updateLoading === "isLoading"}
-          membersActionLoading={membersActionLoading === "isLoading"}
-          showMemberAdminTools
-          canUpdateGroupProfile
-          canDeleteGroup
-          onUpdateGroup={handleUpdateGroup}
+          showMemberAdminTools={false}
+          canUpdateGroupProfile={false}
+          canDeleteGroup={false}
           onExitGroup={() => {
             toast.info("Leaving a community group is not available yet.");
           }}
-          onDeleteGroup={handleDeleteGroup}
-          onAddMembersByIds={handleAddMembersByIds}
-          onAddAllSameRole={handleAddAllSameRole}
-          onRemoveMembersByIds={handleRemoveMembersByIds}
-          onPromoteMember={handlePromoteMember}
         />
       ) : null}
     </div>

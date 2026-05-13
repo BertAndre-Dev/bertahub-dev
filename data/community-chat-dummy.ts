@@ -13,16 +13,31 @@ export type CommunityChatGroup = {
   memberCount: number;
   createdAtLabel: string;
   about: string;
+  /** From API `status` (e.g. active). */
+  status?: string;
+  /** From GET group / list `estateId`. */
+  estateId?: string;
+  /** From GET group / list `createdBy` (creator user id). */
+  createdBy?: string;
+  /** Member user ids (same order as API `members`). */
+  memberIds?: string[];
+  /** Group admin user ids from API `admins`. */
+  adminIds?: string[];
 };
 
 export type CommunityMessage = {
   id: string;
   sender: string;
+  /** Present when mapped from API — for edit/delete own messages */
+  senderId?: string;
   text: string;
   type: "admin" | "resident";
   time: string;
   /** ISO date string for grouping (dummy) */
   date: string;
+  messageType?: string;
+  /** Soft-deleted message from API */
+  isDeleted?: boolean;
 };
 
 export type CommunityMember = {
@@ -193,17 +208,72 @@ function formatCreatedAtLabel(iso?: string): string {
   }
 }
 
+/** Human-readable group status from API (e.g. `active` → Active). */
+export function formatGroupStatus(status?: string): string {
+  if (!status?.trim()) return "";
+  const s = status.trim().toLowerCase().replaceAll("_", " ");
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function shortenUserId(id: string): string {
+  if (id.length <= 14) return id;
+  return `${id.slice(0, 8)}…${id.slice(-6)}`;
+}
+
+/**
+ * Build member rows for the group info modal from API `members` / `admins` ids
+ * (GET group / GET groups shape).
+ */
+export function chatGroupMemberRowsFromApi(
+  group: CommunityChatGroup,
+): CommunityMember[] {
+  const ids = group.memberIds ?? [];
+  const adminSet = new Set(group.adminIds ?? []);
+  return ids.map((userId) => ({
+    id: userId,
+    name: shortenUserId(userId),
+    subtitle: adminSet.has(userId) ? "Group admin" : "Member",
+    tag: adminSet.has(userId) ? "Admin" : "Member",
+    avatarColor: adminSet.has(userId) ? "green" : "gray",
+  }));
+}
+
 /** Map a chat group from the API to sidebar / window display model. */
 export function chatGroupToCommunity(g: ChatGroup): CommunityChatGroup {
   const about = (g.description ?? "").trim() || "No description yet.";
+  const memberCount =
+    typeof g.memberCount === "number" && g.memberCount > 0
+      ? g.memberCount
+      : Array.isArray(g.members)
+        ? g.members.length
+        : 0;
+  const preview = (g.lastMessagePreview ?? "").trim();
+  const desc = (g.description ?? "").trim();
+  const statusLabel = formatGroupStatus(g.status);
+
+  let lastMsg = preview;
+  if (!lastMsg) {
+    if (desc) {
+      lastMsg = desc.length > 56 ? `${desc.slice(0, 56)}…` : desc;
+    } else {
+      lastMsg = `${memberCount} member${memberCount === 1 ? "" : "s"}`;
+      if (statusLabel) lastMsg += ` · ${statusLabel}`;
+    }
+  }
+
   return {
     id: g._id,
     name: g.name,
-    lastMsg: (g.lastMessagePreview ?? "").trim() || "No messages yet",
+    lastMsg,
     time: formatGroupTime(g.updatedAt ?? g.createdAt),
     unread: g.unreadCount ?? 0,
-    memberCount: g.memberCount ?? 0,
+    memberCount,
     createdAtLabel: formatCreatedAtLabel(g.createdAt),
     about,
+    status: g.status,
+    estateId: g.estateId,
+    createdBy: g.createdBy,
+    memberIds: Array.isArray(g.members) ? [...g.members] : undefined,
+    adminIds: Array.isArray(g.admins) ? [...g.admins] : undefined,
   };
 }

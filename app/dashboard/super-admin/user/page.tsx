@@ -23,10 +23,8 @@ import {
   activateUser,
   suspendUser,
   deleteUser,
-  getAllUsersByCompany,
 } from "@/redux/slice/super-admin/super-admin-user/super-admin-user";
 import { getAllEstates } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt";
-import { getCompanies } from "@/redux/slice/super-admin/company-mgt/company";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
@@ -58,11 +56,6 @@ interface EstateOption {
   value: string;
 }
 
-interface CompanyOption {
-  label: string;
-  value: string;
-}
-
 export default function SuperAdminUserPage() {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -79,28 +72,21 @@ export default function SuperAdminUserPage() {
     },
   );
 
-  const { allEstates } = useSelector((state: RootState) => {
+  const { allEstates, estateLoading } = useSelector((state: RootState) => {
     const estateState = state.estate as any;
     const data = estateState.allEstates?.data || [];
     const pagination = estateState.allEstates?.pagination || {};
     return {
       allEstates: Array.isArray(data) ? data : [],
       pagination,
-      loading: estateState.loading || false,
+      estateLoading: Boolean(estateState.loading),
     };
   });
 
-  const { allCompanies } = useSelector((state: RootState) => {
-    const s: any = (state as any).superAdminCompany;
-    return { allCompanies: (s?.list ?? []) as any[] };
-  });
+  const pageLoading = estateLoading || loading;
 
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"estate" | "company">("estate");
   const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(
-    null,
-  );
-  const [selectedCompany, setSelectedCompany] = useState<CompanyOption | null>(
     null,
   );
   const [startDate, setStartDate] = useState("");
@@ -122,15 +108,6 @@ export default function SuperAdminUserPage() {
       })
       .filter((x): x is EstateOption => Boolean(x)) || [];
 
-  const companyOptions: CompanyOption[] =
-    (allCompanies ?? [])
-      .map((c: any) => {
-        const value = String(c?._id || c?.id || "").trim();
-        if (!value) return null;
-        return { label: c?.name ?? "Unnamed company", value };
-      })
-      .filter((x): x is CompanyOption => Boolean(x)) || [];
-
   // ✅ Fetch all estates on mount
   useEffect(() => {
     dispatch(
@@ -140,32 +117,17 @@ export default function SuperAdminUserPage() {
       .catch(() => toast.error("Failed to fetch estates"));
   }, [dispatch]);
 
-  // Fetch companies on mount (for company view)
-  useEffect(() => {
-    dispatch(getCompanies({ page: 1, limit: 200 }))
-      .unwrap()
-      .catch(() => toast.error("Failed to fetch companies"));
-  }, [dispatch]);
-
   // ✅ Default to the first estate as soon as estates load
   useEffect(() => {
-    if (view !== "estate") return;
     if (selectedEstate?.value) return;
     if (!estateOptions.length) return;
     setSelectedEstate(estateOptions[0]);
-  }, [estateOptions, selectedEstate?.value, view]);
-
-  useEffect(() => {
-    if (view !== "company") return;
-    if (selectedCompany?.value) return;
-    if (!companyOptions.length) return;
-    setSelectedCompany(companyOptions[0]);
-  }, [companyOptions, selectedCompany?.value, view]);
+  }, [estateOptions, selectedEstate?.value]);
 
   // ✅ Fetch users for the selected estate
   useEffect(() => {
-    const shouldApplyDate = Boolean(startDate && endDate);
-    if (view === "estate" && selectedEstate?.value) {
+    if (selectedEstate?.value) {
+      const shouldApplyDate = Boolean(startDate && endDate);
       dispatch(
         getAllUsersByEstate({
           estateId: selectedEstate.value,
@@ -178,22 +140,7 @@ export default function SuperAdminUserPage() {
         .unwrap()
         .catch(() => toast.error("Failed to fetch users for selected estate"));
     }
-
-    if (view === "company" && selectedCompany?.value) {
-      const shouldApplyDate = Boolean(startDate && endDate);
-      dispatch(
-        getAllUsersByCompany({
-          companyId: selectedCompany.value,
-          page: 1,
-          limit: Number(pagination?.pageSize) || 10,
-          startDate: shouldApplyDate ? startDate : undefined,
-          endDate: shouldApplyDate ? endDate : undefined,
-        }),
-      )
-        .unwrap()
-        .catch(() => toast.error("Failed to fetch users for selected company"));
-    }
-  }, [selectedEstate, selectedCompany, dispatch, startDate, endDate, view]);
+  }, [selectedEstate, dispatch, startDate, endDate]);
 
   const handleEstateModal = (user?: SuperAdminUserData) => {
     setSelectedUser(user || null);
@@ -237,18 +184,10 @@ export default function SuperAdminUserPage() {
       onConfirm: async () => {
         await dispatch(deleteUser(id)).unwrap();
         toast.success(`${name} deleted successfully!`);
-        if (view === "estate" && selectedEstate?.value)
+        if (selectedEstate?.value)
           await dispatch(
             getAllUsersByEstate({
               estateId: selectedEstate.value,
-              page: 1,
-              limit: Number(pagination?.pageSize) || 10,
-            }),
-          ).unwrap();
-        if (view === "company" && selectedCompany?.value)
-          await dispatch(
-            getAllUsersByCompany({
-              companyId: selectedCompany.value,
               page: 1,
               limit: Number(pagination?.pageSize) || 10,
             }),
@@ -323,41 +262,31 @@ export default function SuperAdminUserPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground mt-1">Manage Users</p>
+    <div className="relative">
+      {pageLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading users..." />
         </div>
+      )}
 
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          {/* View switcher */}
-          <div className="flex gap-2 border-b border-border overflow-x-auto">
-            {[
-              { id: "estate" as const, label: "Estate" },
-              { id: "company" as const, label: "Company" },
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setView(t.id);
-                  setStartDate("");
-                  setEndDate("");
-                }}
-                className={`px-4 py-3 text-sm font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap ${
-                  view === t.id
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+      <div
+        className={[
+          "space-y-6",
+          pageLoading
+            ? "blur-sm opacity-60 pointer-events-none select-none"
+            : "",
+        ].join(" ")}
+      >
+        {/* Header */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="font-heading text-3xl font-bold">User Management</h1>
+            <p className="text-muted-foreground mt-1">Manage Users</p>
           </div>
 
-          {view === "estate" ? (
-            <div className="w-56">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            {/* ✅ Estate Dropdown */}
+            <div className="w-48">
               <Select
                 options={estateOptions}
                 placeholder="Filter by estate"
@@ -367,112 +296,93 @@ export default function SuperAdminUserPage() {
                 className="rounded-full"
               />
             </div>
-          ) : (
-            <div className="w-56">
-              <Select
-                options={companyOptions}
-                placeholder="Filter by company"
-                value={selectedCompany}
-                onChange={(option) => setSelectedCompany(option)}
-                isSearchable
-                className="rounded-full"
-              />
-            </div>
-          )}
 
-          <Button
-            onClick={() => handleEstateModal()}
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            Invite Admins
-          </Button>
+            <Button
+              onClick={() => handleEstateModal()}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Invite Admins
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {(() => {
-          const users = allSuperAdminUsers as SuperAdminUserData[];
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {(() => {
+            const users = allSuperAdminUsers as SuperAdminUserData[];
 
-          const stats = [
-            {
-              label: "Total Residents",
-              value: users?.filter((e) => e.role === "resident")?.length || 0,
-              icon: User2,
-              color: "bg-[#D0DFF280]",
-            },
-            {
-              label: "Total Admins",
-              value: users?.filter((e) => e.role === "admin")?.length || 0,
-              icon: UsersRound,
-              color: "bg-[#FEE6D480]",
-            },
-          ];
+            const stats = [
+              {
+                label: "Total Residents",
+                value: users?.filter((e) => e.role === "resident")?.length || 0,
+                icon: User2,
+                color: "bg-[#D0DFF280]",
+              },
+              {
+                label: "Total Admins",
+                value: users?.filter((e) => e.role === "admin")?.length || 0,
+                icon: UsersRound,
+                color: "bg-[#FEE6D480]",
+              },
+            ];
 
-          return stats.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={i} className="p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      {stat.label}
-                    </p>
-                    <p className="font-heading text-2xl font-bold mt-2">
-                      {stat.value}
-                    </p>
+            return stats.map((stat, i) => {
+              const Icon = stat.icon;
+              return (
+                <Card key={i} className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        {stat.label}
+                      </p>
+                      <p className="font-heading text-2xl font-bold mt-2">
+                        {stat.value}
+                      </p>
+                    </div>
+                    <div className={`p-3 rounded-lg ${stat.color}`}>
+                      <Icon className="w-6 h-6" />
+                    </div>
                   </div>
-                  <div className={`p-3 rounded-lg ${stat.color}`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                </div>
-              </Card>
-            );
-          });
-        })()}
-      </div>
-
-      <div className="bg-white p-4 rounded-lg">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            placeholder="Search by users by name or email"
-            className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
+                </Card>
+              );
+            });
+          })()}
         </div>
-      </div>
 
-      {/* Users Table */}
-      <Card className="p-4">
-        <Table
-          columns={columns}
-          data={allSuperAdminUsers}
-          emptyMessage={
-            loading
-              ? <Loader label="Loading users..." />
-              : view === "estate"
-                ? "No users found for this estate"
-                : "No users found for this company"
-          }
-          enableDateRangeFilter
-          startDate={startDate}
-          endDate={endDate}
-          onDateRangeChange={({ startDate, endDate }) => {
-            setStartDate(startDate);
-            setEndDate(endDate);
-          }}
-          showPagination={true}
-          paginationInfo={{
-            total: pagination?.total || 0,
-            current: Number(pagination?.currentPage) || 1,
-            pageSize: Number(pagination?.pageSize) || 10,
-          }}
-          onPageChange={(page) => {
-            const shouldApplyDate = Boolean(startDate && endDate);
+        <div className="bg-white p-4 rounded-lg">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              placeholder="Search by users by name or email"
+              className="w-full pl-9 pr-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
 
-            if (view === "estate") {
-              if (!selectedEstate?.value) return;
+        {/* Users Table */}
+        <Card className="p-4">
+          <Table
+            columns={columns}
+            data={allSuperAdminUsers}
+            emptyMessage="No users found for this estate"
+            enableDateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onDateRangeChange={({ startDate, endDate }) => {
+              setStartDate(startDate);
+              setEndDate(endDate);
+            }}
+            showPagination={true}
+            paginationInfo={{
+              total: pagination?.total || 0,
+              current: Number(pagination?.currentPage) || 1,
+              pageSize: Number(pagination?.pageSize) || 10,
+            }}
+            onPageChange={(page) => {
+              if (!selectedEstate?.value) return; // ✅ Prevent null access
+              const shouldApplyDate = Boolean(startDate && endDate);
+
               dispatch(
                 getAllUsersByEstate({
                   estateId: selectedEstate.value,
@@ -484,44 +394,16 @@ export default function SuperAdminUserPage() {
               )
                 .unwrap()
                 .catch(() => toast.error("Failed to change page"));
-            } else {
-              if (!selectedCompany?.value) return;
-              dispatch(
-                getAllUsersByCompany({
-                  companyId: selectedCompany.value,
-                  page,
-                  limit: Number(pagination?.pageSize) || 10,
-                  startDate: shouldApplyDate ? startDate : undefined,
-                  endDate: shouldApplyDate ? endDate : undefined,
-                }),
-              )
-                .unwrap()
-                .catch(() => toast.error("Failed to change page"));
-            }
-          }}
-          enableExport
-          exportFileName="users"
-          onExportRequest={
-            view === "estate" && selectedEstate?.value
-              ? async () => {
-                  const shouldApplyDate = Boolean(startDate && endDate);
-                  const res = await dispatch(
-                    getAllUsersByEstate({
-                      estateId: selectedEstate.value,
-                      page: 1,
-                      limit: 50000,
-                      startDate: shouldApplyDate ? startDate : undefined,
-                      endDate: shouldApplyDate ? endDate : undefined,
-                    }),
-                  ).unwrap();
-                  return res?.data ?? [];
-                }
-              : view === "company" && selectedCompany?.value
+            }}
+            enableExport
+            exportFileName="users"
+            onExportRequest={
+              selectedEstate?.value
                 ? async () => {
                     const shouldApplyDate = Boolean(startDate && endDate);
                     const res = await dispatch(
-                      getAllUsersByCompany({
-                        companyId: selectedCompany.value,
+                      getAllUsersByEstate({
+                        estateId: selectedEstate.value,
                         page: 1,
                         limit: 50000,
                         startDate: shouldApplyDate ? startDate : undefined,
@@ -530,17 +412,18 @@ export default function SuperAdminUserPage() {
                     ).unwrap();
                     return res?.data ?? [];
                   }
-              : undefined
-          }
-        />
-      </Card>
+                : undefined
+            }
+          />
+        </Card>
 
-      {/* User Edit Modal */}
-      {open && (
-        <Modal visible={open} onClose={handleCloseModal}>
-          <InviteUserForm close={handleCloseModal} />
-        </Modal>
-      )}
+        {/* User Edit Modal */}
+        {open && (
+          <Modal visible={open} onClose={handleCloseModal}>
+            <InviteUserForm close={handleCloseModal} />
+          </Modal>
+        )}
+      </div>
     </div>
   );
 }

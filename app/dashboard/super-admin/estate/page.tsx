@@ -31,6 +31,7 @@ import { useEffect, useState } from "react";
 import Modal from "@/components/modal/page";
 import EstateForm from "@/components/super-admin/estate-form/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
+import Loader from "@/components/ui/Loader";
 
 type EstateTableRow = Omit<EstateData, "modules"> & {
   id?: string;
@@ -237,7 +238,19 @@ export default function EstatePage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading estates..." />
+        </div>
+      )}
+
+      <div
+        className={[
+          "space-y-6",
+          loading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+        ].join(" ")}
+      >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -326,7 +339,7 @@ export default function EstatePage() {
         <Table
           columns={columns}
           data={allEstates}
-          emptyMessage={loading ? "Loading estates..." : "No estates found"}
+          emptyMessage="No estates found"
           enableDateRangeFilter
           startDate={startDate}
           endDate={endDate}
@@ -387,6 +400,7 @@ export default function EstatePage() {
           />
         </Modal>
       )}
+      </div>
     </div>
   );
 }
