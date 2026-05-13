@@ -14,6 +14,21 @@ interface ResidentMeterData {
 
 
 
+/** POST /api/v1/meters/tariff — body: { meterNumber: string } */
+export const getMeterTariff = createAsyncThunk(
+  "meter-mgt/getMeterTariff",
+  async ({ meterNumber }: { meterNumber: string }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("/api/v1/meters/tariff", {
+        meterNumber,
+      });
+      return res.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data);
+    }
+  },
+);
+
 export const getMeterByAddress = createAsyncThunk(
     "meter-mgt/getMeterByAddress",
     async (

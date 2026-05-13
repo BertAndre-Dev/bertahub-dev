@@ -1,6 +1,6 @@
 "use client";
 
-import type { CommunityMember } from "@/data/community-chat-dummy";
+import type { CommunityMember } from "@/types/community-chat-ui";
 import { cn } from "@/lib/utils";
 
 type Props = {

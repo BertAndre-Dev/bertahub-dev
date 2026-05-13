@@ -5,16 +5,15 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  COMMUNITY_ESTATE_NAME,
-  DUMMY_RESIDENT_OPTIONS,
-} from "@/data/community-chat-dummy";
+
+const DEFAULT_ESTATE_PLACEHOLDER = "your estate";
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  /** Shown in the “about” placeholder; falls back to a generic label. */
+  estateDisplayName?: string | null;
   isSubmitting?: boolean;
   onCreate?: (payload: {
     name: string;
@@ -43,10 +42,13 @@ function readFileAsBase64Payload(file: File): Promise<string> {
 export function CreateGroupChatModal({
   open,
   onClose,
+  estateDisplayName,
   isSubmitting = false,
   onCreate,
 }: Props) {
   const [imageLabel, setImageLabel] = useState<string>("");
+  const estateLabel =
+    (estateDisplayName ?? "").trim() || DEFAULT_ESTATE_PLACEHOLDER;
 
   if (!open) return null;
 
@@ -109,7 +111,7 @@ export function CreateGroupChatModal({
             <Textarea
               id="group-about"
               name="about"
-              placeholder={`This group is for all residents in ${COMMUNITY_ESTATE_NAME}`}
+              placeholder={`This group is for all residents in ${estateLabel}`}
               className="mt-1 min-h-[100px] rounded-lg"
               disabled={isSubmitting}
             />
@@ -132,28 +134,10 @@ export function CreateGroupChatModal({
               <p className="mt-1 text-xs text-muted-foreground">{imageLabel}</p>
             ) : null}
           </div>
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="addAll"
-              className="size-4 rounded border-input accent-[#0052CC]"
-              disabled={isSubmitting}
-            />
-            Add all residents
-          </label>
           <p className="text-xs text-muted-foreground">
-            Member invites may be available once the backend supports them.
+            After the group is created, you can add members from the group info
+            panel when your role allows it.
           </p>
-          <div>
-            <Label htmlFor="select-residents">Select residents</Label>
-            <Select
-              id="select-residents"
-              name="residents"
-              options={DUMMY_RESIDENT_OPTIONS}
-              className="mt-1 h-10 rounded-lg"
-              disabled={isSubmitting}
-            />
-          </div>
           <Button
             type="submit"
             disabled={isSubmitting}

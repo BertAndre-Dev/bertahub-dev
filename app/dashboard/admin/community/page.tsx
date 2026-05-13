@@ -36,6 +36,7 @@ import {
 } from "@/redux/slice/community-group/community-group-thunks";
 import type { ChatGroup, ChatGroupRoleToAdd } from "@/types/community-group";
 import type { RootState, AppDispatch } from "@/redux/store";
+import Loader from "@/components/ui/Loader";
 
 export default function AdminCommunityChatPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -477,14 +478,30 @@ export default function AdminCommunityChatPage() {
   };
 
   const emptySidebar =
-    !listLoading && displayGroups.length === 0 && !debouncedSearch.trim();
+    listLoading !== "isLoading" &&
+    displayGroups.length === 0 &&
+    !debouncedSearch.trim();
 
   let emptyPanelTitle = "No group selected.";
-  if (listLoading) emptyPanelTitle = "Loading groups…";
+  if (listLoading === "isLoading") emptyPanelTitle = "Loading groups…";
   else if (emptySidebar) emptyPanelTitle = "No community groups yet.";
 
+  const pageLoading = listLoading === "isLoading";
+
   return (
-    <div className="mx-auto max-w-[1400px] space-y-6">
+    <div className="relative mx-auto max-w-[1400px] space-y-6">
+      {pageLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm rounded-xl">
+          <Loader label="Loading community..." />
+        </div>
+      )}
+
+      <div
+        className={[
+          "space-y-6",
+          pageLoading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+        ].join(" ")}
+      >
       <CommunityPageHeader onCreateGroup={() => setCreateOpen(true)} />
 
       <div className="grid min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-[minmax(260px,340px)_1fr] lg:gap-6">
@@ -522,7 +539,7 @@ export default function AdminCommunityChatPage() {
             <p className="text-sm font-medium text-foreground">
               {emptyPanelTitle}
             </p>
-            {!listLoading && emptySidebar ? (
+            {listLoading !== "isLoading" && emptySidebar ? (
               <p className="mt-2 max-w-sm text-sm text-muted-foreground">
                 Create a group so residents can chat within your estate.
               </p>
@@ -562,6 +579,7 @@ export default function AdminCommunityChatPage() {
           onPromoteMember={handlePromoteMember}
         />
       ) : null}
+      </div>
     </div>
   );
 }

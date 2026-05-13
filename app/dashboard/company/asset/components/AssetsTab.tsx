@@ -42,13 +42,12 @@ export default function AssetsTab() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Asset | null>(null);
 
-  const { assets, assetsPagination, assetsStatus, categories } = useSelector(
+  const { assets, assetsPagination, categories } = useSelector(
     (state: RootState) => {
       const s: any = (state as any).companyAsset;
       return {
         assets: (s?.assets as Asset[]) ?? [],
         assetsPagination: s?.assetsPagination ?? null,
-        assetsStatus: s?.getAssetsStatus ?? "idle",
         categories: (s?.categories as AssetCategory[]) ?? [],
       };
     },
@@ -243,11 +242,9 @@ export default function AssetsTab() {
         columns={columns}
         data={assets}
         emptyMessage={
-          assetsStatus === "isLoading"
-            ? "Loading..."
-            : search.trim()
-              ? "No assets match your search."
-              : "No assets yet. Create an asset to get started."
+          search.trim()
+            ? "No assets match your search."
+            : "No assets yet. Create an asset to get started."
         }
         enableSearch
         onSearch={(value) => {

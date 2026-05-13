@@ -408,7 +408,19 @@ export default function AdminVisitorManagement() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading visitors..." />
+        </div>
+      )}
+
+      <div
+        className={[
+          "space-y-6",
+          loading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+        ].join(" ")}
+      >
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold">
@@ -556,9 +568,7 @@ export default function AdminVisitorManagement() {
         <Table
           columns={columns}
           data={filteredVisitors}
-          emptyMessage={
-            loading ? <Loader label="Loading visitors..." /> : "No visitors found."
-          }
+          emptyMessage="No visitors found."
           enableDateRangeFilter
           startDate={startDate}
           endDate={endDate}
@@ -594,6 +604,7 @@ export default function AdminVisitorManagement() {
           }
         />
       </Card>
+      </div>
     </div>
   );
 }

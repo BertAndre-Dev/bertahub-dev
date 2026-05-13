@@ -1,8 +1,9 @@
 "use client";
 
-import { MoreVertical, Search, Users } from "lucide-react";
-import type { CommunityChatGroup } from "@/data/community-chat-dummy";
-import { formatGroupStatus } from "@/data/community-chat-dummy";
+import { MoreVertical, Search } from "lucide-react";
+import type { CommunityChatGroup } from "@/types/community-chat-ui";
+import { formatGroupStatus } from "@/lib/community-chat-ui";
+import { CommunityGroupAvatar } from "@/components/dashboard/admin/community/CommunityGroupAvatar";
 
 type Props = {
   group: CommunityChatGroup;
@@ -11,16 +12,19 @@ type Props = {
 
 export function CommunityChatHeader({ group, onOpenGroupInfo }: Props) {
   return (
-    <div className="flex items-center gap-3 rounded-t-xl bg-[#0052CC] px-4 py-3 text-white">
-      <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white text-[#0052CC]">
-        <Users className="size-5" />
-      </div>
+    <div className="flex items-center gap-3 rounded-t-xl bg-primary px-4 py-3 text-primary-foreground">
+      <CommunityGroupAvatar
+        name={group.name}
+        profileImage={group.profileImage}
+        className="size-11"
+        variant="onBrand"
+      />
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold">{group.name}</p>
-        <p className="text-sm text-white/90">
+        <p className="text-sm text-primary-foreground/90">
           {group.memberCount} member{group.memberCount === 1 ? "" : "s"}
           {group.status ? (
-            <span className="text-white/80">
+            <span className="text-primary-foreground/80">
               {" "}
               · {formatGroupStatus(group.status)}
             </span>
@@ -29,18 +33,18 @@ export function CommunityChatHeader({ group, onOpenGroupInfo }: Props) {
       </div>
       <button
         type="button"
-        className="rounded-lg p-2 hover:bg-white/10"
+        className="rounded-lg p-2 hover:bg-primary-foreground/10"
         aria-label="Search in conversation"
       >
-        <Search className="size-5" />
+        <Search className="size-5 cursor-pointer" />
       </button>
       <button
         type="button"
-        className="rounded-lg p-2 hover:bg-white/10"
+        className="rounded-lg p-2 hover:bg-primary-foreground/10"
         aria-label="Open group menu"
         onClick={onOpenGroupInfo}
       >
-        <MoreVertical className="size-5" />
+        <MoreVertical className="size-5 cursor-pointer" />
       </button>
     </div>
   );

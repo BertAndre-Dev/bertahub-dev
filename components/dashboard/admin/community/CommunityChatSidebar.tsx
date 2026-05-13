@@ -2,7 +2,7 @@
 
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import type { CommunityChatGroup } from "@/data/community-chat-dummy";
+import type { CommunityChatGroup } from "@/types/community-chat-ui";
 import { CommunityChatListItem } from "./CommunityChatListItem";
 
 type Props = {
@@ -31,7 +31,7 @@ export function CommunityChatSidebar({
           className="h-10 rounded-lg border-border bg-muted/40 pr-10"
           aria-label="Search group chats"
         />
-        <Search className="pointer-events-none absolute right-6 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute right-6 top-1/2 size-4 -translate-y-1/2 text-muted-foreground cursor-pointer" />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {groups.length === 0 ? (

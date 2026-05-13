@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
 import Tab from "@/components/tabs/page";
-import type { AppDispatch } from "@/redux/store";
+import Loader from "@/components/ui/Loader";
+import type { AppDispatch, RootState } from "@/redux/store";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import AssetCategoriesTab from "./components/AssetCategoriesTab";
 import AssetsTab from "./components/AssetsTab";
@@ -13,6 +14,23 @@ import AssetStatsCards from "./components/AssetStatsCards";
 export default function CompanyAssetPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [companyName, setCompanyName] = useState("Company");
+  const [activeAssetTab, setActiveAssetTab] = useState("Assets");
+
+  const { assetsLoading, categoriesLoading } = useSelector(
+    (state: RootState) => {
+      const s = (state as unknown as { companyAsset?: Record<string, unknown> })
+        .companyAsset;
+      return {
+        assetsLoading: s?.getAssetsStatus === "isLoading",
+        categoriesLoading: s?.getCategoriesStatus === "isLoading",
+      };
+    },
+  );
+
+  const pageLoading =
+    activeAssetTab === "Assets"
+      ? Boolean(assetsLoading || categoriesLoading)
+      : Boolean(categoriesLoading);
 
   useEffect(() => {
     (async () => {
@@ -32,35 +50,52 @@ export default function CompanyAssetPage() {
   }, [dispatch]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col">
-        <h1 className="font-heading text-3xl font-bold">Assets</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage assets for{" "}
-          <span className="text-[18px] font-bold underline uppercase text-black">
-            {companyName}
-          </span>
-          {"."}
-        </p>
-      </div>
-
-      <AssetStatsCards />
-
-      <Card className="p-4">
-        <Tab
-          titles={["Assets", "Asset Categories"]}
-          renderContent={(activeTab) => {
-            switch (activeTab) {
-              case "Assets":
-                return <AssetsTab />;
-              case "Asset Categories":
-                return <AssetCategoriesTab />;
-              default:
-                return null;
+    <div className="relative">
+      {pageLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader
+            label={
+              activeAssetTab === "Assets"
+                ? "Loading assets..."
+                : "Loading categories..."
             }
-          }}
-        />
-      </Card>
+          />
+        </div>
+      )}
+
+      <div
+        className={`space-y-6${pageLoading ? " blur-sm opacity-60 pointer-events-none select-none" : ""}`}
+      >
+        <div className="flex flex-col">
+          <h1 className="font-heading text-3xl font-bold">Assets</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage assets for{" "}
+            <span className="text-[18px] font-bold underline uppercase text-black">
+              {companyName}
+            </span>
+            {"."}
+          </p>
+        </div>
+
+        <AssetStatsCards />
+
+        <Card className="p-4">
+          <Tab
+            titles={["Assets", "Asset Categories"]}
+            onTabChange={(_index, title) => setActiveAssetTab(title)}
+            renderContent={(activeTab) => {
+              switch (activeTab) {
+                case "Assets":
+                  return <AssetsTab />;
+                case "Asset Categories":
+                  return <AssetCategoriesTab />;
+                default:
+                  return null;
+              }
+            }}
+          />
+        </Card>
+      </div>
     </div>
   );
 }

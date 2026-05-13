@@ -146,8 +146,22 @@ export default function AdminMaintenancePage() {
   const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
+  const pageLoading = bootstrapping || loading;
+
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      {pageLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading maintenance requests..." />
+        </div>
+      )}
+
+      <div
+        className={[
+          "space-y-6",
+          pageLoading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+        ].join(" ")}
+      >
       <div>
         <h1 className="font-heading text-3xl font-bold">Maintenance Request</h1>
         <p className="text-muted-foreground mt-1 text-sm">
@@ -188,11 +202,7 @@ export default function AdminMaintenancePage() {
       />
 
       <div className="space-y-4">
-        {bootstrapping || loading ? (
-          <div className="py-12">
-            <Loader label="Loading maintenance requests..." />
-          </div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <p className="text-muted-foreground py-8 text-center rounded-lg border border-border bg-muted/20">
             No maintenance requests found.
           </p>
@@ -222,7 +232,7 @@ export default function AdminMaintenancePage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={!canPrev || loading}
+              disabled={!canPrev || pageLoading}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               <ChevronLeft className="w-4 h-4" />
@@ -234,7 +244,7 @@ export default function AdminMaintenancePage() {
             <Button
               variant="outline"
               size="sm"
-              disabled={!canNext || loading}
+              disabled={!canNext || pageLoading}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
               Next
@@ -243,6 +253,7 @@ export default function AdminMaintenancePage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

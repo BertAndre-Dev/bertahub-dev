@@ -11,7 +11,10 @@ import {
   fetchExpenseHeads,
   type ExpenseHead,
 } from "@/redux/slice/admin/expense-head/expense-head";
-import { selectExpenseHeads } from "@/redux/slice/admin/expense-head/expense-head-slice";
+import {
+  selectExpenseHeads,
+  selectExpenseHeadsLoading,
+} from "@/redux/slice/admin/expense-head/expense-head-slice";
 import {
   createExpenseEntries,
   deleteExpenseEntry,
@@ -37,6 +40,7 @@ import {
 } from "@/components/dashboard/admin/expenses/AddExpenseModal";
 import { EditExpenseModal } from "@/components/dashboard/admin/expenses/EditExpenseModal";
 import { ViewExpenseEntryModal } from "@/components/dashboard/admin/expenses/ViewExpenseEntryModal";
+import Loader from "@/components/ui/Loader";
 
 function getId(item: { id?: string; _id?: string } | null | undefined): string {
   return item?.id || item?._id || "";
@@ -77,10 +81,15 @@ export default function ExpenseHeadDetailPage() {
   const heads = useSelector((s: RootState) =>
     selectExpenseHeads(s),
   ) as ExpenseHead[];
+  const headsLoading = useSelector((s: RootState) =>
+    selectExpenseHeadsLoading(s),
+  );
   const entries = useSelector((s: RootState) =>
     selectExpenseEntries(s),
   ) as ExpenseEntry[];
-  const loading = useSelector((s: RootState) => selectExpenseEntriesLoading(s));
+  const entriesLoading = useSelector((s: RootState) =>
+    selectExpenseEntriesLoading(s),
+  );
   const pagination = useSelector((s: RootState) =>
     selectExpenseEntriesPagination(s),
   );
@@ -318,8 +327,30 @@ export default function ExpenseHeadDetailPage() {
     });
   };
 
+  const pageLoading = headsLoading || entriesLoading;
+
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      {pageLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader
+            label={
+              headsLoading && !headId
+                ? "Loading expense details..."
+                : "Loading expenses..."
+            }
+          />
+        </div>
+      )}
+
+      <div
+        className={[
+          "space-y-6",
+          pageLoading
+            ? "blur-sm opacity-60 pointer-events-none select-none"
+            : "",
+        ].join(" ")}
+      >
       <ExpensesHeader
         showImage
         title={`Expenses Head - ${headName}`}
@@ -346,7 +377,7 @@ export default function ExpenseHeadDetailPage() {
       <ExpenseEntriesTable
         headName={headName}
         items={filteredEntries}
-        loading={loading}
+        loading={pageLoading ? false : entriesLoading}
         total={pagination?.total ?? filteredEntries.length ?? 0}
         currentPage={pagination?.currentPage ?? page}
         pageSize={pagination?.pageSize ?? limit}
@@ -394,6 +425,7 @@ export default function ExpenseHeadDetailPage() {
           }
         }}
       />
+      </div>
     </div>
   );
 }
