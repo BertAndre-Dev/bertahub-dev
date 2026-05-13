@@ -1,5 +1,5 @@
 import type { GroupMessage } from "@/types/community-group";
-import type { CommunityMessage } from "@/data/community-chat-dummy";
+import type { CommunityMessage } from "@/types/community-chat-ui";
 
 function isoDateOnly(iso?: string): string {
   if (!iso) return new Date().toISOString().slice(0, 10);
@@ -20,7 +20,7 @@ function formatTime(iso?: string): string {
   }
 }
 
-/** Map API group message → UI bubble model. Right-aligned “outgoing” uses legacy type `admin`. */
+/** Map API group message → UI bubble model. Outgoing messages use `type` `admin` for bubble layout (legacy). */
 export function groupMessageToCommunity(
   m: GroupMessage,
   currentUserId: string | null,

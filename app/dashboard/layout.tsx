@@ -13,7 +13,7 @@ import {
   securityNav,
   residentNav,
   estateAdminNav,
-  companyNav
+  companyNav,
 } from "@/data/page";
 import { AppDispatch, RootState } from "@/redux/store";
 import {
@@ -42,6 +42,7 @@ export default function DashboardLayout({
   const hasFetchedUser = useRef(false);
   const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // 🔹 Handle sidebar state based on screen size (collapsed on mobile, expanded on desktop)
@@ -58,6 +59,21 @@ export default function DashboardLayout({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Close mobile drawer when crossing sm so it does not stay open on desktop
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 640px)");
+    const onChange = () => {
+      if (mq.matches) setMobileSidebarOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname]);
 
   // 🔹 Load user from sessionStorage (per-tab) or redirect if missing
   useEffect(() => {
@@ -155,13 +171,13 @@ export default function DashboardLayout({
         ? superAdminNav
         : role === "company"
           ? companyNav
-        : role === "admin"
-          ? adminNav
-          : role === "estate admin"
-            ? estateAdminNav
-            : role === "resident"
-              ? residentNav
-              : securityNav;
+          : role === "admin"
+            ? adminNav
+            : role === "estate admin"
+              ? estateAdminNav
+              : role === "resident"
+                ? residentNav
+                : securityNav;
 
     // Residents: hide Tenant Management for residentType=Tenant (owners only)
     if (role === "resident") {
@@ -215,7 +231,12 @@ export default function DashboardLayout({
 
     // Roles with module-scoped sidebar items.
     // IMPORTANT: super admin is excluded above (fully hardcoded).
-    const rolesWithModules = new Set(["admin", "resident", "security", "estate admin"]);
+    const rolesWithModules = new Set([
+      "admin",
+      "resident",
+      "security",
+      "estate admin",
+    ]);
     if (rolesWithModules.has(role)) {
       const staticLabels = new Set<string>([
         "Settings",
@@ -229,7 +250,8 @@ export default function DashboardLayout({
 
       navItems = navItems.filter((item) => {
         if (staticLabels.has(item.label)) return true;
-        if (!Array.isArray(estateModules) || estateModules.length === 0) return false;
+        if (!Array.isArray(estateModules) || estateModules.length === 0)
+          return false;
 
         const key =
           (item as { moduleKey?: string; module?: string }).moduleKey ??
@@ -298,13 +320,32 @@ export default function DashboardLayout({
     );
   }
 
+  const toggleMobileSidebar = () => {
+    setMobileSidebarOpen((open) => {
+      const next = !open;
+      if (next) setSidebarOpen(true);
+      return next;
+    });
+  };
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      {/* Sidebar */}
+      {mobileSidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 z-40 bg-black/50 sm:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar: off-canvas below sm, docked from sm up */}
       <aside
-        className={`fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 z-40 ${
-          sidebarOpen ? "w-64" : "w-20"
-        }`}
+        className={`fixed left-0 top-0 z-50 h-screen border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-out sm:z-40 sm:transition-[width,transform] sm:duration-300 w-64 sm:translate-x-0 ${
+          mobileSidebarOpen
+            ? "max-sm:translate-x-0 max-sm:shadow-xl"
+            : "max-sm:pointer-events-none max-sm:-translate-x-full"
+        } ${sidebarOpen ? "sm:w-64" : "sm:w-20"}`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -315,8 +356,9 @@ export default function DashboardLayout({
               <Image
                 src="/logo.svg"
                 alt="BertaHub"
-                width={100}
-                height={100}
+                width={200}
+                height={200}
+                className="h-16 w-auto max-w-full object-contain"
               />
             </div>
           </div>
@@ -362,45 +404,71 @@ export default function DashboardLayout({
 
       {/* Main */}
       <main
-        className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}
+        className={`flex-1 overflow-auto transition-all duration-300 ml-0 ${sidebarOpen ? "sm:ml-64" : "sm:ml-20"}`}
       >
         {/* Topbar */}
         <header className="sticky top-0 bg-background border-b border-border z-30">
-          <div className="flex items-center justify-between px-6 py-8">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-muted rounded-lg transition-colors"
-            >
-              {sidebarOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </button>
-
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2 bg-muted px-4 py-2 rounded-lg">
-                <Search className="w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="bg-transparent outline-none text-sm w-48"
+          <div className="flex items-center justify-between gap-3 px-6 py-5 md:py-8">
+            <div className="flex min-w-0 flex-1 items-center gap-3 sm:flex-initial">
+              <div className="shrink-0 sm:hidden">
+                <Image
+                  src="/logo.svg"
+                  alt="BertaHub"
+                  width={250}
+                  height={100}
+                  className="h-16 w-auto max-w-[11rem] object-contain object-left"
+                  priority
                 />
               </div>
               <button
-                title="Notifications"
-                className="p-2 hover:bg-muted rounded-lg transition-colors relative"
+                type="button"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="hidden sm:inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-muted"
               >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
+                {sidebarOpen ? (
+                  <X className="h-5 w-5 cursor-pointer" />
+                ) : (
+                  <Menu className="h-5 w-5 cursor-pointer" />
+                )}
+              </button>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+              <div className="hidden items-center gap-2 rounded-lg bg-muted px-4 py-2 md:flex">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-48 bg-transparent text-sm outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                title="Notifications"
+                className="relative rounded-lg p-2 transition-colors hover:bg-muted"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-accent" />
+              </button>
+              <button
+                type="button"
+                title="Open menu"
+                onClick={toggleMobileSidebar}
+                className="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:hidden"
+              >
+                {mobileSidebarOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
               </button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
-                className="text-muted-foreground hover:text-foreground"
+                className="hidden text-muted-foreground hover:text-foreground sm:inline-flex"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="h-5 w-5" />
               </Button>
             </div>
           </div>

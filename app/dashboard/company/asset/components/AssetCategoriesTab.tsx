@@ -33,7 +33,6 @@ export default function AssetCategoriesTab() {
   const {
     categories,
     pagination,
-    getStatus,
     createStatus,
     updateStatus,
     deleteStatus,
@@ -42,7 +41,6 @@ export default function AssetCategoriesTab() {
     return {
       categories: (s?.categories as AssetCategory[]) ?? [],
       pagination: s?.categoriesPagination ?? null,
-      getStatus: s?.getCategoriesStatus ?? "idle",
       createStatus: s?.createCategoryStatus ?? "idle",
       updateStatus: s?.updateCategoryStatus ?? "idle",
       deleteStatus: s?.deleteCategoryStatus ?? "idle",
@@ -172,11 +170,9 @@ export default function AssetCategoriesTab() {
         columns={columns}
         data={categories}
         emptyMessage={
-          getStatus === "isLoading"
-            ? "Loading..."
-            : search.trim()
-              ? "No categories match your search."
-              : "No categories yet. Create one to get started."
+          search.trim()
+            ? "No categories match your search."
+            : "No categories yet. Create one to get started."
         }
         enableSearch
         onSearch={(value) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronRight, Pencil, Users, X } from "lucide-react";
+import { ChevronRight, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,10 +9,11 @@ import { Select } from "@/components/ui/select";
 import type {
   CommunityChatGroup,
   CommunityMember,
-} from "@/data/community-chat-dummy";
-import { formatGroupStatus } from "@/data/community-chat-dummy";
+} from "@/types/community-chat-ui";
+import { formatGroupStatus } from "@/lib/community-chat-ui";
 import type { ChatGroupRoleToAdd } from "@/types/community-group";
 import { GroupMemberRow } from "./GroupMemberRow";
+import { CommunityGroupAvatar } from "./CommunityGroupAvatar";
 
 const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
 
@@ -55,6 +56,8 @@ type Props = Readonly<{
   onAddAllSameRole?: (roleToAdd: ChatGroupRoleToAdd) => void | Promise<void>;
   onRemoveMembersByIds?: (memberIds: string[]) => void | Promise<void>;
   onPromoteMember?: (userId: string) => void | Promise<void>;
+  /** Friendly estate name from signed-in user (replaces showing raw id only). */
+  estateDisplayName?: string | null;
 }>;
 
 export function GroupInfoModal({
@@ -62,7 +65,7 @@ export function GroupInfoModal({
   onClose,
   group,
   members,
-  memberTotal = 128,
+  memberTotal,
   onExitGroup,
   onDeleteGroup,
   onUpdateGroup,
@@ -76,8 +79,11 @@ export function GroupInfoModal({
   onAddAllSameRole,
   onRemoveMembersByIds,
   onPromoteMember,
+  estateDisplayName,
 }: Props) {
   const [editing, setEditing] = useState(false);
+  const resolvedMemberTotal =
+    memberTotal ?? group.memberCount ?? members.length;
   const [editName, setEditName] = useState(group.name);
   const [editAbout, setEditAbout] = useState(group.about);
   const [addIdsRaw, setAddIdsRaw] = useState("");
@@ -101,6 +107,26 @@ export function GroupInfoModal({
 
   const showBusy =
     detailLoading || updateLoading || membersActionLoading;
+
+  const trimmedEstateName = (estateDisplayName ?? "").trim();
+  let estateMetaBlock: JSX.Element | null = null;
+  if (trimmedEstateName) {
+    estateMetaBlock = (
+      <p className="mt-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">Estate: </span>
+        <span>{trimmedEstateName}</span>
+      </p>
+    );
+  } else if (group.estateId) {
+    estateMetaBlock = (
+      <p className="mt-2 break-all font-mono text-[11px] leading-relaxed text-muted-foreground">
+        <span className="font-sans text-xs font-medium text-muted-foreground">
+          Estate ID:{" "}
+        </span>
+        {group.estateId}
+      </p>
+    );
+  }
 
   return (
     <div
@@ -132,9 +158,12 @@ export function GroupInfoModal({
         ) : null}
 
         <div className="mt-5 flex gap-3">
-          <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#0052CC] text-white">
-            <Users className="size-8" />
-          </div>
+          <CommunityGroupAvatar
+            name={group.name}
+            profileImage={group.profileImage}
+            className="size-16"
+            iconClassName="size-8"
+          />
           <div className="min-w-0">
             {editing && canUpdateGroupProfile ? (
               <>
@@ -166,14 +195,7 @@ export function GroupInfoModal({
                 </span>
               </p>
             ) : null}
-            {group.estateId ? (
-              <p className="mt-2 break-all font-mono text-[11px] leading-relaxed text-muted-foreground">
-                <span className="font-sans text-xs font-medium text-muted-foreground">
-                  Estate:{" "}
-                </span>
-                {group.estateId}
-              </p>
-            ) : null}
+            {estateMetaBlock}
             {group.createdBy ? (
               <p className="mt-1 break-all font-mono text-[11px] leading-relaxed text-muted-foreground">
                 <span className="font-sans text-xs font-medium text-muted-foreground">
@@ -357,7 +379,7 @@ export function GroupInfoModal({
         <div className="mt-4">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold">
-              Members ({memberTotal})
+              Members ({resolvedMemberTotal})
             </h3>
           </div>
           <div className="rounded-lg border border-border px-3">
@@ -369,7 +391,7 @@ export function GroupInfoModal({
               members.map((m) => <GroupMemberRow key={m.id} member={m} />)
             )}
           </div>
-          {memberTotal > members.length ? (
+          {resolvedMemberTotal > members.length ? (
             <button
               type="button"
               className="mt-3 flex w-full items-center justify-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"

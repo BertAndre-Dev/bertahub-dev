@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCheck, Pencil, Trash2 } from "lucide-react";
-import type { CommunityMessage } from "@/data/community-chat-dummy";
+import type { CommunityMessage } from "@/types/community-chat-ui";
 import { cn } from "@/lib/utils";
 
 type Props = Readonly<{

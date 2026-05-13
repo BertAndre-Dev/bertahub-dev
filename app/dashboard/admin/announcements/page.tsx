@@ -115,6 +115,7 @@ export default function AdminAnnouncementsPage() {
   const announcements = list ?? [];
   const pageLoading =
     getStatus === "isLoading" || getStatsStatus === "isLoading";
+  const fullPageLoading = bootstrapping || pageLoading;
 
   const handleCreate = async (data: AnnouncementFormData) => {
     if (!estateId) {
@@ -221,107 +222,114 @@ export default function AdminAnnouncementsPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <AnnouncementsPageHeader
-        estateName={estateName}
-        onAddClick={() => setAddModalOpen(true)}
-        addDisabled={!estateId}
-      />
-
-      {bootstrapping || (pageLoading && announcements.length === 0) ? (
-        <div className="py-12">
+    <div className="relative">
+      {fullPageLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
           <Loader label="Loading announcements..." />
         </div>
-      ) : (
-        <>
-          {getStatsStatus === "succeeded" && (
-            <AnnouncementsStatsGrid stats={statsCards} />
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <AnnouncementsListSection
-              loading={getStatus === "isLoading"}
-              announcements={announcements}
-              onView={setViewingItem}
-              onEdit={setEditingItem}
-              onDelete={handleDelete}
-            />
-          </div>
-        </>
       )}
 
-      <AnnouncementFormModal
-        visible={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
-        onSubmit={handleCreate}
-        submitLabel="Send"
-        title="Add Announcement"
-        loading={createStatus === "isLoading"}
-      />
+      <div
+        className={[
+          "space-y-6",
+          fullPageLoading
+            ? "blur-sm opacity-60 pointer-events-none select-none"
+            : "",
+        ].join(" ")}
+      >
+        <AnnouncementsPageHeader
+          estateName={estateName}
+          onAddClick={() => setAddModalOpen(true)}
+          addDisabled={!estateId}
+        />
 
-      <AnnouncementFormModal
-        visible={!!editingItem}
-        onClose={() => setEditingItem(null)}
-        initialData={editingItem ?? undefined}
-        onSubmit={handleUpdate}
-        submitLabel="Update"
-        title="Edit Announcement"
-        loading={updateStatus === "isLoading"}
-      />
-
-      <Modal visible={!!viewingItem} onClose={() => setViewingItem(null)}>
-        {viewingItem && (
-          <div className="p-2 md:p-4 overflow-x-hidden">
-            <h2 className="font-heading font-bold text-lg text-foreground mb-2">
-              {viewingItem.title || "Untitled"}
-            </h2>
-            <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground mb-3">
-              <span>
-                {formatAnnouncementDate(
-                  viewingItem.scheduledFor ??
-                    viewingItem.createdAt ??
-                    viewingItem.updatedAt,
-                )}
-              </span>
-              <span>·</span>
-              <span className="uppercase">{viewingItem.category ?? "—"}</span>
-              <span>·</span>
-              <span>Priority: {viewingItem.priority ?? "—"}</span>
-              {viewingItem.isPinned && (
-                <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
-                  Pinned
-                </span>
-              )}
-            </div>
-            <div
-              className="prose prose-sm max-w-full pb-2 break-words prose-p:my-1 prose-ul:my-1 prose-ol:my-1 text-foreground"
-              dangerouslySetInnerHTML={{
-                __html:
-                  viewingItem.content ??
-                  viewingItem.description ??
-                  "<span>No content.</span>",
-              }}
-            />
-            <div className="flex gap-2 mt-6">
-              <Button variant="outline" onClick={() => setViewingItem(null)}>
-                Close
-              </Button>
-              {canEditWithinOneHour(viewingItem.createdAt) && (
-                <Button
-                  variant="default"
-                  onClick={() => {
-                    setEditingItem(viewingItem);
-                    setViewingItem(null);
-                  }}
-                >
-                  <Pencil className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-            </div>
-          </div>
+        {getStatsStatus === "succeeded" && (
+          <AnnouncementsStatsGrid stats={statsCards} />
         )}
-      </Modal>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <AnnouncementsListSection
+            loading={getStatus === "isLoading" && !fullPageLoading}
+            announcements={announcements}
+            onView={setViewingItem}
+            onEdit={setEditingItem}
+            onDelete={handleDelete}
+          />
+        </div>
+
+        <AnnouncementFormModal
+          visible={addModalOpen}
+          onClose={() => setAddModalOpen(false)}
+          onSubmit={handleCreate}
+          submitLabel="Send"
+          title="Add Announcement"
+          loading={createStatus === "isLoading"}
+        />
+
+        <AnnouncementFormModal
+          visible={!!editingItem}
+          onClose={() => setEditingItem(null)}
+          initialData={editingItem ?? undefined}
+          onSubmit={handleUpdate}
+          submitLabel="Update"
+          title="Edit Announcement"
+          loading={updateStatus === "isLoading"}
+        />
+
+        <Modal visible={!!viewingItem} onClose={() => setViewingItem(null)}>
+          {viewingItem && (
+            <div className="p-2 md:p-4 overflow-x-hidden">
+              <h2 className="font-heading font-bold text-lg text-foreground mb-2">
+                {viewingItem.title || "Untitled"}
+              </h2>
+              <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground mb-3">
+                <span>
+                  {formatAnnouncementDate(
+                    viewingItem.scheduledFor ??
+                      viewingItem.createdAt ??
+                      viewingItem.updatedAt,
+                  )}
+                </span>
+                <span>·</span>
+                <span className="uppercase">{viewingItem.category ?? "—"}</span>
+                <span>·</span>
+                <span>Priority: {viewingItem.priority ?? "—"}</span>
+                {viewingItem.isPinned && (
+                  <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                    Pinned
+                  </span>
+                )}
+              </div>
+              <div
+                className="prose prose-sm max-w-full pb-2 break-words prose-p:my-1 prose-ul:my-1 prose-ol:my-1 text-foreground"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    viewingItem.content ??
+                    viewingItem.description ??
+                    "<span>No content.</span>",
+                }}
+              />
+              <div className="flex gap-2 mt-6">
+                <Button variant="outline" onClick={() => setViewingItem(null)}>
+                  Close
+                </Button>
+                {canEditWithinOneHour(viewingItem.createdAt) && (
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      setEditingItem(viewingItem);
+                      setViewingItem(null);
+                    }}
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </Modal>
+      </div>
     </div>
   );
 }

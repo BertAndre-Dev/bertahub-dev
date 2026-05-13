@@ -1,6 +1,7 @@
 "use client";
 
-import type { CommunityChatGroup, CommunityMessage } from "@/data/community-chat-dummy";
+import type { CommunityChatGroup, CommunityMessage } from "@/types/community-chat-ui";
+import type { CommunitySendOptions } from "./CommunityMessageInput";
 import { CommunityChatHeader } from "./CommunityChatHeader";
 import { CommunityMessageList } from "./CommunityMessageList";
 import { CommunityMessageInput } from "./CommunityMessageInput";
@@ -11,7 +12,7 @@ type Props = Readonly<{
   messagesLoading?: boolean;
   draft: string;
   onDraftChange: (value: string) => void;
-  onSend: () => void;
+  onSend: (opts?: CommunitySendOptions) => void | Promise<void>;
   onOpenGroupInfo: () => void;
   sendDisabled?: boolean;
   sending?: boolean;

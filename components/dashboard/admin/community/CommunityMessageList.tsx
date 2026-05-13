@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { CommunityMessage } from "@/data/community-chat-dummy";
+import type { CommunityMessage } from "@/types/community-chat-ui";
 import { CommunityMessageBubble } from "./CommunityMessageBubble";
 
 function formatSeparatorLabel(isoDate: string): string {

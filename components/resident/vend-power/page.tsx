@@ -9,7 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Modal from "@/components/modal/page";
-import { vendPower } from "@/redux/slice/resident/meter-mgt/meter-mgt";
+import Loader from "@/components/ui/Loader";
+import {
+  vendPower,
+  getMeterTariff,
+} from "@/redux/slice/resident/meter-mgt/meter-mgt";
 import { Copy, CheckCircle } from "lucide-react";
 
 interface VendPowerFormProps {
@@ -36,13 +40,57 @@ export default function VendPowerForm({
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successToken, setSuccessToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [apiTariffPrice, setApiTariffPrice] = useState<number | null>(null);
+  const [tariffLoading, setTariffLoading] = useState(false);
 
-  // const kwh = useMemo(() => {
-  //   const price = Number(tariffPrice);
-  //   if (amount <= 0) return "0";
-  //   if (!Number.isFinite(price) || price <= 0) return "0";
-  //   return (amount / price).toFixed(2);
-  // }, [amount, tariffPrice]);
+  const effectiveTariffPrice =
+    apiTariffPrice != null && Number.isFinite(apiTariffPrice)
+      ? apiTariffPrice
+      : tariffPrice != null && Number.isFinite(Number(tariffPrice))
+        ? Number(tariffPrice)
+        : null;
+
+  const kwh = useMemo(() => {
+    const price = Number(effectiveTariffPrice);
+    if (amount <= 0) return "0";
+    if (!Number.isFinite(price) || price <= 0) return "0";
+    return (amount / price).toFixed(2);
+  }, [amount, effectiveTariffPrice]);
+
+  useEffect(() => {
+    if (!meterNumber?.trim()) return;
+    let cancelled = false;
+    setTariffLoading(true);
+    setApiTariffPrice(null);
+    dispatch(getMeterTariff({ meterNumber: meterNumber.trim() }))
+      .unwrap()
+      .then((payload: unknown) => {
+        if (cancelled) return;
+        const root = payload as {
+          data?: { tariffList?: Array<{ price?: unknown }> };
+        };
+        const list = root?.data?.tariffList;
+        const raw = list?.[0]?.price;
+        const n = Number(raw);
+        setApiTariffPrice(Number.isFinite(n) && n > 0 ? n : null);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setApiTariffPrice(null);
+          const hasFallback =
+            tariffPrice != null && Number.isFinite(Number(tariffPrice));
+          if (!hasFallback) {
+            toast.error("Could not load tariff for this meter.");
+          }
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setTariffLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch, meterNumber, tariffPrice]);
 
   const closeSuccessModal = useCallback(() => {
     setShowSuccessModal(false);
@@ -108,42 +156,67 @@ export default function VendPowerForm({
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-blue-600">
-            Vend Power Payment
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          <div>
-            <Label>Amount</Label>
-            <Input
-              type="number"
-              value={amount === 0 ? "" : amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              placeholder="Enter amount"
-            />
-            {/* <p className="text-sm text-muted-foreground mt-1">
-              Price per kWh:{" "}
-              <strong>
-                {tariffPrice != null && Number.isFinite(Number(tariffPrice))
-                  ? `₦${Number(tariffPrice).toLocaleString()}`
-                  : "—"}
-              </strong>
-            </p> */}
-            {/* <p className="text-sm text-muted-foreground mt-1">
-              You will get <strong>{kwh} kWh</strong> for this amount.
-            </p> */}
+      <div className="relative">
+        {tariffLoading && (
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/40 backdrop-blur-sm"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <div className="flex h-28 w-full max-w-[200px] items-center justify-center">
+              <Loader label="Loading tariff…" />
+            </div>
           </div>
+        )}
+        <form
+          onSubmit={handleSubmit}
+          className={
+            tariffLoading
+              ? "pointer-events-none blur-sm transition-[filter] duration-200"
+              : undefined
+          }
+        >
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-blue-600">
+              Vend Power Payment
+            </CardTitle>
+          </CardHeader>
 
-          <div className="pt-6">
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? "Processing..." : `Pay ₦${amount}`}
-            </Button>
-          </div>
-        </CardContent>
-      </form>
+          <CardContent className="space-y-6">
+            <div>
+              <Label>Amount</Label>
+              <Input
+                type="number"
+                value={amount === 0 ? "" : amount}
+                onChange={(e) => setAmount(Number(e.target.value))}
+                placeholder="Enter amount"
+                disabled={tariffLoading}
+              />
+              <p className="mt-1 text-sm text-muted-foreground">
+                Price per kWh:{" "}
+                <strong>
+                  {effectiveTariffPrice != null
+                    ? `₦${Number(effectiveTariffPrice).toLocaleString()}`
+                    : "—"}
+                </strong>
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                You will get <strong>{kwh} kWh</strong> for this amount.
+              </p>
+            </div>
+
+            <div className="pt-6">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={submitting || tariffLoading}
+              >
+                {submitting ? "Processing..." : `Pay ₦${amount}`}
+              </Button>
+            </div>
+          </CardContent>
+        </form>
+      </div>
 
       <Modal visible={showSuccessModal} onClose={closeSuccessModal}>
         <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 text-center">
