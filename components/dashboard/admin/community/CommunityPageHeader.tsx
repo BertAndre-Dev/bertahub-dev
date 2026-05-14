@@ -39,7 +39,7 @@ export function CommunityPageHeader({
         <Button
           type="button"
           onClick={onCreateGroup}
-          className="shrink-0 rounded-lg bg-[#0052CC] px-4 text-white hover:bg-[#0047B3]"
+          className="shrink-0 cursor-pointer rounded-lg bg-[#0052CC] px-4 text-white hover:bg-[#0047B3] disabled:cursor-not-allowed"
         >
           <Plus className="size-4" />
           Create Group Chat

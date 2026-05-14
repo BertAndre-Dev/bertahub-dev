@@ -20,17 +20,17 @@ export function CommunityChatListItem({
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex w-full gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-b-0 cursor-pointer",
+        "flex w-full gap-3 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-b-0 cursor-pointer disabled:cursor-not-allowed",
         active ? "bg-primary/10" : "hover:bg-muted/50",
       )}
     >
       <CommunityGroupAvatar
         name={group.name}
         profileImage={group.profileImage}
-        className="size-11 cursor-pointer"
+        className="size-11"
       />
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2 cursor-pointer">
+        <div className="flex items-start justify-between gap-2">
           <p className="truncate font-semibold text-foreground">{group.name}</p>
           <span className="shrink-0 text-xs text-muted-foreground">
             {group.time}

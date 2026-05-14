@@ -45,7 +45,16 @@ export function groupMessageToCommunity(
             ? "[File]"
             : `[${m.messageType}]`;
   }
-  if (!isDeleted && m.attachments?.length && !text) text = "[Attachment]";
+  const attachments = (m.attachments ?? []).filter((a) => a.url);
+  const hasRenderableAttachments = attachments.length > 0;
+  if (
+    !isDeleted &&
+    !text &&
+    !hasRenderableAttachments &&
+    (m.attachments?.length ?? 0) > 0
+  ) {
+    text = "[Attachment]";
+  }
   if (!isDeleted && m.isEdited && text) {
     text = `${text} (edited)`;
   }
@@ -60,5 +69,10 @@ export function groupMessageToCommunity(
     date: isoDateOnly(m.createdAt),
     messageType: m.messageType,
     isDeleted,
+    attachments: isDeleted
+      ? undefined
+      : hasRenderableAttachments
+        ? attachments
+        : undefined,
   };
 }

@@ -31,7 +31,7 @@ export default function ChatFilePreview({
       <button
         type="button"
         onClick={onRemove}
-        className="p-1 rounded-md hover:bg-muted transition-colors"
+        className="cursor-pointer p-1 rounded-md hover:bg-muted transition-colors disabled:cursor-not-allowed"
         aria-label="Remove attachment"
         title="Remove"
       >

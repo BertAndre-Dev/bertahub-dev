@@ -215,9 +215,16 @@ export function formatGroupStatus(status?: string): string {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function shortenUserId(id: string): string {
-  if (id.length <= 14) return id;
-  return `${id.slice(0, 8)}…${id.slice(-6)}`;
+function shortenUserId(id: unknown): string {
+  const s =
+    typeof id === "string"
+      ? id.trim()
+      : id != null && id !== ""
+        ? String(id).trim()
+        : "";
+  if (!s) return "—";
+  if (s.length <= 14) return s;
+  return `${s.slice(0, 8)}…${s.slice(-6)}`;
 }
 
 /**
@@ -229,13 +236,19 @@ export function chatGroupMemberRowsFromApi(
 ): CommunityMember[] {
   const ids = group.memberIds ?? [];
   const adminSet = new Set(group.adminIds ?? []);
-  return ids.map((userId) => ({
-    id: userId,
-    name: shortenUserId(userId),
-    subtitle: adminSet.has(userId) ? "Group admin" : "Member",
-    tag: adminSet.has(userId) ? "Admin" : "Member",
-    avatarColor: adminSet.has(userId) ? "green" : "gray",
-  }));
+  return ids.map((rawId) => {
+    const id =
+      typeof rawId === "string"
+        ? rawId.trim()
+        : String(rawId ?? "").trim() || "—";
+    return {
+      id,
+      name: shortenUserId(id),
+      subtitle: adminSet.has(id) ? "Group admin" : "Member",
+      tag: adminSet.has(id) ? "Admin" : "Member",
+      avatarColor: adminSet.has(id) ? "green" : "gray",
+    };
+  });
 }
 
 /** Map a chat group from the API to sidebar / window display model. */
@@ -273,7 +286,7 @@ export function chatGroupToCommunity(g: ChatGroup): CommunityChatGroup {
     status: g.status,
     estateId: g.estateId,
     createdBy: g.createdBy,
-    memberIds: Array.isArray(g.members) ? [...g.members] : undefined,
+    memberIds: g.members?.map((m) => m.id),
     adminIds: Array.isArray(g.admins) ? [...g.admins] : undefined,
   };
 }

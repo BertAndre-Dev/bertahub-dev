@@ -11,8 +11,9 @@ import { GroupInfoModal } from "@/components/dashboard/admin/community/GroupInfo
 import {
   chatGroupToCommunity,
   chatGroupMemberRowsFromApi,
-} from "@/data/community-chat-dummy";
+} from "@/lib/community-chat-ui";
 import { groupMessageToCommunity } from "@/lib/community-chat-map";
+import { displayNameFromSignedInUser } from "@/lib/user-display-name";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
@@ -34,7 +35,7 @@ import {
   sendGroupMessage,
   updateChatGroup,
 } from "@/redux/slice/community-group/community-group-thunks";
-import type { ChatGroup, ChatGroupRoleToAdd } from "@/types/community-group";
+import type { ChatGroup, ChatGroupRoleToAdd, GroupMessageType } from "@/types/community-group";
 import type { RootState, AppDispatch } from "@/redux/store";
 import Loader from "@/components/ui/Loader";
 
@@ -47,6 +48,8 @@ export default function AdminCommunityChatPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [groupInfoOpen, setGroupInfoOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [estateName, setEstateName] = useState("Estate");
+  const [messageSelfLabel, setMessageSelfLabel] = useState("You");
 
   const {
     groups,
@@ -91,8 +94,19 @@ export default function AdminCommunityChatPage() {
               ? (data as { _id: string })._id
               : null;
         setCurrentUserId(id);
+        const name =
+          (data?.estateId as { name?: string } | undefined)?.name ??
+          (data?.estate as { name?: string } | undefined)?.name ??
+          (data?.estateName as string) ??
+          "Estate";
+        setEstateName(name);
+        setMessageSelfLabel(
+          displayNameFromSignedInUser(data as Record<string, unknown>),
+        );
       } catch {
         setCurrentUserId(null);
+        setEstateName("Estate");
+        setMessageSelfLabel("You");
       }
     })();
   }, [dispatch]);
@@ -250,37 +264,43 @@ export default function AdminCommunityChatPage() {
   const messages = useMemo(
     () =>
       groupMessages.map((m) =>
-        groupMessageToCommunity(m, currentUserId, "You (Facility Manager)"),
+        groupMessageToCommunity(m, currentUserId, messageSelfLabel),
       ),
-    [groupMessages, currentUserId],
+    [groupMessages, currentUserId, messageSelfLabel],
   );
 
   const draft = selectedId ? draftByGroup[selectedId] ?? "" : "";
 
-  const handleSend = useCallback(async () => {
-    if (!selectedId) return;
-    const text = draft.trim();
-    if (!text) return;
-    try {
-      await dispatch(
-        sendGroupMessage({
-          groupId: selectedId,
-          content: text,
-          messageType: "text",
-        }),
-      ).unwrap();
-      setDraftByGroup((prev) => ({ ...prev, [selectedId]: "" }));
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Could not send message.";
-      toast.error(msg);
-    }
-  }, [selectedId, draft, dispatch]);
+  const handleSend = useCallback(
+    async (opts?: { attachments?: string[]; messageType?: GroupMessageType }) => {
+      if (!selectedId) return;
+      const text = draft.trim();
+      const hasAtt = Boolean(opts?.attachments?.length);
+      if (!text && !hasAtt) return;
+      try {
+        await dispatch(
+          sendGroupMessage({
+            groupId: selectedId,
+            content: text,
+            messageType: opts?.messageType ?? "text",
+            attachments: hasAtt ? opts?.attachments : undefined,
+          }),
+        ).unwrap();
+        setDraftByGroup((prev) => ({ ...prev, [selectedId]: "" }));
+      } catch (e: unknown) {
+        const msg =
+          e &&
+          typeof e === "object" &&
+          "message" in e &&
+          typeof (e as { message?: string }).message === "string"
+            ? (e as { message: string }).message
+            : "Could not send message.";
+        toast.error(msg);
+        throw e;
+      }
+    },
+    [selectedId, draft, dispatch],
+  );
 
   const handleEditMessage = useCallback(
     (messageId: string) => {
@@ -412,6 +432,7 @@ export default function AdminCommunityChatPage() {
           ? (e as { message: string }).message
           : "Failed to add members.";
       toast.error(msg);
+      throw e;
     }
   };
 
@@ -436,6 +457,7 @@ export default function AdminCommunityChatPage() {
           ? (e as { message: string }).message
           : "Failed to add members.";
       toast.error(msg);
+      throw e;
     }
   };
 
@@ -456,6 +478,7 @@ export default function AdminCommunityChatPage() {
           ? (e as { message: string }).message
           : "Failed to remove members.";
       toast.error(msg);
+      throw e;
     }
   };
 
@@ -474,6 +497,7 @@ export default function AdminCommunityChatPage() {
           ? (e as { message: string }).message
           : "Failed to promote member.";
       toast.error(msg);
+      throw e;
     }
   };
 
@@ -502,7 +526,10 @@ export default function AdminCommunityChatPage() {
           pageLoading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
         ].join(" ")}
       >
-      <CommunityPageHeader onCreateGroup={() => setCreateOpen(true)} />
+      <CommunityPageHeader
+        estateName={estateName}
+        onCreateGroup={() => setCreateOpen(true)}
+      />
 
       <div className="grid min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-[minmax(260px,340px)_1fr] lg:gap-6">
         <CommunityChatSidebar
@@ -541,7 +568,7 @@ export default function AdminCommunityChatPage() {
             </p>
             {listLoading !== "isLoading" && emptySidebar ? (
               <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                Create a group so residents can chat within your estate.
+                Create a group so residents can chat within {estateName}.
               </p>
             ) : null}
           </div>
@@ -551,6 +578,7 @@ export default function AdminCommunityChatPage() {
       <CreateGroupChatModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
+        estateDisplayName={estateName}
         isSubmitting={createLoading === "isLoading"}
         onCreate={handleCreateGroup}
       />
@@ -562,6 +590,8 @@ export default function AdminCommunityChatPage() {
           group={selectedGroupUi}
           members={infoModalMembers}
           memberTotal={selectedGroupUi.memberCount}
+          estateDisplayName={estateName}
+          estateId={selectedGroupUi.estateId}
           detailLoading={detailLoading === "isLoading"}
           updateLoading={updateLoading === "isLoading"}
           membersActionLoading={membersActionLoading === "isLoading"}
@@ -569,9 +599,6 @@ export default function AdminCommunityChatPage() {
           canUpdateGroupProfile
           canDeleteGroup
           onUpdateGroup={handleUpdateGroup}
-          onExitGroup={() => {
-            toast.info("Leaving a community group is not available yet.");
-          }}
           onDeleteGroup={handleDeleteGroup}
           onAddMembersByIds={handleAddMembersByIds}
           onAddAllSameRole={handleAddAllSameRole}
