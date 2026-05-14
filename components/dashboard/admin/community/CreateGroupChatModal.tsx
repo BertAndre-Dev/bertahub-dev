@@ -54,12 +54,12 @@ export function CreateGroupChatModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/50 p-4"
       role="presentation"
       onClick={(e) => e.target === e.currentTarget && !isSubmitting && onClose()}
     >
       <div
-        className="relative w-full max-w-md rounded-xl bg-card p-6 shadow-xl"
+        className="relative w-full max-w-md cursor-default rounded-xl bg-card p-6 shadow-xl"
         role="dialog"
         aria-labelledby="create-group-title"
         onClick={(e) => e.stopPropagation()}
@@ -68,7 +68,7 @@ export function CreateGroupChatModal({
           type="button"
           onClick={onClose}
           disabled={isSubmitting}
-          className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-[#d0dff2] text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-50"
+          className="absolute right-4 top-4 flex size-9 cursor-pointer items-center justify-center rounded-full bg-[#d0dff2] text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Close"
         >
           <X className="size-5" />
@@ -101,7 +101,7 @@ export function CreateGroupChatModal({
               id="group-name"
               name="name"
               placeholder="Enter group name"
-              className="mt-1 h-10 rounded-lg"
+              className="mt-1 h-10 cursor-text rounded-lg"
               required
               disabled={isSubmitting}
             />
@@ -112,7 +112,7 @@ export function CreateGroupChatModal({
               id="group-about"
               name="about"
               placeholder={`This group is for all residents in ${estateLabel}`}
-              className="mt-1 min-h-[100px] rounded-lg"
+              className="mt-1 min-h-[100px] cursor-text rounded-lg"
               disabled={isSubmitting}
             />
           </div>
@@ -123,7 +123,7 @@ export function CreateGroupChatModal({
               name="profileImage"
               type="file"
               accept="image/*"
-              className="mt-1 rounded-lg"
+              className="mt-1 cursor-pointer rounded-lg file:cursor-pointer"
               disabled={isSubmitting}
               onChange={(ev) => {
                 const f = ev.target.files?.[0];
@@ -141,7 +141,7 @@ export function CreateGroupChatModal({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 h-11 w-full rounded-lg bg-[#0052CC] text-white hover:bg-[#0047B3]"
+            className="mt-2 h-11 w-full rounded-lg bg-[#0052CC] text-white hover:bg-[#0047B3] disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Creating…" : "Create"}
           </Button>

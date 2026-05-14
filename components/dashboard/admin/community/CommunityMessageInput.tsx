@@ -120,7 +120,7 @@ export function CommunityMessageInput({
           }}
           placeholder={placeholder}
           disabled={blocked}
-          className="h-11 flex-1 rounded-lg border-border pr-24"
+          className="h-11 flex-1 cursor-text rounded-lg border-border pr-24"
           aria-label="Message text"
         />
         <div className="absolute right-2 flex items-center gap-0.5">
@@ -128,19 +128,19 @@ export function CommunityMessageInput({
             type="button"
             onClick={handlePickFile}
             disabled={blocked}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+            className="cursor-pointer rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Attach file"
           >
-            <Paperclip className="size-5 cursor-pointer" />
+            <Paperclip className="size-5" />
           </button>
           <button
             type="button"
             onClick={() => void runSend()}
             disabled={blocked || !canSend}
-            className="rounded-lg p-2 text-primary hover:bg-primary/10 disabled:opacity-40"
+            className="cursor-pointer rounded-lg p-2 text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Send message"
           >
-            <SendHorizontal className="size-5 cursor-pointer" />
+            <SendHorizontal className="size-5" />
           </button>
         </div>
       </div>

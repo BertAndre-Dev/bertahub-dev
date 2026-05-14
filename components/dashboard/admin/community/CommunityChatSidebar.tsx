@@ -28,10 +28,10 @@ export function CommunityChatSidebar({
           placeholder="Search group chats"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="h-10 rounded-lg border-border bg-muted/40 pr-10"
+          className="h-10 cursor-text rounded-lg border-border bg-muted/40 pr-10"
           aria-label="Search group chats"
         />
-        <Search className="pointer-events-none absolute right-6 top-1/2 size-4 -translate-y-1/2 text-muted-foreground cursor-pointer" />
+        <Search className="pointer-events-none absolute right-6 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {groups.length === 0 ? (

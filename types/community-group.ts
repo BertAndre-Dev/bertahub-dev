@@ -1,5 +1,13 @@
 /** Estate community group chat (REST: /api/v1/chat/groups). */
 
+/** Populated member row from list/detail API (or legacy string id only). */
+export interface ChatGroupMemberUser {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
 export interface ChatGroup {
   _id: string;
   name: string;
@@ -7,8 +15,8 @@ export interface ChatGroup {
   profileImage?: string;
   estateId?: string;
   createdBy?: string;
-  /** Member user IDs (list/detail API). */
-  members?: string[];
+  members?: ChatGroupMemberUser[];
+  /** Admin user ids (extracted from API string or object entries). */
   admins?: string[];
   status?: string;
   createdAt?: string;
@@ -67,6 +75,14 @@ export interface PromoteGroupAdminPayload {
 
 export type GroupMessageType = "text" | "image" | "video" | "file" | string;
 
+/** Attachment object from list/send API; legacy responses may use plain URL strings. */
+export interface GroupMessageAttachment {
+  url: string;
+  type?: string;
+  mimeType?: string;
+  fileName?: string;
+}
+
 export interface GroupMessage {
   _id: string;
   groupId?: string;
@@ -76,7 +92,7 @@ export interface GroupMessage {
   senderName: string;
   createdAt: string;
   updatedAt?: string;
-  attachments?: string[];
+  attachments?: GroupMessageAttachment[];
   replyTo?: string;
   isEdited?: boolean;
   isDeleted?: boolean;

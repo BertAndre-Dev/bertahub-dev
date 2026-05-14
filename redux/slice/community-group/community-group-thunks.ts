@@ -4,10 +4,12 @@ import axiosInstance from "@/utils/axiosInstance";
 import type {
   AddGroupMembersPayload,
   ChatGroup,
+  ChatGroupMemberUser,
   ChatGroupsListResponse,
   CreateChatGroupPayload,
   EditGroupMessagePayload,
   GroupMessage,
+  GroupMessageAttachment,
   GroupMessagesListResponse,
   PromoteGroupAdminPayload,
   RemoveGroupMembersPayload,
@@ -37,6 +39,14 @@ type ApiPagination = {
   totalPages?: number;
 };
 
+type ApiChatGroupMember = {
+  id?: string;
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+};
+
 type ApiChatGroup = {
   id?: string;
   _id?: string;
@@ -45,8 +55,9 @@ type ApiChatGroup = {
   profileImage?: string;
   estateId?: string;
   createdBy?: string;
-  members?: string[];
-  admins?: string[];
+  /** Legacy: string ids; current API: populated user objects. */
+  members?: (string | ApiChatGroupMember)[];
+  admins?: (string | ApiChatGroupMember)[];
   status?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -56,6 +67,34 @@ type ApiChatGroup = {
   lastMessage?: string;
   lastMessagePreview?: string;
 };
+
+function userIdFromMemberEntry(entry: unknown): string | null {
+  if (typeof entry === "string") {
+    const t = entry.trim();
+    return t || null;
+  }
+  if (entry && typeof entry === "object") {
+    const o = entry as ApiChatGroupMember;
+    const id = (o.id ?? o._id ?? "").toString().trim();
+    return id || null;
+  }
+  return null;
+}
+
+function normalizeMemberUser(entry: unknown): ChatGroupMemberUser | null {
+  const id = userIdFromMemberEntry(entry);
+  if (!id) return null;
+  if (typeof entry === "string") {
+    return { id };
+  }
+  const o = entry as ApiChatGroupMember;
+  return {
+    id,
+    firstName: typeof o.firstName === "string" ? o.firstName : undefined,
+    lastName: typeof o.lastName === "string" ? o.lastName : undefined,
+    email: typeof o.email === "string" ? o.email : undefined,
+  };
+}
 
 function normalizePagination(p: ApiPagination | undefined): {
   total: number;
@@ -94,7 +133,17 @@ function mergeApiPagination(
 
 function normalizeGroup(raw: ApiChatGroup): ChatGroup {
   const _id = (raw._id ?? raw.id ?? "").toString();
-  const fromMembers = Array.isArray(raw.members) ? raw.members.length : 0;
+  const membersList = Array.isArray(raw.members)
+    ? raw.members
+        .map(normalizeMemberUser)
+        .filter((m): m is ChatGroupMemberUser => m !== null)
+    : [];
+  const adminsIds = Array.isArray(raw.admins)
+    ? raw.admins
+        .map(userIdFromMemberEntry)
+        .filter((id): id is string => Boolean(id))
+    : [];
+  const fromMembers = membersList.length;
   const memberRaw = raw.memberCount ?? raw.membersCount ?? fromMembers;
   return {
     _id,
@@ -105,8 +154,8 @@ function normalizeGroup(raw: ApiChatGroup): ChatGroup {
       typeof raw.estateId === "string" ? raw.estateId : undefined,
     createdBy:
       typeof raw.createdBy === "string" ? raw.createdBy : undefined,
-    members: Array.isArray(raw.members) ? [...raw.members] : undefined,
-    admins: Array.isArray(raw.admins) ? [...raw.admins] : undefined,
+    members: fromMembers > 0 ? membersList : undefined,
+    admins: adminsIds.length > 0 ? adminsIds : undefined,
     status: typeof raw.status === "string" ? raw.status : undefined,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
@@ -280,7 +329,8 @@ type ApiGroupMessage = {
   senderName?: string;
   createdAt?: string;
   updatedAt?: string;
-  attachments?: string[];
+  /** API returns objects `{ url, type, mimeType, fileName }` or legacy URL strings. */
+  attachments?: unknown[];
   replyTo?: string;
   isEdited?: boolean;
   isDeleted?: boolean;
@@ -303,6 +353,48 @@ function normalizeSender(u: string | ApiUser | undefined): {
   };
 }
 
+function normalizeAttachments(
+  raw: unknown,
+): GroupMessageAttachment[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const out: GroupMessageAttachment[] = [];
+  for (const item of raw) {
+    if (typeof item === "string") {
+      const u = item.trim();
+      if (u) out.push({ url: u });
+      continue;
+    }
+    if (item && typeof item === "object") {
+      const o = item as Record<string, unknown>;
+      const urlRaw =
+        typeof o.url === "string"
+          ? o.url
+          : typeof o.src === "string"
+            ? o.src
+            : "";
+      const url = urlRaw.trim();
+      if (!url) continue;
+      out.push({
+        url,
+        type: typeof o.type === "string" ? o.type : undefined,
+        mimeType:
+          typeof o.mimeType === "string"
+            ? o.mimeType
+            : typeof o.mimetype === "string"
+              ? String(o.mimetype)
+              : undefined,
+        fileName:
+          typeof o.fileName === "string"
+            ? o.fileName
+            : typeof o.filename === "string"
+              ? String(o.filename)
+              : undefined,
+      });
+    }
+  }
+  return out.length ? out : undefined;
+}
+
 export function normalizeGroupMessage(raw: ApiGroupMessage): GroupMessage {
   const _id = (raw._id ?? raw.id ?? "").toString();
   const explicitName =
@@ -321,7 +413,7 @@ export function normalizeGroupMessage(raw: ApiGroupMessage): GroupMessage {
     senderName,
     createdAt: raw.createdAt ?? new Date().toISOString(),
     updatedAt: raw.updatedAt,
-    attachments: Array.isArray(raw.attachments) ? raw.attachments : undefined,
+    attachments: normalizeAttachments(raw.attachments),
     replyTo:
       typeof raw.replyTo === "string"
         ? raw.replyTo

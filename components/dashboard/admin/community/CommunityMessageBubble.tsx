@@ -1,8 +1,20 @@
 "use client";
 
 import { CheckCheck, Pencil, Trash2 } from "lucide-react";
+import type { GroupMessageAttachment } from "@/types/community-group";
 import type { CommunityMessage } from "@/types/community-chat-ui";
 import { cn } from "@/lib/utils";
+
+function attachmentLooksLikeImage(a: GroupMessageAttachment): boolean {
+  if (a.type === "image") return true;
+  if (a.mimeType?.toLowerCase().startsWith("image/")) return true;
+  try {
+    const path = new URL(a.url).pathname;
+    return /\.(png|jpe?g|gif|webp|svg|avif|bmp)(\?|$)/i.test(path);
+  } catch {
+    return /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(a.url);
+  }
+}
 
 type Props = Readonly<{
   message: CommunityMessage;
@@ -29,6 +41,10 @@ export function CommunityMessageBubble({
     !deleted && (!message.messageType || message.messageType === "text");
   const showEdit = isMine && onEditMessage && canEditText;
   const showDelete = isMine && onDeleteMessage && !deleted;
+
+  const attachmentsList = deleted ? undefined : message.attachments;
+  const showAttachments = Boolean(attachmentsList?.length);
+  const showTextBody = deleted || Boolean(message.text.trim());
 
   return (
     <div
@@ -67,14 +83,59 @@ export function CommunityMessageBubble({
             deleted && "opacity-80",
           )}
         >
-          <p
-            className={cn(
-              "whitespace-pre-wrap break-words",
-              deleted && "italic text-muted-foreground",
-            )}
-          >
-            {message.text}
-          </p>
+          {showTextBody ? (
+            <p
+              className={cn(
+                "whitespace-pre-wrap break-words",
+                deleted && "italic text-muted-foreground",
+              )}
+            >
+              {message.text}
+            </p>
+          ) : null}
+          {showAttachments && attachmentsList ? (
+            <div
+              className={cn(
+                "flex min-w-0 flex-col gap-2",
+                showTextBody && "mt-2",
+              )}
+            >
+              {attachmentsList.map((a, i) => {
+                const label =
+                  a.fileName?.replace(/^.*\//, "") ||
+                  a.fileName ||
+                  "Attachment";
+                if (attachmentLooksLikeImage(a)) {
+                  return (
+                    <a
+                      key={`${a.url}-${i}`}
+                      href={a.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block min-w-0 overflow-hidden rounded-lg border border-border/60 bg-background/40"
+                    >
+                      <img
+                        src={a.url}
+                        alt={label}
+                        className="max-h-56 w-full object-contain"
+                      />
+                    </a>
+                  );
+                }
+                return (
+                  <a
+                    key={`${a.url}-${i}`}
+                    href={a.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="break-all text-sm font-medium text-primary underline underline-offset-2 hover:text-primary/90"
+                  >
+                    {label}
+                  </a>
+                );
+              })}
+            </div>
+          ) : null}
           <div
             className={cn(
               "mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground",
@@ -91,7 +152,7 @@ export function CommunityMessageBubble({
                   <button
                     type="button"
                     disabled={messageActionsDisabled}
-                    className="rounded p-0.5 hover:bg-background/80 disabled:opacity-40"
+                    className="cursor-pointer rounded p-0.5 hover:bg-background/80 disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Edit message"
                     onClick={() => onEditMessage?.(message.id)}
                   >
@@ -102,7 +163,7 @@ export function CommunityMessageBubble({
                   <button
                     type="button"
                     disabled={messageActionsDisabled}
-                    className="rounded p-0.5 hover:bg-background/80 text-destructive disabled:opacity-40"
+                    className="cursor-pointer rounded p-0.5 hover:bg-background/80 text-destructive disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Delete message"
                     onClick={() => onDeleteMessage?.(message.id)}
                   >

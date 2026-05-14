@@ -1,4 +1,4 @@
-import type { ChatGroup } from "@/types/community-group";
+import type { ChatGroup, ChatGroupMemberUser } from "@/types/community-group";
 import type { CommunityChatGroup, CommunityMember } from "@/types/community-chat-ui";
 
 function formatGroupTime(iso?: string): string {
@@ -48,27 +48,59 @@ export function formatGroupStatus(status?: string): string {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function shortenUserId(id: string): string {
-  if (id.length <= 14) return id;
-  return `${id.slice(0, 8)}…${id.slice(-6)}`;
+/** Short display for a user id when we have no name (API may send non-string in edge cases). */
+function shortenUserId(id: unknown): string {
+  const s =
+    typeof id === "string"
+      ? id.trim()
+      : id != null && id !== ""
+        ? String(id).trim()
+        : "";
+  if (!s) return "—";
+  if (s.length <= 14) return s;
+  return `${s.slice(0, 8)}…${s.slice(-6)}`;
+}
+
+function memberDisplayName(m: ChatGroupMemberUser): string {
+  const combined = [m.firstName, m.lastName].filter(Boolean).join(" ").trim();
+  if (combined) return combined;
+  if (m.email?.trim()) return m.email.trim();
+  return shortenUserId(m.id);
 }
 
 /**
- * Build member rows for the group info modal from API `members` / `admins` ids
- * (GET group / GET groups shape).
+ * Build member rows for the group info modal from API `members` / `admins`
+ * (string ids, or populated user objects normalized in Redux).
  */
 export function chatGroupMemberRowsFromApi(
   group: CommunityChatGroup,
 ): CommunityMember[] {
-  const ids = group.memberIds ?? [];
   const adminSet = new Set(group.adminIds ?? []);
-  return ids.map((userId) => ({
-    id: userId,
-    name: shortenUserId(userId),
-    subtitle: adminSet.has(userId) ? "Group admin" : "Member",
-    tag: adminSet.has(userId) ? "Admin" : "Member",
-    avatarColor: adminSet.has(userId) ? "green" : "gray",
-  }));
+
+  if (group.memberUsers && group.memberUsers.length > 0) {
+    return group.memberUsers.map((m) => ({
+      id: m.id,
+      name: memberDisplayName(m),
+      subtitle: adminSet.has(m.id) ? "Group admin" : "Member",
+      tag: adminSet.has(m.id) ? "Admin" : "Member",
+      avatarColor: adminSet.has(m.id) ? "green" : "gray",
+    }));
+  }
+
+  const ids = group.memberIds ?? [];
+  return ids.map((rawId) => {
+    const id =
+      typeof rawId === "string"
+        ? rawId.trim()
+        : String(rawId ?? "").trim() || "—";
+    return {
+      id,
+      name: shortenUserId(id),
+      subtitle: adminSet.has(id) ? "Group admin" : "Member",
+      tag: adminSet.has(id) ? "Admin" : "Member",
+      avatarColor: adminSet.has(id) ? "green" : "gray",
+    };
+  });
 }
 
 /** Map a chat group from the API to sidebar / window display model. */
@@ -94,6 +126,12 @@ export function chatGroupToCommunity(g: ChatGroup): CommunityChatGroup {
     }
   }
 
+  const memberUsers =
+    g.members && g.members.length > 0 ? [...g.members] : undefined;
+  const memberIds =
+    memberUsers?.map((m) => m.id) ??
+    undefined;
+
   return {
     id: g._id,
     name: g.name,
@@ -107,7 +145,8 @@ export function chatGroupToCommunity(g: ChatGroup): CommunityChatGroup {
     estateId: g.estateId,
     createdBy: g.createdBy,
     profileImage: g.profileImage,
-    memberIds: Array.isArray(g.members) ? [...g.members] : undefined,
+    memberUsers,
+    memberIds,
     adminIds: Array.isArray(g.admins) ? [...g.admins] : undefined,
   };
 }
