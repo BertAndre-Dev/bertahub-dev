@@ -105,6 +105,21 @@ export default function FundWalletForm({
       return;
     }
 
+    if (!description.trim()) {
+      toast.error("Please enter a payment description.");
+      return;
+    }
+
+    if (!country || !currency) {
+      toast.error("Please select a currency / country.");
+      return;
+    }
+
+    if (!paymentOption) {
+      toast.error("Please select a payment option.");
+      return;
+    }
+
     // const MAX_AMOUNT = 200_000;
     // if (numAmount > MAX_AMOUNT) {
     //   toast.error(`You cannot fund more than ${MAX_AMOUNT.toLocaleString()}`);
@@ -118,7 +133,7 @@ export default function FundWalletForm({
         userId,
         walletId,
         amount: numAmount,
-        description,
+        description: description.trim(),
         type: "credit",
         currency,
         paymentOption,
@@ -134,6 +149,12 @@ export default function FundWalletForm({
     }
   };
 
+  const isFormValid =
+    Boolean(userId && walletId) &&
+    Number(amount) > 0 &&
+    description.trim().length > 0 &&
+    Boolean(country && currency && paymentOption);
+
   return (
     <Card className="w-full max-w-md mx-auto">
       <form onSubmit={handleSubmit}>
@@ -145,9 +166,14 @@ export default function FundWalletForm({
 
         <CardContent className="space-y-4">
           <div>
-            <Label>Amount</Label>
+            <Label htmlFor="fund-wallet-amount">
+              Amount <span className="text-destructive">*</span>
+            </Label>
             <Input
+              id="fund-wallet-amount"
               type="number"
+              min={1}
+              step="any"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter amount"
@@ -161,22 +187,30 @@ export default function FundWalletForm({
           </div>
 
           <div>
-            <Label>Payment Description</Label>
+            <Label htmlFor="fund-wallet-description">
+              Payment Description <span className="text-destructive">*</span>
+            </Label>
             <Input
+              id="fund-wallet-description"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter payment description"
+              required
             />
           </div>
 
           <div>
-            <Label>Currency / Country</Label>
+            <Label htmlFor="fund-wallet-country">
+              Currency / Country <span className="text-destructive">*</span>
+            </Label>
             <select
+              id="fund-wallet-country"
               title="Currency / Country"
               className="w-full border border-gray-300 rounded px-3 py-2"
               value={country}
               onChange={handleCurrencyChange}
+              required
             >
               {countries.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -187,12 +221,16 @@ export default function FundWalletForm({
           </div>
 
           <div>
-            <Label>Payment Option</Label>
+            <Label htmlFor="fund-wallet-payment-option">
+              Payment Option <span className="text-destructive">*</span>
+            </Label>
             <select
+              id="fund-wallet-payment-option"
               title="Payment Option"
               className="w-full border border-gray-300 rounded px-3 py-2"
               value={paymentOption}
               onChange={(e) => setPaymentOption(e.target.value)}
+              required
             >
               {availablePaymentOptions.map((opt) => (
                 <option key={opt.code} value={opt.code}>
@@ -202,7 +240,11 @@ export default function FundWalletForm({
             </select>
           </div>
 
-          <Button type="submit" className="w-full mt-4" disabled={submitting}>
+          <Button
+            type="submit"
+            className="w-full mt-4"
+            disabled={submitting || !isFormValid}
+          >
             {submitting ? "Processing..." : `Fund Wallet ₦${amount || 0}`}
           </Button>
         </CardContent>

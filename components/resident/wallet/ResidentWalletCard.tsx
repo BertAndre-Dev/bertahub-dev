@@ -23,7 +23,7 @@ function MaskableBalance({
         !show && "select-none blur-[10px]",
         className,
       )}
-      aria-hidden={!show}
+      {...(show ? {} : { "aria-hidden": "true" })}
     >
       {children}
     </span>
@@ -75,9 +75,9 @@ export function ResidentWalletCard({
             aria-pressed={showBalance}
           >
             {showBalance ? (
-              <EyeOff className="size-7 cursor-pointer" aria-hidden />
+              <EyeOff className="size-7 cursor-pointer" aria-hidden="true" />
             ) : (
-              <Eye className="size-7 cursor-pointer" aria-hidden />
+              <Eye className="size-7 cursor-pointer" aria-hidden="true" />
             )}
           </Button>
         ) : null}
