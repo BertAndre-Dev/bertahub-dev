@@ -11,20 +11,21 @@ export interface EstateData {
   modules: string[];
 }
 
-export const fetchAvailableModules = createAsyncThunk(
-  "super-admin-est-mgt/fetchAvailableModules",
-  async (_, { rejectWithValue }) => {
+/** GET /api/v1/estate-mgt/{id}/modules — enabled modules for an estate */
+export const fetchEstateModules = createAsyncThunk(
+  "super-admin-est-mgt/fetchEstateModules",
+  async (estateId: string, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get<{ data: string[] }>(
-        "/api/v1/estate-mgt/modules",
+      const res = await axiosInstance.get<{ data?: string[] }>(
+        `/api/v1/estate-mgt/${estateId}/modules`,
       );
       return res.data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data ?? {
-          message: error?.message ?? "Failed to load modules",
-        },
-      );
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue({
+        message:
+          err?.response?.data?.message ?? "Failed to load estate modules",
+      });
     }
   },
 );

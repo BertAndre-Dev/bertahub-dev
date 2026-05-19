@@ -227,7 +227,19 @@ export default function AdminMeterManagement() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading estate meters..." />
+        </div>
+      )}
+
+      <div
+        className={[
+          "space-y-6",
+          loading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+        ].join(" ")}
+      >
       {/* Header */}
       <div>
         <h1 className="font-heading text-3xl font-bold">
@@ -292,9 +304,7 @@ export default function AdminMeterManagement() {
         <Table
           columns={columns}
           data={allAdminMeters || []}
-          emptyMessage={
-            loading ? <Loader label="Loading estate meters..." /> : "No meter found."
-          }
+          emptyMessage="No meter found."
           showPagination
           // enableSearch
           onSearch={(value) => setSearch(value)}
@@ -344,6 +354,7 @@ export default function AdminMeterManagement() {
           />
         </Modal>
       )}
+      </div>
     </div>
   );
 }

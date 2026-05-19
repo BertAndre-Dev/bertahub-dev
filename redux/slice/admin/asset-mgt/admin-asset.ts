@@ -94,7 +94,7 @@ const normalizeId = (id: string | undefined) => id ?? "";
 
 /** POST /api/v1/asset-categories */
 export const createAssetCategory = createAsyncThunk(
-  "company-asset/createAssetCategory",
+  "admin-asset/createAssetCategory",
   async (payload: CreateAssetCategoryPayload, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.post("/api/v1/asset-categories", payload);
@@ -111,7 +111,7 @@ export const createAssetCategory = createAsyncThunk(
 
 /** GET /api/v1/asset-categories */
 export const getAssetCategories = createAsyncThunk(
-  "company-asset/getAssetCategories",
+  "admin-asset/getAssetCategories",
   async (params: GetListParams | undefined, { rejectWithValue }) => {
     try {
       const { page = 1, limit = 10, search } = params ?? {};
@@ -131,7 +131,7 @@ export const getAssetCategories = createAsyncThunk(
 
 /** PUT /api/v1/asset-categories/{id} */
 export const updateAssetCategory = createAsyncThunk(
-  "company-asset/updateAssetCategory",
+  "admin-asset/updateAssetCategory",
   async (payload: UpdateAssetCategoryPayload, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.put(
@@ -150,7 +150,7 @@ export const updateAssetCategory = createAsyncThunk(
 
 /** DELETE /api/v1/asset-categories/{id} */
 export const deleteAssetCategory = createAsyncThunk(
-  "company-asset/deleteAssetCategory",
+  "admin-asset/deleteAssetCategory",
   async (id: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.delete(`/api/v1/asset-categories/${normalizeId(id)}`);
@@ -170,7 +170,7 @@ export const deleteAssetCategory = createAsyncThunk(
 
 /** POST /api/v1/assets  (body: { assets: [...] }) */
 export const createAssets = createAsyncThunk(
-  "company-asset/createAssets",
+  "admin-asset/createAssets",
   async (payload: CreateAssetsPayload, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.post("/api/v1/assets", payload);
@@ -187,7 +187,7 @@ export const createAssets = createAsyncThunk(
 
 /** GET /api/v1/assets?estateId=... */
 export const getAssets = createAsyncThunk(
-  "company-asset/getAssets",
+  "admin-asset/getAssets",
   async (params: GetAssetsParams, { rejectWithValue }) => {
     try {
       const { estateId, page = 1, limit = 10, search } = params;
@@ -215,7 +215,7 @@ export const getAssets = createAsyncThunk(
 
 /** GET /api/v1/assets/{id} */
 export const getAssetById = createAsyncThunk(
-  "company-asset/getAssetById",
+  "admin-asset/getAssetById",
   async (id: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get(`/api/v1/assets/${normalizeId(id)}`);
@@ -231,7 +231,7 @@ export const getAssetById = createAsyncThunk(
 
 /** PUT /api/v1/assets/{id} */
 export const updateAsset = createAsyncThunk(
-  "company-asset/updateAsset",
+  "admin-asset/updateAsset",
   async (payload: UpdateAssetPayload, { rejectWithValue }) => {
     try {
       const { id, ...body } = payload;
@@ -248,7 +248,7 @@ export const updateAsset = createAsyncThunk(
 
 /** DELETE /api/v1/assets/{id} */
 export const deleteAsset = createAsyncThunk(
-  "company-asset/deleteAsset",
+  "admin-asset/deleteAsset",
   async (id: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.delete(`/api/v1/assets/${normalizeId(id)}`);

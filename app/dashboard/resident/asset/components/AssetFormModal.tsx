@@ -8,15 +8,12 @@ import type {
   Asset,
   AssetCategory,
   CreateAssetItemPayload,
-} from "@/redux/slice/company/asset-mgt/company-asset";
-
-type EstateOption = { id: string; name: string };
+} from "@/redux/slice/resident/asset-mgt/resident-asset";
 
 type FormState = {
   name: string;
   tag: string;
   assetCategoryId: string;
-  estateId: string;
   amount: string;
   useFullLife: string;
   datePurchased: string;
@@ -28,8 +25,8 @@ type Props = {
   onSubmit: (payload: CreateAssetItemPayload) => Promise<void> | void;
   loading?: boolean;
   categories: AssetCategory[];
-  estates: EstateOption[];
-  defaultEstateId?: string;
+  estateId: string;
+  estateName?: string;
   initial?: Asset | null;
 };
 
@@ -45,18 +42,16 @@ export default function AssetFormModal({
   onSubmit,
   loading = false,
   categories,
-  estates,
-  defaultEstateId = "",
+  estateId,
+  estateName,
   initial,
 }: Readonly<Props>) {
   const initialForm: FormState = useMemo(() => {
-    const categoryId = getId(initial?.assetCategoryId as any);
-    const estateFromAsset = getId(initial?.estateId as any);
+    const categoryId = getId(initial?.assetCategoryId as string | { id?: string; _id?: string });
     return {
       name: initial?.name ?? "",
       tag: initial?.tag ?? "",
       assetCategoryId: categoryId ?? "",
-      estateId: estateFromAsset || defaultEstateId || estates[0]?.id || "",
       amount:
         initial?.amount != null && !Number.isNaN(Number(initial.amount))
           ? String(initial.amount)
@@ -67,7 +62,7 @@ export default function AssetFormModal({
           : "",
       datePurchased: initial?.datePurchased?.slice(0, 10) ?? "",
     };
-  }, [initial, estates, defaultEstateId]);
+  }, [initial]);
 
   const [form, setForm] = useState<FormState>(initialForm);
 
@@ -79,7 +74,7 @@ export default function AssetFormModal({
     form.name.trim().length >= 2 &&
     form.tag.trim().length >= 2 &&
     Boolean(form.assetCategoryId) &&
-    Boolean(form.estateId) &&
+    Boolean(estateId) &&
     Number(form.amount) > 0 &&
     Number(form.useFullLife) > 0 &&
     Boolean(form.datePurchased);
@@ -92,17 +87,18 @@ export default function AssetFormModal({
             {initial ? "Edit asset" : "Create asset"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Assets must be linked to a category and estate.
+            Assets are linked to your estate
+            {estateName ? `: ${estateName}` : ""}.
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-3">
           <div className="space-y-2 sm:col-span-2">
-            <label htmlFor="asset-name" className="text-sm font-medium">
+            <label htmlFor="resident-asset-name" className="text-sm font-medium">
               Name
             </label>
             <Input
-              id="asset-name"
+              id="resident-asset-name"
               value={form.name}
               onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
               placeholder='e.g. "Laptop"'
@@ -110,11 +106,11 @@ export default function AssetFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="asset-tag" className="text-sm font-medium">
+            <label htmlFor="resident-asset-tag" className="text-sm font-medium">
               Tag
             </label>
             <Input
-              id="asset-tag"
+              id="resident-asset-tag"
               value={form.tag}
               onChange={(e) => setForm((s) => ({ ...s, tag: e.target.value }))}
               placeholder="ASSET-2024-001"
@@ -122,33 +118,11 @@ export default function AssetFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="asset-estate" className="text-sm font-medium">
-              Estate
-            </label>
-            <select
-              id="asset-estate"
-              aria-label="Estate"
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-              value={form.estateId}
-              onChange={(e) =>
-                setForm((s) => ({ ...s, estateId: e.target.value }))
-              }
-            >
-              <option value="">Select estate</option>
-              {estates.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="asset-category" className="text-sm font-medium">
+            <label htmlFor="resident-asset-category" className="text-sm font-medium">
               Category
             </label>
             <select
-              id="asset-category"
+              id="resident-asset-category"
               aria-label="Asset category"
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
               value={form.assetCategoryId}
@@ -169,11 +143,11 @@ export default function AssetFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="asset-amount" className="text-sm font-medium">
+            <label htmlFor="resident-asset-amount" className="text-sm font-medium">
               Amount (₦)
             </label>
             <Input
-              id="asset-amount"
+              id="resident-asset-amount"
               inputMode="numeric"
               value={form.amount}
               onChange={(e) => setForm((s) => ({ ...s, amount: e.target.value }))}
@@ -182,11 +156,11 @@ export default function AssetFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="asset-life" className="text-sm font-medium">
+            <label htmlFor="resident-asset-life" className="text-sm font-medium">
               Useful life (years)
             </label>
             <Input
-              id="asset-life"
+              id="resident-asset-life"
               inputMode="numeric"
               value={form.useFullLife}
               onChange={(e) =>
@@ -196,12 +170,12 @@ export default function AssetFormModal({
             />
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="asset-date" className="text-sm font-medium">
+          <div className="space-y-2 sm:col-span-2">
+            <label htmlFor="resident-asset-date" className="text-sm font-medium">
               Date purchased
             </label>
             <Input
-              id="asset-date"
+              id="resident-asset-date"
               type="date"
               value={form.datePurchased}
               onChange={(e) =>
@@ -224,7 +198,7 @@ export default function AssetFormModal({
                 name: form.name.trim(),
                 tag: form.tag.trim(),
                 assetCategoryId: form.assetCategoryId,
-                estateId: form.estateId,
+                estateId,
                 amount: Number(form.amount),
                 useFullLife: Number(form.useFullLife),
                 datePurchased: form.datePurchased,

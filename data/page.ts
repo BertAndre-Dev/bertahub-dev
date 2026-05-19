@@ -10,6 +10,7 @@ import {
   ClipboardList,
   CircleDollarSign,
   CreditCard,
+  Armchair,
   History,
   Home,
   Inbox,
@@ -96,9 +97,34 @@ export const superAdminNav = [
     
 export const companyNav = [
   {
+    label: "User Management",
+    icon: UserCog,
+    path: "/dashboard/company/users",
+  },{
+    label: "Estate Management",
+    icon: BsBuildings,
+    path: "/dashboard/company/estate",
+  },
+  {
     label: "Asset Management",
     icon: Building2,
     path: "/dashboard/company/asset",
+  },
+  {
+    label: "Asset Maintenance",
+    icon: Wrench,
+    path: "/dashboard/company/asset-mgt",
+    moduleKey: "asset-maintenance",
+  },
+  // {
+  //   label: "Community Chat",
+  //   icon: MessagesSquare,
+  //   path: "/dashboard/company/community",
+  // },
+  {
+    label: "Contact Support",
+    icon: MessageCircle,
+    path: "/dashboard/company/support",
   },
   // {
   //   label: "Marketplace",
@@ -174,6 +200,12 @@ export const adminNav = [
     moduleKey: "announcements",
   },
   {
+    label: "Asset Maintenance",
+    icon: Wrench,
+    path: "/dashboard/admin/asset-maintenance",
+    moduleKey: "asset-maintenance",
+  },
+  {
     label: "Community Chat",
     icon: MessagesSquare,
     path: "/dashboard/admin/community",
@@ -216,24 +248,6 @@ export const securityNav = [
 export const residentNav = [
   // { label: "Overview", icon: FiHome, path: "/dashboard/resident/dashboard" },
   {
-    label: "Tenant Management",
-    icon: UsersRound,
-    path: "/dashboard/resident/user",
-    moduleKey: "users",
-  },
-  {
-    label: "Rent Management",
-    icon: Home,
-    path: "/dashboard/resident/rent",
-    moduleKey: "rent",
-  },
-  {
-    label: "Pay Bills",
-    icon: CreditCard,
-    path: "/dashboard/resident/pay-bills",
-    moduleKey: "bills",
-  },
-  {
     label: "Bills Management",
     icon: ClipboardList,
     path: "/dashboard/resident/bills",
@@ -252,6 +266,18 @@ export const residentNav = [
     moduleKey: "wallet",
   },
   {
+    label: "Tenant Management",
+    icon: UsersRound,
+    path: "/dashboard/resident/user",
+    moduleKey: "users",
+  },
+  {
+    label: "Rent Management",
+    icon: Home,
+    path: "/dashboard/resident/rent",
+    moduleKey: "rent",
+  },
+  {
     label: "Visitor Management",
     icon: CarFront,
     path: "/dashboard/resident/visitor",
@@ -262,6 +288,12 @@ export const residentNav = [
     icon: Wrench,
     path: "/dashboard/resident/maintenance",
     moduleKey: "complaints",
+  },
+  {
+    label: "Asset Management",
+    icon: Armchair,
+    path: "/dashboard/resident/asset",
+    moduleKey: "asset",
   },
   {
     label: "Marketplace",

@@ -8,9 +8,8 @@ import type {
   Asset,
   AssetCategory,
   CreateAssetItemPayload,
-} from "@/redux/slice/company/asset-mgt/company-asset";
-
-type EstateOption = { id: string; name: string };
+} from "@/redux/slice/admin/asset-mgt/admin-asset";
+import type { EstateOption } from "../lib/estate";
 
 type FormState = {
   name: string;
@@ -50,13 +49,15 @@ export default function AssetFormModal({
   initial,
 }: Readonly<Props>) {
   const initialForm: FormState = useMemo(() => {
-    const categoryId = getId(initial?.assetCategoryId as any);
-    const estateFromAsset = getId(initial?.estateId as any);
+    const categoryId = getId(initial?.assetCategoryId as string | { id?: string; _id?: string });
+    const estateFromAsset = getId(initial?.estateId as string | { id?: string; _id?: string });
+    const fallbackEstateId =
+      estateFromAsset || defaultEstateId || estates[0]?.id || "";
     return {
       name: initial?.name ?? "",
       tag: initial?.tag ?? "",
       assetCategoryId: categoryId ?? "",
-      estateId: estateFromAsset || defaultEstateId || estates[0]?.id || "",
+      estateId: fallbackEstateId,
       amount:
         initial?.amount != null && !Number.isNaN(Number(initial.amount))
           ? String(initial.amount)
@@ -92,17 +93,17 @@ export default function AssetFormModal({
             {initial ? "Edit asset" : "Create asset"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Assets must be linked to a category and estate.
+            Select an estate and category for this asset.
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-3">
           <div className="space-y-2 sm:col-span-2">
-            <label htmlFor="asset-name" className="text-sm font-medium">
+            <label htmlFor="admin-asset-name" className="text-sm font-medium">
               Name
             </label>
             <Input
-              id="asset-name"
+              id="admin-asset-name"
               value={form.name}
               onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
               placeholder='e.g. "Laptop"'
@@ -110,11 +111,11 @@ export default function AssetFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="asset-tag" className="text-sm font-medium">
+            <label htmlFor="admin-asset-tag" className="text-sm font-medium">
               Tag
             </label>
             <Input
-              id="asset-tag"
+              id="admin-asset-tag"
               value={form.tag}
               onChange={(e) => setForm((s) => ({ ...s, tag: e.target.value }))}
               placeholder="ASSET-2024-001"
@@ -122,11 +123,11 @@ export default function AssetFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="asset-estate" className="text-sm font-medium">
+            <label htmlFor="admin-asset-estate" className="text-sm font-medium">
               Estate
             </label>
             <select
-              id="asset-estate"
+              id="admin-asset-estate"
               aria-label="Estate"
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
               value={form.estateId}
@@ -144,11 +145,11 @@ export default function AssetFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="asset-category" className="text-sm font-medium">
+            <label htmlFor="admin-asset-category" className="text-sm font-medium">
               Category
             </label>
             <select
-              id="asset-category"
+              id="admin-asset-category"
               aria-label="Asset category"
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
               value={form.assetCategoryId}
@@ -169,11 +170,11 @@ export default function AssetFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="asset-amount" className="text-sm font-medium">
+            <label htmlFor="admin-asset-amount" className="text-sm font-medium">
               Amount (₦)
             </label>
             <Input
-              id="asset-amount"
+              id="admin-asset-amount"
               inputMode="numeric"
               value={form.amount}
               onChange={(e) => setForm((s) => ({ ...s, amount: e.target.value }))}
@@ -182,11 +183,11 @@ export default function AssetFormModal({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="asset-life" className="text-sm font-medium">
+            <label htmlFor="admin-asset-life" className="text-sm font-medium">
               Useful life (years)
             </label>
             <Input
-              id="asset-life"
+              id="admin-asset-life"
               inputMode="numeric"
               value={form.useFullLife}
               onChange={(e) =>
@@ -196,12 +197,12 @@ export default function AssetFormModal({
             />
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="asset-date" className="text-sm font-medium">
+          <div className="space-y-2 sm:col-span-2">
+            <label htmlFor="admin-asset-date" className="text-sm font-medium">
               Date purchased
             </label>
             <Input
-              id="asset-date"
+              id="admin-asset-date"
               type="date"
               value={form.datePurchased}
               onChange={(e) =>
@@ -218,7 +219,7 @@ export default function AssetFormModal({
           <Button
             className="text-white"
             style={{ backgroundColor: "#0150AC" }}
-            disabled={!canSubmit || loading}
+            disabled={!canSubmit || loading || estates.length === 0}
             onClick={async () =>
               onSubmit({
                 name: form.name.trim(),

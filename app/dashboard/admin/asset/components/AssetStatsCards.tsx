@@ -5,16 +5,17 @@ import { useDispatch, useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
 import { Package, Tags } from "lucide-react";
 import type { RootState, AppDispatch } from "@/redux/store";
-import { getAssetCategories, getAssets } from "@/redux/slice/company/asset-mgt/company-asset";
+import {
+  getAssetCategories,
+  getAssets,
+} from "@/redux/slice/admin/asset-mgt/admin-asset";
 
 const STAT_LIMIT = 1;
 
-function getTotal(pagination: any, fallbackLength: number) {
+function getTotal(pagination: unknown, fallbackLength: number) {
+  const p = pagination as Record<string, unknown> | null | undefined;
   const raw =
-    pagination?.total ??
-    pagination?.pagination?.total ??
-    pagination?.count ??
-    undefined;
+    p?.total ?? (p?.pagination as Record<string, unknown> | undefined)?.total ?? p?.count;
   const total = raw != null ? Number(raw) : Number.NaN;
   return Number.isFinite(total) ? total : fallbackLength;
 }
@@ -28,10 +29,10 @@ export default function AssetStatsCards({ estateId }: Readonly<Props>) {
 
   const { assetsLen, categoriesLen, assetsPagination, categoriesPagination } =
     useSelector((state: RootState) => {
-      const s: any = (state as any).companyAsset;
+      const s = state.adminAsset;
       return {
-        assetsLen: ((s?.assets as any[]) ?? []).length,
-        categoriesLen: ((s?.categories as any[]) ?? []).length,
+        assetsLen: s?.assets?.length ?? 0,
+        categoriesLen: s?.categories?.length ?? 0,
         assetsPagination: s?.assetsPagination ?? null,
         categoriesPagination: s?.categoriesPagination ?? null,
       };
@@ -75,9 +76,7 @@ export default function AssetStatsCards({ estateId }: Readonly<Props>) {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="font-heading text-2xl font-bold mt-2">
-                  {stat.value}
-                </p>
+                <p className="font-heading text-2xl font-bold mt-2">{stat.value}</p>
               </div>
               <div className="p-3 rounded-lg bg-[#D0DFF280]">
                 <Icon className="w-6 h-6" />
@@ -89,4 +88,3 @@ export default function AssetStatsCards({ estateId }: Readonly<Props>) {
     </div>
   );
 }
-

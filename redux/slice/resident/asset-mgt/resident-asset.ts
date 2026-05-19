@@ -88,13 +88,9 @@ export type UpdateAssetPayload = {
 
 const normalizeId = (id: string | undefined) => id ?? "";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Asset categories
-// ─────────────────────────────────────────────────────────────────────────────
-
 /** POST /api/v1/asset-categories */
 export const createAssetCategory = createAsyncThunk(
-  "company-asset/createAssetCategory",
+  "resident-asset/createAssetCategory",
   async (payload: CreateAssetCategoryPayload, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.post("/api/v1/asset-categories", payload);
@@ -111,7 +107,7 @@ export const createAssetCategory = createAsyncThunk(
 
 /** GET /api/v1/asset-categories */
 export const getAssetCategories = createAsyncThunk(
-  "company-asset/getAssetCategories",
+  "resident-asset/getAssetCategories",
   async (params: GetListParams | undefined, { rejectWithValue }) => {
     try {
       const { page = 1, limit = 10, search } = params ?? {};
@@ -131,14 +127,14 @@ export const getAssetCategories = createAsyncThunk(
 
 /** PUT /api/v1/asset-categories/{id} */
 export const updateAssetCategory = createAsyncThunk(
-  "company-asset/updateAssetCategory",
+  "resident-asset/updateAssetCategory",
   async (payload: UpdateAssetCategoryPayload, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.put(
         `/api/v1/asset-categories/${normalizeId(payload.id)}`,
         { name: payload.name },
       );
-      return { ...(res.data as any), id: payload.id };
+      return { ...(res.data as object), id: payload.id };
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
@@ -150,11 +146,11 @@ export const updateAssetCategory = createAsyncThunk(
 
 /** DELETE /api/v1/asset-categories/{id} */
 export const deleteAssetCategory = createAsyncThunk(
-  "company-asset/deleteAssetCategory",
+  "resident-asset/deleteAssetCategory",
   async (id: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.delete(`/api/v1/asset-categories/${normalizeId(id)}`);
-      return { ...(res.data as any), deletedId: id };
+      return { ...(res.data as object), deletedId: id };
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
@@ -164,13 +160,9 @@ export const deleteAssetCategory = createAsyncThunk(
   },
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Assets
-// ─────────────────────────────────────────────────────────────────────────────
-
 /** POST /api/v1/assets  (body: { assets: [...] }) */
 export const createAssets = createAsyncThunk(
-  "company-asset/createAssets",
+  "resident-asset/createAssets",
   async (payload: CreateAssetsPayload, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.post("/api/v1/assets", payload);
@@ -187,7 +179,7 @@ export const createAssets = createAsyncThunk(
 
 /** GET /api/v1/assets?estateId=... */
 export const getAssets = createAsyncThunk(
-  "company-asset/getAssets",
+  "resident-asset/getAssets",
   async (params: GetAssetsParams, { rejectWithValue }) => {
     try {
       const { estateId, page = 1, limit = 10, search } = params;
@@ -215,7 +207,7 @@ export const getAssets = createAsyncThunk(
 
 /** GET /api/v1/assets/{id} */
 export const getAssetById = createAsyncThunk(
-  "company-asset/getAssetById",
+  "resident-asset/getAssetById",
   async (id: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get(`/api/v1/assets/${normalizeId(id)}`);
@@ -231,12 +223,12 @@ export const getAssetById = createAsyncThunk(
 
 /** PUT /api/v1/assets/{id} */
 export const updateAsset = createAsyncThunk(
-  "company-asset/updateAsset",
+  "resident-asset/updateAsset",
   async (payload: UpdateAssetPayload, { rejectWithValue }) => {
     try {
       const { id, ...body } = payload;
       const res = await axiosInstance.put(`/api/v1/assets/${normalizeId(id)}`, body);
-      return { ...(res.data as any), id };
+      return { ...(res.data as object), id };
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
@@ -248,11 +240,11 @@ export const updateAsset = createAsyncThunk(
 
 /** DELETE /api/v1/assets/{id} */
 export const deleteAsset = createAsyncThunk(
-  "company-asset/deleteAsset",
+  "resident-asset/deleteAsset",
   async (id: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.delete(`/api/v1/assets/${normalizeId(id)}`);
-      return { ...(res.data as any), deletedId: id };
+      return { ...(res.data as object), deletedId: id };
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
@@ -261,4 +253,3 @@ export const deleteAsset = createAsyncThunk(
     }
   },
 );
-

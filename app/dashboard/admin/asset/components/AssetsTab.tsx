@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import type { RootState, AppDispatch } from "@/redux/store";
+import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
   createAssets,
   deleteAsset,
@@ -17,10 +18,9 @@ import {
   type Asset,
   type AssetCategory,
   type CreateAssetItemPayload,
-} from "@/redux/slice/company/asset-mgt/company-asset";
+} from "@/redux/slice/admin/asset-mgt/admin-asset";
 import AssetFormModal from "./AssetFormModal";
-
-type EstateOption = { id: string; name: string };
+import { parseAdminEstates, type EstateOption } from "../lib/estate";
 
 const PAGE_SIZE = 10;
 
@@ -38,47 +38,34 @@ function getCategoryName(
   return match?.name ?? "—";
 }
 
-function getEstateName(
-  estateId: string | { id?: string; _id?: string; name?: string } | undefined,
-  estates: EstateOption[],
-) {
-  if (!estateId) return "—";
-  if (typeof estateId !== "string") return estateId?.name ?? "—";
-  const match = estates.find((e) => e.id === estateId);
-  return match?.name ?? "—";
-}
-
-type AssetsTabProps = {
-  estates: EstateOption[];
-  selectedEstateId: string;
-  onEstateChange: (estateId: string) => void;
+type Props = {
+  estateId: string;
+  estateName: string;
 };
 
-export default function AssetsTab({
-  estates,
-  selectedEstateId,
-  onEstateChange,
-}: Readonly<AssetsTabProps>) {
+export default function AssetsTab({ estateId, estateName }: Readonly<Props>) {
   const dispatch = useDispatch<AppDispatch>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Asset | null>(null);
+  const [estates, setEstates] = useState<EstateOption[]>([]);
+  const [listEstateId, setListEstateId] = useState(estateId);
 
   const { assets, assetsPagination, categories } = useSelector(
     (state: RootState) => {
-      const s: any = (state as any).companyAsset;
+      const s = state.adminAsset;
       return {
-        assets: (s?.assets as Asset[]) ?? [],
+        assets: s?.assets ?? [],
         assetsPagination: s?.assetsPagination ?? null,
-        categories: (s?.categories as AssetCategory[]) ?? [],
+        categories: s?.categories ?? [],
       };
     },
   );
 
   const { createStatus, updateStatus, deleteStatus } = useSelector(
     (state: RootState) => {
-      const s: any = (state as any).companyAsset;
+      const s = state.adminAsset;
       return {
         createStatus: s?.createAssetsStatus ?? "idle",
         updateStatus: s?.updateAssetStatus ?? "idle",
@@ -94,17 +81,33 @@ export default function AssetsTab({
   }, [dispatch]);
 
   useEffect(() => {
-    if (selectedEstateId) return;
-    if (!estates.length) return;
-    onEstateChange(estates[0].id);
-  }, [estates, selectedEstateId, onEstateChange]);
+    (async () => {
+      try {
+        const userRes = await dispatch(getSignedInUser()).unwrap();
+        const data = (userRes?.data ?? userRes) as Record<string, unknown>;
+        const parsed = parseAdminEstates(data);
+        if (parsed.length) {
+          setEstates(parsed);
+          setListEstateId((prev) => prev || estateId || parsed[0]?.id || "");
+        } else if (estateId) {
+          setEstates([{ id: estateId, name: estateName }]);
+          setListEstateId(estateId);
+        }
+      } catch {
+        if (estateId) {
+          setEstates([{ id: estateId, name: estateName }]);
+          setListEstateId(estateId);
+        }
+      }
+    })();
+  }, [dispatch, estateId, estateName]);
 
   useEffect(() => {
-    if (!selectedEstateId) return;
-    dispatch(getAssets({ estateId: selectedEstateId, page, limit: PAGE_SIZE, search }))
+    if (!listEstateId) return;
+    dispatch(getAssets({ estateId: listEstateId, page, limit: PAGE_SIZE, search }))
       .unwrap()
       .catch(() => toast.error("Failed to load assets."));
-  }, [dispatch, selectedEstateId, page, search]);
+  }, [dispatch, listEstateId, page, search]);
 
   const columns = useMemo(
     () => [
@@ -129,18 +132,12 @@ export default function AssetsTab({
       { key: "name" as const, header: "Asset" },
       { key: "tag" as const, header: "Tag" },
       {
-        key: "estateId" as const,
-        header: "Estate",
-        render: (item: Asset) => getEstateName(item.estateId as any, estates),
-        exportValue: (item: Asset) => getEstateName(item.estateId as any, estates),
-      },
-      {
         key: "assetCategoryId" as const,
         header: "Category",
         render: (item: Asset) =>
-          getCategoryName(item.assetCategoryId as any, categories),
+          getCategoryName(item.assetCategoryId as string | AssetCategory, categories),
         exportValue: (item: Asset) =>
-          getCategoryName(item.assetCategoryId as any, categories),
+          getCategoryName(item.assetCategoryId as string | AssetCategory, categories),
       },
       {
         key: "amount" as const,
@@ -203,7 +200,7 @@ export default function AssetsTab({
         ),
       },
     ],
-    [categories, deleteStatus, dispatch, estates],
+    [categories, deleteStatus, dispatch],
   );
 
   const openCreate = () => {
@@ -212,16 +209,11 @@ export default function AssetsTab({
       return;
     }
     if (!estates.length) {
-      toast.info("No estate available for your company.");
+      toast.info("No estate available. Link an estate to your account first.");
       return;
     }
     setEditing(null);
     setModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalOpen(false);
-    setEditing(null);
   };
 
   const handleSubmit = async (payload: CreateAssetItemPayload) => {
@@ -235,27 +227,23 @@ export default function AssetsTab({
         await dispatch(createAssets({ assets: [payload] })).unwrap();
         toast.success("Asset created.");
       }
-      closeModal();
+      setModalOpen(false);
+      setEditing(null);
       setPage(1);
-      if (!editing && payload.estateId && !selectedEstateId) {
-        onEstateChange(payload.estateId);
+      if (!editing && payload.estateId) {
+        setListEstateId(payload.estateId);
       }
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to save asset.");
+    } catch (err: unknown) {
+      const message =
+        (err as { message?: string })?.message ?? "Failed to save asset.";
+      toast.error(message);
     }
   };
 
   const pagination = assetsPagination;
-  const total =
-    Number(pagination?.total ?? 0) ||
-    Number((pagination as any)?.total ?? 0) ||
-    assets.length;
-  const current =
-    Number(pagination?.page ?? (pagination as any)?.currentPage ?? page) ||
-    page;
-  const pageSize =
-    Number(pagination?.limit ?? (pagination as any)?.pageSize ?? PAGE_SIZE) ||
-    PAGE_SIZE;
+  const total = Number(pagination?.total ?? assets.length);
+  const current = Number(pagination?.page ?? pagination?.currentPage ?? page) || page;
+  const pageSize = Number(pagination?.limit ?? pagination?.pageSize ?? PAGE_SIZE) || PAGE_SIZE;
 
   return (
     <div className="space-y-4">
@@ -263,30 +251,8 @@ export default function AssetsTab({
         <div>
           <h2 className="font-heading text-xl font-bold">Assets</h2>
           <p className="text-muted-foreground text-sm">
-            Create and manage company assets.
+            Create and manage assets for this estate.
           </p>
-          {estates.length > 1 && (
-            <div className="mt-2 flex items-center gap-2">
-              <label htmlFor="company-asset-estate" className="text-sm font-medium">
-                Estate
-              </label>
-              <select
-                id="company-asset-estate"
-                className="h-9 rounded-md border border-border bg-background px-3 text-sm"
-                value={selectedEstateId}
-                onChange={(e) => {
-                  onEstateChange(e.target.value);
-                  setPage(1);
-                }}
-              >
-                {estates.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
         <Button
           onClick={openCreate}
@@ -314,17 +280,20 @@ export default function AssetsTab({
         paginationInfo={{ total, current, pageSize }}
         onPageChange={(p) => setPage(p)}
         enableExport
-        exportFileName="assets"
+        exportFileName="admin-assets"
         onExportRequest={() => Promise.resolve(assets)}
       />
 
       <AssetFormModal
         visible={modalOpen}
-        onClose={closeModal}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
         initial={editing}
         categories={categories}
         estates={estates}
-        defaultEstateId={selectedEstateId || estates[0]?.id}
+        defaultEstateId={listEstateId || estateId}
         loading={createStatus === "isLoading" || updateStatus === "isLoading"}
         onSubmit={handleSubmit}
       />

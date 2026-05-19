@@ -21,6 +21,8 @@ export interface SuperAdminUserDetails {
   role: string; 
   image?: string; 
   isActive?: boolean;
+  serviceCharge?: boolean;
+  invitationStatus?: string;
   createdAt?: string;
   updatedAt?: string;
   id?: string;

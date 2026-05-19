@@ -49,6 +49,11 @@ import estateAdminFinancialReportSliceReducer from "@/redux/slice/estate-admin/f
 import superAdminCompanySliceReducer from "@/redux/slice/super-admin/company-mgt/company-slice";
 import companyMarketplaceSliceReducer from "@/redux/slice/company/marketplace/company-marketplace-slice";
 import companyAssetSliceReducer from "@/redux/slice/company/asset-mgt/company-asset-slice";
+import companyEstateSliceReducer from "@/redux/slice/company/estate-mgt/company-estate-slice";
+import companyUserSliceReducer from "@/redux/slice/company/user-mgt/company-user-slice";
+import residentAssetSliceReducer from "@/redux/slice/resident/asset-mgt/resident-asset-slice";
+import adminAssetSliceReducer from "@/redux/slice/admin/asset-mgt/admin-asset-slice";
+import companyAssetMaintenanceSliceReducer from "@/redux/slice/company/asset-maintenance/company-asset-maintenance-slice";
 import chatSliceReducer from "@/redux/slice/chat/chat-slice";
 import communityGroupSliceReducer from "@/redux/slice/community-group/community-group-slice";
 import mapsSliceReducer from "@/redux/slice/maps/maps-slice";
@@ -179,6 +184,16 @@ const persistedCompanyAssetSliceReducer = persistReducer(
   companyAssetSliceReducer,
 );
 
+const persistedCompanyEstateSliceReducer = persistReducer(
+  persistConfig,
+  companyEstateSliceReducer,
+);
+
+const persistedCompanyUserSliceReducer = persistReducer(
+  persistConfig,
+  companyUserSliceReducer,
+);
+
 export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
@@ -224,6 +239,11 @@ export const store = configureStore({
     superAdminCompany: persistedSuperAdminCompanySliceReducer,
     companyMarketplace: persistedCompanyMarketplaceSliceReducer,
     companyAsset: persistedCompanyAssetSliceReducer,
+    companyEstate: persistedCompanyEstateSliceReducer,
+    companyUser: persistedCompanyUserSliceReducer,
+    residentAsset: residentAssetSliceReducer,
+    adminAsset: adminAssetSliceReducer,
+    companyAssetMaintenance: companyAssetMaintenanceSliceReducer,
     residentMarketplace: residentMarketplaceSliceReducer,
     residentAnnouncements: residentAnnouncementsSliceReducer,
     adminExpenseHead: persistedAdminExpenseHeadSliceReducer,
