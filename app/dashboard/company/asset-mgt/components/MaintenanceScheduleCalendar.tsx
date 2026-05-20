@@ -41,7 +41,9 @@ function EventBadge({
     <button
       type="button"
       onClick={onClick}
-      className={`mb-1 w-full rounded-md px-1.5 py-1 text-center text-[10px] leading-tight transition-opacity hover:opacity-90 ${styles.container}`}
+      className={`mb-1 w-full rounded-md px-1.5 py-1 text-center text-[10px] leading-tight transition-opacity hover:opacity-90 ${
+        onClick ? "cursor-pointer" : "cursor-default"
+      } ${styles.container}`}
     >
       <div className={`truncate ${styles.tag}`}>{event.tag}</div>
       <div className={`truncate ${styles.label}`}>{event.label}</div>
@@ -92,7 +94,7 @@ export default function MaintenanceScheduleCalendar({
         </h2>
         <Button
           type="button"
-          className="shrink-0 rounded-lg px-5 text-white"
+          className="shrink-0 cursor-pointer rounded-lg px-5 text-white disabled:cursor-not-allowed"
           style={{ backgroundColor: "#0150AC" }}
           disabled={scheduleDisabled}
           onClick={onSchedule}
@@ -105,7 +107,7 @@ export default function MaintenanceScheduleCalendar({
         <button
           type="button"
           aria-label="Previous month"
-          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="cursor-pointer rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           onClick={goPrevMonth}
         >
           <ChevronLeft className="h-5 w-5" />
@@ -116,7 +118,7 @@ export default function MaintenanceScheduleCalendar({
         <button
           type="button"
           aria-label="Next month"
-          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="cursor-pointer rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           onClick={goNextMonth}
         >
           <ChevronRight className="h-5 w-5" />

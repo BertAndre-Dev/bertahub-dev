@@ -160,7 +160,7 @@ export default function CompanyAssetMaintenancePage() {
             </label>
             <select
               id="maint-estate-filter"
-              className="h-10 min-w-[12rem] rounded-md border border-border bg-background px-3 text-sm"
+              className="h-10 min-w-[12rem] cursor-pointer rounded-md border border-border bg-background px-3 text-sm"
               value={selectedEstateId}
               onChange={(e) => setSelectedEstateId(e.target.value)}
             >
@@ -177,7 +177,7 @@ export default function CompanyAssetMaintenancePage() {
             </label>
             <select
               id="maint-active-filter"
-              className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+              className="h-10 cursor-pointer rounded-md border border-border bg-background px-3 text-sm"
               value={isActiveFilter}
               onChange={(e) => setIsActiveFilter(e.target.value)}
             >

@@ -244,6 +244,7 @@ export default function DashboardLayout({
         "Community Chat",
         "Pay Bills",
         "Nearby Places",
+        "Asset Management",
         "Logout",
       ]);
       if (role === "security") staticLabels.add("Activity Log");
@@ -265,13 +266,22 @@ export default function DashboardLayout({
             estateModules.includes("expenses")
           );
         }
+        if (key === "asset" || key === "assets") {
+          return (
+            estateModules.includes("asset") ||
+            estateModules.includes("assets")
+          );
+        }
         return estateModules.includes(key);
       });
     }
 
+    const isNavPathActive = (itemPath: string) =>
+      pathname === itemPath || pathname.startsWith(`${itemPath}/`);
+
     return navItems.map((item, i) => {
       const Icon = item.icon;
-      const active = item.path ? pathname.startsWith(item.path) : false;
+      const active = item.path ? isNavPathActive(item.path) : false;
 
       // Render Logout as a button so it can trigger sign out logic
       if (item.label === "Logout") {

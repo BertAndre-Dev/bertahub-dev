@@ -8,29 +8,20 @@ import Tab from "@/components/tabs/page";
 import Loader from "@/components/ui/Loader";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-import { getCompanyEstates } from "@/redux/slice/company/estate-mgt/company-estate";
-import { parseCompanyFromUser } from "../lib/company";
-import {
-  mapCompanyEstateRows,
-  parseCompanyEstates,
-  type EstateOption,
-} from "./lib/estate";
+import { parseAdminEstate } from "./lib/estate";
 import AssetCategoriesTab from "./components/AssetCategoriesTab";
 import AssetsTab from "./components/AssetsTab";
 import AssetStatsCards from "./components/AssetStatsCards";
 
-export default function CompanyAssetPage() {
+export default function AdminAssetPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const [companyName, setCompanyName] = useState("Company");
-  const [estates, setEstates] = useState<EstateOption[]>([]);
-  const [selectedEstateId, setSelectedEstateId] = useState("");
-  const [estatesLoading, setEstatesLoading] = useState(true);
+  const [estateName, setEstateName] = useState("Estate");
+  const [estateId, setEstateId] = useState("");
   const [activeAssetTab, setActiveAssetTab] = useState("Assets");
 
   const { assetsLoading, categoriesLoading } = useSelector(
     (state: RootState) => {
-      const s = (state as unknown as { companyAsset?: Record<string, unknown> })
-        .companyAsset;
+      const s = state.adminAsset;
       return {
         assetsLoading: s?.getAssetsStatus === "isLoading",
         categoriesLoading: s?.getCategoriesStatus === "isLoading",
@@ -39,50 +30,40 @@ export default function CompanyAssetPage() {
   );
 
   const pageLoading =
-    estatesLoading ||
-    (activeAssetTab === "Assets"
+    activeAssetTab === "Assets"
       ? Boolean(assetsLoading || categoriesLoading)
-      : Boolean(categoriesLoading));
+      : Boolean(categoriesLoading);
 
   useEffect(() => {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
         const data = (userRes?.data ?? userRes) as Record<string, unknown>;
-        const company = parseCompanyFromUser(data);
-        if (!company) {
-          toast.warning("No company linked to your account.");
-          setEstatesLoading(false);
+        const estate = parseAdminEstate(data);
+        if (!estate) {
+          toast.warning("No estate linked to your account.");
           return;
         }
-        setCompanyName(company.name);
-
-        let options: EstateOption[] = [];
-        try {
-          const res = await dispatch(
-            getCompanyEstates({ page: 1, limit: 200 }),
-          ).unwrap();
-          options = mapCompanyEstateRows(res?.data);
-        } catch {
-          toast.error("Failed to fetch company estates.");
-        }
-
-        if (!options.length) {
-          options = parseCompanyEstates(data);
-        }
-
-        setEstates(options);
-        setSelectedEstateId(options[0]?.id ?? "");
-        if (!options.length) {
-          toast.warning("No estates found for your company.");
-        }
+        setEstateId(estate.id);
+        setEstateName(estate.name);
       } catch {
-        toast.error("Failed to load company information.");
-      } finally {
-        setEstatesLoading(false);
+        toast.error("Failed to load estate information.");
       }
     })();
   }, [dispatch]);
+
+  if (!estateId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col">
+          <h1 className="font-heading text-3xl font-bold">Assets</h1>
+          <p className="text-muted-foreground mt-1">
+            No estate is linked to your account.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
@@ -90,11 +71,9 @@ export default function CompanyAssetPage() {
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
           <Loader
             label={
-              estatesLoading
-                ? "Loading estates..."
-                : activeAssetTab === "Assets"
-                  ? "Loading assets..."
-                  : "Loading categories..."
+              activeAssetTab === "Assets"
+                ? "Loading assets..."
+                : "Loading categories..."
             }
           />
         </div>
@@ -108,13 +87,13 @@ export default function CompanyAssetPage() {
           <p className="text-muted-foreground mt-1">
             Manage assets for{" "}
             <span className="text-[18px] font-bold underline uppercase text-black">
-              {companyName}
+              {estateName}
             </span>
             .
           </p>
         </div>
 
-        <AssetStatsCards estateId={selectedEstateId} />
+        <AssetStatsCards estateId={estateId} />
 
         <Card className="p-4">
           <Tab
@@ -123,13 +102,7 @@ export default function CompanyAssetPage() {
             renderContent={(activeTab) => {
               switch (activeTab) {
                 case "Assets":
-                  return (
-                    <AssetsTab
-                      estates={estates}
-                      selectedEstateId={selectedEstateId}
-                      onEstateChange={setSelectedEstateId}
-                    />
-                  );
+                  return <AssetsTab estateId={estateId} estateName={estateName} />;
                 case "Asset Categories":
                   return <AssetCategoriesTab />;
                 default:

@@ -27,6 +27,11 @@ const FREQUENCY_OPTIONS = [
   { value: "yearly", label: "Yearly" },
 ];
 
+const SELECT_CLASS =
+  "h-10 w-full cursor-pointer rounded-md border border-border bg-background px-3 text-sm disabled:cursor-not-allowed";
+
+const DATE_INPUT_CLASS = "cursor-pointer";
+
 type CreateFormState = {
   estateId: string;
   assetId: string;
@@ -261,6 +266,7 @@ export default function MaintenanceFormModal({
               <Input
                 id="maint-date-edit"
                 type="datetime-local"
+                className={DATE_INPUT_CLASS}
                 max={maxDatetimeLocalNow()}
                 value={editForm.lastMaintenanceDate}
                 onChange={(e) =>
@@ -280,7 +286,7 @@ export default function MaintenanceFormModal({
               </label>
               <select
                 id="maint-freq-edit"
-                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                className={SELECT_CLASS}
                 value={editForm.frequency}
                 onChange={(e) =>
                   setEditForm((s) => ({ ...s, frequency: e.target.value }))
@@ -314,7 +320,7 @@ export default function MaintenanceFormModal({
               </label>
               <select
                 id="maint-estate"
-                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                className={SELECT_CLASS}
                 value={createForm.estateId}
                 onChange={(e) => handleEstateChange(e.target.value)}
               >
@@ -333,7 +339,7 @@ export default function MaintenanceFormModal({
               </label>
               <select
                 id="maint-asset"
-                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                className={SELECT_CLASS}
                 value={createForm.assetId}
                 onChange={(e) => handleAssetChange(e.target.value)}
                 disabled={!createForm.estateId || assetsLoading}
@@ -417,6 +423,7 @@ export default function MaintenanceFormModal({
                 <Input
                   id="maint-date"
                   type="datetime-local"
+                  className={DATE_INPUT_CLASS}
                   max={maxDatetimeLocalNow()}
                   value={createForm.lastMaintenanceDate}
                   onChange={(e) =>
@@ -436,7 +443,7 @@ export default function MaintenanceFormModal({
                 </label>
                 <select
                   id="maint-freq"
-                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                  className={SELECT_CLASS}
                   value={createForm.frequency}
                   onChange={(e) =>
                     setCreateForm((s) => ({ ...s, frequency: e.target.value }))
@@ -469,7 +476,7 @@ export default function MaintenanceFormModal({
 
         <div className="w-full pt-2">
           <Button
-            className="text-white w-full"
+            className="w-full cursor-pointer text-white disabled:cursor-not-allowed"
             style={{ backgroundColor: "#0150AC" }}
             disabled={loading || (isEdit ? !canSubmitEdit : !canSubmitCreate)}
             onClick={async () => {
