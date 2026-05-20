@@ -29,6 +29,7 @@ interface InviteUserFormData {
 // ✅ FIXED: Correct React.FC syntax
 const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const [inviteScope, setInviteScope] = useState<"estate" | "company">("estate");
   const [formData, setFormData] = useState<InviteUserFormData>({
     estateId: "",
     companyId: "",
@@ -138,14 +139,20 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
     if (!formData.email) return toast.error("Please provide an email.");
     if (!formData.firstName) return toast.error("Please provide first name.");
     if (!formData.lastName) return toast.error("Please provide last name.");
+    if (inviteScope === "estate" && !formData.estateId?.trim()) {
+      return toast.error("Please select an estate.");
+    }
+    if (inviteScope === "company" && !formData.companyId?.trim()) {
+      return toast.error("Please select a company.");
+    }
 
     setSubmitting(true);
     try {
       const estateId = formData.estateId?.trim();
       const companyId = formData.companyId?.trim();
       const payload = {
-        ...(estateId ? { estateId } : {}),
-        ...(companyId ? { companyId } : {}),
+        ...(inviteScope === "estate" && estateId ? { estateId } : {}),
+        ...(inviteScope === "company" && companyId ? { companyId } : {}),
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -156,6 +163,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
       const res = await dispatch(iniviteUser(payload) as any).unwrap();
       toast.success(res?.message || "User invited successfully");
       resetForm();
+      setInviteScope("estate");
       close();
     } catch (err: any) {
       const message =
@@ -223,44 +231,69 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
         <form onSubmit={handleSubmit} className="space-y-8">
           {renderTextFields()}
 
-          <div>
-            <Label>
-              Estate{" "}
-              <span className="text-muted-foreground text-xs font-normal">
-                (optional)
-              </span>
-            </Label>
-            <Select
-              options={estateOptions}
-              value={
-                estateOptions.find((o) => o.value === formData.estateId) ?? null
-              }
-              onChange={(opt) => handleSelectChange("estateId", opt)}
-              isLoading={loadingEstates}
-              placeholder="Select estate"
-              isClearable
-            />
+          <div className="space-y-3">
+            <Label>Invite admin to</Label>
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="radio"
+                  name="inviteScope"
+                  value="estate"
+                  checked={inviteScope === "estate"}
+                  onChange={() => {
+                    setInviteScope("estate");
+                    setFormData((p) => ({ ...p, companyId: "" }));
+                  }}
+                />
+                Estate
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="radio"
+                  name="inviteScope"
+                  value="company"
+                  checked={inviteScope === "company"}
+                  onChange={() => {
+                    setInviteScope("company");
+                    setFormData((p) => ({ ...p, estateId: "" }));
+                  }}
+                />
+                Company
+              </label>
+            </div>
           </div>
 
-          <div>
-            <Label>
-              Company{" "}
-              <span className="text-muted-foreground text-xs font-normal">
-                (optional)
-              </span>
-            </Label>
-            <Select
-              options={companyOptions}
-              value={
-                companyOptions.find((o) => o.value === formData.companyId) ??
-                null
-              }
-              onChange={(opt) => handleSelectChange("companyId", opt)}
-              isLoading={loadingCompanies}
-              placeholder="Select company"
-              isClearable
-            />
-          </div>
+          {inviteScope === "estate" ? (
+            <div>
+              <Label>Estate</Label>
+              <Select
+                options={estateOptions}
+                value={
+                  estateOptions.find((o) => o.value === formData.estateId) ??
+                  null
+                }
+                onChange={(opt) => handleSelectChange("estateId", opt)}
+                isLoading={loadingEstates}
+                placeholder="Select estate"
+                isClearable
+              />
+            </div>
+          ) : (
+            <div>
+              <Label>Company</Label>
+              <Select
+                options={companyOptions}
+                value={
+                  companyOptions.find((o) => o.value === formData.companyId) ??
+                  null
+                }
+                onChange={(opt) => handleSelectChange("companyId", opt)}
+                isLoading={loadingCompanies}
+                placeholder="Select company"
+                isClearable
+              />
+            </div>
+          )}
 
           <div>
             <Label>Role</Label>
