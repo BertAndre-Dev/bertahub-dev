@@ -283,18 +283,11 @@ export default function CompanyMarketplacePage() {
   ];
 
   const formLoading = createStatus === "isLoading" || updateStatus === "isLoading";
+  const pageLoading = bootstrapping || getListStatus === "isLoading";
   let emptyMessage = 'No businesses yet. Click "Add business" to create one.';
   if (search.trim()) emptyMessage = "No businesses match your search.";
-  else if (bootstrapping || getListStatus === "isLoading") emptyMessage = "Loading...";
 
   const renderEditTab = () => {
-    if (bootstrapping || getListStatus === "isLoading") {
-      return (
-        <div className="py-12">
-          <Loader label="Loading marketplace..." />
-        </div>
-      );
-    }
     if (filteredListings.length === 0) {
       return (
         <p className="text-muted-foreground py-8 text-center">
@@ -347,7 +340,16 @@ export default function CompanyMarketplacePage() {
   );
 
   return (
-    <div className="space-y-6 sm:space-y-8 pb-8">
+    <>
+      <div className="relative">
+        {pageLoading && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+            <Loader label="Loading marketplace..." />
+          </div>
+        )}
+        <div
+          className={`space-y-6 sm:space-y-8 pb-8${pageLoading ? " blur-sm opacity-60 pointer-events-none select-none" : ""}`}
+        >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-2">
           <h1 className="font-heading text-3xl font-bold">Marketplace</h1>
@@ -457,6 +459,8 @@ export default function CompanyMarketplacePage() {
           }}
         />
       </div>
+        </div>
+      </div>
 
       <Modal visible={modalOpen} onClose={closeModal}>
         <div className="pr-8">
@@ -486,7 +490,7 @@ export default function CompanyMarketplacePage() {
         onConfirm={handleSuspendConfirm}
         loading={suspendSubmitting}
       />
-    </div>
+    </>
   );
 }
 

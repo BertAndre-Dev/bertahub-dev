@@ -16,8 +16,11 @@ import {
   updateAsset,
   type Asset,
   type AssetCategory,
+  type CreateAssetItemPayload,
 } from "@/redux/slice/company/asset-mgt/company-asset";
 import AssetFormModal from "./AssetFormModal";
+
+type EstateOption = { id: string; name: string };
 
 const PAGE_SIZE = 10;
 
@@ -35,7 +38,27 @@ function getCategoryName(
   return match?.name ?? "—";
 }
 
-export default function AssetsTab() {
+function getEstateName(
+  estateId: string | { id?: string; _id?: string; name?: string } | undefined,
+  estates: EstateOption[],
+) {
+  if (!estateId) return "—";
+  if (typeof estateId !== "string") return estateId?.name ?? "—";
+  const match = estates.find((e) => e.id === estateId);
+  return match?.name ?? "—";
+}
+
+type AssetsTabProps = {
+  estates: EstateOption[];
+  selectedEstateId: string;
+  onEstateChange: (estateId: string) => void;
+};
+
+export default function AssetsTab({
+  estates,
+  selectedEstateId,
+  onEstateChange,
+}: Readonly<AssetsTabProps>) {
   const dispatch = useDispatch<AppDispatch>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -65,17 +88,23 @@ export default function AssetsTab() {
   );
 
   useEffect(() => {
-    // Ensure categories are available for the create/edit form and table column.
     dispatch(getAssetCategories({ page: 1, limit: 100, search: "" }))
       .unwrap()
       .catch(() => {});
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(getAssets({ page, limit: PAGE_SIZE, search }))
+    if (selectedEstateId) return;
+    if (!estates.length) return;
+    onEstateChange(estates[0].id);
+  }, [estates, selectedEstateId, onEstateChange]);
+
+  useEffect(() => {
+    if (!selectedEstateId) return;
+    dispatch(getAssets({ estateId: selectedEstateId, page, limit: PAGE_SIZE, search }))
       .unwrap()
       .catch(() => toast.error("Failed to load assets."));
-  }, [dispatch, page, search]);
+  }, [dispatch, selectedEstateId, page, search]);
 
   const columns = useMemo(
     () => [
@@ -98,6 +127,13 @@ export default function AssetsTab() {
           item.createdAt ? new Date(item.createdAt).toISOString() : "",
       },
       { key: "name" as const, header: "Asset" },
+      { key: "tag" as const, header: "Tag" },
+      {
+        key: "estateId" as const,
+        header: "Estate",
+        render: (item: Asset) => getEstateName(item.estateId as any, estates),
+        exportValue: (item: Asset) => getEstateName(item.estateId as any, estates),
+      },
       {
         key: "assetCategoryId" as const,
         header: "Category",
@@ -167,12 +203,16 @@ export default function AssetsTab() {
         ),
       },
     ],
-    [categories, deleteStatus, dispatch],
+    [categories, deleteStatus, dispatch, estates],
   );
 
   const openCreate = () => {
     if (!categories.length) {
       toast.info("Create an asset category first.");
+      return;
+    }
+    if (!estates.length) {
+      toast.info("No estate available for your company.");
       return;
     }
     setEditing(null);
@@ -184,13 +224,7 @@ export default function AssetsTab() {
     setEditing(null);
   };
 
-  const handleSubmit = async (payload: {
-    name: string;
-    assetCategoryId: string;
-    amount: number;
-    useFullLife: number;
-    datePurchased: string;
-  }) => {
+  const handleSubmit = async (payload: CreateAssetItemPayload) => {
     try {
       if (editing) {
         const id = getId(editing);
@@ -203,6 +237,9 @@ export default function AssetsTab() {
       }
       closeModal();
       setPage(1);
+      if (!editing && payload.estateId && !selectedEstateId) {
+        onEstateChange(payload.estateId);
+      }
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to save asset.");
     }
@@ -228,6 +265,28 @@ export default function AssetsTab() {
           <p className="text-muted-foreground text-sm">
             Create and manage company assets.
           </p>
+          {estates.length > 1 && (
+            <div className="mt-2 flex items-center gap-2">
+              <label htmlFor="company-asset-estate" className="text-sm font-medium">
+                Estate
+              </label>
+              <select
+                id="company-asset-estate"
+                className="h-9 rounded-md border border-border bg-background px-3 text-sm"
+                value={selectedEstateId}
+                onChange={(e) => {
+                  onEstateChange(e.target.value);
+                  setPage(1);
+                }}
+              >
+                {estates.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         <Button
           onClick={openCreate}
@@ -264,6 +323,8 @@ export default function AssetsTab() {
         onClose={closeModal}
         initial={editing}
         categories={categories}
+        estates={estates}
+        defaultEstateId={selectedEstateId || estates[0]?.id}
         loading={createStatus === "isLoading" || updateStatus === "isLoading"}
         onSubmit={handleSubmit}
       />

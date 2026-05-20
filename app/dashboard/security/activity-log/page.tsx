@@ -185,55 +185,61 @@ export default function ActivityLogPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Activity Log</h1>
-        <p className="text-muted-foreground">
-          Welcome back! View all visitors and activity for your estate.
-        </p>
-      </div>
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading visitors..." />
+        </div>
+      )}
 
-      <Card className="p-4">
-        <input
-          type="text"
-          placeholder="Search resident, visitor, purpose..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)} // ✅ search fixed
-          className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-      </Card>
+      <div
+        className={`space-y-6${loading ? " blur-sm opacity-60 pointer-events-none select-none" : ""}`}
+      >
+        <div>
+          <h1 className="text-3xl font-bold">Activity Log</h1>
+          <p className="text-muted-foreground">
+            Welcome back! View all visitors and activity for your estate.
+          </p>
+        </div>
 
-      <Card className="overflow-hidden">
-        <CardHeader>
-          <CardTitle>Visitor records</CardTitle>
-          <CardDescription className="text-sm">
-            {cardDescription}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          <Table<SecurityVisitorItem>
-            columns={columns}
-            data={filtered}
-            emptyMessage={
-              loading
-                ? <Loader label="Loading visitors..." />
-                : "No visitors found."
-            }
-            showPagination={!!pagination && (pagination.total > pagination.limit || (pagination.totalPages ?? 1) > 1)}
-            paginationInfo={
-              pagination
-                ? {
-                    total: pagination.total,
-                    current: pagination.page,
-                    pageSize: pagination.limit,
-                  }
-                : undefined
-            }
-            onPageChange={onPageChange}
+        <Card className="p-4">
+          <input
+            type="text"
+            placeholder="Search resident, visitor, purpose..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)} // ✅ search fixed
+            className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
-        </CardContent>
-      </Card>
+        </Card>
+
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle>Visitor records</CardTitle>
+            <CardDescription className="text-sm">
+              {cardDescription}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            <Table<SecurityVisitorItem>
+              columns={columns}
+              data={filtered}
+              emptyMessage="No visitors found."
+              showPagination={!!pagination && (pagination.total > pagination.limit || (pagination.totalPages ?? 1) > 1)}
+              paginationInfo={
+                pagination
+                  ? {
+                      total: pagination.total,
+                      current: pagination.page,
+                      pageSize: pagination.limit,
+                    }
+                  : undefined
+              }
+              onPageChange={onPageChange}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -47,8 +47,30 @@ interface SuperAdminUserData {
   role: string;
   image?: string;
   isActive?: boolean;
+  serviceCharge?: boolean;
+  invitationStatus?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+function formatUserDate(value?: string) {
+  if (!value) return "—";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+}
+
+function formatInvitationStatus(value?: string) {
+  if (!value) return "—";
+  return value
+    .split(/[\s_-]+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
 }
 
 interface EstateOption {
@@ -197,10 +219,32 @@ export default function SuperAdminUserPage() {
   };
 
   const columns = [
+    {
+      key: "createdAt",
+      header: "Created",
+      render: (item: SuperAdminUserData) => formatUserDate(item.createdAt),
+      exportValue: (item: SuperAdminUserData) =>
+        item.createdAt ? String(item.createdAt) : "",
+    },
     { key: "firstName", header: "First Name" },
     { key: "lastName", header: "Last Name" },
     { key: "email", header: "Email" },
     { key: "role", header: "Role" },
+    {
+      key: "serviceCharge",
+      header: "Service charge",
+      render: (item: SuperAdminUserData) => String(Boolean(item.serviceCharge)),
+      exportValue: (item: SuperAdminUserData) =>
+        String(Boolean(item.serviceCharge)),
+    },
+    {
+      key: "invitationStatus",
+      header: "Invitation",
+      render: (item: SuperAdminUserData) =>
+        formatInvitationStatus(item.invitationStatus),
+      exportValue: (item: SuperAdminUserData) =>
+        formatInvitationStatus(item.invitationStatus),
+    },
     {
       key: "isActive",
       header: "Status",

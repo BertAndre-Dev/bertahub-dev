@@ -11,13 +11,27 @@ import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CountryDropdown, RegionDropdown } from "react-country-region-selector"
 import { cn } from "@/lib/utils"
 import type { AppDispatch } from "@/redux/store"
-import { fetchAvailableModules } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt"
+import { fetchEstateModules } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt"
 import type { EstateData } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt"
 import {
   selectAvailableModules,
   selectModulesError,
   selectModulesLoading,
 } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt-slice"
+
+const ALL_MODULE_KEYS = [
+  "bills",
+  "rent",
+  "meter",
+  "marketplace",
+  "visitor",
+  "complaints",
+  "announcements",
+  "wallet",
+  "transactions",
+  "comments",
+  "asset",
+] as const
 
 const MODULE_LABELS: Record<string, string> = {
   bills: "Bills",
@@ -30,18 +44,26 @@ const MODULE_LABELS: Record<string, string> = {
   wallet: "Wallet",
   transactions: "Transactions",
   comments: "Comments",
+  asset: "Asset Management",
+  assets: "Asset Management",
 }
 
 interface EstateFormProps {
   initialData?: EstateData | null
+  estateId?: string
   onSubmit: (data: EstateData) => void
 }
 
-export default function EstateForm({ initialData = null, onSubmit }: EstateFormProps) {
+export default function EstateForm({
+  initialData = null,
+  estateId,
+  onSubmit,
+}: EstateFormProps) {
   const dispatch = useDispatch<AppDispatch>()
-  const availableModules = useSelector(selectAvailableModules)
+  const estateModules = useSelector(selectAvailableModules)
   const modulesLoading = useSelector(selectModulesLoading)
   const modulesError = useSelector(selectModulesError)
+  const moduleOptions = ALL_MODULE_KEYS as unknown as string[]
 
   const [formData, setFormData] = useState<EstateData>({
     name: "",
@@ -53,8 +75,17 @@ export default function EstateForm({ initialData = null, onSubmit }: EstateFormP
   })
 
   useEffect(() => {
-    dispatch(fetchAvailableModules())
-  }, [dispatch])
+    if (estateId) {
+      dispatch(fetchEstateModules(estateId))
+    }
+  }, [dispatch, estateId])
+
+  useEffect(() => {
+    if (!estateId || modulesLoading || modulesError) return
+    if (estateModules.length > 0) {
+      setFormData((prev) => ({ ...prev, modules: [...estateModules] }))
+    }
+  }, [estateId, estateModules, modulesLoading, modulesError])
 
   useEffect(() => {
     if (initialData) {
@@ -154,16 +185,16 @@ export default function EstateForm({ initialData = null, onSubmit }: EstateFormP
             <p className="text-sm text-muted-foreground">
               Select one or more features enabled for this estate.
             </p>
-            {modulesLoading ? (
+            {estateId && modulesLoading ? (
               <div className="flex items-center gap-2 rounded-md border border-border px-3 py-6 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading modules…
               </div>
-            ) : modulesError ? (
+            ) : estateId && modulesError ? (
               <p className="text-sm text-destructive">{modulesError}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {availableModules.map((key) => {
+                {moduleOptions.map((key) => {
                   const selected = formData.modules.includes(key)
                   return (
                     <button
@@ -189,7 +220,11 @@ export default function EstateForm({ initialData = null, onSubmit }: EstateFormP
             <Button
               type="submit"
               className="w-full cursor-pointer"
-              disabled={modulesLoading || Boolean(modulesError) || availableModules.length === 0}
+              disabled={
+                (Boolean(estateId) && modulesLoading) ||
+                Boolean(estateId && modulesError) ||
+                formData.modules.length === 0
+              }
             >
               {initialData ? "Update" : "Create Estate"}
             </Button>

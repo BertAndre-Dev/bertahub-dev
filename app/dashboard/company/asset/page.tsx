@@ -2,11 +2,19 @@
 
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import { Card } from "@/components/ui/card";
 import Tab from "@/components/tabs/page";
 import Loader from "@/components/ui/Loader";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import { getCompanyEstates } from "@/redux/slice/company/estate-mgt/company-estate";
+import { parseCompanyFromUser } from "../lib/company";
+import {
+  mapCompanyEstateRows,
+  parseCompanyEstates,
+  type EstateOption,
+} from "./lib/estate";
 import AssetCategoriesTab from "./components/AssetCategoriesTab";
 import AssetsTab from "./components/AssetsTab";
 import AssetStatsCards from "./components/AssetStatsCards";
@@ -14,6 +22,9 @@ import AssetStatsCards from "./components/AssetStatsCards";
 export default function CompanyAssetPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [companyName, setCompanyName] = useState("Company");
+  const [estates, setEstates] = useState<EstateOption[]>([]);
+  const [selectedEstateId, setSelectedEstateId] = useState("");
+  const [estatesLoading, setEstatesLoading] = useState(true);
   const [activeAssetTab, setActiveAssetTab] = useState("Assets");
 
   const { assetsLoading, categoriesLoading } = useSelector(
@@ -28,23 +39,47 @@ export default function CompanyAssetPage() {
   );
 
   const pageLoading =
-    activeAssetTab === "Assets"
+    estatesLoading ||
+    (activeAssetTab === "Assets"
       ? Boolean(assetsLoading || categoriesLoading)
-      : Boolean(categoriesLoading);
+      : Boolean(categoriesLoading));
 
   useEffect(() => {
     (async () => {
       try {
         const userRes = await dispatch(getSignedInUser()).unwrap();
-        const data = userRes?.data ?? (userRes as Record<string, unknown>);
-        const companyFromId =
-          (data?.companyId as { name?: string } | undefined)?.name ?? "";
-        const companyFromObj =
-          (data?.company as { name?: string } | undefined)?.name ?? "";
-        const fallback = (data?.companyName as string) ?? "";
-        setCompanyName(companyFromId || companyFromObj || fallback || "Company");
+        const data = (userRes?.data ?? userRes) as Record<string, unknown>;
+        const company = parseCompanyFromUser(data);
+        if (!company) {
+          toast.warning("No company linked to your account.");
+          setEstatesLoading(false);
+          return;
+        }
+        setCompanyName(company.name);
+
+        let options: EstateOption[] = [];
+        try {
+          const res = await dispatch(
+            getCompanyEstates({ page: 1, limit: 200 }),
+          ).unwrap();
+          options = mapCompanyEstateRows(res?.data);
+        } catch {
+          toast.error("Failed to fetch company estates.");
+        }
+
+        if (!options.length) {
+          options = parseCompanyEstates(data);
+        }
+
+        setEstates(options);
+        setSelectedEstateId(options[0]?.id ?? "");
+        if (!options.length) {
+          toast.warning("No estates found for your company.");
+        }
       } catch {
-        // keep default
+        toast.error("Failed to load company information.");
+      } finally {
+        setEstatesLoading(false);
       }
     })();
   }, [dispatch]);
@@ -55,9 +90,11 @@ export default function CompanyAssetPage() {
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
           <Loader
             label={
-              activeAssetTab === "Assets"
-                ? "Loading assets..."
-                : "Loading categories..."
+              estatesLoading
+                ? "Loading estates..."
+                : activeAssetTab === "Assets"
+                  ? "Loading assets..."
+                  : "Loading categories..."
             }
           />
         </div>
@@ -73,11 +110,11 @@ export default function CompanyAssetPage() {
             <span className="text-[18px] font-bold underline uppercase text-black">
               {companyName}
             </span>
-            {"."}
+            .
           </p>
         </div>
 
-        <AssetStatsCards />
+        <AssetStatsCards estateId={selectedEstateId} />
 
         <Card className="p-4">
           <Tab
@@ -86,7 +123,13 @@ export default function CompanyAssetPage() {
             renderContent={(activeTab) => {
               switch (activeTab) {
                 case "Assets":
-                  return <AssetsTab />;
+                  return (
+                    <AssetsTab
+                      estates={estates}
+                      selectedEstateId={selectedEstateId}
+                      onEstateChange={setSelectedEstateId}
+                    />
+                  );
                 case "Asset Categories":
                   return <AssetCategoriesTab />;
                 default:
@@ -99,4 +142,3 @@ export default function CompanyAssetPage() {
     </div>
   );
 }
-

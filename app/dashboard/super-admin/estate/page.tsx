@@ -384,6 +384,7 @@ export default function EstatePage() {
       {open && (
         <Modal visible={open} onClose={handleCloseModal}>
           <EstateForm
+            estateId={selectedEstate?.id}
             initialData={
               selectedEstate
                 ? {

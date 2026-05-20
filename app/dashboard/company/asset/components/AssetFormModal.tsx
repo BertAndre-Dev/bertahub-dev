@@ -7,11 +7,16 @@ import { Input } from "@/components/ui/input";
 import type {
   Asset,
   AssetCategory,
+  CreateAssetItemPayload,
 } from "@/redux/slice/company/asset-mgt/company-asset";
+
+type EstateOption = { id: string; name: string };
 
 type FormState = {
   name: string;
+  tag: string;
   assetCategoryId: string;
+  estateId: string;
   amount: string;
   useFullLife: string;
   datePurchased: string;
@@ -20,15 +25,11 @@ type FormState = {
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (payload: {
-    name: string;
-    assetCategoryId: string;
-    amount: number;
-    useFullLife: number;
-    datePurchased: string;
-  }) => Promise<void> | void;
+  onSubmit: (payload: CreateAssetItemPayload) => Promise<void> | void;
   loading?: boolean;
   categories: AssetCategory[];
+  estates: EstateOption[];
+  defaultEstateId?: string;
   initial?: Asset | null;
 };
 
@@ -44,13 +45,18 @@ export default function AssetFormModal({
   onSubmit,
   loading = false,
   categories,
+  estates,
+  defaultEstateId = "",
   initial,
 }: Readonly<Props>) {
   const initialForm: FormState = useMemo(() => {
     const categoryId = getId(initial?.assetCategoryId as any);
+    const estateFromAsset = getId(initial?.estateId as any);
     return {
       name: initial?.name ?? "",
+      tag: initial?.tag ?? "",
       assetCategoryId: categoryId ?? "",
+      estateId: estateFromAsset || defaultEstateId || estates[0]?.id || "",
       amount:
         initial?.amount != null && !Number.isNaN(Number(initial.amount))
           ? String(initial.amount)
@@ -61,7 +67,7 @@ export default function AssetFormModal({
           : "",
       datePurchased: initial?.datePurchased?.slice(0, 10) ?? "",
     };
-  }, [initial]);
+  }, [initial, estates, defaultEstateId]);
 
   const [form, setForm] = useState<FormState>(initialForm);
 
@@ -71,7 +77,9 @@ export default function AssetFormModal({
 
   const canSubmit =
     form.name.trim().length >= 2 &&
+    form.tag.trim().length >= 2 &&
     Boolean(form.assetCategoryId) &&
+    Boolean(form.estateId) &&
     Number(form.amount) > 0 &&
     Number(form.useFullLife) > 0 &&
     Boolean(form.datePurchased);
@@ -84,11 +92,11 @@ export default function AssetFormModal({
             {initial ? "Edit asset" : "Create asset"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Assets must be linked to an asset category.
+            Assets must be linked to a category and estate.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <div className="space-y-2 sm:col-span-2">
             <label htmlFor="asset-name" className="text-sm font-medium">
               Name
@@ -99,6 +107,40 @@ export default function AssetFormModal({
               onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
               placeholder='e.g. "Laptop"'
             />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="asset-tag" className="text-sm font-medium">
+              Tag
+            </label>
+            <Input
+              id="asset-tag"
+              value={form.tag}
+              onChange={(e) => setForm((s) => ({ ...s, tag: e.target.value }))}
+              placeholder="ASSET-2024-001"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="asset-estate" className="text-sm font-medium">
+              Estate
+            </label>
+            <select
+              id="asset-estate"
+              aria-label="Estate"
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+              value={form.estateId}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, estateId: e.target.value }))
+              }
+            >
+              <option value="">Select estate</option>
+              {estates.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2">
@@ -180,7 +222,9 @@ export default function AssetFormModal({
             onClick={async () =>
               onSubmit({
                 name: form.name.trim(),
+                tag: form.tag.trim(),
                 assetCategoryId: form.assetCategoryId,
+                estateId: form.estateId,
                 amount: Number(form.amount),
                 useFullLife: Number(form.useFullLife),
                 datePurchased: form.datePurchased,
@@ -194,4 +238,3 @@ export default function AssetFormModal({
     </Modal>
   );
 }
-

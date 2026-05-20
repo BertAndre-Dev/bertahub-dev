@@ -14,6 +14,7 @@ import { getAllVisitors } from "@/redux/slice/security/visitor/visitor";
 import type { RootState, AppDispatch } from "@/redux/store";
 import { toast } from "react-toastify";
 import type { VisitorDetailsData } from "@/app/dashboard/security/types";
+import Loader from "@/components/ui/Loader";
 
 export default function VisitorManagementPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -21,15 +22,13 @@ export default function VisitorManagementPage() {
   const [visitorDetails, setVisitorDetails] =
     useState<VisitorDetailsData | null>(null);
 
-  const { allVisitors } = useSelector(
-    (state: RootState) => {
-      const v = state.securityVisitor;
-      return {
-        allVisitors: v?.allVisitors ?? null,
-        loading: v?.getAllVisitorsStatus === "isLoading",
-      };
-    },
-  );
+  const { allVisitors, loading } = useSelector((state: RootState) => {
+    const v = state.securityVisitor;
+    return {
+      allVisitors: v?.allVisitors ?? null,
+      loading: v?.getAllVisitorsStatus === "isLoading",
+    };
+  });
 
   // const visitors = allVisitors?.data ?? [];
 
@@ -63,7 +62,16 @@ export default function VisitorManagementPage() {
   const clockedOut = visitorDetails?.checkedOutAt ?? null;
 
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading visitors..." />
+        </div>
+      )}
+
+      <div
+        className={`space-y-6${loading ? " blur-sm opacity-60 pointer-events-none select-none" : ""}`}
+      >
       {/* Stats Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
@@ -117,7 +125,8 @@ export default function VisitorManagementPage() {
         initialClockOutCode={visitorDetails?.visitorCode}
       />
       {/* Recent Visitor Invites */}
-      <RecentVisitorInvites visitors={allVisitors?.data ?? []} />
+      <RecentVisitorInvites visitors={allVisitors?.data ?? []} loading={false} />
+      </div>
     </div>
   );
 }

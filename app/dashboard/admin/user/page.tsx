@@ -19,6 +19,7 @@ import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import InviteUserForm from "@/components/admin/user-form/page";
 import SuspendRentModal from "@/components/resident/suspend-rent-modal/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
+import Loader from "@/components/ui/Loader";
 
 interface AdminUserData {
   id?: string;
@@ -321,7 +322,19 @@ export default function AdminUserPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading users..." />
+        </div>
+      )}
+
+      <div
+        className={[
+          "space-y-6",
+          loading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+        ].join(" ")}
+      >
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
         <div>
@@ -397,9 +410,7 @@ export default function AdminUserPage() {
         <Table
           columns={columns}
           data={allAdminUsers}
-          emptyMessage={
-            loading ? "Loading users..." : "No users found for this estate"
-          }
+          emptyMessage="No users found for this estate"
           enableDateRangeFilter
           startDate={startDate}
           endDate={endDate}
@@ -465,6 +476,7 @@ export default function AdminUserPage() {
         onConfirm={handleSuspendConfirm}
         loading={suspendSubmitting}
       />
+      </div>
     </div>
   );
 }

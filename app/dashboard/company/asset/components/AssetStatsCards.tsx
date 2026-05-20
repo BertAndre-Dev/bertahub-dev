@@ -19,7 +19,11 @@ function getTotal(pagination: any, fallbackLength: number) {
   return Number.isFinite(total) ? total : fallbackLength;
 }
 
-export default function AssetStatsCards() {
+type Props = {
+  estateId: string;
+};
+
+export default function AssetStatsCards({ estateId }: Readonly<Props>) {
   const dispatch = useDispatch<AppDispatch>();
 
   const { assetsLen, categoriesLen, assetsPagination, categoriesPagination } =
@@ -34,10 +38,14 @@ export default function AssetStatsCards() {
     });
 
   useEffect(() => {
-    // Fetch minimal pages just to get `pagination.total`.
-    dispatch(getAssets({ page: 1, limit: STAT_LIMIT, search: "" })).catch(() => {});
-    dispatch(getAssetCategories({ page: 1, limit: STAT_LIMIT, search: "" })).catch(() => {});
-  }, [dispatch]);
+    if (!estateId) return;
+    dispatch(getAssets({ estateId, page: 1, limit: STAT_LIMIT, search: "" })).catch(
+      () => {},
+    );
+    dispatch(getAssetCategories({ page: 1, limit: STAT_LIMIT, search: "" })).catch(
+      () => {},
+    );
+  }, [dispatch, estateId]);
 
   const stats = useMemo(() => {
     const totalAssets = getTotal(assetsPagination, assetsLen);

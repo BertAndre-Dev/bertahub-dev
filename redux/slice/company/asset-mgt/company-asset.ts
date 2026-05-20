@@ -23,8 +23,10 @@ export type Asset = {
   id?: string;
   _id?: string;
   name?: string;
+  tag?: string;
   assetCategoryId?: string | AssetCategory;
   estateId?: string | { id?: string; _id?: string; name?: string };
+  companyId?: string;
   amount?: number;
   useFullLife?: number;
   datePurchased?: string;
@@ -52,22 +54,31 @@ export type GetListParams = {
   search?: string;
 };
 
+export type GetAssetsParams = GetListParams & {
+  estateId: string;
+};
+
 export type CreateAssetCategoryPayload = { name: string };
 export type UpdateAssetCategoryPayload = { id: string; name: string };
 
+export type CreateAssetItemPayload = {
+  name: string;
+  tag: string;
+  assetCategoryId: string;
+  estateId: string;
+  amount: number;
+  useFullLife: number;
+  datePurchased: string;
+};
+
 export type CreateAssetsPayload = {
-  assets: Array<{
-    name: string;
-    assetCategoryId: string;
-    amount: number;
-    useFullLife: number;
-    datePurchased: string;
-  }>;
+  assets: CreateAssetItemPayload[];
 };
 
 export type UpdateAssetPayload = {
   id: string;
   name?: string;
+  tag?: string;
   assetCategoryId?: string;
   estateId?: string;
   amount?: number;
@@ -174,14 +185,23 @@ export const createAssets = createAsyncThunk(
   },
 );
 
-/** GET /api/v1/assets */
+/** GET /api/v1/assets?estateId=... */
 export const getAssets = createAsyncThunk(
   "company-asset/getAssets",
-  async (params: GetListParams | undefined, { rejectWithValue }) => {
+  async (params: GetAssetsParams, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 10, search } = params ?? {};
+      const { estateId, page = 1, limit = 10, search } = params;
+      const estateIdValue = normalizeId(estateId).trim();
+      if (!estateIdValue) {
+        return rejectWithValue({ message: "Estate is required to load assets." });
+      }
       const res = await axiosInstance.get<AssetListResponse>("/api/v1/assets", {
-        params: { page, limit, search: search?.trim() || undefined },
+        params: {
+          estateId: estateIdValue,
+          page,
+          limit,
+          search: search?.trim() || undefined,
+        },
       });
       return res.data;
     } catch (error: unknown) {
