@@ -104,7 +104,7 @@ export default function ResidentAssetPage() {
                 case "Assets":
                   return <AssetsTab estateId={estateId} estateName={estateName} />;
                 case "Asset Categories":
-                  return <AssetCategoriesTab />;
+                  return <AssetCategoriesTab estateId={estateId} />;
                 default:
                   return null;
               }

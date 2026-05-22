@@ -131,7 +131,7 @@ export default function CompanyAssetPage() {
                     />
                   );
                 case "Asset Categories":
-                  return <AssetCategoriesTab />;
+                  return <AssetCategoriesTab estateId={selectedEstateId} />;
                 default:
                   return null;
               }

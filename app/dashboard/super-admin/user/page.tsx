@@ -33,6 +33,7 @@ import Modal from "@/components/modal/page";
 import InviteUserForm from "@/components/super-admin/user-form/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import Loader from "@/components/ui/Loader";
+import { UserStatusModal } from "./components/UserStatusModal";
 
 interface SuperAdminUserData {
   id?: string;
@@ -116,6 +117,9 @@ export default function SuperAdminUserPage() {
   const [selectedUser, setSelectedUser] = useState<SuperAdminUserData | null>(
     null,
   );
+  const [statusItem, setStatusItem] = useState<SuperAdminUserData | null>(null);
+  const [statusMode, setStatusMode] = useState<"suspend" | "activate">("suspend");
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
 
   // ✅ Map estates for dropdown
   const estateOptions: EstateOption[] =
@@ -174,18 +178,40 @@ export default function SuperAdminUserPage() {
     setSelectedUser(null);
   };
 
-  const handleToggleStatus = async (user: SuperAdminUserData) => {
+  const closeStatusModal = () => {
+    if (statusSubmitting) return;
+    setStatusItem(null);
+  };
+
+  const openSuspendModal = (user: SuperAdminUserData) => {
+    setStatusItem(user);
+    setStatusMode("suspend");
+  };
+
+  const openActivateModal = (user: SuperAdminUserData) => {
+    setStatusItem(user);
+    setStatusMode("activate");
+  };
+
+  const userDisplayName = (user: SuperAdminUserData) =>
+    `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
+    user.email ||
+    "this user";
+
+  const handleConfirmStatus = async () => {
+    const user = statusItem;
+    if (!user?.id) return;
+    setStatusSubmitting(true);
     try {
-      if (!user.id) return;
-      if (user.isActive) {
+      if (statusMode === "suspend") {
         await dispatch(suspendUser(user.id)).unwrap();
-        toast.info(`${user.firstName} has been suspended.`);
+        toast.info(`${user.firstName ?? "User"} has been suspended.`);
       } else {
         await dispatch(activateUser(user.id)).unwrap();
-        toast.success(`${user.firstName} has been activated.`);
+        toast.success(`${user.firstName ?? "User"} has been activated.`);
       }
-
-      if (selectedEstate?.value)
+      closeStatusModal();
+      if (selectedEstate?.value) {
         await dispatch(
           getAllUsersByEstate({
             estateId: selectedEstate.value,
@@ -193,8 +219,11 @@ export default function SuperAdminUserPage() {
             limit: Number(pagination?.pageSize) || 10,
           }),
         ).unwrap();
+      }
     } catch (err: any) {
       toast.error(err?.message || "Failed to update user status.");
+    } finally {
+      setStatusSubmitting(false);
     }
   };
 
@@ -278,7 +307,8 @@ export default function SuperAdminUserPage() {
               variant="ghost"
               className="cursor-pointer"
               size="sm"
-              onClick={() => handleToggleStatus(item)}
+              onClick={() => openSuspendModal(item)}
+              title="Suspend user"
             >
               <PowerOff className="w-4 h-4 text-red-600" />
             </Button>
@@ -287,7 +317,8 @@ export default function SuperAdminUserPage() {
               variant="ghost"
               className="cursor-pointer"
               size="sm"
-              onClick={() => handleToggleStatus(item)}
+              onClick={() => openActivateModal(item)}
+              title="Activate user"
             >
               <Power className="w-4 h-4 text-green-600" />
             </Button>
@@ -467,6 +498,15 @@ export default function SuperAdminUserPage() {
             <InviteUserForm close={handleCloseModal} />
           </Modal>
         )}
+
+        <UserStatusModal
+          visible={Boolean(statusItem)}
+          onClose={closeStatusModal}
+          userName={statusItem ? userDisplayName(statusItem) : "this user"}
+          mode={statusMode}
+          loading={statusSubmitting}
+          onConfirm={handleConfirmStatus}
+        />
       </div>
     </div>
   );

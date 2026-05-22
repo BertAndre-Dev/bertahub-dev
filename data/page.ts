@@ -200,7 +200,7 @@ export const adminNav = [
     moduleKey: "announcements",
   },
   {
-    label: "Asset Maintenance",
+    label: "Maintenance & Report",
     icon: Wrench,
     path: "/dashboard/admin/asset-maintenance",
     moduleKey: "asset-maintenance",

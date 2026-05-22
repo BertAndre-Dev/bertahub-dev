@@ -169,12 +169,13 @@ export default function SuperAdminCompanyPage() {
   const effectivePageSize = Number(pagination?.pageSize) || PAGE_SIZE;
 
   useEffect(() => {
+    if (!open) return;
     dispatch(getCompanyModules())
       .unwrap()
       .catch((err: any) =>
         toast.error(err?.message ?? "Failed to fetch available modules"),
       );
-  }, [dispatch]);
+  }, [dispatch, open]);
 
   const fetchList = (
     opts?: Partial<{

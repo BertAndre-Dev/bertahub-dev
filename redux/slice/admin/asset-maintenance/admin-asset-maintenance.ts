@@ -62,7 +62,7 @@ const normalizeId = (id: string | undefined) => id ?? "";
 
 /** POST /api/v1/asset-maintenance */
 export const createAssetMaintenance = createAsyncThunk(
-  "company-asset-maintenance/create",
+  "admin-asset-maintenance/create",
   async (payload: CreateMaintenancePayload, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.post("/api/v1/asset-maintenance", payload);
@@ -79,7 +79,7 @@ export const createAssetMaintenance = createAsyncThunk(
 
 /** GET /api/v1/asset-maintenance?estateId=... */
 export const getAssetMaintenanceList = createAsyncThunk(
-  "company-asset-maintenance/getList",
+  "admin-asset-maintenance/getList",
   async (params: GetMaintenanceListParams, { rejectWithValue }) => {
     try {
       const { estateId, page = 1, limit = 10, isActive } = params;
@@ -110,7 +110,7 @@ export const getAssetMaintenanceList = createAsyncThunk(
 
 /** GET /api/v1/asset-maintenance/{maintenanceId} */
 export const getAssetMaintenanceById = createAsyncThunk(
-  "company-asset-maintenance/getById",
+  "admin-asset-maintenance/getById",
   async (maintenanceId: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get(
@@ -128,7 +128,7 @@ export const getAssetMaintenanceById = createAsyncThunk(
 
 /** PUT /api/v1/asset-maintenance/{maintenanceId} */
 export const updateAssetMaintenance = createAsyncThunk(
-  "company-asset-maintenance/update",
+  "admin-asset-maintenance/update",
   async (payload: UpdateMaintenancePayload, { rejectWithValue }) => {
     try {
       const { maintenanceId, ...body } = payload;
@@ -148,7 +148,7 @@ export const updateAssetMaintenance = createAsyncThunk(
 
 /** DELETE /api/v1/asset-maintenance/{maintenanceId} */
 export const deleteAssetMaintenance = createAsyncThunk(
-  "company-asset-maintenance/delete",
+  "admin-asset-maintenance/delete",
   async (maintenanceId: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.delete(
@@ -166,7 +166,7 @@ export const deleteAssetMaintenance = createAsyncThunk(
 
 /** PUT /api/v1/asset-maintenance/{maintenanceId}/suspend */
 export const suspendAssetMaintenance = createAsyncThunk(
-  "company-asset-maintenance/suspend",
+  "admin-asset-maintenance/suspend",
   async (maintenanceId: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.put(
@@ -184,7 +184,7 @@ export const suspendAssetMaintenance = createAsyncThunk(
 
 /** PUT /api/v1/asset-maintenance/{maintenanceId}/activate */
 export const activateAssetMaintenance = createAsyncThunk(
-  "company-asset-maintenance/activate",
+  "admin-asset-maintenance/activate",
   async (maintenanceId: string, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.put(

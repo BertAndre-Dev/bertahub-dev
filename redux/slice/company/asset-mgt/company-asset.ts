@@ -58,8 +58,13 @@ export type GetAssetsParams = GetListParams & {
   estateId: string;
 };
 
-export type CreateAssetCategoryPayload = { name: string };
+export type GetAssetCategoriesParams = GetListParams & {
+  estateId: string;
+};
+
+export type CreateAssetCategoryPayload = { name: string; estateId: string };
 export type UpdateAssetCategoryPayload = { id: string; name: string };
+export type DeleteAssetCategoryPayload = { id: string; estateId: string };
 
 export type CreateAssetItemPayload = {
   name: string;
@@ -97,7 +102,14 @@ export const createAssetCategory = createAsyncThunk(
   "company-asset/createAssetCategory",
   async (payload: CreateAssetCategoryPayload, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post("/api/v1/asset-categories", payload);
+      const estateId = normalizeId(payload.estateId).trim();
+      if (!estateId) {
+        return rejectWithValue({ message: "Estate is required to create an asset category." });
+      }
+      const res = await axiosInstance.post("/api/v1/asset-categories", {
+        name: payload.name,
+        estateId,
+      });
       return res.data as { success?: boolean; message?: string; data?: AssetCategory };
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string | string[] } } };
@@ -109,15 +121,28 @@ export const createAssetCategory = createAsyncThunk(
   },
 );
 
-/** GET /api/v1/asset-categories */
+/** GET /api/v1/asset-categories?estateId=... */
 export const getAssetCategories = createAsyncThunk(
   "company-asset/getAssetCategories",
-  async (params: GetListParams | undefined, { rejectWithValue }) => {
+  async (params: GetAssetCategoriesParams, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 10, search } = params ?? {};
+      const { estateId, page = 1, limit = 10, search } = params;
+      const estateIdValue = normalizeId(estateId).trim();
+      if (!estateIdValue) {
+        return rejectWithValue({
+          message: "Estate is required to load asset categories.",
+        });
+      }
       const res = await axiosInstance.get<AssetCategoryListResponse>(
         "/api/v1/asset-categories",
-        { params: { page, limit, search: search?.trim() || undefined } },
+        {
+          params: {
+            estateId: estateIdValue,
+            page,
+            limit,
+            search: search?.trim() || undefined,
+          },
+        },
       );
       return res.data;
     } catch (error: unknown) {
@@ -148,12 +173,21 @@ export const updateAssetCategory = createAsyncThunk(
   },
 );
 
-/** DELETE /api/v1/asset-categories/{id} */
+/** DELETE /api/v1/asset-categories/{id}?estateId=... */
 export const deleteAssetCategory = createAsyncThunk(
   "company-asset/deleteAssetCategory",
-  async (id: string, { rejectWithValue }) => {
+  async (payload: DeleteAssetCategoryPayload, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.delete(`/api/v1/asset-categories/${normalizeId(id)}`);
+      const id = normalizeId(payload.id).trim();
+      const estateId = normalizeId(payload.estateId).trim();
+      if (!id || !estateId) {
+        return rejectWithValue({
+          message: "Estate and category are required to delete an asset category.",
+        });
+      }
+      const res = await axiosInstance.delete(`/api/v1/asset-categories/${id}`, {
+        params: { estateId },
+      });
       return { ...(res.data as any), deletedId: id };
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
