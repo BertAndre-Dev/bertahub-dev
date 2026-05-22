@@ -43,9 +43,9 @@ export default function AssetStatsCards({ estateId }: Readonly<Props>) {
     dispatch(getAssets({ estateId, page: 1, limit: STAT_LIMIT, search: "" })).catch(
       () => {},
     );
-    dispatch(getAssetCategories({ page: 1, limit: STAT_LIMIT, search: "" })).catch(
-      () => {},
-    );
+    dispatch(
+      getAssetCategories({ estateId, page: 1, limit: STAT_LIMIT, search: "" }),
+    ).catch(() => {});
   }, [dispatch, estateId]);
 
   const stats = useMemo(() => {

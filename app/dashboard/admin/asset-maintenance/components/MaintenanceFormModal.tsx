@@ -11,7 +11,7 @@ import {
   getAssets,
   type Asset,
   type AssetCategory,
-} from "@/redux/slice/company/asset-mgt/company-asset";
+} from "@/redux/slice/admin/asset-mgt/admin-asset";
 import {
   MAINTENANCE_FREQUENCY_OPTIONS,
   toApiMaintenanceFrequency,
@@ -19,8 +19,7 @@ import {
 import type {
   AssetMaintenanceRecord,
   CreateMaintenancePayload,
-} from "@/redux/slice/company/asset-maintenance/company-asset-maintenance";
-import type { EstateOption } from "../../asset/lib/estate";
+} from "@/redux/slice/admin/asset-maintenance/admin-asset-maintenance";
 
 const SELECT_CLASS =
   "h-10 w-full cursor-pointer rounded-md border border-border bg-background px-3 text-sm disabled:cursor-not-allowed";
@@ -47,8 +46,8 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   loading?: boolean;
-  estates: EstateOption[];
-  defaultEstateId?: string;
+  estateId: string;
+  estateName: string;
   categories: AssetCategory[];
   initial?: AssetMaintenanceRecord | null;
   onCreate: (payload: CreateMaintenancePayload) => Promise<void> | void;
@@ -79,7 +78,6 @@ function fromDatetimeLocal(value: string) {
   return Number.isNaN(d.getTime()) ? value : d.toISOString();
 }
 
-/** Upper bound for datetime-local inputs (no future maintenance dates). */
 function maxDatetimeLocalNow() {
   return toDatetimeLocal(new Date().toISOString());
 }
@@ -108,22 +106,12 @@ function resolveCategoryName(
   return categories.find((c) => getId(c) === raw)?.name ?? raw;
 }
 
-function resolveEstateName(
-  asset: Asset | undefined,
-  estates: EstateOption[],
-) {
-  const raw = asset?.estateId;
-  if (!raw) return "—";
-  if (typeof raw !== "string") return raw.name ?? "—";
-  return estates.find((e) => e.id === raw)?.name ?? raw;
-}
-
 export default function MaintenanceFormModal({
   visible,
   onClose,
   loading = false,
-  estates,
-  defaultEstateId = "",
+  estateId,
+  estateName,
   categories,
   initial,
   onCreate,
@@ -134,7 +122,7 @@ export default function MaintenanceFormModal({
 
   const initialCreate: CreateFormState = useMemo(
     () => ({
-      estateId: defaultEstateId || estates[0]?.id || "",
+      estateId: estateId || "",
       assetId: "",
       categoryId: "",
       tag: "",
@@ -142,7 +130,7 @@ export default function MaintenanceFormModal({
       frequency: "weekly",
       note: "",
     }),
-    [estates, defaultEstateId],
+    [estateId],
   );
 
   const initialEdit: EditFormState = useMemo(
@@ -167,16 +155,14 @@ export default function MaintenanceFormModal({
   }, [initialCreate, initialEdit, visible]);
 
   useEffect(() => {
-    if (!visible || isEdit || !createForm.estateId) return;
-    dispatch(
-      getAssetCategories({ estateId: createForm.estateId, page: 1, limit: 200 }),
-    )
+    if (!visible || isEdit || !estateId) return;
+    dispatch(getAssetCategories({ estateId, page: 1, limit: 200 }))
       .unwrap()
       .catch(() => {});
-  }, [createForm.estateId, dispatch, visible, isEdit]);
+  }, [dispatch, estateId, visible, isEdit]);
 
   useEffect(() => {
-    if (!visible || isEdit || !createForm.estateId) {
+    if (!visible || isEdit || !estateId) {
       setEstateAssets([]);
       return;
     }
@@ -185,7 +171,7 @@ export default function MaintenanceFormModal({
       setAssetsLoading(true);
       try {
         const res = await dispatch(
-          getAssets({ estateId: createForm.estateId, page: 1, limit: 500 }),
+          getAssets({ estateId, page: 1, limit: 500 }),
         ).unwrap();
         if (!cancelled) setEstateAssets(res?.data ?? []);
       } catch {
@@ -197,24 +183,12 @@ export default function MaintenanceFormModal({
     return () => {
       cancelled = true;
     };
-  }, [createForm.estateId, dispatch, isEdit, visible]);
+  }, [estateId, dispatch, isEdit, visible]);
 
   const selectedAsset = useMemo(
     () => estateAssets.find((a) => getId(a) === createForm.assetId),
     [estateAssets, createForm.assetId],
   );
-
-  const handleEstateChange = (estateId: string) => {
-    setCreateForm({
-      estateId,
-      assetId: "",
-      categoryId: "",
-      tag: "",
-      lastMaintenanceDate: createForm.lastMaintenanceDate,
-      frequency: createForm.frequency,
-      note: createForm.note,
-    });
-  };
 
   const handleAssetChange = (assetId: string) => {
     const asset = estateAssets.find((a) => getId(a) === assetId);
@@ -250,7 +224,7 @@ export default function MaintenanceFormModal({
           <p className="text-sm text-muted-foreground mt-1">
             {isEdit
               ? "Update schedule and notes for this maintenance record."
-              : "Select an estate and asset; asset details are filled in automatically."}
+              : "Select an asset; details are filled in automatically."}
           </p>
         </div>
 
@@ -311,23 +285,9 @@ export default function MaintenanceFormModal({
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="maint-estate" className="text-sm font-medium">
-                Estate
-              </label>
-              <select
-                id="maint-estate"
-                className={SELECT_CLASS}
-                value={createForm.estateId}
-                onChange={(e) => handleEstateChange(e.target.value)}
-              >
-                <option value="">Select estate</option>
-                {estates.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-              </select>
+            <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+              <p className="text-sm text-muted-foreground">Estate</p>
+              <p className="font-medium">{estateName}</p>
             </div>
 
             <div className="space-y-2">
@@ -339,16 +299,14 @@ export default function MaintenanceFormModal({
                 className={SELECT_CLASS}
                 value={createForm.assetId}
                 onChange={(e) => handleAssetChange(e.target.value)}
-                disabled={!createForm.estateId || assetsLoading}
+                disabled={!estateId || assetsLoading}
               >
                 <option value="">
                   {assetsLoading
                     ? "Loading assets..."
-                    : !createForm.estateId
-                      ? "Select estate first"
-                      : estateAssets.length
-                        ? "Select asset"
-                        : "No assets in this estate"}
+                    : estateAssets.length
+                      ? "Select asset"
+                      : "No assets in this estate"}
                 </option>
                 {estateAssets.map((a) => {
                   const id = getId(a);
@@ -376,9 +334,7 @@ export default function MaintenanceFormModal({
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Estate</dt>
-                    <dd className="font-medium">
-                      {resolveEstateName(selectedAsset, estates)}
-                    </dd>
+                    <dd className="font-medium">{estateName}</dd>
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Category</dt>

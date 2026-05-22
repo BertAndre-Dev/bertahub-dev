@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { AssetMaintenanceRecord } from "@/redux/slice/company/asset-maintenance/company-asset-maintenance";
+import type { AssetMaintenanceRecord } from "@/redux/slice/admin/asset-maintenance/admin-asset-maintenance";
 import {
   buildCalendarCells,
   buildMaintenanceScheduleEvents,
@@ -23,7 +23,6 @@ type Props = {
   onSchedule?: () => void;
   onEventClick?: (record: AssetMaintenanceRecord) => void;
   scheduleDisabled?: boolean;
-  /** When false, hides the "+ Schedule" button (e.g. company view-only). */
   showScheduleButton?: boolean;
 };
 

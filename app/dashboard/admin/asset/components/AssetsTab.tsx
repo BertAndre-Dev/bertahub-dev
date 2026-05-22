@@ -75,10 +75,13 @@ export default function AssetsTab({ estateId, estateName }: Readonly<Props>) {
   );
 
   useEffect(() => {
-    dispatch(getAssetCategories({ page: 1, limit: 100, search: "" }))
+    if (!listEstateId) return;
+    dispatch(
+      getAssetCategories({ estateId: listEstateId, page: 1, limit: 100, search: "" }),
+    )
       .unwrap()
       .catch(() => {});
-  }, [dispatch]);
+  }, [dispatch, listEstateId]);
 
   useEffect(() => {
     (async () => {

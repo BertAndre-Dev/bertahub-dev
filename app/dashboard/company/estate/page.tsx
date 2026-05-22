@@ -33,6 +33,7 @@ import {
   type EstateData,
 } from "@/redux/slice/company/estate-mgt/company-estate";
 import CompanyEstateForm from "./components/CompanyEstateForm";
+import { CompanyEstateStatusModal } from "./components/CompanyEstateStatusModal";
 
 type EstateTableRow = EstateData & {
   id?: string;
@@ -49,6 +50,9 @@ export default function CompanyEstatePage() {
   const [companyName, setCompanyName] = useState("Company");
   const [open, setOpen] = useState(false);
   const [selectedEstate, setSelectedEstate] = useState<EstateTableRow | null>(null);
+  const [statusItem, setStatusItem] = useState<EstateTableRow | null>(null);
+  const [statusMode, setStatusMode] = useState<"suspend" | "activate">("suspend");
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
@@ -126,22 +130,42 @@ export default function CompanyEstatePage() {
     }
   };
 
-  const handleToggleStatus = async (estate: EstateTableRow) => {
-    const id = rowId(estate);
+  const closeStatusModal = () => {
+    if (statusSubmitting) return;
+    setStatusItem(null);
+  };
+
+  const openSuspendModal = (estate: EstateTableRow) => {
+    setStatusItem(estate);
+    setStatusMode("suspend");
+  };
+
+  const openActivateModal = (estate: EstateTableRow) => {
+    setStatusItem(estate);
+    setStatusMode("activate");
+  };
+
+  const handleConfirmStatus = async () => {
+    const estate = statusItem;
+    const id = estate ? rowId(estate) : "";
     if (!id) return;
+    setStatusSubmitting(true);
     try {
-      if (estate.isActive) {
+      if (statusMode === "suspend") {
         await dispatch(suspendCompanyEstate(id)).unwrap();
-        toast.info(`${estate.name} has been suspended.`);
+        toast.info(`${estate?.name ?? "Estate"} has been suspended.`);
       } else {
         await dispatch(activateCompanyEstate(id)).unwrap();
-        toast.success(`${estate.name} has been activated.`);
+        toast.success(`${estate?.name ?? "Estate"} has been activated.`);
       }
+      closeStatusModal();
       await fetchEstates(Number(pagination?.currentPage) || 1);
     } catch (err: unknown) {
       toast.error(
         (err as { message?: string })?.message ?? "Failed to update estate status.",
       );
+    } finally {
+      setStatusSubmitting(false);
     }
   };
 
@@ -208,7 +232,7 @@ export default function CompanyEstatePage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleToggleStatus(item)}
+              onClick={() => openSuspendModal(item)}
               title="Suspend Estate"
               className="cursor-pointer"
             >
@@ -218,7 +242,7 @@ export default function CompanyEstatePage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleToggleStatus(item)}
+              onClick={() => openActivateModal(item)}
               title="Activate Estate"
               className="cursor-pointer"
             >
@@ -389,6 +413,15 @@ export default function CompanyEstatePage() {
             />
           </Modal>
         )}
+
+        <CompanyEstateStatusModal
+          visible={Boolean(statusItem)}
+          onClose={closeStatusModal}
+          estateName={statusItem?.name ?? "this estate"}
+          mode={statusMode}
+          loading={statusSubmitting}
+          onConfirm={handleConfirmStatus}
+        />
       </div>
     </div>
   );

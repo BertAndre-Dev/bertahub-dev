@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
-import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
+import DeleteModal from "@/components/resident/delete-modal/page";
 import type { RootState, AppDispatch } from "@/redux/store";
 import {
   createAssetCategory,
@@ -23,12 +23,17 @@ function getId(v: { id?: string; _id?: string } | undefined) {
   return v?.id || v?._id || "";
 }
 
-export default function AssetCategoriesTab() {
+type Props = {
+  estateId: string;
+};
+
+export default function AssetCategoriesTab({ estateId }: Readonly<Props>) {
   const dispatch = useDispatch<AppDispatch>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AssetCategory | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<AssetCategory | null>(null);
 
   const {
     categories,
@@ -48,10 +53,20 @@ export default function AssetCategoriesTab() {
   });
 
   useEffect(() => {
-    dispatch(getAssetCategories({ page, limit: PAGE_SIZE, search }))
+    if (!estateId) return;
+    dispatch(getAssetCategories({ estateId, page, limit: PAGE_SIZE, search }))
       .unwrap()
       .catch(() => toast.error("Failed to load asset categories."));
-  }, [dispatch, page, search]);
+  }, [dispatch, estateId, page, search]);
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete || !estateId) return;
+    const id = getId(categoryToDelete);
+    if (!id) return;
+    await dispatch(deleteAssetCategory({ id, estateId })).unwrap();
+    toast.success("Category deleted.");
+    setPage(1);
+  };
 
   const columns = useMemo(
     () => [
@@ -97,16 +112,8 @@ export default function AssetCategoriesTab() {
               disabled={deleteStatus === "isLoading"}
               onClick={(e) => {
                 e.stopPropagation();
-                const id = getId(item);
-                if (!id) return;
-                confirmDeleteToast({
-                  name: item.name ?? "this category",
-                  onConfirm: async () => {
-                    await dispatch(deleteAssetCategory(id)).unwrap();
-                    toast.success("Category deleted.");
-                    setPage(1);
-                  },
-                });
+                if (!getId(item)) return;
+                setCategoryToDelete(item);
               }}
             >
               <Trash2 className="w-4 h-4" />
@@ -115,7 +122,7 @@ export default function AssetCategoriesTab() {
         ),
       },
     ],
-    [deleteStatus, dispatch],
+    [deleteStatus],
   );
 
   const handleSubmit = async (payload: { name: string }) => {
@@ -128,7 +135,9 @@ export default function AssetCategoriesTab() {
         ).unwrap();
         toast.success("Category updated.");
       } else {
-        await dispatch(createAssetCategory({ name: payload.name })).unwrap();
+        await dispatch(
+          createAssetCategory({ name: payload.name, estateId }),
+        ).unwrap();
         toast.success("Category created.");
       }
       setModalOpen(false);
@@ -196,6 +205,15 @@ export default function AssetCategoriesTab() {
         initial={editing}
         loading={createStatus === "isLoading" || updateStatus === "isLoading"}
         onSubmit={handleSubmit}
+      />
+
+      <DeleteModal
+        visible={!!categoryToDelete}
+        onClose={() => setCategoryToDelete(null)}
+        itemName={categoryToDelete?.name ?? "this category"}
+        title="Delete category"
+        loading={deleteStatus === "isLoading"}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

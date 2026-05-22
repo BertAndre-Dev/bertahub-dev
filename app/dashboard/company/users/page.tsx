@@ -36,6 +36,7 @@ import {
 } from "@/redux/slice/company/user-mgt/company-user-slice";
 import { parseCompanyFromUser } from "../lib/company";
 import CompanyInviteUserForm from "./components/CompanyInviteUserForm";
+import { UserStatusModal } from "./components/UserStatusModal";
 
 interface EstateOption {
   label: string;
@@ -75,6 +76,9 @@ export default function CompanyUsersPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
+  const [statusItem, setStatusItem] = useState<CompanyUserDetails | null>(null);
+  const [statusMode, setStatusMode] = useState<"suspend" | "activate">("suspend");
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
   const [estatesLoading, setEstatesLoading] = useState(true);
   const [estateOptions, setEstateOptions] = useState<EstateOption[]>([]);
 
@@ -166,22 +170,47 @@ export default function CompanyUsersPage() {
     fetchUsers(1).catch(() => toast.error("Failed to fetch users for selected estate"));
   }, [selectedEstate, fetchUsers]);
 
-  const handleToggleStatus = async (user: CompanyUserDetails) => {
-    const id = userRowId(user);
+  const closeStatusModal = () => {
+    if (statusSubmitting) return;
+    setStatusItem(null);
+  };
+
+  const openSuspendModal = (user: CompanyUserDetails) => {
+    setStatusItem(user);
+    setStatusMode("suspend");
+  };
+
+  const openActivateModal = (user: CompanyUserDetails) => {
+    setStatusItem(user);
+    setStatusMode("activate");
+  };
+
+  const userDisplayName = (user: CompanyUserDetails) =>
+    `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
+    user.email ||
+    "this user";
+
+  const handleConfirmStatus = async () => {
+    const user = statusItem;
+    const id = user ? userRowId(user) : "";
     if (!id) return;
+    setStatusSubmitting(true);
     try {
-      if (user.isActive) {
+      if (statusMode === "suspend") {
         await dispatch(suspendCompanyUser(id)).unwrap();
-        toast.info(`${user.firstName} has been suspended.`);
+        toast.info(`${user?.firstName ?? "User"} has been suspended.`);
       } else {
         await dispatch(activateCompanyUser(id)).unwrap();
-        toast.success(`${user.firstName} has been activated.`);
+        toast.success(`${user?.firstName ?? "User"} has been activated.`);
       }
+      closeStatusModal();
       await fetchUsers(Number(pagination?.currentPage) || 1);
     } catch (err: unknown) {
       toast.error(
         (err as { message?: string })?.message ?? "Failed to update user status.",
       );
+    } finally {
+      setStatusSubmitting(false);
     }
   };
 
@@ -251,7 +280,7 @@ export default function CompanyUsersPage() {
                 variant="ghost"
                 size="sm"
                 className="cursor-pointer"
-                onClick={() => handleToggleStatus(item)}
+                onClick={() => openSuspendModal(item)}
                 title="Suspend user"
               >
                 <PowerOff className="w-4 h-4 text-red-600" />
@@ -261,7 +290,7 @@ export default function CompanyUsersPage() {
                 variant="ghost"
                 size="sm"
                 className="cursor-pointer"
-                onClick={() => handleToggleStatus(item)}
+                onClick={() => openActivateModal(item)}
                 title="Activate user"
               >
                 <Power className="w-4 h-4 text-green-600" />
@@ -452,6 +481,15 @@ export default function CompanyUsersPage() {
             />
           </Modal>
         )}
+
+        <UserStatusModal
+          visible={Boolean(statusItem)}
+          onClose={closeStatusModal}
+          userName={statusItem ? userDisplayName(statusItem) : "this user"}
+          mode={statusMode}
+          loading={statusSubmitting}
+          onConfirm={handleConfirmStatus}
+        />
       </div>
     </div>
   );

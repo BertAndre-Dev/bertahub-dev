@@ -2,7 +2,7 @@ import {
   addMaintenanceInterval,
   isInspectionFrequency,
 } from "@/lib/asset-maintenance-frequency";
-import type { AssetMaintenanceRecord } from "@/redux/slice/company/asset-maintenance/company-asset-maintenance";
+import type { AssetMaintenanceRecord } from "@/redux/slice/admin/asset-maintenance/admin-asset-maintenance";
 
 export type ScheduleEventKind = "inspection" | "service" | "overdue";
 

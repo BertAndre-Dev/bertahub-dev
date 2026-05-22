@@ -88,10 +88,13 @@ export default function AssetsTab({
   );
 
   useEffect(() => {
-    dispatch(getAssetCategories({ page: 1, limit: 100, search: "" }))
+    if (!selectedEstateId) return;
+    dispatch(
+      getAssetCategories({ estateId: selectedEstateId, page: 1, limit: 100, search: "" }),
+    )
       .unwrap()
       .catch(() => {});
-  }, [dispatch]);
+  }, [dispatch, selectedEstateId]);
 
   useEffect(() => {
     if (selectedEstateId) return;

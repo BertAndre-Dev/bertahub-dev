@@ -54,6 +54,8 @@ import companyUserSliceReducer from "@/redux/slice/company/user-mgt/company-user
 import residentAssetSliceReducer from "@/redux/slice/resident/asset-mgt/resident-asset-slice";
 import adminAssetSliceReducer from "@/redux/slice/admin/asset-mgt/admin-asset-slice";
 import companyAssetMaintenanceSliceReducer from "@/redux/slice/company/asset-maintenance/company-asset-maintenance-slice";
+import adminAssetMaintenanceSliceReducer from "@/redux/slice/admin/asset-maintenance/admin-asset-maintenance-slice";
+import adminOperationsReportingSliceReducer from "@/redux/slice/admin/operations-reporting/admin-operations-reporting-slice";
 import chatSliceReducer from "@/redux/slice/chat/chat-slice";
 import communityGroupSliceReducer from "@/redux/slice/community-group/community-group-slice";
 import mapsSliceReducer from "@/redux/slice/maps/maps-slice";
@@ -244,6 +246,8 @@ export const store = configureStore({
     residentAsset: residentAssetSliceReducer,
     adminAsset: adminAssetSliceReducer,
     companyAssetMaintenance: companyAssetMaintenanceSliceReducer,
+    adminAssetMaintenance: adminAssetMaintenanceSliceReducer,
+    adminOperationsReporting: adminOperationsReportingSliceReducer,
     residentMarketplace: residentMarketplaceSliceReducer,
     residentAnnouncements: residentAnnouncementsSliceReducer,
     adminExpenseHead: persistedAdminExpenseHeadSliceReducer,
