@@ -134,6 +134,8 @@ export default function DataList({
             {filters.map((filter) => (
               <select
                 key={filter.key}
+                aria-label={filter.label}
+                title={filter.label}
                 className="border rounded-lg px-3 h-10"
                 value={filterValues[filter.key] || "all"}
                 onChange={(e) =>
