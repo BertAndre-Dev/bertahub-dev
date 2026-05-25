@@ -34,6 +34,16 @@ export const superAdminNav = [
   //   path: "/dashboard/super-admin/dashboard",
   // },
   {
+    label: "Transactions",
+    icon: ArrowLeftRight,
+    path: "/dashboard/super-admin/transactions",
+  },
+  {
+    label: "User Management",
+    icon: UserCog,
+    path: "/dashboard/super-admin/user",
+  },
+  {
     label: "Estate Management",
     icon: BsBuildings,
     path: "/dashboard/super-admin/estate",
@@ -43,21 +53,11 @@ export const superAdminNav = [
     icon: Building2,
     path: "/dashboard/super-admin/company",
   },
-  {
-    label: "Market Place",
-    icon: Store,
-    path: "/dashboard/super-admin/marketplace",
-  },
   //   {
   //     label: "Address Management",
   //     icon: BsBuildings,
   //     path: "/dashboard/super-admin/address",
   //   },
-  {
-    label: "User Management",
-    icon: UserCog,
-    path: "/dashboard/super-admin/user",
-  },
   // {
   //   label: "Bills Management",
   //   icon: LuReceipt,
@@ -69,9 +69,9 @@ export const superAdminNav = [
     path: "/dashboard/super-admin/meter",
   },
   {
-    label: "Transactions",
-    icon: ArrowLeftRight,
-    path: "/dashboard/super-admin/transactions",
+    label: "Market Place",
+    icon: Store,
+    path: "/dashboard/super-admin/marketplace",
   },
   {
     label: "Contact Support Inbox",
@@ -94,13 +94,14 @@ export const superAdminNav = [
     // path: "/auth/logout"
   },
 ];
-    
+
 export const companyNav = [
   {
     label: "User Management",
     icon: UserCog,
     path: "/dashboard/company/users",
-  },{
+  },
+  {
     label: "Estate Management",
     icon: BsBuildings,
     path: "/dashboard/company/estate",
@@ -198,6 +199,12 @@ export const adminNav = [
     path: "/dashboard/admin/announcements",
     module: "announcements",
     moduleKey: "announcements",
+  },
+  {
+    label: "Asset Maintenance",
+    icon: Wrench,
+    path: "/dashboard/admin/asset",
+    moduleKey: "asset-maintenance",
   },
   {
     label: "Maintenance & Report",

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface TabProps {
   titles: string[];
@@ -14,8 +14,6 @@ const Tab: React.FC<TabProps> = ({ titles, renderContent, onTabChange }) => {
     onTabChange?.(activeTab, titles[activeTab]);
   }, [activeTab]);
 
-  
-
   return (
     <div>
       {/* Tab Titles */}
@@ -24,9 +22,11 @@ const Tab: React.FC<TabProps> = ({ titles, renderContent, onTabChange }) => {
           <button
             key={index}
             className={`py-2 px-4 cursor-pointer ${
-              activeTab === index ? 'text-primary border-b-2 border-primary font-bold' : 'font-medium text-sidebar-foreground/60'
+              activeTab === index
+                ? "text-primary border-b-2 border-primary font-bold"
+                : "font-medium text-sidebar-foreground/60"
             }`}
-             onClick={() => setActiveTab(index)}
+            onClick={() => setActiveTab(index)}
           >
             {title}
           </button>
