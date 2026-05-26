@@ -35,6 +35,15 @@ import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import Loader from "@/components/ui/Loader";
 import { UserStatusModal } from "./components/UserStatusModal";
 
+interface UserAddress {
+  id: string;
+  data?: {
+    block?: string;
+    apartment?: string;
+    [key: string]: unknown;
+  };
+}
+
 interface SuperAdminUserData {
   id?: string;
   firstName: string;
@@ -52,6 +61,29 @@ interface SuperAdminUserData {
   invitationStatus?: string;
   createdAt?: string;
   updatedAt?: string;
+  residentType?: string | null;
+  addressIds?: UserAddress[];
+  serviceChargesPaidForAddresses?: string[];
+}
+
+function formatAddressLabel(data?: UserAddress["data"]) {
+  if (!data) return "";
+  const parts: string[] = [];
+  if (data.block) parts.push(`Block ${data.block}`);
+  if (data.apartment) parts.push(`Apt ${data.apartment}`);
+  return parts.join(", ");
+}
+
+function resolvePaidAddressLabels(item: SuperAdminUserData): string[] {
+  const paidIds = item.serviceChargesPaidForAddresses || [];
+  if (!paidIds.length) return [];
+  const addressMap = new Map<string, UserAddress["data"]>(
+    (item.addressIds || []).map((a) => [a.id, a.data]),
+  );
+  return paidIds.map((id) => {
+    const data = addressMap.get(id);
+    return formatAddressLabel(data) || id;
+  });
 }
 
 function formatUserDate(value?: string) {
@@ -260,11 +292,43 @@ export default function SuperAdminUserPage() {
     { key: "email", header: "Email" },
     { key: "role", header: "Role" },
     {
+      key: "residentType",
+      header: "Resident Type",
+      render: (item: SuperAdminUserData) => {
+        const value = item.residentType;
+        if (!value) return "—";
+        return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+      },
+      exportValue: (item: SuperAdminUserData) => item.residentType || "",
+    },
+    {
       key: "serviceCharge",
       header: "Service charge",
       render: (item: SuperAdminUserData) => String(Boolean(item.serviceCharge)),
       exportValue: (item: SuperAdminUserData) =>
         String(Boolean(item.serviceCharge)),
+    },
+    {
+      key: "serviceChargesPaidForAddresses",
+      header: "Service Charges Paid (Addresses)",
+      render: (item: SuperAdminUserData) => {
+        const labels = resolvePaidAddressLabels(item);
+        if (!labels.length) return "—";
+        return (
+          <div className="flex flex-col gap-0.5 max-w-[220px]">
+            {labels.map((label) => (
+              <span
+                key={label}
+                className="text-xs px-2 py-0.5 rounded-md bg-green-100 text-green-700 w-fit"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        );
+      },
+      exportValue: (item: SuperAdminUserData) =>
+        resolvePaidAddressLabels(item).join("; "),
     },
     {
       key: "invitationStatus",

@@ -119,6 +119,12 @@ export const companyNav = [
     path: "/dashboard/company/asset-mgt",
     moduleKey: "asset-maintenance",
   },
+  {
+    label: "Operations Reporting",
+    icon: ClipboardList,
+    path: "/dashboard/company/operations",
+    moduleKey: "operations-reporting",
+  },
   // {
   //   label: "Community Chat",
   //   icon: MessagesSquare,
