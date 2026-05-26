@@ -377,6 +377,12 @@ export default function CompanyUsersPage() {
                 onChange={(option) => setSelectedEstate(option)}
                 isSearchable
                 isDisabled={!estateOptions.length}
+                styles={{
+                  control: (base) => ({ ...base, cursor: "pointer" }),
+                  option: (base) => ({ ...base, cursor: "pointer" }),
+                  dropdownIndicator: (base) => ({ ...base, cursor: "pointer" }),
+                  clearIndicator: (base) => ({ ...base, cursor: "pointer" }),
+                }}
               />
             </div>
             <Button
