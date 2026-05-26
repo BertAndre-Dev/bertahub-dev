@@ -8,7 +8,7 @@ import axiosInstance from "@/utils/axiosInstance";
  */
 export interface InviteTenantPayload {
   estateId: string;
-  companyId: string;
+  companyId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -25,8 +25,11 @@ export const inviteTenant = createAsyncThunk(
   "resident-invite-tenant/inviteTenant",
   async (payload: InviteTenantPayload, { rejectWithValue }) => {
     try {
+      const { companyId, ...rest } = payload;
+      const trimmedCompanyId = companyId?.trim();
       const body = {
-        ...payload,
+        ...rest,
+        ...(trimmedCompanyId ? { companyId: trimmedCompanyId } : {}),
         role: "resident",
         residentType: "tenant",
       };
