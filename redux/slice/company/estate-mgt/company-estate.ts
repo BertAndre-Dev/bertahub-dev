@@ -8,6 +8,7 @@ export interface EstateData {
   state: string;
   country: string;
   isActive?: boolean;
+  modules?: string[];
 }
 
 export type GetEstatesParams = {
