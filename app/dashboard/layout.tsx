@@ -359,7 +359,7 @@ export default function DashboardLayout({
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between pl-6 border-b border-sidebar-border">
+          <div className="flex items-center justify-between pl-6 border-b border-sidebar-border py-2">
             <div
               className={`flex items-center ${!sidebarOpen && "justify-center w-full"}`}
             >
@@ -418,7 +418,7 @@ export default function DashboardLayout({
       >
         {/* Topbar */}
         <header className="sticky top-0 bg-background border-b border-border z-30">
-          <div className="flex items-center justify-between gap-3 px-6 py-5 md:py-8">
+          <div className="flex items-center justify-between gap-3 px-6 py-5 md:py-5.5">
             <div className="flex min-w-0 flex-1 items-center gap-3 sm:flex-initial">
               <div className="shrink-0 sm:hidden">
                 <Image
