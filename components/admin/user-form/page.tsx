@@ -79,26 +79,31 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
         const companyId =
           typeof rawCompanyId === "string"
             ? rawCompanyId
-            : rawCompanyId?._id || rawCompanyId?.id || (data as any)?.company?._id || (data as any)?.company?.id || "";
+            : rawCompanyId?._id ||
+              rawCompanyId?.id ||
+              (data as any)?.company?._id ||
+              (data as any)?.company?.id ||
+              "";
+
+        // Stash whatever ids we found so submit can validate later.
+        setFormData((prev) => ({ ...prev, estateId, companyId }));
 
         if (!estateId) {
-          return toast.error("No estate linked to your account.");
+          toast.error("No estate linked to your account.");
+          return;
         }
-
-        if (!companyId) {
-          return toast.error("No company linked to your account.");
-        }
-
-        setFormData((prev) => ({ ...prev, estateId, companyId }));
 
         const fieldRes = await dispatch(getFieldByEstate(estateId)).unwrap();
         const fields = fieldRes?.data || [];
-        if (!fields.length) return toast.error("No address fields configured.");
+        if (!fields.length) {
+          toast.error("No address fields configured.");
+          return;
+        }
 
         const primaryFieldId = fields[0].id;
 
         const entryRes = await dispatch(
-          getEntriesByField({ fieldId: primaryFieldId, page: 1, limit: 200 })
+          getEntriesByField({ fieldId: primaryFieldId, page: 1, limit: 200 }),
         ).unwrap();
 
         const entries = entryRes?.data || [];
@@ -131,6 +136,14 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.estateId) {
+      return toast.error("No estate linked to your account.");
+    }
+
+    if (!formData.companyId) {
+      return toast.error("No company linked to your account.");
+    }
 
     if (!formData.role) {
       return toast.error("Please select a role");
