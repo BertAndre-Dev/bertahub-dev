@@ -141,10 +141,6 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
       return toast.error("No estate linked to your account.");
     }
 
-    if (!formData.companyId) {
-      return toast.error("No company linked to your account.");
-    }
-
     if (!formData.role) {
       return toast.error("Please select a role");
     }
@@ -155,9 +151,13 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
       }
     }
 
+    // companyId is optional on the invite endpoint — only include it when we
+    // actually resolved one for the signed-in admin. This prevents sending
+    // empty/null ids which trigger backend ObjectId cast errors.
+    const trimmedCompanyId = formData.companyId?.trim();
     const payload = {
       estateId: formData.estateId,
-      companyId: formData.companyId,
+      ...(trimmedCompanyId ? { companyId: trimmedCompanyId } : {}),
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
