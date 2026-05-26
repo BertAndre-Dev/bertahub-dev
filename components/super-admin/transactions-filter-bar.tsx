@@ -41,6 +41,8 @@ interface TransactionsFilterBarProps {
   searchFieldLabel?: string;
   /** Whether to show the Type (credit/debit) filter. Default: true */
   showTypeFilter?: boolean;
+  /** Whether to show the text search/estate input. Default: true */
+  showSearchInput?: boolean;
 }
 
 export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
@@ -53,6 +55,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
   searchPlaceholder = "Filter by estate name",
   searchFieldLabel = "Estate",
   showTypeFilter = true,
+  showSearchInput = true,
 }) => {
   const hasInitializedDefaultRange = useRef(false);
 
@@ -137,16 +140,18 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
         />
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">{searchFieldLabel}:</span>
-        <input
-          type="text"
-          placeholder={searchPlaceholder}
-          value={estate}
-          onChange={handleEstateChange}
-          className="px-3 py-2 border rounded-lg text-sm min-w-[200px]"
-        />
-      </div>
+      {showSearchInput && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">{searchFieldLabel}:</span>
+          <input
+            type="text"
+            placeholder={searchPlaceholder}
+            value={estate}
+            onChange={handleEstateChange}
+            className="px-3 py-2 border rounded-lg text-sm min-w-[200px]"
+          />
+        </div>
+      )}
 
       {showTypeFilter && (
         <div className="flex items-center gap-2">

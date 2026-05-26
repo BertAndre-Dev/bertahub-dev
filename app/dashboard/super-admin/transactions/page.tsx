@@ -26,7 +26,6 @@ export default function SuperAdminTransactionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [fromDate, setFromDate] = useState<string | null>(null);
   const [toDate, setToDate] = useState<string | null>(null);
-  const [estateFilter, setEstateFilter] = useState("");
 
   // ✅ Track grand total separately — never let it overwrite the list
   const [grandTotalAmount, setGrandTotalAmount] = useState(0);
@@ -91,7 +90,6 @@ export default function SuperAdminTransactionsPage() {
             limit: PAGE_SIZE,
             type: typeFilter,
             search: searchQuery,
-            estate: estateFilter,
             startDate: fromDate || "",
             endDate: toDate || "",
           }),
@@ -101,7 +99,7 @@ export default function SuperAdminTransactionsPage() {
       }
     };
     fetch();
-  }, [dispatch, currentPage, typeFilter, searchQuery, estateFilter, fromDate, toDate]); // ✅ all deps
+  }, [dispatch, currentPage, typeFilter, searchQuery, fromDate, toDate]); // ✅ all deps
 
   const handlePageChange = (page: number) => setCurrentPage(page);
 
@@ -113,7 +111,6 @@ export default function SuperAdminTransactionsPage() {
   }) => {
     setFromDate(filters.fromDate);
     setToDate(filters.toDate);
-    setEstateFilter(filters.estate);
     setTypeFilter(filters.type);
     setCurrentPage(1); // ✅ reset to page 1 on filter change
   };
@@ -126,7 +123,6 @@ export default function SuperAdminTransactionsPage() {
           limit: 99999,
           type: typeFilter,
           search: searchQuery,
-          estate: estateFilter,
           startDate: fromDate || "",
           endDate: toDate || "",
           forExport: true,
@@ -279,7 +275,6 @@ export default function SuperAdminTransactionsPage() {
           limit: PAGE_SIZE,
           type: typeFilter,
           search: searchQuery,
-          estate: estateFilter,
           startDate: fromDate || "",
           endDate: toDate || "",
         }),
@@ -316,7 +311,7 @@ export default function SuperAdminTransactionsPage() {
       <TotalTransactionsCard grandTotal={grandTotalAmount} />
 
       <TransactionsSearchCard
-        placeholder="Search by estate name, address, city etc..."
+        placeholder="Search by name, email, estate, description, reference or amount..."
         searchInput={searchInput}
         onSearchInputChange={setSearchInput}
         onCommitSearch={() => {
@@ -333,11 +328,12 @@ export default function SuperAdminTransactionsPage() {
       <TransactionsFilterBar
         fromDate={fromDate}
         toDate={toDate}
-        estate={estateFilter}
+        estate=""
         type={typeFilter}
         onFiltersChange={handleFiltersChange}
         onExport={(format) => handleExport(format)}
         showTypeFilter={false}
+        showSearchInput={false}
       />
 
       <TransactionsTableCard
