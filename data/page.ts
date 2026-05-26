@@ -304,12 +304,12 @@ export const residentNav = [
     path: "/dashboard/resident/maintenance",
     moduleKey: "complaints",
   },
-  {
-    label: "Asset Management",
-    icon: Armchair,
-    path: "/dashboard/resident/asset",
-    moduleKey: "asset",
-  },
+  // {
+  //   label: "Asset Management",
+  //   icon: Armchair,
+  //   path: "/dashboard/resident/asset",
+  //   moduleKey: "asset",
+  // },
   {
     label: "Marketplace",
     icon: Store,
