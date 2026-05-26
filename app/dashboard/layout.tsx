@@ -245,6 +245,8 @@ export default function DashboardLayout({
         "Pay Bills",
         "Nearby Places",
         "Asset Management",
+        "Asset Maintenance",
+        "Maintenance & Report",
         "Logout",
       ]);
       if (role === "security") staticLabels.add("Activity Log");
