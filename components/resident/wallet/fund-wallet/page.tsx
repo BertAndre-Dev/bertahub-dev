@@ -140,7 +140,7 @@ export default function FundWalletForm({
         country,
       });
 
-      toast.success("Wallet funded successfully!");
+      //toast.success("Wallet funded successfully!");
       onClose?.();
     } catch (err: any) {
       toast.error(err?.message || "Failed to fund wallet.");
