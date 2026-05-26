@@ -147,12 +147,6 @@ export default function ResidentMaintenancePage() {
         onChange={setSelectedAddressId}
       />
 
-      {!selectedAddressId && addressOptions.length === 0 && !loading && (
-        <p className="text-muted-foreground py-6 rounded-lg border border-border bg-muted/20 text-center">
-          No address linked to your account.
-        </p>
-      )}
-
       {selectedAddressId && (
         <>
           {bootstrapping || loading ? (

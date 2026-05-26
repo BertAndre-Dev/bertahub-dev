@@ -54,6 +54,13 @@ function getAddressDisplay(
   return "—";
 }
 
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 function getRequesterName(complaint: ResidentComplaintItem): string {
   const r =
     complaint.resident ??
@@ -84,9 +91,17 @@ export function ResidentComplaintCard({
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
 
-  const userId = useSelector(
-    (state: RootState) => state.auth?.user?.id ?? state.auth?.user?._id ?? "",
+  const authUser = useSelector(
+    (state: RootState) =>
+      state.auth?.user as
+        | { id?: string; _id?: string; firstName?: string; lastName?: string }
+        | null,
   );
+  const userId = authUser?.id ?? authUser?._id ?? "";
+  const commenterName = [authUser?.firstName, authUser?.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
 
   const comments = useSelector((state: RootState) => {
     const s = state.residentComplaints as {
@@ -196,10 +211,10 @@ export function ResidentComplaintCard({
                       className="flex p-2 rounded-lg shadow-sm border border-[#E0E0E0] gap-2"
                     >
                       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs border border-[#A1BFE4] font-medium shrink-0">
-                        FM
+                        {getInitials(commenterName)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">Facility Manager</p>
+                        <p className="text-sm font-medium">{commenterName}</p>
                         <p className="text-xs text-muted-foreground">
                           {formatDate(c.createdAt)}
                         </p>
