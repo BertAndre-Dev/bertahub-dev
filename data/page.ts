@@ -209,7 +209,7 @@ export const adminNav = [
     moduleKey: "asset-maintenance",
   },
   {
-    label: "Maintenance",
+    label: "Asset Maintenance",
     icon: Wrench,
     path: "/dashboard/admin/asset-maintenance",
     moduleKey: "asset-maintenance",
@@ -304,12 +304,12 @@ export const residentNav = [
     path: "/dashboard/resident/maintenance",
     moduleKey: "complaints",
   },
-  {
-    label: "Asset Management",
-    icon: Armchair,
-    path: "/dashboard/resident/asset",
-    moduleKey: "asset",
-  },
+  // {
+  //   label: "Asset Management",
+  //   icon: Armchair,
+  //   path: "/dashboard/resident/asset",
+  //   moduleKey: "asset",
+  // },
   {
     label: "Marketplace",
     icon: Store,
