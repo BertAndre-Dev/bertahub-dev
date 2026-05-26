@@ -7,12 +7,14 @@ import {
   createVisitor,
   updateVisitor,
   getVisitorById,
+  type VisitingType,
 } from "@/redux/slice/resident/visitor/visitor";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "react-toastify";
+import { formatAddressEntryLabel } from "@/lib/address";
 
 interface VisitorFormProps {
   visitorId?: string | null;
@@ -35,21 +37,37 @@ export default function VisitorForm({
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    firstName: string;
+    lastName: string;
+    phone: string;
+    purpose: string;
+    address: string;
+    visitingType: VisitingType;
+    visitStartDate: string;
+    visitEndDate: string;
+  }>({
     firstName: "",
     lastName: "",
     phone: "",
     purpose: "",
     address: "",
+    visitingType: "SHORT_VISIT",
+    visitStartDate: "",
+    visitEndDate: "",
   });
 
   // Auto-populate address from addressId prop
   useEffect(() => {
     if (addressId && typeof addressId === "object" && addressId.data) {
-      const { block, unit } = addressId.data;
+      const friendly = formatAddressEntryLabel(addressId.data);
       setFormData((prev) => ({
         ...prev,
-        address: `${block}, ${unit}`,
+        address:
+          friendly ||
+          [addressId.data?.block, addressId.data?.unit]
+            .filter(Boolean)
+            .join(", "),
       }));
     }
   }, [addressId]);
@@ -63,12 +81,23 @@ export default function VisitorForm({
           // API response has flat structure, not nested visitor object
           const visitor = res?.data?.visitor || res?.data;
           if (visitor) {
+            const toDateInputValue = (val?: string | null) => {
+              if (!val) return "";
+              const d = new Date(val);
+              if (Number.isNaN(d.getTime())) return "";
+              const pad = (n: number) => String(n).padStart(2, "0");
+              return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            };
             setFormData({
               firstName: visitor.firstName || "",
               lastName: visitor.lastName || "",
               phone: visitor.phone || "",
               purpose: visitor.purpose || "",
               address: visitor.address || "",
+              visitingType:
+                (visitor.visitingType as VisitingType) || "SHORT_VISIT",
+              visitStartDate: toDateInputValue(visitor.visitStartDate),
+              visitEndDate: toDateInputValue(visitor.visitEndDate),
             });
           }
         } catch (err: any) {
@@ -101,15 +130,59 @@ export default function VisitorForm({
       return;
     }
 
+    const addressIdString =
+      typeof addressId === "object" && addressId !== null
+        ? addressId.id
+        : addressId;
+
+    if (!addressIdString) {
+      toast.error(
+        "No address is linked to your account. Please contact your estate admin to assign you an address before inviting visitors.",
+      );
+      return;
+    }
+
+    if (!residentId) {
+      toast.error("Unable to identify resident. Please refresh and try again.");
+      return;
+    }
+
+    if (!estateId) {
+      toast.error("Unable to identify estate. Please refresh and try again.");
+      return;
+    }
+
+    if (formData.visitingType === "LONG_VISIT") {
+      if (!formData.visitStartDate || !formData.visitEndDate) {
+        toast.error(
+          "Start and end dates are required for a long visit",
+        );
+        return;
+      }
+      if (
+        new Date(formData.visitEndDate).getTime() <
+        new Date(formData.visitStartDate).getTime()
+      ) {
+        toast.error("End date must be after start date");
+        return;
+      }
+    }
+
+    const toIsoOrNull = (val: string) =>
+      val ? new Date(val).toISOString() : null;
+
+    const visitStartDate =
+      formData.visitingType === "LONG_VISIT"
+        ? toIsoOrNull(formData.visitStartDate)
+        : null;
+    const visitEndDate =
+      formData.visitingType === "LONG_VISIT"
+        ? toIsoOrNull(formData.visitEndDate)
+        : null;
+
     setSubmitting(true);
     try {
       if (visitorId) {
-        // Update visitor - include residentId, estateId and addressId to satisfy backend validation
-        const addressIdString =
-          typeof addressId === "object" && addressId !== null
-            ? addressId.id
-            : addressId;
-
         await dispatch(
           updateVisitor({
             id: visitorId,
@@ -121,17 +194,14 @@ export default function VisitorForm({
               residentId,
               estateId,
               addressId: addressIdString,
+              visitingType: formData.visitingType,
+              visitStartDate,
+              visitEndDate,
             },
           }),
         ).unwrap();
         toast.success("Visitor updated successfully");
       } else {
-        // Create visitor - extract addressId string if it's an object
-        const addressIdString =
-          typeof addressId === "object" && addressId !== null
-            ? addressId.id
-            : addressId;
-
         await dispatch(
           createVisitor({
             firstName: formData.firstName,
@@ -141,6 +211,9 @@ export default function VisitorForm({
             residentId,
             estateId,
             addressId: addressIdString,
+            visitingType: formData.visitingType,
+            visitStartDate,
+            visitEndDate,
           }),
         ).unwrap();
         toast.success("Visitor created successfully");
@@ -149,8 +222,11 @@ export default function VisitorForm({
       onSubmitSuccess?.();
       onClose?.();
     } catch (err: any) {
+      const apiMessage = Array.isArray(err?.message)
+        ? err.message.join(", ")
+        : err?.message;
       toast.error(
-        err?.message || `Failed to ${visitorId ? "update" : "create"} visitor`,
+        apiMessage || `Failed to ${visitorId ? "update" : "create"} visitor`,
       );
     } finally {
       setSubmitting(false);
@@ -210,6 +286,15 @@ export default function VisitorForm({
                 disabled
                 className="mt-1 bg-gray-50"
               />
+              {!(typeof addressId === "object"
+                ? addressId?.id
+                : addressId) && (
+                <p className="text-xs text-amber-600 mt-1">
+                  No address is linked to your account. Please contact your
+                  estate admin to assign you an address before inviting
+                  visitors.
+                </p>
+              )}
             </div>
 
             <div>
@@ -239,6 +324,70 @@ export default function VisitorForm({
                 className="mt-1 flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
+
+            <div>
+              <Label htmlFor="visitingType">Visiting Type *</Label>
+              <select
+                id="visitingType"
+                name="visitingType"
+                title="Visiting Type"
+                aria-label="Visiting Type"
+                value={formData.visitingType}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    visitingType: e.target.value as VisitingType,
+                    visitStartDate:
+                      e.target.value === "SHORT_VISIT"
+                        ? ""
+                        : prev.visitStartDate,
+                    visitEndDate:
+                      e.target.value === "SHORT_VISIT"
+                        ? ""
+                        : prev.visitEndDate,
+                  }))
+                }
+                className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="SHORT_VISIT">Short Visit</option>
+                <option value="LONG_VISIT">Long Visit</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.visitingType === "SHORT_VISIT"
+                  ? "Short visits are valid for the day of creation."
+                  : "Long visits require a start and end date."}
+              </p>
+            </div>
+
+            {formData.visitingType === "LONG_VISIT" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="visitStartDate">Visit Start Date *</Label>
+                  <Input
+                    id="visitStartDate"
+                    name="visitStartDate"
+                    type="datetime-local"
+                    value={formData.visitStartDate}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="visitEndDate">Visit End Date *</Label>
+                  <Input
+                    id="visitEndDate"
+                    name="visitEndDate"
+                    type="datetime-local"
+                    value={formData.visitEndDate}
+                    min={formData.visitStartDate || undefined}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 

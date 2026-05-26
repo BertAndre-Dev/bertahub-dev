@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/ui/Loader";
-import { Bell, Megaphone } from "lucide-react";
+import { Bell, Megaphone, FileText, Paperclip } from "lucide-react";
 import Modal from "@/components/modal/page";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
@@ -70,8 +70,24 @@ function ResidentAnnouncementCard({
             <span className="capitalize">{category}</span>
             <span>·</span>
             <span className="capitalize">Priority: {priority}</span>
+            {(item.fileUrl || item.file) && (
+              <span
+                className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded inline-flex items-center gap-1"
+                title="Has attachment"
+              >
+                <Paperclip className="h-3 w-3" />
+                Attachment
+              </span>
+            )}
           </div>
           <h3 className="font-semibold text-foreground mb-2">{title}</h3>
+          {(item.imageUrl || item.image) && (
+            <img
+              src={item.imageUrl || item.image}
+              alt={title || "Announcement image"}
+              className="mb-2 w-full rounded-md border border-border object-cover max-h-40"
+            />
+          )}
           <div
             className="text-sm text-muted-foreground line-clamp-4 prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1"
             dangerouslySetInnerHTML={{ __html: content || "" }}
@@ -212,6 +228,15 @@ export default function ResidentAnnouncementsPage() {
                   Priority: {viewingItem.priority ?? "—"}
                 </span>
               </div>
+              {(viewingItem.imageUrl || viewingItem.image) && (
+                <div className="mb-4">
+                  <img
+                    src={viewingItem.imageUrl || viewingItem.image}
+                    alt={viewingItem.title ?? "Announcement image"}
+                    className="w-full rounded-lg border border-border object-cover max-h-72"
+                  />
+                </div>
+              )}
               <div
                 className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 text-foreground"
                 dangerouslySetInnerHTML={{
@@ -221,6 +246,19 @@ export default function ResidentAnnouncementsPage() {
                     "<span>No content.</span>",
                 }}
               />
+              {(viewingItem.fileUrl || viewingItem.file) && (
+                <a
+                  href={viewingItem.fileUrl || viewingItem.file}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-primary hover:bg-muted"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className="truncate max-w-[260px]">
+                    {viewingItem.fileName ?? "Download attachment"}
+                  </span>
+                </a>
+              )}
               <div className="mt-6">
                 <Button variant="outline" onClick={() => setViewingItem(null)}>
                   Close

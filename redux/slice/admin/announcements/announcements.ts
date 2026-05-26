@@ -23,6 +23,13 @@ export interface AnnouncementItem {
   priority?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** Public URL of the uploaded image (JPEG, PNG, WebP, GIF) */
+  image?: string;
+  imageUrl?: string;
+  /** Public URL of the uploaded attachment (PDF, DOCX, etc.) */
+  file?: string;
+  fileUrl?: string;
+  fileName?: string;
 }
 
 export interface CreateAnnouncementPayload {
@@ -37,6 +44,10 @@ export interface CreateAnnouncementPayload {
   priority?: string;
   /** When true, send immediately; schedule field is ignored. */
   sendNow?: boolean;
+  /** Optional image (JPEG, PNG, WebP, GIF) up to 5MB. */
+  image?: File | null;
+  /** Optional attachment (PDF, DOCX, etc.) up to 10MB. */
+  file?: File | null;
 }
 
 export interface UpdateAnnouncementPayload {
@@ -51,6 +62,50 @@ export interface UpdateAnnouncementPayload {
   isPinned?: boolean;
   priority?: string;
   sendNow?: boolean;
+  image?: File | null;
+  file?: File | null;
+}
+
+/**
+ * Build a multipart/form-data body for create/update endpoints.
+ *
+ * Skips `undefined`/`null`/empty values so unset optional fields are not sent.
+ *
+ * Non-primitive types (arrays, booleans, numbers) are JSON-encoded so they
+ * round-trip cleanly through `@Transform(({ value }) => JSON.parse(value))`
+ * on the backend. This is required because the new endpoint validates with
+ * `@IsArray()` / `@IsBoolean()` and multipart natively only carries strings.
+ */
+function buildAnnouncementFormData(
+  payload: Record<string, unknown>,
+): FormData {
+  const form = new FormData();
+  for (const [key, value] of Object.entries(payload)) {
+    if (value === undefined || value === null) continue;
+    if (typeof value === "string" && value.trim() === "") continue;
+
+    if (value instanceof File) {
+      form.append(key, value);
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      // Empty arrays are skipped — backend treats absence as "no change".
+      if (value.length === 0) continue;
+      form.append(key, JSON.stringify(value));
+      continue;
+    }
+
+    if (typeof value === "boolean" || typeof value === "number") {
+      // JSON.stringify(true) → "true", JSON.stringify(false) → "false",
+      // JSON.stringify(42) → "42" — all valid JSON tokens the backend can parse.
+      form.append(key, JSON.stringify(value));
+      continue;
+    }
+
+    form.append(key, value as string);
+  }
+  return form;
 }
 
 export interface AnnouncementsListResponse {
@@ -118,14 +173,18 @@ export const getAnnouncementStats = createAsyncThunk(
   },
 );
 
-/** Create announcement. POST /api/v1/estates/announcements */
+/** Create announcement. POST /api/v1/estates/announcements (multipart/form-data) */
 export const createAnnouncement = createAsyncThunk(
   "admin-announcements/createAnnouncement",
   async (payload: CreateAnnouncementPayload, { rejectWithValue }) => {
     try {
+      const form = buildAnnouncementFormData(
+        payload as unknown as Record<string, unknown>,
+      );
       const res = await axiosInstance.post(
         "/api/v1/estates/announcements",
-        payload,
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       return res.data;
     } catch (error: unknown) {
@@ -156,16 +215,20 @@ export const getAnnouncementById = createAsyncThunk(
   },
 );
 
-/** Update announcement. PUT /api/v1/estates/announcements/:id (allowed when &lt; 1 hour since posted) */
+/** Update announcement. PUT /api/v1/estates/announcements/:id (multipart/form-data, allowed when < 1 hour since posted) */
 export const updateAnnouncement = createAsyncThunk(
   "admin-announcements/updateAnnouncement",
   async (payload: UpdateAnnouncementPayload, { rejectWithValue }) => {
     try {
       const { id, ...body } = payload;
       if (!id) throw new Error("Announcement id is required");
+      const form = buildAnnouncementFormData(
+        body as unknown as Record<string, unknown>,
+      );
       const res = await axiosInstance.put(
         `/api/v1/estates/announcements/${id}`,
-        body,
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       return res.data;
     } catch (error: unknown) {

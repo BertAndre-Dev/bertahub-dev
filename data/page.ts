@@ -11,6 +11,7 @@ import {
   CircleDollarSign,
   CreditCard,
   Armchair,
+  Hammer,
   History,
   Home,
   Inbox,
@@ -18,6 +19,7 @@ import {
   Map as MapIcon,
   MessageCircle,
   MessagesSquare,
+  Package,
   Store,
   UserCheck,
   UserCog,
@@ -188,7 +190,7 @@ export const adminNav = [
   },
   {
     label: "Maintenance Requests",
-    icon: Wrench,
+    icon: Hammer,
     path: "/dashboard/admin/maintenance",
     module: "complaints",
     moduleKey: "complaints",
@@ -202,14 +204,20 @@ export const adminNav = [
   },
   {
     label: "Asset Management",
-    icon: Wrench,
+    icon: Package,
     path: "/dashboard/admin/asset",
     moduleKey: "asset-maintenance",
   },
   {
-    label: "Maintenance & Report",
+    label: "Maintenance",
     icon: Wrench,
     path: "/dashboard/admin/asset-maintenance",
+    moduleKey: "asset-maintenance",
+  },
+  {
+    label: "Operations Reporting",
+    icon: ClipboardList,
+    path: "/dashboard/admin/operations-reporting",
     moduleKey: "asset-maintenance",
   },
   {

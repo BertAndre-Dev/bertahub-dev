@@ -3,7 +3,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bell, Pencil, Trash2 } from "lucide-react";
+import { Bell, Pencil, Trash2, Paperclip } from "lucide-react";
 import type { AnnouncementItem } from "@/redux/slice/admin/announcements/announcements";
 
 export interface AnnouncementCardProps {
@@ -120,10 +120,26 @@ export default function AnnouncementCard({
                 Pinned
               </span>
             )}
+            {(announcement.fileUrl || announcement.file) && (
+              <span
+                className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded inline-flex items-center gap-1"
+                title="Has attachment"
+              >
+                <Paperclip className="h-3 w-3" />
+                Attachment
+              </span>
+            )}
           </div>
           <h3 className="font-heading font-bold text-black uppercase tracking-tight mt-1">
             {title || "Untitled"}
           </h3>
+          {(announcement.imageUrl || announcement.image) && (
+            <img
+              src={announcement.imageUrl || announcement.image}
+              alt={title || "Announcement image"}
+              className="mt-2 w-full rounded-md border border-border object-cover max-h-40"
+            />
+          )}
           <div
             className="text-sm text-muted-foreground mt-2 line-clamp-4 prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1"
             dangerouslySetInnerHTML={{

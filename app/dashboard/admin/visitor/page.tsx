@@ -17,6 +17,7 @@ import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
   CheckCircle,
   Eye,
+  QrCode,
   ShieldCheck,
   ShieldCheckIcon,
   Trash2,
@@ -26,6 +27,11 @@ import {
 import AdminVisitorForm from "@/components/admin/visitor-form/page";
 import DeleteModal from "@/components/resident/delete-modal/page";
 import Loader from "@/components/ui/Loader";
+import {
+  VisitorQrCodeModal,
+  type QrCodeVisitor,
+} from "@/components/resident/visitor-management/VisitorQrCodeModal";
+import { formatAddressEntryLabel } from "@/lib/address";
 
 export default function AdminVisitorManagement() {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,6 +47,9 @@ export default function AdminVisitorManagement() {
     lastName?: string;
   } | null>(null);
   const [visitorToDelete, setVisitorToDelete] = useState<any | null>(null);
+  const [qrCodeVisitor, setQrCodeVisitor] = useState<QrCodeVisitor | null>(
+    null,
+  );
 
   const { visitors, pagination, loading } = useSelector((state: RootState) => {
     const visitorState = state.visitor;
@@ -212,53 +221,6 @@ export default function AdminVisitorManagement() {
     }
   };
 
-  const formatVisitorAddress = (data: Record<string, unknown>) => {
-    const toStr = (v: unknown) => {
-      const s =
-        typeof v === "string" || typeof v === "number" ? String(v).trim() : "";
-      return s;
-    };
-
-    const block = toStr(data.block);
-    const street = toStr(data.street);
-    const unit = toStr(data.unit);
-    const flat = toStr(data.flat);
-    const apartment = toStr(data.apartment);
-    const houseNumber = toStr(data.houseNumber);
-    const number = toStr(data.number);
-
-    const unitLikeValue = unit || flat || apartment || houseNumber || number || "";
-    const unitLikeKey = unit
-      ? "unit"
-      : flat
-        ? "flat"
-        : apartment
-          ? "apartment"
-          : houseNumber
-            ? "houseNumber"
-            : number
-              ? "number"
-              : "";
-
-    if (block && unitLikeValue) {
-      const base = `block ${block}, ${unitLikeKey} ${unitLikeValue}`;
-      return street ? `${base} (${street})` : base;
-    }
-    if (block) {
-      const base = `block ${block}`;
-      return street ? `${base} (${street})` : base;
-    }
-
-    const pairs = Object.entries(data)
-      .map(([k, v]) => {
-        const sv = toStr(v);
-        return sv ? `${k}: ${sv}` : "";
-      })
-      .filter(Boolean);
-
-    return pairs.join(" • ");
-  };
-
   const columns = [
     {
       header: "Created At",
@@ -298,20 +260,34 @@ export default function AdminVisitorManagement() {
       ),
     },
     {
+      header: "Visit Type",
+      key: "visitingType",
+      render: (item: any) => {
+        if (!item.visitingType) return <span className="text-gray-500 text-xs">—</span>;
+        return (
+          <span
+            className={`px-2 py-1 rounded text-xs font-semibold ${
+              item.visitingType === "LONG_VISIT"
+                ? "bg-blue-100 text-blue-700"
+                : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            {item.visitingType === "LONG_VISIT" ? "Long Visit" : "Short Visit"}
+          </span>
+        );
+      },
+    },
+    {
       header: "Address",
       key: "address",
       render: (item: any) => {
         if (!item.addressId?.data) {
           return <span className="text-gray-500 text-xs">No address</span>;
         }
-        const label = formatVisitorAddress(
+        const label = formatAddressEntryLabel(
           item.addressId.data as Record<string, unknown>,
         );
-        return (
-          <div className="text-xs">
-            {label || "N/A"}
-          </div>
-        );
+        return <div className="text-xs">{label || "N/A"}</div>;
       },
     },
     {
@@ -393,6 +369,22 @@ export default function AdminVisitorManagement() {
               <span className="text-xs">Verify</span>
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={!item.qrCodeDataUrl}
+            onClick={(e) => {
+              e.stopPropagation();
+              setQrCodeVisitor(item as QrCodeVisitor);
+            }}
+            className="flex items-center gap-1 text-blue-600 hover:bg-blue-50 cursor-pointer disabled:opacity-50"
+            title={
+              item.qrCodeDataUrl ? "View QR code" : "QR code not available"
+            }
+          >
+            <QrCode className="w-4 h-4" />
+            <span className="text-xs">QR Code</span>
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -562,6 +554,12 @@ export default function AdminVisitorManagement() {
         }
         title="Delete visitor"
         onConfirm={handleConfirmDelete}
+      />
+
+      <VisitorQrCodeModal
+        open={!!qrCodeVisitor}
+        visitor={qrCodeVisitor}
+        onClose={() => setQrCodeVisitor(null)}
       />
 
       <Card className="p-4">

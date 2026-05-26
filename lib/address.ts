@@ -31,3 +31,59 @@ export function toAddressIdString(
   if (typeof addressId === "object" && addressId?.id) return addressId.id;
   return null;
 }
+
+/** Render a human-friendly address label from an entry data object
+ *  e.g. { block: "A", unit: "1", street: "Main St" } => "Block A, Unit 1 (Main St)" */
+export function formatAddressEntryLabel(
+  data: Record<string, unknown> | undefined | null,
+): string {
+  if (!data || typeof data !== "object") return "";
+  const toStr = (v: unknown) =>
+    typeof v === "string" || typeof v === "number" ? String(v).trim() : "";
+
+  const block = toStr(data.block);
+  const street = toStr(data.street);
+  const unit = toStr(data.unit);
+  const flat = toStr(data.flat);
+  const apartment = toStr(data.apartment);
+  const houseNumber = toStr(data.houseNumber);
+  const number = toStr(data.number);
+
+  const unitLikeValue =
+    unit || flat || apartment || houseNumber || number || "";
+  const unitLikeKey = unit
+    ? "Unit"
+    : flat
+      ? "Flat"
+      : apartment
+        ? "Apartment"
+        : houseNumber
+          ? "House"
+          : number
+            ? "No."
+            : "";
+
+  if (block && unitLikeValue) {
+    const base = `Block ${block}, ${unitLikeKey} ${unitLikeValue}`;
+    return street ? `${base} (${street})` : base;
+  }
+  if (block) {
+    const base = `Block ${block}`;
+    return street ? `${base} (${street})` : base;
+  }
+  if (unitLikeValue) {
+    const base = `${unitLikeKey} ${unitLikeValue}`;
+    return street ? `${base} (${street})` : base;
+  }
+
+  const pairs = Object.entries(data)
+    .map(([k, v]) => {
+      const sv = toStr(v);
+      if (!sv) return "";
+      const key = k.charAt(0).toUpperCase() + k.slice(1);
+      return `${key} ${sv}`;
+    })
+    .filter(Boolean);
+
+  return pairs.join(", ");
+}
