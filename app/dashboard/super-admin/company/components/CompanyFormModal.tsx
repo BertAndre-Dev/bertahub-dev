@@ -58,7 +58,7 @@ export function CompanyFormModal({
 
   return (
     <Modal visible={open} onClose={onClose}>
-      <form onSubmit={onSubmit} className="p-6">
+      <form onSubmit={onSubmit}>
         <CardHeader>
           <CardTitle className="text-lg font-semibold pb-4">
             {mode === "update" ? "Update Company" : "Create Company"}

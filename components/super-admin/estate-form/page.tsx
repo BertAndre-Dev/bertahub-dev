@@ -138,7 +138,7 @@ export default function EstateForm({
   ]
 
   return (
-    <form onSubmit={handleSubmit} className="p-8">
+    <form onSubmit={handleSubmit}>
       <CardHeader>
           <CardTitle className="text-lg font-semibold pb-4">
             {initialData ? "Update Estate" : "Create New Estate"}

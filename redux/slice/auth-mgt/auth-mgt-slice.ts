@@ -6,11 +6,7 @@ import { clearStoredAuth, readStoredAuth, writeStoredAuth, writeStoredUser } fro
 import {
   signIn,
   signOut,
-  verifyOtp,
-  resendOtp,
-  resetPassword,
   getSignedInUser,
-  forgotPassword,
   iniviteUser,
   verifyInivitedUser,
 } from './auth-mgt';
@@ -165,10 +161,23 @@ export const selectUserRole = (state: RootState) =>
   (state.auth.user?.role ?? '').toString().toLowerCase();
 
 export const selectEstateModules = (state: RootState): string[] => {
-  const estateId = state.auth.user?.estateId;
-  const modules =
-    estateId && typeof estateId === "object" && !Array.isArray(estateId)
-      ? (estateId as { modules?: unknown }).modules
-      : undefined;
-  return Array.isArray(modules) ? modules : [];
+  const user = state.auth.user as
+    | { modules?: unknown; estateId?: unknown }
+    | null;
+
+  const fromUser = Array.isArray(user?.modules)
+    ? (user!.modules as unknown[])
+    : [];
+
+  const estate = user?.estateId;
+  const fromEstate =
+    estate && typeof estate === "object" && !Array.isArray(estate) &&
+    Array.isArray((estate as { modules?: unknown }).modules)
+      ? ((estate as { modules: unknown[] }).modules)
+      : [];
+
+  const merged = [...fromUser, ...fromEstate].filter(
+    (m): m is string => typeof m === "string" && m.length > 0,
+  );
+  return Array.from(new Set(merged));
 };

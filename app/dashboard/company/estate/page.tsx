@@ -406,6 +406,9 @@ export default function CompanyEstatePage() {
                       city: selectedEstate.city ?? "",
                       state: selectedEstate.state ?? "",
                       country: selectedEstate.country ?? "",
+                      modules: Array.isArray(selectedEstate.modules)
+                        ? [...selectedEstate.modules]
+                        : [],
                     }
                   : null
               }
