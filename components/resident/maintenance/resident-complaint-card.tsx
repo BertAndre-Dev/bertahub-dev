@@ -161,7 +161,7 @@ export function ResidentComplaintCard({
       )}
     >
       <CardContent className="p-0">
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 overflow-auto h-[250px]">
           <button
             type="button"
             className="w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
