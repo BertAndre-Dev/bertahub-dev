@@ -7,6 +7,7 @@ import { VisitorsTableCard } from "@/components/resident/visitor-management/Visi
 import { VisitorUpsertModal } from "@/components/resident/visitor-management/VisitorUpsertModal";
 import { DeleteVisitorModal } from "@/components/resident/visitor-management/DeleteVisitorModal";
 import { VisitorViewModal } from "@/components/resident/visitor-management/VisitorViewModal";
+import { VisitorQrCodeModal } from "@/components/resident/visitor-management/VisitorQrCodeModal";
 import type { ResidentVisitorData } from "@/components/resident/visitor-management/types";
 import {
   getVisitorsByResident,
@@ -39,6 +40,8 @@ export default function VisitorPage() {
   const [viewingVisitor, setViewingVisitor] =
     useState<ResidentVisitorData | null>(null);
   const [visitorToDelete, setVisitorToDelete] =
+    useState<ResidentVisitorData | null>(null);
+  const [qrCodeVisitor, setQrCodeVisitor] =
     useState<ResidentVisitorData | null>(null);
 
   // User meta
@@ -259,7 +262,19 @@ export default function VisitorPage() {
           loading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
         ].join(" ")}
       >
-        <VisitorPageHeader onAddVisitor={() => handleOpenModal("create")} />
+        <VisitorPageHeader
+          onAddVisitor={() => handleOpenModal("create")}
+          disabled={!selectedAddressId || !userId || !estateId}
+          disabledReason={
+            !userId
+              ? "Loading your account..."
+              : !estateId
+                ? "No estate is linked to your account."
+                : !selectedAddressId
+                  ? "Please select or contact your admin to assign an address before inviting visitors."
+                  : undefined
+          }
+        />
 
         <SwitchAddress
           addresses={addressOptions}
@@ -305,6 +320,7 @@ export default function VisitorPage() {
           onView={(id) => handleOpenModal("view", id)}
           onEdit={(id) => handleOpenModal("edit", id)}
           onDelete={(visitor) => setVisitorToDelete(visitor)}
+          onViewQrCode={(visitor) => setQrCodeVisitor(visitor)}
         />
 
         <VisitorUpsertModal
@@ -328,6 +344,12 @@ export default function VisitorPage() {
           open={viewModalOpen}
           visitor={viewingVisitor}
           onClose={handleCloseModal}
+        />
+
+        <VisitorQrCodeModal
+          open={!!qrCodeVisitor}
+          visitor={qrCodeVisitor}
+          onClose={() => setQrCodeVisitor(null)}
         />
       </div>
     </div>

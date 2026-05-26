@@ -20,6 +20,13 @@ export interface ResidentAnnouncementItem {
   priority?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** Public URL of the uploaded image (JPEG, PNG, WebP, GIF) */
+  image?: string;
+  imageUrl?: string;
+  /** Public URL of the uploaded attachment (PDF, DOCX, etc.) */
+  file?: string;
+  fileUrl?: string;
+  fileName?: string;
 }
 
 export interface ResidentAnnouncementsListResponse {

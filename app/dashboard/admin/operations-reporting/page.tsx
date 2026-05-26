@@ -3,13 +3,15 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import Tab from "@/components/tabs/page";
 import Loader from "@/components/ui/Loader";
 import type { AppDispatch } from "@/redux/store";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { parseAdminEstate } from "../asset/lib/estate";
-import AssetMaintenanceTab from "./components/AssetMaintenanceTab";
+import OperationsReportingTypesTab from "./components/OperationsReportingTypesTab";
+import OperationsReportingReportsTab from "./components/OperationsReportingReportsTab";
 
-export default function AdminAssetMaintenancePage() {
+export default function AdminOperationsReportingPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [estateName, setEstateName] = useState("Estate");
   const [estateId, setEstateId] = useState("");
@@ -49,14 +51,32 @@ export default function AdminAssetMaintenancePage() {
         }
       >
         <div className="flex flex-col">
-          <h1 className="font-heading text-3xl font-bold">Maintenance</h1>
+          <h1 className="font-heading text-3xl font-bold">Operations Reporting</h1>
           <p className="mt-1 text-muted-foreground">
-            Manage maintenance schedules for{" "}
+            Configure report types and review submitted operations reports for{" "}
             <span className="font-bold uppercase text-black">{estateName}</span>.
           </p>
         </div>
 
-        <AssetMaintenanceTab estateId={estateId} estateName={estateName} />
+        {!estateId ? (
+          <p className="text-sm text-muted-foreground py-4">
+            Loading estate information…
+          </p>
+        ) : (
+          <Tab
+            titles={["Reports", "Configure Report Type"]}
+            renderContent={(opsTab) => {
+              switch (opsTab) {
+                case "Reports":
+                  return <OperationsReportingReportsTab estateId={estateId} />;
+                case "Configure Report Type":
+                  return <OperationsReportingTypesTab estateId={estateId} />;
+                default:
+                  return null;
+              }
+            }}
+          />
+        )}
       </div>
     </div>
   );

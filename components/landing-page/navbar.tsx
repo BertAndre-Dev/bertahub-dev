@@ -190,7 +190,7 @@ export default function Navbar({ onOpenBookDemo }: NavbarProps) {
               </button>
             </div>
 
-            <div className="mt-10 flex flex-col gap-6">
+            <div className="mt-10 flex flex-col gap-6 bg-red-200 md:bg-transparent p-4 rounded">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}

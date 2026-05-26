@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { Megaphone, Calendar, Eye, Mail, Pencil } from "lucide-react";
+import { Megaphone, Calendar, Eye, Mail, Pencil, FileText } from "lucide-react";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
   getAnnouncements,
@@ -133,6 +133,8 @@ export default function AdminAnnouncementsPage() {
       isPinned: data.isPinned,
       priority: data.priority,
       sendNow: data.sendNow,
+      image: data.image ?? null,
+      file: data.file ?? null,
     };
     await dispatch(createAnnouncement(payload)).unwrap();
     toast.success("Announcement created.");
@@ -157,6 +159,8 @@ export default function AdminAnnouncementsPage() {
       isPinned: data.isPinned,
       priority: data.priority,
       sendNow: data.sendNow,
+      image: data.image ?? null,
+      file: data.file ?? null,
     };
     await dispatch(updateAnnouncement(payload)).unwrap();
     toast.success("Announcement updated.");
@@ -300,6 +304,15 @@ export default function AdminAnnouncementsPage() {
                   </span>
                 )}
               </div>
+              {(viewingItem.imageUrl || viewingItem.image) && (
+                <div className="mb-4">
+                  <img
+                    src={viewingItem.imageUrl || viewingItem.image}
+                    alt={viewingItem.title ?? "Announcement image"}
+                    className="w-full rounded-lg border border-border object-cover max-h-72"
+                  />
+                </div>
+              )}
               <div
                 className="prose prose-sm max-w-full pb-2 break-words prose-p:my-1 prose-ul:my-1 prose-ol:my-1 text-foreground"
                 dangerouslySetInnerHTML={{
@@ -309,6 +322,19 @@ export default function AdminAnnouncementsPage() {
                     "<span>No content.</span>",
                 }}
               />
+              {(viewingItem.fileUrl || viewingItem.file) && (
+                <a
+                  href={viewingItem.fileUrl || viewingItem.file}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-primary hover:bg-muted"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className="truncate max-w-[260px]">
+                    {viewingItem.fileName ?? "Download attachment"}
+                  </span>
+                </a>
+              )}
               <div className="flex gap-2 mt-6">
                 <Button variant="outline" onClick={() => setViewingItem(null)}>
                   Close

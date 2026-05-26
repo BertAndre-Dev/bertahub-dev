@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import "react-quill-new/dist/quill.snow.css";
-import { Calendar } from "lucide-react";
+import { Calendar, FileText, ImageIcon, X } from "lucide-react";
+import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,12 @@ import { Select } from "@/components/ui/select";
 import type { AnnouncementItem } from "@/redux/slice/admin/announcements/announcements";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10MB
+const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/gif";
+const FILE_ACCEPT =
+  ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf";
 
 export interface AnnouncementFormData {
   title: string;
@@ -23,6 +30,8 @@ export interface AnnouncementFormData {
   isPinned: boolean;
   priority: string;
   sendNow: boolean;
+  image: File | null;
+  file: File | null;
 }
 
 export interface AnnouncementFormModalProps {
@@ -82,6 +91,12 @@ export default function AnnouncementFormModal({
   const [formIsPinned, setFormIsPinned] = useState(false);
   const [formPriority, setFormPriority] = useState("low");
   const [sendMode, setSendMode] = useState<SendMode>("send_now");
+  const [formImage, setFormImage] = useState<File | null>(null);
+  const [formFile, setFormFile] = useState<File | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string>("");
+  const [existingFileUrl, setExistingFileUrl] = useState<string>("");
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (visible) {
@@ -93,15 +108,59 @@ export default function AnnouncementFormModal({
       setFormTagsStr((initialData?.tags ?? []).join(", "));
       setFormIsPinned(initialData?.isPinned ?? false);
       setFormPriority(initialData?.priority ?? "low");
-      // If editing an existing scheduled announcement, default to schedule mode
       setSendMode(initialData?.scheduledFor ? "schedule" : "send_now");
+      setFormImage(null);
+      setFormFile(null);
+      setExistingImageUrl(
+        initialData?.imageUrl ?? initialData?.image ?? "",
+      );
+      setExistingFileUrl(initialData?.fileUrl ?? initialData?.file ?? "");
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }, [visible, initialData]);
 
   const handleSendModeChange = (mode: SendMode) => {
     setSendMode(mode);
-    // Clear scheduled date when switching to send now
     if (mode === "send_now") setFormScheduledFor("");
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    if (!f) {
+      setFormImage(null);
+      return;
+    }
+    if (f.size > MAX_IMAGE_BYTES) {
+      toast.error("Image must be 5MB or less.");
+      e.target.value = "";
+      return;
+    }
+    setFormImage(f);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    if (!f) {
+      setFormFile(null);
+      return;
+    }
+    if (f.size > MAX_FILE_BYTES) {
+      toast.error("Attachment must be 10MB or less.");
+      e.target.value = "";
+      return;
+    }
+    setFormFile(f);
+  };
+
+  const clearImage = () => {
+    setFormImage(null);
+    if (imageInputRef.current) imageInputRef.current.value = "";
+  };
+
+  const clearFile = () => {
+    setFormFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -129,10 +188,28 @@ export default function AnnouncementFormModal({
         isPinned: formIsPinned,
         priority: formPriority,
         sendNow: sendMode === "send_now",
+        image: formImage,
+        file: formFile,
       });
       onClose();
     } catch {
       // Caller can toast
+    }
+  };
+
+  const formatBytes = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const filenameFromUrl = (url: string): string => {
+    try {
+      const u = new URL(url);
+      const last = u.pathname.split("/").filter(Boolean).pop();
+      return last ? decodeURIComponent(last) : url;
+    } catch {
+      return url.split("/").pop() ?? url;
     }
   };
 
@@ -222,6 +299,116 @@ export default function AnnouncementFormModal({
               disabled={loading}
               className="mt-1"
             />
+          </div>
+
+          {/* Image upload */}
+          <div>
+            <Label htmlFor="announcement-image">Image</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              JPEG, PNG, WebP or GIF · Max 5MB
+            </p>
+            <div className="mt-1.5">
+              <input
+                ref={imageInputRef}
+                id="announcement-image"
+                type="file"
+                accept={IMAGE_ACCEPT}
+                onChange={handleImageChange}
+                disabled={loading}
+                title="Announcement image"
+                aria-label="Announcement image"
+                className="block w-full text-sm text-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-input file:bg-background file:text-sm file:font-medium file:cursor-pointer hover:file:bg-muted"
+              />
+            </div>
+
+            {formImage && (
+              <div className="mt-2 flex items-center gap-2 rounded-md border border-border p-2 text-sm">
+                <ImageIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="truncate flex-1">{formImage.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatBytes(formImage.size)}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  disabled={loading}
+                  className="p-1 rounded hover:bg-muted text-muted-foreground"
+                  aria-label="Remove image"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
+            {!formImage && existingImageUrl && (
+              <div className="mt-2 flex items-center gap-2 rounded-md border border-border p-2 text-sm">
+                <ImageIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <a
+                  href={existingImageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="truncate flex-1 text-primary hover:underline"
+                >
+                  {filenameFromUrl(existingImageUrl)}
+                </a>
+                <span className="text-xs text-muted-foreground">current</span>
+              </div>
+            )}
+          </div>
+
+          {/* Attachment upload */}
+          <div>
+            <Label htmlFor="announcement-file">Attachment</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              PDF, DOCX, etc. · Max 10MB
+            </p>
+            <div className="mt-1.5">
+              <input
+                ref={fileInputRef}
+                id="announcement-file"
+                type="file"
+                accept={FILE_ACCEPT}
+                onChange={handleFileChange}
+                disabled={loading}
+                title="Announcement attachment"
+                aria-label="Announcement attachment"
+                className="block w-full text-sm text-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-input file:bg-background file:text-sm file:font-medium file:cursor-pointer hover:file:bg-muted"
+              />
+            </div>
+
+            {formFile && (
+              <div className="mt-2 flex items-center gap-2 rounded-md border border-border p-2 text-sm">
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="truncate flex-1">{formFile.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatBytes(formFile.size)}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearFile}
+                  disabled={loading}
+                  className="p-1 rounded hover:bg-muted text-muted-foreground"
+                  aria-label="Remove attachment"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
+            {!formFile && existingFileUrl && (
+              <div className="mt-2 flex items-center gap-2 rounded-md border border-border p-2 text-sm">
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <a
+                  href={existingFileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="truncate flex-1 text-primary hover:underline"
+                >
+                  {filenameFromUrl(existingFileUrl)}
+                </a>
+                <span className="text-xs text-muted-foreground">current</span>
+              </div>
+            )}
           </div>
 
           {/* Send mode — only one can be checked at a time */}
