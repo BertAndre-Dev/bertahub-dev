@@ -89,10 +89,15 @@ const residentVisitorSlice = createSlice({
       .addCase(createVisitor.fulfilled, (state, action) => {
         state.createVisitorState = "succeeded";
         state.status = "succeeded";
-        const newVisitor = action.payload?.data;
-        if (newVisitor && state.allVisitors?.data) {
-          state.allVisitors.data.push(newVisitor);
-          state.allVisitors.pagination.total += 1;
+        const payloadData = action.payload?.data;
+        const created = Array.isArray(payloadData)
+          ? payloadData
+          : payloadData
+            ? [payloadData]
+            : [];
+        if (created.length && state.allVisitors?.data) {
+          state.allVisitors.data.push(...created);
+          state.allVisitors.pagination.total += created.length;
         }
       })
       .addCase(createVisitor.rejected, (state, action: any) => {

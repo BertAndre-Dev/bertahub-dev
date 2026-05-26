@@ -59,7 +59,9 @@ export const createVisitor = createAsyncThunk(
   "residentVisitor/createVisitor",
   async (data: CreateVisitorData, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post("/api/v1/visitor-mgt", data);
+      const res = await axiosInstance.post("/api/v1/visitor-mgt", {
+        visitors: [data],
+      });
       return res.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data || { message: "Failed to create visitor" });
