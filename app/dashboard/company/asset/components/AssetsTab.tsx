@@ -51,13 +51,11 @@ function getEstateName(
 type AssetsTabProps = {
   estates: EstateOption[];
   selectedEstateId: string;
-  onEstateChange: (estateId: string) => void;
 };
 
 export default function AssetsTab({
   estates,
   selectedEstateId,
-  onEstateChange,
 }: Readonly<AssetsTabProps>) {
   const dispatch = useDispatch<AppDispatch>();
   const [page, setPage] = useState(1);
@@ -97,10 +95,8 @@ export default function AssetsTab({
   }, [dispatch, selectedEstateId]);
 
   useEffect(() => {
-    if (selectedEstateId) return;
-    if (!estates.length) return;
-    onEstateChange(estates[0].id);
-  }, [estates, selectedEstateId, onEstateChange]);
+    setPage(1);
+  }, [selectedEstateId]);
 
   useEffect(() => {
     if (!selectedEstateId) return;
@@ -240,9 +236,6 @@ export default function AssetsTab({
       }
       closeModal();
       setPage(1);
-      if (!editing && payload.estateId && !selectedEstateId) {
-        onEstateChange(payload.estateId);
-      }
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to save asset.");
     }
@@ -268,28 +261,6 @@ export default function AssetsTab({
           <p className="text-muted-foreground text-sm">
             Create and manage company assets.
           </p>
-          {estates.length > 1 && (
-            <div className="mt-2 flex items-center gap-2">
-              <label htmlFor="company-asset-estate" className="text-sm font-medium">
-                Estate
-              </label>
-              <select
-                id="company-asset-estate"
-                className="h-9 rounded-md border border-border bg-background px-3 text-sm"
-                value={selectedEstateId}
-                onChange={(e) => {
-                  onEstateChange(e.target.value);
-                  setPage(1);
-                }}
-              >
-                {estates.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
         <Button
           onClick={openCreate}
