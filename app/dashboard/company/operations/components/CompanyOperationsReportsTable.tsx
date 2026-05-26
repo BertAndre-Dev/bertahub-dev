@@ -157,14 +157,14 @@ export default function CompanyOperationsReportsTable({ estateId }: Readonly<Pro
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="font-heading text-xl font-bold">Operations reports</h2>
           <p className="text-muted-foreground text-sm">
             Review operations data submitted by estate administrators.
           </p>
         </div>
-      </div>
+      </div> */}
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1 min-w-[200px]">

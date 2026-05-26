@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import Select from "react-select";
 import Loader from "@/components/ui/Loader";
 import type { AppDispatch } from "@/redux/store";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
@@ -21,17 +22,19 @@ import {
   parseCompanyEstates,
   type EstateOption,
 } from "../asset/lib/estate";
-import EstateTabs from "./components/EstateTabs";
 import MaintenanceScheduleCalendar from "./components/MaintenanceScheduleCalendar";
 import MaintenanceRecordsTable from "./components/MaintenanceRecordsTable";
 
 const SCHEDULE_LIST_LIMIT = 500;
 
+type EstateSelectOption = { label: string; value: string };
+
 export default function CompanyAssetMaintenancePage() {
   const dispatch = useDispatch<AppDispatch>();
   const [companyName, setCompanyName] = useState("Company");
   const [estates, setEstates] = useState<EstateOption[]>([]);
-  const [selectedEstateId, setSelectedEstateId] = useState("");
+  const [selectedEstate, setSelectedEstate] =
+    useState<EstateSelectOption | null>(null);
   const [estatesLoading, setEstatesLoading] = useState(true);
   const [isActiveFilter, setIsActiveFilter] = useState("");
   const [categories, setCategories] = useState<AssetCategory[]>([]);
@@ -39,6 +42,13 @@ export default function CompanyAssetMaintenancePage() {
     [],
   );
   const [scheduleLoading, setScheduleLoading] = useState(false);
+
+  const selectedEstateId = selectedEstate?.value ?? "";
+
+  const estateOptions = useMemo<EstateSelectOption[]>(
+    () => estates.map((e) => ({ label: e.name, value: e.id })),
+    [estates],
+  );
 
   const pageLoading = estatesLoading;
 
@@ -100,7 +110,9 @@ export default function CompanyAssetMaintenancePage() {
         if (!options.length) options = parseCompanyEstates(data);
 
         setEstates(options);
-        setSelectedEstateId(options[0]?.id ?? "");
+        if (options.length) {
+          setSelectedEstate({ label: options[0].name, value: options[0].id });
+        }
       } catch {
         toast.error("Failed to load company information.");
       } finally {
@@ -141,20 +153,31 @@ export default function CompanyAssetMaintenancePage() {
           pageLoading ? "pointer-events-none select-none blur-sm opacity-60" : ""
         }
       >
-        <div className="flex flex-col">
-          <h1 className="font-heading text-3xl font-bold">Asset Maintenance</h1>
-          <p className="mt-1 text-muted-foreground">
-            View maintenance schedules for assets under{" "}
-            <span className="font-bold uppercase text-black">{companyName}</span>.
-            Scheduling is managed by estate administrators.
-          </p>
-        </div>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="font-heading text-3xl font-bold">Asset Maintenance</h1>
+            <p className="mt-1 text-muted-foreground">
+              View maintenance schedules for assets under{" "}
+              <span className="font-bold uppercase text-black">{companyName}</span>.
+              Scheduling is managed by estate administrators.
+            </p>
+          </div>
 
-        <EstateTabs
-          estates={estates}
-          selectedEstateId={selectedEstateId}
-          onEstateChange={setSelectedEstateId}
-        />
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="w-48 min-w-[12rem]">
+              <Select
+                options={estateOptions}
+                placeholder="Filter by estate"
+                value={selectedEstate}
+                onChange={(option) =>
+                  setSelectedEstate(option as EstateSelectOption | null)
+                }
+                isSearchable
+                isDisabled={!estateOptions.length}
+              />
+            </div>
+          </div>
+        </div>
 
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1">

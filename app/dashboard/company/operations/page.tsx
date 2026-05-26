@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import Select from "react-select";
 import Loader from "@/components/ui/Loader";
 import type { AppDispatch } from "@/redux/store";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
@@ -13,14 +14,16 @@ import {
   parseCompanyEstates,
   type EstateOption,
 } from "../asset/lib/estate";
-import EstateTabs from "../asset-mgt/components/EstateTabs";
 import CompanyOperationsReportsTable from "./components/CompanyOperationsReportsTable";
+
+type EstateSelectOption = { label: string; value: string };
 
 export default function CompanyOperationsReportingPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [companyName, setCompanyName] = useState("Company");
   const [estates, setEstates] = useState<EstateOption[]>([]);
-  const [selectedEstateId, setSelectedEstateId] = useState("");
+  const [selectedEstate, setSelectedEstate] =
+    useState<EstateSelectOption | null>(null);
   const [estatesLoading, setEstatesLoading] = useState(true);
 
   useEffect(() => {
@@ -48,7 +51,9 @@ export default function CompanyOperationsReportingPage() {
         if (!options.length) options = parseCompanyEstates(data);
 
         setEstates(options);
-        setSelectedEstateId(options[0]?.id ?? "");
+        if (options.length) {
+          setSelectedEstate({ label: options[0].name, value: options[0].id });
+        }
       } catch {
         toast.error("Failed to load company information.");
       } finally {
@@ -57,46 +62,67 @@ export default function CompanyOperationsReportingPage() {
     })();
   }, [dispatch]);
 
-  const selectedEstateName =
-    estates.find((e) => e.id === selectedEstateId)?.name ?? "";
+  const estateOptions = useMemo<EstateSelectOption[]>(
+    () => estates.map((e) => ({ label: e.name, value: e.id })),
+    [estates],
+  );
+
+  const selectedEstateId = selectedEstate?.value ?? "";
 
   return (
-    <div className="relative space-y-6">
+    <div className="relative">
       {estatesLoading && (
-        <div className="absolute inset-0 z-50 flex min-h-[200px] items-center justify-center bg-background/40 backdrop-blur-sm">
-          <Loader label="Loading..." />
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+          <Loader label="Loading estates..." />
         </div>
       )}
 
       <div
-        className={
-          estatesLoading ? "pointer-events-none select-none blur-sm opacity-60" : ""
-        }
+        className={[
+          "space-y-6",
+          estatesLoading
+            ? "pointer-events-none select-none blur-sm opacity-60"
+            : "",
+        ].join(" ")}
       >
-        <div className="flex flex-col">
-          <h1 className="font-heading text-3xl font-bold">Operations Reporting</h1>
-          <p className="mt-1 text-muted-foreground">
-            Review operations reports submitted across estates under{" "}
-            <span className="font-bold uppercase text-black">{companyName}</span>.
-            {selectedEstateName ? (
-              <>
-                {" "}
-                Currently viewing{" "}
-                <span className="font-semibold text-black">{selectedEstateName}</span>
-                .
-              </>
-            ) : null}
-          </p>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="font-heading text-3xl font-bold">
+              Operations Reporting
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Review operations reports submitted across estates under{" "}
+              <span className="text-[18px] font-bold underline uppercase text-black">
+                {companyName}
+              </span>
+              .
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="w-48 min-w-[12rem]">
+              <Select
+                options={estateOptions}
+                placeholder="Filter by estate"
+                value={selectedEstate}
+                onChange={(option) =>
+                  setSelectedEstate(option as EstateSelectOption | null)
+                }
+                isSearchable
+                isDisabled={!estateOptions.length}
+                styles={{
+                  control: (base) => ({ ...base, cursor: "pointer" }),
+                  option: (base) => ({ ...base, cursor: "pointer" }),
+                  dropdownIndicator: (base) => ({ ...base, cursor: "pointer" }),
+                  clearIndicator: (base) => ({ ...base, cursor: "pointer" }),
+                }}
+              />
+            </div>
+          </div>
         </div>
 
-        <EstateTabs
-          estates={estates}
-          selectedEstateId={selectedEstateId}
-          onEstateChange={setSelectedEstateId}
-        />
-
         {!estatesLoading && !estates.length ? (
-          <p className="text-sm text-muted-foreground py-4">
+          <p className="text-sm text-muted-foreground">
             No estates linked to your company yet.
           </p>
         ) : selectedEstateId ? (
@@ -104,7 +130,11 @@ export default function CompanyOperationsReportingPage() {
             key={selectedEstateId}
             estateId={selectedEstateId}
           />
-        ) : null}
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Select an estate to view operations reports.
+          </p>
+        )}
       </div>
     </div>
   );

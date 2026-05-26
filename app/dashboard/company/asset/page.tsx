@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import Select from "react-select";
 import { Card } from "@/components/ui/card";
 import Tab from "@/components/tabs/page";
 import Loader from "@/components/ui/Loader";
@@ -19,13 +20,23 @@ import AssetCategoriesTab from "./components/AssetCategoriesTab";
 import AssetsTab from "./components/AssetsTab";
 import AssetStatsCards from "./components/AssetStatsCards";
 
+type EstateSelectOption = { label: string; value: string };
+
 export default function CompanyAssetPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [companyName, setCompanyName] = useState("Company");
   const [estates, setEstates] = useState<EstateOption[]>([]);
-  const [selectedEstateId, setSelectedEstateId] = useState("");
+  const [selectedEstate, setSelectedEstate] =
+    useState<EstateSelectOption | null>(null);
   const [estatesLoading, setEstatesLoading] = useState(true);
   const [activeAssetTab, setActiveAssetTab] = useState("Assets");
+
+  const selectedEstateId = selectedEstate?.value ?? "";
+
+  const estateOptions = useMemo<EstateSelectOption[]>(
+    () => estates.map((e) => ({ label: e.name, value: e.id })),
+    [estates],
+  );
 
   const { assetsLoading, categoriesLoading } = useSelector(
     (state: RootState) => {
@@ -72,8 +83,9 @@ export default function CompanyAssetPage() {
         }
 
         setEstates(options);
-        setSelectedEstateId(options[0]?.id ?? "");
-        if (!options.length) {
+        if (options.length) {
+          setSelectedEstate({ label: options[0].name, value: options[0].id });
+        } else {
           toast.warning("No estates found for your company.");
         }
       } catch {
@@ -103,15 +115,32 @@ export default function CompanyAssetPage() {
       <div
         className={`space-y-6${pageLoading ? " blur-sm opacity-60 pointer-events-none select-none" : ""}`}
       >
-        <div className="flex flex-col">
-          <h1 className="font-heading text-3xl font-bold">Assets</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage assets for{" "}
-            <span className="text-[18px] font-bold underline uppercase text-black">
-              {companyName}
-            </span>
-            .
-          </p>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="font-heading text-3xl font-bold">Assets</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage assets for{" "}
+              <span className="text-[18px] font-bold underline uppercase text-black">
+                {companyName}
+              </span>
+              .
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="w-48 min-w-[12rem]">
+              <Select
+                options={estateOptions}
+                placeholder="Filter by estate"
+                value={selectedEstate}
+                onChange={(option) =>
+                  setSelectedEstate(option as EstateSelectOption | null)
+                }
+                isSearchable
+                isDisabled={!estateOptions.length}
+              />
+            </div>
+          </div>
         </div>
 
         <AssetStatsCards estateId={selectedEstateId} />
@@ -127,7 +156,6 @@ export default function CompanyAssetPage() {
                     <AssetsTab
                       estates={estates}
                       selectedEstateId={selectedEstateId}
-                      onEstateChange={setSelectedEstateId}
                     />
                   );
                 case "Asset Categories":
