@@ -39,6 +39,7 @@ type EstateTableRow = EstateData & {
   id?: string;
   _id?: string;
   createdAt?: string | number | Date;
+  visitorVerificationMode?: string;
 };
 
 function rowId(item: EstateTableRow) {
@@ -198,6 +199,22 @@ export default function CompanyEstatePage() {
     { key: "city" as const, header: "City" },
     { key: "state" as const, header: "State" },
     { key: "country" as const, header: "Country" },
+    {
+      key: "visitorVerificationMode" as const,
+      header: "Visitor Verification",
+      render: (item: EstateTableRow) => {
+        const v = item.visitorVerificationMode;
+        const label =
+          v === "VIEW_AND_VERIFY"
+            ? "View and verify"
+            : v === "VERIFY_ONLY"
+              ? "Verify only"
+              : v === "VIEW_ONLY"
+                ? "View only"
+                : "—";
+        return <span className="font-medium">{label}</span>;
+      },
+    },
     {
       key: "isActive" as const,
       header: "Status",
@@ -409,6 +426,8 @@ export default function CompanyEstatePage() {
                       modules: Array.isArray(selectedEstate.modules)
                         ? [...selectedEstate.modules]
                         : [],
+                      visitorVerificationMode:
+                        (selectedEstate as any).visitorVerificationMode,
                     }
                   : null
               }

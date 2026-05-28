@@ -19,6 +19,7 @@ import AssignMeterForm from "@/components/super-admin/meter-form/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import { IoSpeedometerOutline } from "react-icons/io5";
 import Loader from "@/components/ui/Loader";
+import { getAllEstates } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt";
 
 /** addressId from list API can be a string or populated object with id */
 type AddressIdInput = string | { id: string; data?: Record<string, unknown> };
@@ -45,6 +46,26 @@ function toAddressIdString(
   return null;
 }
 
+function toAddressData(addressId: AddressIdInput | null | undefined): Record<
+  string,
+  unknown
+> | null {
+  if (addressId == null) return null;
+  if (typeof addressId === "object" && addressId?.data) return addressId.data;
+  return null;
+}
+
+function formatAddressData(
+  data: Record<string, unknown> | null | undefined,
+): string {
+  if (!data) return "—";
+  const entries = Object.entries(data).filter(
+    ([, v]) => v != null && String(v).trim() !== "",
+  );
+  if (entries.length === 0) return "—";
+  return entries.map(([k, v]) => `${k}: ${String(v)}`).join(", ");
+}
+
 export default function AdminMeterManagement() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
@@ -56,6 +77,9 @@ export default function AdminMeterManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [detailsAddressId, setDetailsAddressId] = useState<string | null>(null);
+  const [estateNameById, setEstateNameById] = useState<Record<string, string>>(
+    {},
+  );
 
   const {
     allSuperAdminMeters,
@@ -92,6 +116,32 @@ export default function AdminMeterManagement() {
     };
     fetchMeters();
   }, [dispatch, searchQuery]);
+
+  // Fetch estates map (id -> name) for display
+  useEffect(() => {
+    const loadEstateNames = async () => {
+      try {
+        const res = await dispatch(
+          getAllEstates({
+            page: 1,
+            limit: 5000,
+          }),
+        ).unwrap();
+
+        const estates: any[] = res?.data ?? [];
+        const map: Record<string, string> = {};
+        for (const estate of estates) {
+          const id = estate?.id ?? estate?._id;
+          const name = estate?.name;
+          if (id && name) map[String(id)] = String(name);
+        }
+        setEstateNameById(map);
+      } catch (e) {
+        // non-blocking: table can still render estateId if name isn't available
+      }
+    };
+    loadEstateNames();
+  }, [dispatch]);
 
   const handleRefresh = async () => {
     try {
@@ -179,6 +229,19 @@ export default function AdminMeterManagement() {
   const columns = [
     { key: "createdAt", header: "Created Date" },
     { key: "meterNumber", header: "Meter Number" },
+    {
+      key: "estateId",
+      header: "Estate",
+      render: (item: AdminMeterData) => {
+        const id = item.estateId;
+        if (!id) return <span className="text-muted-foreground">—</span>;
+        return (
+          <span className="font-medium">
+            {estateNameById[id] ?? id}
+          </span>
+        );
+      },
+    },
     {
       key: "isActive",
       header: "Status",
@@ -442,6 +505,15 @@ export default function AdminMeterManagement() {
                   </dd>
                 </div>
                 <div>
+                  <dt className="text-muted-foreground">Estate</dt>
+                  <dd className="font-medium">
+                    {meterDetails.estateId
+                      ? estateNameById[meterDetails.estateId] ??
+                        meterDetails.estateId
+                      : "—"}
+                  </dd>
+                </div>
+                <div>
                   <dt className="text-muted-foreground">Status</dt>
                   <dd>
                     <span
@@ -467,6 +539,12 @@ export default function AdminMeterManagement() {
                     >
                       {meterDetails.isAssigned ? "Yes" : "No"}
                     </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Address</dt>
+                  <dd className="font-medium">
+                    {formatAddressData(toAddressData(meterDetails.addressId))}
                   </dd>
                 </div>
                 {meterDetails.lastCredit != null && (

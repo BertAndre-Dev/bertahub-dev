@@ -1,6 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 
+export enum VisitorVerificationMode {
+  VIEW_AND_VERIFY = "VIEW_AND_VERIFY",
+  VERIFY_ONLY = "VERIFY_ONLY",
+  VIEW_ONLY = "VIEW_ONLY",
+}
+
 export interface EstateData {
   name: string;
   address: string;
@@ -9,6 +15,7 @@ export interface EstateData {
   country: string;
   isActive?: boolean;
   modules?: string[];
+  visitorVerificationMode?: VisitorVerificationMode;
 }
 
 export type GetEstatesParams = {
