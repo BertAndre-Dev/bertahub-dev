@@ -37,6 +37,7 @@ type EstateTableRow = Omit<EstateData, "modules"> & {
   id?: string;
   modules?: string[];
   createdAt?: string | number | Date;
+  visitorVerificationMode?: string;
 };
 
 export default function EstatePage() {
@@ -168,6 +169,22 @@ export default function EstatePage() {
     { key: "city", header: "City" },
     { key: "state", header: "State" },
     { key: "country", header: "Country" },
+    {
+      key: "visitorVerificationMode",
+      header: "Visitor Verification",
+      render: (item: EstateTableRow) => {
+        const v = item.visitorVerificationMode;
+        const label =
+          v === "VIEW_AND_VERIFY"
+            ? "View and verify"
+            : v === "VERIFY_ONLY"
+              ? "Verify only"
+              : v === "VIEW_ONLY"
+                ? "View only"
+                : "—";
+        return <span className="font-medium">{label}</span>;
+      },
+    },
     {
       key: "isActive",
       header: "Status",
@@ -394,6 +411,8 @@ export default function EstatePage() {
                     state: selectedEstate.state,
                     country: selectedEstate.country,
                     modules: selectedEstate.modules ?? [],
+                    visitorVerificationMode:
+                      (selectedEstate as any).visitorVerificationMode,
                   }
                 : null
             }

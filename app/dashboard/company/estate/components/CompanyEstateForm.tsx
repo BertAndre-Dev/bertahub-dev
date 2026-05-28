@@ -12,7 +12,10 @@ import { CountryDropdown, RegionDropdown } from "react-country-region-selector";
 import { cn } from "@/lib/utils";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
-import type { EstateData } from "@/redux/slice/company/estate-mgt/company-estate";
+import {
+  type EstateData,
+  VisitorVerificationMode,
+} from "@/redux/slice/company/estate-mgt/company-estate";
 
 const MODULE_LABELS: Record<string, string> = {
   bills: "Bills",
@@ -60,6 +63,8 @@ export default function CompanyEstateForm({
     state: initialData?.state ?? "",
     country: initialData?.country ?? "",
     modules: Array.isArray(initialData?.modules) ? [...initialData!.modules!] : [],
+    visitorVerificationMode:
+      initialData?.visitorVerificationMode ?? VisitorVerificationMode.VIEW_AND_VERIFY,
   }));
 
   useEffect(() => {
@@ -139,6 +144,32 @@ export default function CompanyEstateForm({
               className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="visitorVerificationMode">Visitor Verification Mode</Label>
+          <select
+            id="visitorVerificationMode"
+            name="visitorVerificationMode"
+            title="Visitor verification mode"
+            value={
+              formData.visitorVerificationMode ??
+              VisitorVerificationMode.VIEW_AND_VERIFY
+            }
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                visitorVerificationMode: e.target.value as VisitorVerificationMode,
+              }))
+            }
+            className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+          >
+            <option value={VisitorVerificationMode.VIEW_AND_VERIFY}>
+              View and verify
+            </option>
+            <option value={VisitorVerificationMode.VERIFY_ONLY}>Verify only</option>
+            <option value={VisitorVerificationMode.VIEW_ONLY}>View only</option>
+          </select>
         </div>
 
         <div className="space-y-3">

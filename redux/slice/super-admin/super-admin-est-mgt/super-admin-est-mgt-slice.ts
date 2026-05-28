@@ -20,6 +20,7 @@ export interface EstateDetails {
   country?: string;
   isActive?: boolean;
   modules?: string[];
+  visitorVerificationMode?: string;
   createdAt?: string;
   updatedAt?: string;
   id?: string;

@@ -87,9 +87,9 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
                   src="/chat-Logo.svg"
                   alt=""
                   aria-hidden="true"
-                  width={220}
+                  width={320}
                   height={120}
-                  className="w-[220px] sm:w-[260px] md:w-[320px] h-auto object-contain opacity-[0.09]"
+                  className="hidden sm:block w-[160px] md:w-[200px] lg:w-[240px] h-auto object-contain opacity-[0.035] blur-[0.2px]"
                 />
               </div>
 

@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import type { AppDispatch } from "@/redux/store"
 import { fetchEstateModules } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt"
 import type { EstateData } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt"
+import { VisitorVerificationMode } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt"
 import {
   selectAvailableModules,
   selectModulesError,
@@ -72,6 +73,7 @@ export default function EstateForm({
     state: "",
     country: "",
     modules: [],
+    visitorVerificationMode: VisitorVerificationMode.VIEW_AND_VERIFY,
   })
 
   useEffect(() => {
@@ -96,6 +98,9 @@ export default function EstateForm({
         state: initialData.state,
         country: initialData.country,
         modules: Array.isArray(initialData.modules) ? [...initialData.modules] : [],
+        visitorVerificationMode:
+          initialData.visitorVerificationMode ??
+          VisitorVerificationMode.VIEW_AND_VERIFY,
       })
     } else {
       setFormData({
@@ -105,6 +110,7 @@ export default function EstateForm({
         state: "",
         country: "",
         modules: [],
+        visitorVerificationMode: VisitorVerificationMode.VIEW_AND_VERIFY,
       })
     }
   }, [initialData])
@@ -178,6 +184,36 @@ export default function EstateForm({
                 className="w-full border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="visitorVerificationMode">
+              Visitor Verification Mode
+            </Label>
+            <select
+              id="visitorVerificationMode"
+              name="visitorVerificationMode"
+              title="Visitor verification mode"
+              value={
+                formData.visitorVerificationMode ??
+                VisitorVerificationMode.VIEW_AND_VERIFY
+              }
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  visitorVerificationMode: e.target.value as VisitorVerificationMode,
+                }))
+              }
+              className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+            >
+              <option value={VisitorVerificationMode.VIEW_AND_VERIFY}>
+                View and verify
+              </option>
+              <option value={VisitorVerificationMode.VERIFY_ONLY}>
+                Verify only
+              </option>
+              <option value={VisitorVerificationMode.VIEW_ONLY}>View only</option>
+            </select>
           </div>
 
           <div className="space-y-3">
