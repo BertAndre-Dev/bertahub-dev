@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import Image from "next/image";
 
 interface ModalProps {
   visible: boolean;
@@ -79,7 +80,21 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
             >
               <X className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="w-full min-w-0 break-words">{children}</div>
+            <div className="relative w-full min-w-0">
+              {/* subtle center watermark */}
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <Image
+                  src="/chat-Logo.svg"
+                  alt=""
+                  aria-hidden="true"
+                  width={220}
+                  height={120}
+                  className="w-[220px] sm:w-[260px] md:w-[320px] h-auto object-contain opacity-[0.09]"
+                />
+              </div>
+
+              <div className="relative z-10 wrap-break-word">{children}</div>
+            </div>
           </motion.div>
         </motion.div>
       )}
