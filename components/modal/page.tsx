@@ -9,9 +9,16 @@ interface ModalProps {
   visible: boolean;
   children: React.ReactNode;
   onClose: () => void;
+  /** Optional: override modal panel classes (width, padding, etc). */
+  contentClassName?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
+const Modal: React.FC<ModalProps> = ({
+  visible,
+  children,
+  onClose,
+  contentClassName,
+}) => {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -39,20 +46,10 @@ const Modal: React.FC<ModalProps> = ({ visible, children, onClose }) => {
           onClick={(e) => e.target === e.currentTarget && onClose()}
         >
           <motion.div
-            className="
-              bg-white
-              w-full md:w-[45%]
-              rounded-xl
-              shadow-xl
-              p-5
-              overflow-y-auto
-              overflow-x-hidden
-              max-h-[70vh]
-              flex
-              flex-col
-              relative
-              min-w-0
-            "
+            className={[
+              "bg-white rounded-xl shadow-xl p-5 overflow-y-auto overflow-x-hidden max-h-[70vh] flex flex-col relative min-w-0 w-full",
+              contentClassName ?? "md:w-[45%]",
+            ].join(" ")}
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}

@@ -1,7 +1,6 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { FaCopy } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import Modal from "@/components/modal/page";
 import { toast } from "react-toastify";
@@ -16,6 +15,7 @@ import VendPower from "@/components/resident/vend-power/page";
 import Table from "@/components/tables/list/page";
 import type { EnergyListItem } from "@/redux/slice/resident/meter-mgt/meter-mgt-slice";
 import Loader from "@/components/ui/Loader";
+import { CopyButton } from "@/components/ui/copy-button";
 
 export default function ResidentMeter() {
   const dispatch = useDispatch<AppDispatch>();
@@ -175,14 +175,7 @@ export default function ResidentMeter() {
         return (
           <div className="flex items-center gap-2">
             <span className="truncate max-w-[180px]">{row.token}</span>
-            <button
-              type="button"
-              onClick={() => navigator.clipboard.writeText(row.token!)}
-              className="text-blue-600 hover:text-blue-800"
-              title="Copy Token"
-            >
-              <FaCopy size={14} />
-            </button>
+            <CopyButton value={row.token} title="Copy token" />
           </div>
         );
       },

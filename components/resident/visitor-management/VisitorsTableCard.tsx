@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Table from "@/components/tables/list/page";
 import { Eye, Edit, Trash2, QrCode } from "lucide-react";
 import type { ResidentVisitorData } from "./types";
+import { CopyButton } from "@/components/ui/copy-button";
 
 export function VisitorsTableCard({
   visitors,
@@ -46,9 +47,14 @@ export function VisitorsTableCard({
         key: "visitorCode",
         header: "Visitor Code",
         render: (item: ResidentVisitorData) => (
-          <span className="font-mono text-sm font-semibold">
-            {item.visitorCode}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-sm font-semibold">
+              {item.visitorCode}
+            </span>
+            {item.visitorCode ? (
+              <CopyButton value={item.visitorCode} title="Copy visitor code" />
+            ) : null}
+          </div>
         ),
       },
       {
@@ -80,7 +86,9 @@ export function VisitorsTableCard({
                   : "bg-gray-100 text-gray-800"
               }`}
             >
-              {item.visitingType === "LONG_VISIT" ? "Long Visit" : "Short Visit"}
+              {item.visitingType === "LONG_VISIT"
+                ? "Long Visit"
+                : "Short Visit"}
             </span>
           );
         },
@@ -111,7 +119,8 @@ export function VisitorsTableCard({
       {
         key: "isCheckedOut",
         header: "Checked Out",
-        render: (item: ResidentVisitorData) => (item.isCheckedOut ? "Yes" : "No"),
+        render: (item: ResidentVisitorData) =>
+          item.isCheckedOut ? "Yes" : "No",
       },
       {
         key: "actions",
@@ -140,9 +149,7 @@ export function VisitorsTableCard({
                 onViewQrCode(item);
               }}
               title={
-                item.qrCodeDataUrl
-                  ? "View QR code"
-                  : "QR code not available"
+                item.qrCodeDataUrl ? "View QR code" : "QR code not available"
               }
             >
               <QrCode className="w-4 h-4 mr-1" />
@@ -186,7 +193,9 @@ export function VisitorsTableCard({
         columns={columns}
         data={visitors || []}
         emptyMessage={
-          loading ? "Loading visitors..." : "You haven't created any visitors yet."
+          loading
+            ? "Loading visitors..."
+            : "You haven't created any visitors yet."
         }
         enableDateRangeFilter
         startDate={startDate}
@@ -202,4 +211,3 @@ export function VisitorsTableCard({
     </Card>
   );
 }
-

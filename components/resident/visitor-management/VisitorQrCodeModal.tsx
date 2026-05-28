@@ -3,8 +3,9 @@
 import React from "react";
 import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
-import { Download, Copy, QrCode } from "lucide-react";
+import { Download, QrCode } from "lucide-react";
 import { toast } from "react-toastify";
+import { CopyButton } from "@/components/ui/copy-button";
 
 export interface QrCodeVisitor {
   id?: string;
@@ -48,16 +49,6 @@ export function VisitorQrCodeModal({
       document.body.removeChild(link);
     } catch {
       toast.error("Failed to download QR code");
-    }
-  };
-
-  const handleCopyInvite = async () => {
-    if (!visitor.inviteLink) return;
-    try {
-      await navigator.clipboard.writeText(visitor.inviteLink);
-      toast.success("Invite link copied to clipboard");
-    } catch {
-      toast.error("Unable to copy invite link");
     }
   };
 
@@ -163,15 +154,14 @@ export function VisitorQrCodeModal({
 
         <div className="flex flex-col md:flex-row gap-2 pt-2">
           {visitor.inviteLink && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCopyInvite}
-              className="flex-1 cursor-pointer"
-            >
-              <Copy className="w-4 h-4 mr-2" />
-              Copy Invite Link
-            </Button>
+            <div className="flex-1">
+              <CopyButton
+                value={visitor.inviteLink}
+                label="Copy Invite Link"
+                title="Copy invite link"
+                className="w-full justify-center py-2 text-sm"
+              />
+            </div>
           )}
           {visitor.qrCodeDataUrl && (
             <Button

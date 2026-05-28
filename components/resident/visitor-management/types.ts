@@ -27,3 +27,16 @@ export interface ResidentVisitorData {
   verificationCode?: string;
 }
 
+export interface ResidentOccupantData {
+  id: string;
+  occupantCode?: string;
+  firstName?: string;
+  lastName?: string;
+  relationship?: string;
+  addressId?: string | { id: string; data?: Record<string, unknown> } | null;
+  estateId?: unknown;
+  residentId?: unknown;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
