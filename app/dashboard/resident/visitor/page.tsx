@@ -6,14 +6,24 @@ import { VisitorPageHeader } from "@/components/resident/visitor-management/Visi
 import { VisitorsTableCard } from "@/components/resident/visitor-management/VisitorsTableCard";
 import { VisitorUpsertModal } from "@/components/resident/visitor-management/VisitorUpsertModal";
 import { DeleteVisitorModal } from "@/components/resident/visitor-management/DeleteVisitorModal";
+import { OccupantUpsertModal } from "@/components/resident/visitor-management/OccupantUpsertModal";
+import { OccupantsTableCard } from "@/components/resident/visitor-management/OccupantsTableCard";
+import { DeleteOccupantModal } from "@/components/resident/visitor-management/DeleteOccupantModal";
 import { VisitorViewModal } from "@/components/resident/visitor-management/VisitorViewModal";
 import { VisitorQrCodeModal } from "@/components/resident/visitor-management/VisitorQrCodeModal";
-import type { ResidentVisitorData } from "@/components/resident/visitor-management/types";
+import type {
+  ResidentOccupantData,
+  ResidentVisitorData,
+} from "@/components/resident/visitor-management/types";
 import {
   getVisitorsByResident,
   getVisitorById,
   deleteVisitor,
 } from "@/redux/slice/resident/visitor/visitor";
+import {
+  deleteOccupant,
+  getOccupantsByEstate,
+} from "@/redux/slice/resident/visitor/occupant";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
   normalizeAddresses,
@@ -28,19 +38,26 @@ import Loader from "@/components/ui/Loader";
 export default function VisitorPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
+  const [occupantModalOpen, setOccupantModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(
     null,
   );
   const [mode, setMode] = useState<"create" | "edit" | "view">("create");
+  const [activeTab, setActiveTab] = useState<"visitors" | "occupants">(
+    "visitors",
+  );
 
   const [visitors, setVisitors] = useState<ResidentVisitorData[]>([]);
+  const [occupants, setOccupants] = useState<ResidentOccupantData[]>([]);
   const [pagination, setPagination] = useState<any>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [viewingVisitor, setViewingVisitor] =
     useState<ResidentVisitorData | null>(null);
   const [visitorToDelete, setVisitorToDelete] =
     useState<ResidentVisitorData | null>(null);
+  const [occupantToDelete, setOccupantToDelete] =
+    useState<ResidentOccupantData | null>(null);
   const [qrCodeVisitor, setQrCodeVisitor] =
     useState<ResidentVisitorData | null>(null);
 
@@ -105,6 +122,20 @@ export default function VisitorPage() {
         ).unwrap();
         setVisitors(visitorsRes?.data || []);
         setPagination(visitorsRes?.pagination || {});
+
+        // Get occupants for this estate
+        if (eId) {
+          const occRes = await dispatch(getOccupantsByEstate(eId)).unwrap();
+          const occData =
+            (occRes?.data?.occupants as ResidentOccupantData[] | undefined) ??
+            (occRes?.data as ResidentOccupantData[] | undefined) ??
+            (occRes?.occupants as ResidentOccupantData[] | undefined) ??
+            (occRes as ResidentOccupantData[] | undefined) ??
+            [];
+          setOccupants(Array.isArray(occData) ? occData : []);
+        } else {
+          setOccupants([]);
+        }
       } catch (err: any) {
         toast.error(err?.message || "Failed to fetch visitors");
       } finally {
@@ -130,6 +161,22 @@ export default function VisitorPage() {
       setPagination(visitorsRes?.pagination || {});
     } catch (err: any) {
       console.error("Refresh visitors failed:", err);
+    }
+  };
+
+  const refreshOccupants = async () => {
+    if (!estateId) return;
+    try {
+      const occRes = await dispatch(getOccupantsByEstate(estateId)).unwrap();
+      const occData =
+        (occRes?.data?.occupants as ResidentOccupantData[] | undefined) ??
+        (occRes?.data as ResidentOccupantData[] | undefined) ??
+        (occRes?.occupants as ResidentOccupantData[] | undefined) ??
+        (occRes as ResidentOccupantData[] | undefined) ??
+        [];
+      setOccupants(Array.isArray(occData) ? occData : []);
+    } catch (err: any) {
+      console.error("Refresh occupants failed:", err);
     }
   };
 
@@ -185,11 +232,13 @@ export default function VisitorPage() {
   const handleCloseModal = () => {
     setSelectedVisitorId(null);
     setOpen(false);
+    setOccupantModalOpen(false);
     setViewModalOpen(false);
     setViewingVisitor(null);
   };
 
   const handleCloseDeleteModal = () => setVisitorToDelete(null);
+  const handleCloseDeleteOccupantModal = () => setOccupantToDelete(null);
 
   const handleConfirmDelete = async () => {
     if (!visitorToDelete) return;
@@ -200,6 +249,18 @@ export default function VisitorPage() {
       await refreshVisitors();
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete visitor");
+    }
+  };
+
+  const handleConfirmDeleteOccupant = async () => {
+    if (!occupantToDelete) return;
+    try {
+      await dispatch(deleteOccupant(occupantToDelete.id)).unwrap();
+      toast.success("Occupant deleted successfully.");
+      setOccupantToDelete(null);
+      await refreshOccupants();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete occupant");
     }
   };
 
@@ -230,6 +291,13 @@ export default function VisitorPage() {
       (v) => toAddressIdString(v.addressId) === selectedAddressId,
     );
   }, [visitors, addressOptions.length, selectedAddressId]);
+
+  const displayedOccupants = useMemo(() => {
+    if (addressOptions.length <= 1 || !selectedAddressId) return occupants;
+    return occupants.filter(
+      (o) => toAddressIdString(o.addressId) === selectedAddressId,
+    );
+  }, [occupants, addressOptions.length, selectedAddressId]);
 
   // For form: pass addressId as string or { id, data: { block, unit } } to match VisitorFormProps
   const selectedAddressForForm = useMemo(():
@@ -264,6 +332,10 @@ export default function VisitorPage() {
       >
         <VisitorPageHeader
           onAddVisitor={() => handleOpenModal("create")}
+          onAddOccupant={() => {
+            setActiveTab("occupants");
+            setOccupantModalOpen(true);
+          }}
           disabled={!selectedAddressId || !userId || !estateId}
           disabledReason={
             !userId
@@ -282,46 +354,120 @@ export default function VisitorPage() {
           onChange={setSelectedAddressId}
         />
 
-        <VisitorsTableCard
-          visitors={displayedVisitors || []}
-          loading={false}
-          startDate={startDate}
-          endDate={endDate}
-          onDateRangeChange={({ startDate, endDate }) => {
-            setStartDate(startDate);
-            setEndDate(endDate);
-          }}
-          paginationInfo={{
-            total:
-              addressOptions.length > 1
-                ? displayedVisitors.length
-                : pagination?.total || visitors.length || 0,
-            current: Number(pagination?.page) || 1,
-            pageSize: Number(pagination?.limit) || 10,
-          }}
-          onPageChange={handlePageChange}
-          onExportRequest={
-            userId
-              ? async () => {
-                  const shouldApplyDate = Boolean(startDate && endDate);
-                  const res = await dispatch(
-                    getVisitorsByResident({
-                      residentId: userId,
-                      page: 1,
-                      limit: 50000,
-                      startDate: shouldApplyDate ? startDate : undefined,
-                      endDate: shouldApplyDate ? endDate : undefined,
-                    }),
-                  ).unwrap();
-                  return res?.data ?? [];
-                }
-              : undefined
-          }
-          onView={(id) => handleOpenModal("view", id)}
-          onEdit={(id) => handleOpenModal("edit", id)}
-          onDelete={(visitor) => setVisitorToDelete(visitor)}
-          onViewQrCode={(visitor) => setQrCodeVisitor(visitor)}
-        />
+        <div
+          role="tablist"
+          aria-label="Visitor management tabs"
+          className="flex gap-2 border-b border-border overflow-x-auto"
+        >
+          {activeTab === "visitors" ? (
+            <button
+              type="button"
+              onClick={() => setActiveTab("visitors")}
+              role="tab"
+              data-state="active"
+              aria-selected="true"
+              className={[
+                "px-4 py-3 text-sm font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap",
+                "border-primary text-primary",
+              ].join(" ")}
+            >
+              My Visitors
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setActiveTab("visitors")}
+              role="tab"
+              data-state="inactive"
+              aria-selected="false"
+              className={[
+                "px-4 py-3 text-sm font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap",
+                "border-transparent text-muted-foreground hover:text-foreground",
+              ].join(" ")}
+            >
+              My Visitors
+            </button>
+          )}
+
+          {activeTab === "occupants" ? (
+            <button
+              type="button"
+              onClick={() => setActiveTab("occupants")}
+              role="tab"
+              data-state="active"
+              aria-selected="true"
+              className={[
+                "px-4 py-3 text-sm font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap",
+                "border-primary text-primary",
+              ].join(" ")}
+            >
+              My Occupants
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setActiveTab("occupants")}
+              role="tab"
+              data-state="inactive"
+              aria-selected="false"
+              className={[
+                "px-4 py-3 text-sm font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap",
+                "border-transparent text-muted-foreground hover:text-foreground",
+              ].join(" ")}
+            >
+              My Occupants
+            </button>
+          )}
+        </div>
+
+        {activeTab === "visitors" ? (
+          <VisitorsTableCard
+            visitors={displayedVisitors || []}
+            loading={false}
+            startDate={startDate}
+            endDate={endDate}
+            onDateRangeChange={({ startDate, endDate }) => {
+              setStartDate(startDate);
+              setEndDate(endDate);
+            }}
+            paginationInfo={{
+              total:
+                addressOptions.length > 1
+                  ? displayedVisitors.length
+                  : pagination?.total || visitors.length || 0,
+              current: Number(pagination?.page) || 1,
+              pageSize: Number(pagination?.limit) || 10,
+            }}
+            onPageChange={handlePageChange}
+            onExportRequest={
+              userId
+                ? async () => {
+                    const shouldApplyDate = Boolean(startDate && endDate);
+                    const res = await dispatch(
+                      getVisitorsByResident({
+                        residentId: userId,
+                        page: 1,
+                        limit: 50000,
+                        startDate: shouldApplyDate ? startDate : undefined,
+                        endDate: shouldApplyDate ? endDate : undefined,
+                      }),
+                    ).unwrap();
+                    return res?.data ?? [];
+                  }
+                : undefined
+            }
+            onView={(id) => handleOpenModal("view", id)}
+            onEdit={(id) => handleOpenModal("edit", id)}
+            onDelete={(visitor) => setVisitorToDelete(visitor)}
+            onViewQrCode={(visitor) => setQrCodeVisitor(visitor)}
+          />
+        ) : (
+          <OccupantsTableCard
+            occupants={displayedOccupants || []}
+            loading={false}
+            onDelete={(occupant) => setOccupantToDelete(occupant)}
+          />
+        )}
 
         <VisitorUpsertModal
           open={open && (mode === "create" || mode === "edit")}
@@ -334,10 +480,23 @@ export default function VisitorPage() {
           onClose={handleCloseModal}
         />
 
+        <OccupantUpsertModal
+          open={occupantModalOpen}
+          addressId={selectedAddressForForm ?? ""}
+          onSubmitSuccess={refreshOccupants}
+          onClose={handleCloseModal}
+        />
+
         <DeleteVisitorModal
           visitor={visitorToDelete}
           onClose={handleCloseDeleteModal}
           onConfirm={handleConfirmDelete}
+        />
+
+        <DeleteOccupantModal
+          occupant={occupantToDelete}
+          onClose={handleCloseDeleteOccupantModal}
+          onConfirm={handleConfirmDeleteOccupant}
         />
 
         <VisitorViewModal
