@@ -43,6 +43,10 @@ interface TableProps<T> {
   endDate?: string;
   /** Called when date range changes. Dates are YYYY-MM-DD or empty string when cleared. */
   onDateRangeChange?: (range: { startDate: string; endDate: string }) => void;
+  /** Placeholder text for the start date input when no date is selected. */
+  startDatePlaceholder?: string;
+  /** Placeholder text for the end date input when no date is selected. */
+  endDatePlaceholder?: string;
   /**
    * Auto-initialize the date range filter when empty.
    * Default: 30 (last 30 days). Set to 0/undefined to disable.
@@ -78,6 +82,8 @@ export default function Table<T extends { id?: string }>({
   startDate,
   endDate,
   onDateRangeChange,
+  startDatePlaceholder,
+  endDatePlaceholder,
   defaultDateRangeDays = 30,
   enableExport = false,
   exportFileName = "export",
@@ -224,6 +230,7 @@ export default function Table<T extends { id?: string }>({
                     });
                   }}
                   ariaLabel="Start date"
+                  placeholder={startDatePlaceholder}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -245,6 +252,7 @@ export default function Table<T extends { id?: string }>({
                     });
                   }}
                   ariaLabel="End date"
+                  placeholder={endDatePlaceholder}
                 />
               </div>
               {showDateReset && (

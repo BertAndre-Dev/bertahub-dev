@@ -46,8 +46,8 @@ interface EstateOption {
   value: string;
 }
 
-/** Matches Table defaultDateRangeDays (30) so we fetch once with dates on load. */
-function getDefaultDateRange(): { startDate: string; endDate: string } {
+/** Example dates for empty inputs (display only; not sent until the user picks a range). */
+function getDateRangePlaceholders(): { start: string; end: string } {
   const now = new Date();
   const start = new Date(now);
   start.setUTCDate(start.getUTCDate() - 30);
@@ -55,8 +55,10 @@ function getDefaultDateRange(): { startDate: string; endDate: string } {
     new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
       .toISOString()
       .slice(0, 10);
-  return { startDate: toIso(start), endDate: toIso(now) };
+  return { start: toIso(start), end: toIso(now) };
 }
+
+const DATE_RANGE_PLACEHOLDERS = getDateRangePlaceholders();
 
 const PAGE_LIMIT = 10;
 
@@ -76,10 +78,8 @@ export default function AdminUserPage() {
     null,
   );
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
-  const [startDate, setStartDate] = useState(
-    () => getDefaultDateRange().startDate,
-  );
-  const [endDate, setEndDate] = useState(() => getDefaultDateRange().endDate);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const { allAdminUsers, pagination, loading } = useSelector(
     (state: RootState) => {
@@ -424,6 +424,8 @@ export default function AdminUserPage() {
           defaultDateRangeDays={0}
           startDate={startDate}
           endDate={endDate}
+          startDatePlaceholder={DATE_RANGE_PLACEHOLDERS.start}
+          endDatePlaceholder={DATE_RANGE_PLACEHOLDERS.end}
           onDateRangeChange={({ startDate, endDate }) => {
             setStartDate(startDate);
             setEndDate(endDate);

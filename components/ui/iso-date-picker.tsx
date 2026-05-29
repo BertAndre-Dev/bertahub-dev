@@ -110,11 +110,13 @@ export function IsoLinkedRangeStart({
   onStartChange,
   id,
   ariaLabel,
+  placeholder,
   disabled,
   className,
 }: Omit<LinkedRangeBase, "onEndChange"> & {
   id?: string;
   ariaLabel?: string;
+  placeholder?: string;
 }) {
   const s = parseIsoToDate(startDate);
   const e = parseIsoToDate(endDate);
@@ -128,6 +130,7 @@ export function IsoLinkedRangeStart({
       endDate={e}
       maxDate={e ?? undefined}
       dateFormat="yyyy-MM-dd"
+      placeholderText={placeholder}
       disabled={disabled}
       className={cn(inputClassName, className)}
       wrapperClassName="w-full"
@@ -147,11 +150,13 @@ export function IsoLinkedRangeEnd({
   onEndChange,
   id,
   ariaLabel,
+  placeholder,
   disabled,
   className,
 }: Omit<LinkedRangeBase, "onStartChange"> & {
   id?: string;
   ariaLabel?: string;
+  placeholder?: string;
 }) {
   const s = parseIsoToDate(startDate);
   const e = parseIsoToDate(endDate);
@@ -165,6 +170,7 @@ export function IsoLinkedRangeEnd({
       endDate={e}
       minDate={s ?? undefined}
       dateFormat="yyyy-MM-dd"
+      placeholderText={placeholder}
       disabled={disabled}
       className={cn(inputClassName, className)}
       wrapperClassName="w-full"

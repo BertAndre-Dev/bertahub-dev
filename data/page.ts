@@ -98,16 +98,31 @@ export const superAdminNav = [
 ];
 
 export const staffNav = [
-  // {
-  //   label: "Overview",
-  //   icon: FiHome,
-  //   path: "/dashboard/super-admin/dashboard",
-  // },
-  // {
-  //   label: "Transactions",
-  //   icon: ArrowLeftRight,
-  //   path: "/dashboard/super-admin/transactions",
-  // },
+  {
+    label: "Maintenance Requests",
+    icon: Hammer,
+    path: "/dashboard/staff/maintenance",
+    moduleKey: "complaints",
+  },
+  {
+    label: "Community Chat",
+    icon: MessagesSquare,
+    path: "/dashboard/staff/community",
+  },
+  {
+    label: "Contact Support",
+    icon: MessageCircle,
+    path: "/dashboard/staff/support",
+  },
+  {
+    label: "Settings",
+    icon: FiSettings,
+    path: "/dashboard/staff/settings",
+  },
+  {
+    label: "Logout",
+    icon: FiLogOut,
+  },
 ];
 
 export const companyNav = [
