@@ -285,7 +285,6 @@ export default function AdminMeterManagement() {
             title="View details"
           >
             <Eye className="w-4 h-4" />
-            View details
           </Button>
           <Button
             variant="destructive"

@@ -6,7 +6,7 @@ import Modal from "@/components/modal/page";
 import Table from "@/components/tables/list/page";
 import { toast } from "react-toastify";
 import { RootState, AppDispatch } from "@/redux/store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "lucide-react";
 import { getAllEstateMeter } from "@/redux/slice/admin/meter-mgt/meter-mgt";
@@ -44,6 +44,8 @@ interface AdminMeterData {
   vendorData?: VendorData;
 }
 
+const PAGE_LIMIT = 10;
+
 export default function AdminMeterManagement() {
   const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = useState(false);
@@ -67,7 +69,22 @@ export default function AdminMeterManagement() {
     },
   );
 
-  // ✅ Fetch user and meters initially
+  const fetchMeters = useCallback(
+    async (page = 1) => {
+      if (!estateId) return;
+      await dispatch(
+        getAllEstateMeter({
+          estateId,
+          page,
+          limit: PAGE_LIMIT,
+          search: search || undefined,
+        }),
+      ).unwrap();
+    },
+    [dispatch, estateId, search],
+  );
+
+  // Bootstrap signed-in user and estate only (no meter fetch here).
   useEffect(() => {
     (async () => {
       try {
@@ -97,46 +114,21 @@ export default function AdminMeterManagement() {
         }
 
         setEstateId(estateIdValue);
-        await dispatch(
-          getAllEstateMeter({
-            estateId: estateIdValue,
-            page: 1,
-            limit: 10,
-            search: search || undefined,
-          }),
-        ).unwrap();
       } catch (error: any) {
         toast.error(error?.message);
       }
     })();
   }, [dispatch]);
 
-  // ✅ Refetch when search changes
+  // Single fetch when estate or search changes.
   useEffect(() => {
     if (!estateId) return;
-    dispatch(
-      getAllEstateMeter({
-        estateId,
-        page: 1,
-        limit: 10,
-        search: search || undefined,
-      }),
-    )
-      .unwrap()
-      .catch((error: any) => toast.error(error?.message));
-  }, [search, estateId]);
+    fetchMeters(1).catch((error: any) => toast.error(error?.message));
+  }, [estateId, fetchMeters]);
 
   const handleRefresh = async () => {
-    if (!estateId) return;
     try {
-      await dispatch(
-        getAllEstateMeter({
-          estateId,
-          page: 1,
-          limit: 10,
-          search: search || undefined,
-        }),
-      ).unwrap();
+      await fetchMeters(Number(pagination?.currentPage) || 1);
     } catch (error: any) {
       toast.error(error?.message);
     }
@@ -260,7 +252,7 @@ export default function AdminMeterManagement() {
           const stats = [
             {
               label: "Total Meters",
-              value: allAdminMeters?.length || 0, // ✅ value from Redux
+              value: pagination?.total ?? 0,
               icon: IoSpeedometerOutline,
               color: "bg-[#FEE6D480]",
             },
@@ -314,17 +306,9 @@ export default function AdminMeterManagement() {
             pageSize: Number(pagination?.pageSize) || 10,
           }}
           onPageChange={(page) => {
-            if (!estateId) return;
-            dispatch(
-              getAllEstateMeter({
-                estateId,
-                page,
-                limit: Number(pagination?.pageSize) || 10,
-                search: search || undefined,
-              }),
-            )
-              .unwrap()
-              .catch(() => toast.error("Failed to change page"));
+            fetchMeters(page).catch(() =>
+              toast.error("Failed to change page"),
+            );
           }}
           enableExport
           exportFileName="meters"

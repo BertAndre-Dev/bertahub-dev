@@ -13,7 +13,7 @@ import {
 import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Modal from "@/components/modal/page";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import InviteUserForm from "@/components/admin/user-form/page";
@@ -46,6 +46,20 @@ interface EstateOption {
   value: string;
 }
 
+/** Matches Table defaultDateRangeDays (30) so we fetch once with dates on load. */
+function getDefaultDateRange(): { startDate: string; endDate: string } {
+  const now = new Date();
+  const start = new Date(now);
+  start.setUTCDate(start.getUTCDate() - 30);
+  const toIso = (d: Date) =>
+    new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+      .toISOString()
+      .slice(0, 10);
+  return { startDate: toIso(start), endDate: toIso(now) };
+}
+
+const PAGE_LIMIT = 10;
+
 export default function AdminUserPage() {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -62,8 +76,10 @@ export default function AdminUserPage() {
     null,
   );
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(
+    () => getDefaultDateRange().startDate,
+  );
+  const [endDate, setEndDate] = useState(() => getDefaultDateRange().endDate);
 
   const { allAdminUsers, pagination, loading } = useSelector(
     (state: RootState) => {
@@ -78,31 +94,28 @@ export default function AdminUserPage() {
     },
   );
 
-  const fetchAdminUsers = async (
-    estateId?: string,
-    page = 1,
-    searchTerm?: string,
-  ) => {
-    if (!estateId) return;
+  const fetchAdminUsers = useCallback(
+    async (page = 1) => {
+      const estateId = selectedEstate?.value;
+      if (!estateId) return;
 
-    try {
       const shouldApplyDate = Boolean(startDate && endDate);
       await dispatch(
         getAllUsersByEstate({
           estateId,
           page,
-          limit: 10,
-          search: searchTerm,
+          limit: PAGE_LIMIT,
+          search: search || undefined,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
         }),
       ).unwrap();
       setCurrentPage(page);
-    } catch {
-      toast.error("Failed to fetch users.");
-    }
-  };
+    },
+    [dispatch, selectedEstate?.value, search, startDate, endDate],
+  );
 
+  // Bootstrap signed-in user and estate only (no user list fetch here).
   useEffect(() => {
     (async () => {
       try {
@@ -130,7 +143,6 @@ export default function AdminUserPage() {
 
         if (estateId) {
           setSelectedEstate({ label: "My Estate", value: estateId });
-          await fetchAdminUsers(estateId, 1, "");
         } else {
           toast.warning("No estate found for this user.");
         }
@@ -140,11 +152,11 @@ export default function AdminUserPage() {
     })();
   }, [dispatch]);
 
+  // Single fetch when estate, search, or date range changes.
   useEffect(() => {
-    if (selectedEstate?.value) {
-      fetchAdminUsers(selectedEstate.value, 1, search);
-    }
-  }, [selectedEstate, search, startDate, endDate]);
+    if (!selectedEstate?.value) return;
+    fetchAdminUsers(1).catch(() => toast.error("Failed to fetch users."));
+  }, [selectedEstate?.value, fetchAdminUsers]);
 
   const handleEstateModal = (user?: AdminUserData) => {
     setSelectedUser(user || null);
@@ -168,9 +180,9 @@ export default function AdminUserPage() {
       await dispatch(suspendUser(suspendUserItem.id)).unwrap();
       toast.info(`${suspendUserItem.firstName} has been suspended.`);
       setSuspendUserItem(null);
-      if (selectedEstate?.value) {
-        fetchAdminUsers(selectedEstate.value, 1, search);
-      }
+      await fetchAdminUsers(1).catch(() =>
+        toast.error("Failed to refresh users."),
+      );
     } catch (err: any) {
       toast.error(err?.message || "Failed to suspend user.");
     } finally {
@@ -183,9 +195,9 @@ export default function AdminUserPage() {
     try {
       await dispatch(activateUser(user.id)).unwrap();
       toast.success(`${user.firstName} has been activated.`);
-      if (selectedEstate?.value) {
-        fetchAdminUsers(selectedEstate.value, 1, search);
-      }
+      await fetchAdminUsers(1).catch(() =>
+        toast.error("Failed to refresh users."),
+      );
     } catch (err: any) {
       toast.error(err?.message || "Failed to activate user.");
     }
@@ -200,9 +212,9 @@ export default function AdminUserPage() {
         await dispatch(deleteUser(id)).unwrap();
         toast.success(`${name} deleted successfully!`);
 
-        if (selectedEstate?.value) {
-          fetchAdminUsers(selectedEstate.value, 1, search);
-        }
+        await fetchAdminUsers(1).catch(() =>
+          toast.error("Failed to refresh users."),
+        );
       },
     });
   };
@@ -362,10 +374,7 @@ export default function AdminUserPage() {
           const stats = [
             {
               label: "Total Residents",
-              value:
-                allAdminUsers?.filter(
-                  (u: AdminUserData) => u.role === "resident",
-                )?.length || 0,
+              value: pagination?.total ?? 0,
               icon: UsersRound,
               color: "bg-[#FEE6D480]",
             },
@@ -412,6 +421,7 @@ export default function AdminUserPage() {
           data={allAdminUsers}
           emptyMessage="No users found for this estate"
           enableDateRangeFilter
+          defaultDateRangeDays={0}
           startDate={startDate}
           endDate={endDate}
           onDateRangeChange={({ startDate, endDate }) => {
@@ -426,8 +436,9 @@ export default function AdminUserPage() {
             pageSize: Number(pagination?.pageSize) || 10,
           }}
           onPageChange={(page) => {
-            if (!selectedEstate?.value) return;
-            fetchAdminUsers(selectedEstate.value, page, search);
+            fetchAdminUsers(page).catch(() =>
+              toast.error("Failed to change page"),
+            );
           }}
           enableExport
           exportFileName="users"
@@ -457,7 +468,11 @@ export default function AdminUserPage() {
         <Modal visible={open} onClose={handleCloseModal}>
           <InviteUserForm
             close={handleCloseModal}
-            refresh={() => fetchAdminUsers(selectedEstate?.value, 1, search)}
+            refresh={() =>
+              fetchAdminUsers(1).catch(() =>
+                toast.error("Failed to refresh users."),
+              )
+            }
           />
         </Modal>
       )}

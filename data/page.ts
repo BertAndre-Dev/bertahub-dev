@@ -97,6 +97,19 @@ export const superAdminNav = [
   },
 ];
 
+export const staffNav = [
+  // {
+  //   label: "Overview",
+  //   icon: FiHome,
+  //   path: "/dashboard/super-admin/dashboard",
+  // },
+  // {
+  //   label: "Transactions",
+  //   icon: ArrowLeftRight,
+  //   path: "/dashboard/super-admin/transactions",
+  // },
+];
+
 export const companyNav = [
   {
     label: "User Management",
