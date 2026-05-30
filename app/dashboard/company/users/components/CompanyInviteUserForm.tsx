@@ -102,7 +102,7 @@ export default function CompanyInviteUserForm({
           lastName: formData.lastName.trim(),
           email: formData.email.trim(),
           role: formData.role,
-          residentType: "owner",
+          residentType: null,
           addressIds: [],
         }),
       ).unwrap();

@@ -21,6 +21,7 @@ import {
   getStaffChatGroupById,
   getStaffChatGroups,
   getStaffGroupMessages,
+  replyToStaffGroupMessage,
   sendStaffGroupMessage,
 } from "./staff-community-thunks";
 
@@ -329,6 +330,29 @@ const staffCommunitySlice = createSlice({
       .addCase(sendStaffGroupMessage.rejected, (state, action) => {
         state.sendMessageLoading = "failed";
         state.error = action.payload?.message ?? "Failed to send message.";
+      })
+
+      .addCase(replyToStaffGroupMessage.pending, (state) => {
+        state.sendMessageLoading = "isLoading";
+        state.error = null;
+      })
+      .addCase(replyToStaffGroupMessage.fulfilled, (state, action) => {
+        state.sendMessageLoading = "succeeded";
+        const gid = action.meta.arg.groupId;
+        const msg = action.payload.data;
+        if (state.activeMessagesGroupId === gid && msg) {
+          const exists = state.groupMessages.some((m) => m._id === msg._id);
+          if (!exists) {
+            state.groupMessages = sortMessagesAsc([
+              ...state.groupMessages,
+              msg,
+            ]);
+          }
+        }
+      })
+      .addCase(replyToStaffGroupMessage.rejected, (state, action) => {
+        state.sendMessageLoading = "failed";
+        state.error = action.payload?.message ?? "Failed to send reply.";
       })
 
       .addCase(editStaffGroupMessage.pending, (state) => {

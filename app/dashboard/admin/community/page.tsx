@@ -14,6 +14,7 @@ import {
 } from "@/lib/community-chat-ui";
 import { groupMessageToCommunity } from "@/lib/community-chat-map";
 import { displayNameFromSignedInUser } from "@/lib/user-display-name";
+import { extractUserId } from "@/lib/user-id";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
@@ -32,10 +33,12 @@ import {
   getGroupMessages,
   promoteGroupAdmin,
   removeGroupMembers,
+  replyToGroupMessage,
   sendGroupMessage,
   updateChatGroup,
 } from "@/redux/slice/community-group/community-group-thunks";
 import type { ChatGroup, ChatGroupRoleToAdd, GroupMessageType } from "@/types/community-group";
+import type { CommunityReplyTarget } from "@/types/community-chat-ui";
 import type { RootState, AppDispatch } from "@/redux/store";
 import Loader from "@/components/ui/Loader";
 import { useCommunityChatGroupRoom } from "@/hooks/useCommunityChatGroupRoom";
@@ -48,7 +51,12 @@ export default function AdminCommunityChatPage() {
   const [draftByGroup, setDraftByGroup] = useState<Record<string, string>>({});
   const [createOpen, setCreateOpen] = useState(false);
   const [groupInfoOpen, setGroupInfoOpen] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<CommunityReplyTarget | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const authUserId = useSelector((state: RootState) =>
+    extractUserId((state.auth.user ?? null) as Record<string, unknown> | null),
+  );
+  const effectiveUserId = currentUserId ?? authUserId;
   const [estateName, setEstateName] = useState("Estate");
   const [messageSelfLabel, setMessageSelfLabel] = useState("You");
 
@@ -57,7 +65,7 @@ export default function AdminCommunityChatPage() {
   useCommunityChatGroupRoom({
     groupId: selectedId,
     token: authToken,
-    currentUserId,
+    currentUserId: effectiveUserId,
   });
 
   const {
@@ -96,12 +104,7 @@ export default function AdminCommunityChatPage() {
       try {
         const res = await dispatch(getSignedInUser()).unwrap();
         const data = (res as { data?: Record<string, unknown> })?.data ?? res;
-        const id =
-          typeof (data as { id?: string })?.id === "string"
-            ? (data as { id: string }).id
-            : typeof (data as { _id?: string })?._id === "string"
-              ? (data as { _id: string })._id
-              : null;
+        const id = extractUserId(data as Record<string, unknown>);
         setCurrentUserId(id);
         const name =
           (data?.estateId as { name?: string } | undefined)?.name ??
@@ -270,13 +273,16 @@ export default function AdminCommunityChatPage() {
     [selectedGroupUi],
   );
 
-  const messages = useMemo(
-    () =>
-      groupMessages.map((m) =>
-        groupMessageToCommunity(m, currentUserId, messageSelfLabel),
-      ),
-    [groupMessages, currentUserId, messageSelfLabel],
-  );
+  const messages = useMemo(() => {
+    const byId = new Map(groupMessages.map((m) => [m._id, m]));
+    return groupMessages.map((m) =>
+      groupMessageToCommunity(m, effectiveUserId, messageSelfLabel, byId),
+    );
+  }, [groupMessages, effectiveUserId, messageSelfLabel]);
+
+  useEffect(() => {
+    setReplyingTo(null);
+  }, [selectedId]);
 
   const draft = selectedId ? draftByGroup[selectedId] ?? "" : "";
 
@@ -287,14 +293,27 @@ export default function AdminCommunityChatPage() {
       const hasAtt = Boolean(opts?.attachments?.length);
       if (!text && !hasAtt) return;
       try {
-        await dispatch(
-          sendGroupMessage({
-            groupId: selectedId,
-            content: text,
-            messageType: opts?.messageType ?? "text",
-            attachments: hasAtt ? opts?.attachments : undefined,
-          }),
-        ).unwrap();
+        if (replyingTo) {
+          await dispatch(
+            replyToGroupMessage({
+              groupId: selectedId,
+              messageId: replyingTo.messageId,
+              content: text,
+              messageType: opts?.messageType ?? "text",
+              attachments: hasAtt ? opts?.attachments : undefined,
+            }),
+          ).unwrap();
+          setReplyingTo(null);
+        } else {
+          await dispatch(
+            sendGroupMessage({
+              groupId: selectedId,
+              content: text,
+              messageType: opts?.messageType ?? "text",
+              attachments: hasAtt ? opts?.attachments : undefined,
+            }),
+          ).unwrap();
+        }
         setDraftByGroup((prev) => ({ ...prev, [selectedId]: "" }));
       } catch (e: unknown) {
         const msg =
@@ -308,7 +327,20 @@ export default function AdminCommunityChatPage() {
         throw e;
       }
     },
-    [selectedId, draft, dispatch],
+    [selectedId, draft, dispatch, replyingTo],
+  );
+
+  const handleReplyMessage = useCallback(
+    (messageId: string) => {
+      const target = messages.find((m) => m.id === messageId);
+      if (!target || target.isDeleted) return;
+      setReplyingTo({
+        messageId: target.id,
+        sender: target.sender,
+        text: target.text,
+      });
+    },
+    [messages],
   );
 
   const handleEditMessage = useCallback(
@@ -562,9 +594,12 @@ export default function AdminCommunityChatPage() {
             onOpenGroupInfo={() => setGroupInfoOpen(true)}
             sendDisabled={sendMessageLoading === "isLoading"}
             sending={sendMessageLoading === "isLoading"}
-            currentUserId={currentUserId}
+            currentUserId={effectiveUserId}
             onEditMessage={handleEditMessage}
             onDeleteMessage={handleDeleteMessage}
+            onReplyMessage={handleReplyMessage}
+            replyingTo={replyingTo}
+            onCancelReply={() => setReplyingTo(null)}
             messageActionsDisabled={
               editMessageLoading === "isLoading" ||
               deleteMessageLoading === "isLoading"

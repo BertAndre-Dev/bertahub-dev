@@ -13,6 +13,7 @@ import type {
   EditGroupMessagePayload,
   GroupMessage,
   GroupMessagesListResponse,
+  ReplyToGroupMessagePayload,
   SendGroupMessagePayload,
 } from "@/types/community-group";
 
@@ -159,6 +160,49 @@ export const sendStaffGroupMessage = createAsyncThunk<
     const err = error as { response?: { data?: { message?: string } } };
     return rejectWithValue({
       message: err?.response?.data?.message || "Failed to send message.",
+    });
+  }
+});
+
+/** POST /api/v1/chat/groups/{groupId}/messages/{messageId}/reply */
+export const replyToStaffGroupMessage = createAsyncThunk<
+  ApiResponse<GroupMessage>,
+  ReplyToGroupMessagePayload,
+  { rejectValue: RejectValue }
+>("staffCommunity/replyToGroupMessage", async (payload, { rejectWithValue }) => {
+  try {
+    const id = payload.groupId?.trim();
+    const messageId = payload.messageId?.trim();
+    if (!id || !isValidCommunityObjectId(id)) {
+      return rejectWithValue(invalidIdMessage("groupId"));
+    }
+    if (!messageId || !isValidCommunityObjectId(messageId)) {
+      return rejectWithValue(invalidIdMessage("messageId"));
+    }
+    if (!payload.content?.trim() && !payload.attachments?.length) {
+      return rejectWithValue({
+        message: "Message content or attachment required.",
+      });
+    }
+    const body: Record<string, unknown> = {
+      content: payload.content?.trim() ?? "",
+      messageType: payload.messageType ?? "text",
+    };
+    if (payload.attachments?.length) body.attachments = payload.attachments;
+    const res = await axiosInstance.post(
+      `/api/v1/chat/groups/${id}/messages/${messageId}/reply`,
+      body,
+    );
+    const raw = res.data as ApiResponse<Parameters<typeof normalizeGroupMessage>[0]>;
+    const data = raw.data ? normalizeGroupMessage(raw.data) : null;
+    if (!data) {
+      return rejectWithValue({ message: "Invalid response from server." });
+    }
+    return { ...raw, data };
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue({
+      message: err?.response?.data?.message || "Failed to send reply.",
     });
   }
 });

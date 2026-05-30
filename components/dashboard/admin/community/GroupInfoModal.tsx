@@ -18,6 +18,7 @@ import { GroupMemberRow } from "./GroupMemberRow";
 import { CommunityGroupAvatar } from "./CommunityGroupAvatar";
 import { getAllUsersByEstate } from "@/redux/slice/admin/user-mgt/user";
 import type { AppDispatch } from "@/redux/store";
+import { chatGroupRoleToApiRole } from "@/lib/estate-user-roles";
 
 const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
 
@@ -167,6 +168,7 @@ export function GroupInfoModal({
             estateId: eid,
             page,
             limit: 25,
+            role: chatGroupRoleToApiRole(roleToAdd),
             search: debouncedEstateSearch || undefined,
           }),
         ).unwrap()) as {
@@ -206,7 +208,7 @@ export function GroupInfoModal({
         setEstateUsersLoading(false);
       }
     },
-    [dispatch, estateId, showMemberAdminTools, debouncedEstateSearch],
+    [dispatch, estateId, showMemberAdminTools, debouncedEstateSearch, roleToAdd],
   );
 
   useEffect(() => {
@@ -214,7 +216,14 @@ export function GroupInfoModal({
       return;
     }
     void fetchEstateUsers(1, false);
-  }, [open, showMemberAdminTools, estateId, debouncedEstateSearch, fetchEstateUsers]);
+  }, [
+    open,
+    showMemberAdminTools,
+    estateId,
+    debouncedEstateSearch,
+    roleToAdd,
+    fetchEstateUsers,
+  ]);
 
   const availableToAdd = useMemo(
     () => estateUsers.filter((u) => !idsInGroup.has(u.id)),

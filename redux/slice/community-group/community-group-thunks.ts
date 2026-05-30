@@ -13,6 +13,7 @@ import type {
   GroupMessagesListResponse,
   PromoteGroupAdminPayload,
   RemoveGroupMembersPayload,
+  ReplyToGroupMessagePayload,
   SendGroupMessagePayload,
   UpdateChatGroupPayload,
 } from "@/types/community-group";
@@ -329,6 +330,8 @@ type ApiGroupMessage = {
   content?: string;
   messageType?: string;
   senderId?: string | ApiUser;
+  sender?: string | ApiUser;
+  userId?: string;
   /** Plain string senderId responses include this (e.g. send message, history) */
   senderName?: string;
   createdAt?: string;
@@ -403,7 +406,9 @@ export function normalizeGroupMessage(raw: ApiGroupMessage): GroupMessage {
   const _id = (raw._id ?? raw.id ?? "").toString();
   const explicitName =
     typeof raw.senderName === "string" ? raw.senderName.trim() : "";
-  const fromSender = normalizeSender(raw.senderId);
+  const fromSender = normalizeSender(
+    raw.senderId ?? raw.sender ?? raw.userId,
+  );
   const senderId = fromSender.senderId;
   const senderName =
     explicitName || fromSender.senderName || "Someone";
@@ -593,6 +598,47 @@ export const sendGroupMessage = createAsyncThunk<
     const err = error as { response?: { data?: { message?: string } } };
     return rejectWithValue({
       message: err?.response?.data?.message || "Failed to send message.",
+    });
+  }
+});
+
+// POST /api/v1/chat/groups/{groupId}/messages/{messageId}/reply
+export const replyToGroupMessage = createAsyncThunk<
+  ApiResponse<GroupMessage>,
+  ReplyToGroupMessagePayload,
+  { rejectValue: RejectValue }
+>("communityGroup/replyToGroupMessage", async (payload, { rejectWithValue }) => {
+  try {
+    const id = payload.groupId?.trim();
+    const messageId = payload.messageId?.trim();
+    if (!id || !isValidObjectId(id)) {
+      return rejectWithValue(invalidIdMessage("groupId"));
+    }
+    if (!messageId || !isValidObjectId(messageId)) {
+      return rejectWithValue(invalidIdMessage("messageId"));
+    }
+    if (!payload.content?.trim() && !payload.attachments?.length) {
+      return rejectWithValue({ message: "Message content or attachment required." });
+    }
+    const body: Record<string, unknown> = {
+      content: payload.content?.trim() ?? "",
+      messageType: payload.messageType ?? "text",
+    };
+    if (payload.attachments?.length) body.attachments = payload.attachments;
+    const res = await axiosInstance.post(
+      `/api/v1/chat/groups/${id}/messages/${messageId}/reply`,
+      body,
+    );
+    const raw = res.data as ApiResponse<ApiGroupMessage>;
+    const data = raw.data ? normalizeGroupMessage(raw.data) : null;
+    if (!data) {
+      return rejectWithValue({ message: "Invalid response from server." });
+    }
+    return { ...raw, data };
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    return rejectWithValue({
+      message: err?.response?.data?.message || "Failed to send reply.",
     });
   }
 });

@@ -7,13 +7,15 @@ export type GetCompanyUsersParams = {
   search?: string;
   startDate?: string;
   endDate?: string;
+  role?: string;
 };
 
 function buildQuery(params: GetCompanyUsersParams) {
-  const { page = 1, limit = 10, search, startDate, endDate } = params;
+  const { page = 1, limit = 10, search, startDate, endDate, role } = params;
   const query = new URLSearchParams();
   if (page != null) query.set("page", String(page));
   if (limit != null) query.set("limit", String(limit));
+  query.set("role", (role?.trim() || "resident"));
   if (search?.trim()) query.set("search", search.trim());
   if (startDate) query.set("startDate", startDate);
   if (endDate) query.set("endDate", endDate);
