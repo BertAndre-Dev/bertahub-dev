@@ -27,12 +27,17 @@ import { getAllEstates } from "@/redux/slice/super-admin/super-admin-est-mgt/sup
 import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Modal from "@/components/modal/page";
 import InviteUserForm from "@/components/super-admin/user-form/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import Loader from "@/components/ui/Loader";
 import { UserStatusModal } from "./components/UserStatusModal";
+import {
+  DEFAULT_ESTATE_USER_ROLE,
+  ESTATE_USER_ROLE_FILTER_OPTIONS,
+  type EstateUserRoleFilter,
+} from "@/lib/estate-user-roles";
 
 interface UserAddress {
   id: string;
@@ -145,11 +150,16 @@ export default function SuperAdminUserPage() {
   );
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [roleFilter, setRoleFilter] = useState<EstateUserRoleFilter>(
+    DEFAULT_ESTATE_USER_ROLE,
+  );
   const [selectedUser, setSelectedUser] = useState<SuperAdminUserData | null>(
     null,
   );
   const [statusItem, setStatusItem] = useState<SuperAdminUserData | null>(null);
-  const [statusMode, setStatusMode] = useState<"suspend" | "activate">("suspend");
+  const [statusMode, setStatusMode] = useState<"suspend" | "activate">(
+    "suspend",
+  );
   const [statusSubmitting, setStatusSubmitting] = useState(false);
 
   // ✅ Map estates for dropdown
@@ -164,6 +174,26 @@ export default function SuperAdminUserPage() {
         };
       })
       .filter((x): x is EstateOption => Boolean(x)) || [];
+
+  const pageSize = Number(pagination?.pageSize) || 10;
+
+  const fetchUsers = useCallback(
+    (page = 1) => {
+      if (!selectedEstate?.value) return Promise.resolve();
+      const shouldApplyDate = Boolean(startDate && endDate);
+      return dispatch(
+        getAllUsersByEstate({
+          estateId: selectedEstate.value,
+          page,
+          limit: pageSize,
+          role: roleFilter,
+          startDate: shouldApplyDate ? startDate : undefined,
+          endDate: shouldApplyDate ? endDate : undefined,
+        }),
+      ).unwrap();
+    },
+    [dispatch, selectedEstate?.value, pageSize, roleFilter, startDate, endDate],
+  );
 
   // ✅ Fetch all estates on mount
   useEffect(() => {
@@ -183,21 +213,11 @@ export default function SuperAdminUserPage() {
 
   // ✅ Fetch users for the selected estate
   useEffect(() => {
-    if (selectedEstate?.value) {
-      const shouldApplyDate = Boolean(startDate && endDate);
-      dispatch(
-        getAllUsersByEstate({
-          estateId: selectedEstate.value,
-          page: 1,
-          limit: Number(pagination?.pageSize) || 10,
-          startDate: shouldApplyDate ? startDate : undefined,
-          endDate: shouldApplyDate ? endDate : undefined,
-        }),
-      )
-        .unwrap()
-        .catch(() => toast.error("Failed to fetch users for selected estate"));
-    }
-  }, [selectedEstate, dispatch, startDate, endDate]);
+    if (!selectedEstate?.value) return;
+    fetchUsers(1).catch(() =>
+      toast.error("Failed to fetch users for selected estate"),
+    );
+  }, [selectedEstate?.value, fetchUsers]);
 
   const handleEstateModal = (user?: SuperAdminUserData) => {
     setSelectedUser(user || null);
@@ -243,13 +263,7 @@ export default function SuperAdminUserPage() {
       }
       closeStatusModal();
       if (selectedEstate?.value) {
-        await dispatch(
-          getAllUsersByEstate({
-            estateId: selectedEstate.value,
-            page: 1,
-            limit: Number(pagination?.pageSize) || 10,
-          }),
-        ).unwrap();
+        await fetchUsers(1);
       }
     } catch (err: any) {
       toast.error(err?.message || "Failed to update user status.");
@@ -266,14 +280,7 @@ export default function SuperAdminUserPage() {
       onConfirm: async () => {
         await dispatch(deleteUser(id)).unwrap();
         toast.success(`${name} deleted successfully!`);
-        if (selectedEstate?.value)
-          await dispatch(
-            getAllUsersByEstate({
-              estateId: selectedEstate.value,
-              page: 1,
-              limit: Number(pagination?.pageSize) || 10,
-            }),
-          ).unwrap();
+        if (selectedEstate?.value) await fetchUsers(1);
       },
     });
   };
@@ -417,9 +424,30 @@ export default function SuperAdminUserPage() {
       >
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
-          <div>
+          <div className="flex flex-col gap-2">
             <h1 className="font-heading text-3xl font-bold">User Management</h1>
             <p className="text-muted-foreground mt-1">Manage Users</p>
+            <div className="w-48">
+              <Select
+                options={ESTATE_USER_ROLE_FILTER_OPTIONS}
+                placeholder="Filter by role"
+                value={ESTATE_USER_ROLE_FILTER_OPTIONS.find(
+                  (o) => o.value === roleFilter,
+                )}
+                onChange={(option) =>
+                  setRoleFilter(
+                    (option?.value as EstateUserRoleFilter) ??
+                      DEFAULT_ESTATE_USER_ROLE,
+                  )
+                }
+                isSearchable={false}
+                styles={{
+                  control: (base) => ({ ...base, cursor: "pointer" }),
+                  option: (base) => ({ ...base, cursor: "pointer" }),
+                  dropdownIndicator: (base) => ({ ...base, cursor: "pointer" }),
+                }}
+              />
+            </div>
           </div>
 
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -510,20 +538,9 @@ export default function SuperAdminUserPage() {
               pageSize: Number(pagination?.pageSize) || 10,
             }}
             onPageChange={(page) => {
-              if (!selectedEstate?.value) return; // ✅ Prevent null access
-              const shouldApplyDate = Boolean(startDate && endDate);
-
-              dispatch(
-                getAllUsersByEstate({
-                  estateId: selectedEstate.value,
-                  page,
-                  limit: Number(pagination?.pageSize) || 10,
-                  startDate: shouldApplyDate ? startDate : undefined,
-                  endDate: shouldApplyDate ? endDate : undefined,
-                }),
-              )
-                .unwrap()
-                .catch(() => toast.error("Failed to change page"));
+              fetchUsers(page).catch(() =>
+                toast.error("Failed to change page"),
+              );
             }}
             enableExport
             exportFileName="users"
@@ -536,6 +553,7 @@ export default function SuperAdminUserPage() {
                         estateId: selectedEstate.value,
                         page: 1,
                         limit: 50000,
+                        role: roleFilter,
                         startDate: shouldApplyDate ? startDate : undefined,
                         endDate: shouldApplyDate ? endDate : undefined,
                       }),

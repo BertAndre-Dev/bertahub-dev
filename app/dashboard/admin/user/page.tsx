@@ -86,8 +86,9 @@ export default function AdminUserPage() {
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [roleFilter, setRoleFilter] =
-    useState<EstateUserRoleFilter>(DEFAULT_ESTATE_USER_ROLE);
+  const [roleFilter, setRoleFilter] = useState<EstateUserRoleFilter>(
+    DEFAULT_ESTATE_USER_ROLE,
+  );
 
   const { allAdminUsers, pagination, loading } = useSelector(
     (state: RootState) => {
@@ -308,7 +309,7 @@ export default function AdminUserPage() {
           {item.invitationStatus === "completed"
             ? "Completed"
             : "Not Completed"}
-            {/* {item.serviceCharge ? "Yes" : "No"} */}
+          {/* {item.serviceCharge ? "Yes" : "No"} */}
         </span>
       ),
     },
@@ -363,176 +364,177 @@ export default function AdminUserPage() {
           loading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
         ].join(" ")}
       >
-      {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground mt-1">
-            View and manage residents and staff in{" "}
-            <span className="text-[18px] font-bold underline uppercase text-black">
-              {estateName}
-            </span>
-            .
-          </p>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
+          <div className="flex flex-col gap-2">
+            <h1 className="font-heading text-3xl font-bold">User Management</h1>
+            <p className="text-muted-foreground mt-1">
+              View and manage residents and staff in{" "}
+              <span className="text-[18px] font-bold underline uppercase text-black">
+                {estateName}
+              </span>
+              .
+            </p>
+
+            <div className="w-full max-w-xs">
+              <Select
+                options={ESTATE_USER_ROLE_FILTER_OPTIONS}
+                placeholder="Filter by role"
+                value={ESTATE_USER_ROLE_FILTER_OPTIONS.find(
+                  (o) => o.value === roleFilter,
+                )}
+                onChange={(option) =>
+                  setRoleFilter(
+                    (option?.value as EstateUserRoleFilter) ??
+                      DEFAULT_ESTATE_USER_ROLE,
+                  )
+                }
+                isSearchable={false}
+                styles={{
+                  control: (base) => ({ ...base, cursor: "pointer" }),
+                  option: (base) => ({ ...base, cursor: "pointer" }),
+                  dropdownIndicator: (base) => ({ ...base, cursor: "pointer" }),
+                }}
+              />
+            </div>
+          </div>
+
+          <Button
+            onClick={() => handleEstateModal()}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> Invite User
+          </Button>
         </div>
 
-        <Button
-          onClick={() => handleEstateModal()}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" /> Invite User
-        </Button>
-      </div>
+        {/* Stats Card */}
+        <div className="grid grid-cols-1 gap-4">
+          {(() => {
+            const stats = [
+              {
+                label: "Total Users",
+                value: pagination?.total ?? 0,
+                icon: UsersRound,
+                color: "bg-[#FEE6D480]",
+              },
+            ];
 
-      {/* Stats Card */}
-      <div className="grid grid-cols-1 gap-4">
-        {(() => {
-          const stats = [
-            {
-              label: "Total Users",
-              value: pagination?.total ?? 0,
-              icon: UsersRound,
-              color: "bg-[#FEE6D480]",
-            },
-          ];
-
-          return stats.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={i} className="p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      {stat.label}
-                    </p>
-                    <p className="font-heading text-2xl font-bold mt-2">
-                      {stat.value}
-                    </p>
+            return stats.map((stat, i) => {
+              const Icon = stat.icon;
+              return (
+                <Card key={i} className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        {stat.label}
+                      </p>
+                      <p className="font-heading text-2xl font-bold mt-2">
+                        {stat.value}
+                      </p>
+                    </div>
+                    <div className={`p-3 rounded-lg ${stat.color}`}>
+                      <Icon className="w-6 h-6" />
+                    </div>
                   </div>
-                  <div className={`p-3 rounded-lg ${stat.color}`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                </div>
-              </Card>
-            );
-          });
-        })()}
-      </div>
+                </Card>
+              );
+            });
+          })()}
+        </div>
 
-      {/* Search */}
-      <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <input
-            type="text"
-            placeholder="Search users by name, email, block or apartment..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <div className="w-full max-w-xs">
-            <Select
-              options={ESTATE_USER_ROLE_FILTER_OPTIONS}
-              placeholder="Filter by role"
-              value={ESTATE_USER_ROLE_FILTER_OPTIONS.find(
-                (o) => o.value === roleFilter,
-              )}
-              onChange={(option) =>
-                setRoleFilter(
-                  (option?.value as EstateUserRoleFilter) ??
-                    DEFAULT_ESTATE_USER_ROLE,
-                )
-              }
-              isSearchable={false}
-              styles={{
-                control: (base) => ({ ...base, cursor: "pointer" }),
-                option: (base) => ({ ...base, cursor: "pointer" }),
-                dropdownIndicator: (base) => ({ ...base, cursor: "pointer" }),
-              }}
+        {/* Search */}
+        <Card className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <input
+              type="text"
+              placeholder="Search users by name, email, block or apartment..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      {/* Table */}
-      <Card className="p-4">
-        <Table
-          columns={columns}
-          data={allAdminUsers}
-          emptyMessage="No users found for this estate"
-          enableDateRangeFilter
-          defaultDateRangeDays={0}
-          startDate={startDate}
-          endDate={endDate}
-          startDatePlaceholder={DATE_RANGE_PLACEHOLDERS.start}
-          endDatePlaceholder={DATE_RANGE_PLACEHOLDERS.end}
-          onDateRangeChange={({ startDate, endDate }) => {
-            setStartDate(startDate);
-            setEndDate(endDate);
-            setCurrentPage(1);
-          }}
-          showPagination={true}
-          paginationInfo={{
-            total: pagination?.total || 0,
-            current: currentPage,
-            pageSize: Number(pagination?.pageSize) || 10,
-          }}
-          onPageChange={(page) => {
-            fetchAdminUsers(page).catch(() =>
-              toast.error("Failed to change page"),
-            );
-          }}
-          enableExport
-          exportFileName="users"
-          onExportRequest={
-            selectedEstate?.value
-              ? async () => {
-                  const shouldApplyDate = Boolean(startDate && endDate);
-                  const res = await dispatch(
-                    getAllUsersByEstate({
-                      estateId: selectedEstate.value,
-                      page: 1,
-                      limit: 50000,
-                      role: roleFilter,
-                      search,
-                      startDate: shouldApplyDate ? startDate : undefined,
-                      endDate: shouldApplyDate ? endDate : undefined,
-                    }),
-                  ).unwrap();
-                  return res?.data ?? [];
-                }
-              : undefined
-          }
-        />
-      </Card>
-
-      {/* Invite user modal */}
-      {open && (
-        <Modal visible={open} onClose={handleCloseModal}>
-          <InviteUserForm
-            close={handleCloseModal}
-            refresh={() =>
-              fetchAdminUsers(1).catch(() =>
-                toast.error("Failed to refresh users."),
-              )
+        {/* Table */}
+        <Card className="p-4">
+          <Table
+            columns={columns}
+            data={allAdminUsers}
+            emptyMessage="No users found for this estate"
+            enableDateRangeFilter
+            defaultDateRangeDays={0}
+            startDate={startDate}
+            endDate={endDate}
+            startDatePlaceholder={DATE_RANGE_PLACEHOLDERS.start}
+            endDatePlaceholder={DATE_RANGE_PLACEHOLDERS.end}
+            onDateRangeChange={({ startDate, endDate }) => {
+              setStartDate(startDate);
+              setEndDate(endDate);
+              setCurrentPage(1);
+            }}
+            showPagination={true}
+            paginationInfo={{
+              total: pagination?.total || 0,
+              current: currentPage,
+              pageSize: Number(pagination?.pageSize) || 10,
+            }}
+            onPageChange={(page) => {
+              fetchAdminUsers(page).catch(() =>
+                toast.error("Failed to change page"),
+              );
+            }}
+            enableExport
+            exportFileName="users"
+            onExportRequest={
+              selectedEstate?.value
+                ? async () => {
+                    const shouldApplyDate = Boolean(startDate && endDate);
+                    const res = await dispatch(
+                      getAllUsersByEstate({
+                        estateId: selectedEstate.value,
+                        page: 1,
+                        limit: 50000,
+                        role: roleFilter,
+                        search,
+                        startDate: shouldApplyDate ? startDate : undefined,
+                        endDate: shouldApplyDate ? endDate : undefined,
+                      }),
+                    ).unwrap();
+                    return res?.data ?? [];
+                  }
+                : undefined
             }
           />
-        </Modal>
-      )}
+        </Card>
 
-      <SuspendRentModal
-        visible={!!suspendUserItem}
-        onClose={() => setSuspendUserItem(null)}
-        tenantName={
-          suspendUserItem
-            ? `${suspendUserItem.firstName} ${suspendUserItem.lastName}`.trim() ||
-              suspendUserItem.email
-            : ""
-        }
-        title="Suspend user"
-        confirmLabel="Suspend"
-        onConfirm={handleSuspendConfirm}
-        loading={suspendSubmitting}
-      />
+        {/* Invite user modal */}
+        {open && (
+          <Modal visible={open} onClose={handleCloseModal}>
+            <InviteUserForm
+              close={handleCloseModal}
+              refresh={() =>
+                fetchAdminUsers(1).catch(() =>
+                  toast.error("Failed to refresh users."),
+                )
+              }
+            />
+          </Modal>
+        )}
+
+        <SuspendRentModal
+          visible={!!suspendUserItem}
+          onClose={() => setSuspendUserItem(null)}
+          tenantName={
+            suspendUserItem
+              ? `${suspendUserItem.firstName} ${suspendUserItem.lastName}`.trim() ||
+                suspendUserItem.email
+              : ""
+          }
+          title="Suspend user"
+          confirmLabel="Suspend"
+          onConfirm={handleSuspendConfirm}
+          loading={suspendSubmitting}
+        />
       </div>
     </div>
   );
