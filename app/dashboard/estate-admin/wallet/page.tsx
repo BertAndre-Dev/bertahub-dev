@@ -14,17 +14,28 @@ import {
   getEstateCredits,
 } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt";
 import { getBanks } from "@/redux/slice/estate-admin/fund-wallet/fund-wallet";
+import type { BankItem } from "@/redux/slice/estate-admin/fund-wallet/fund-wallet";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { verifyTransaction } from "@/redux/slice/estate-admin/transaction/transaction";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import type { EstateCreditItem } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt-slice";
 import { TransactionsFilterBar } from "@/components/super-admin/transactions-filter-bar";
 
 const LIMIT = 10;
+
+function dedupeBanksByCode(banks: BankItem[]): BankItem[] {
+  const seen = new Set<string>();
+  return banks.filter((bank) => {
+    if (seen.has(bank.code)) return false;
+    seen.add(bank.code);
+    return true;
+  });
+}
+
 interface ExtendedEstateCreditItem extends EstateCreditItem {
   serviceCharge?: number;
   source?: string;
@@ -72,6 +83,7 @@ export default function EstateAdminWalletPage() {
     (state: RootState) => state.estateAdminFundWallet,
   );
   const loadingBanks = getBanksState === "isLoading";
+  const bankOptions = useMemo(() => dedupeBanksByCode(banks), [banks]);
 
   useEffect(() => {
     (async () => {
@@ -164,7 +176,7 @@ export default function EstateAdminWalletPage() {
 
   const walletBankName =
     wallet && wallet.bankCode
-      ? (banks.find((b) => b.code === wallet.bankCode)?.name ?? "")
+      ? (bankOptions.find((b) => b.code === wallet.bankCode)?.name ?? "")
       : "";
 
   // Verify transaction when redirected back from payment
@@ -423,7 +435,7 @@ export default function EstateAdminWalletPage() {
           setCreateWalletBankCode("");
         }}
       >
-        <div className="bg-white rounded-md shadow-md w-full max-w-md mx-auto mt-12 pb-8 px-6">
+        <div className="rounded-md shadow-md w-full max-w-md mx-auto mt-12 pb-8 px-4">
           <h2 className="text-lg font-semibold mb-4">Create Wallet</h2>
           <p className="text-sm text-muted-foreground mb-4">
             Your withdrawal will be sent to this account number. Select the bank
@@ -443,8 +455,8 @@ export default function EstateAdminWalletPage() {
                 <option value="">
                   {loadingBanks ? "Loading banks..." : "Select bank"}
                 </option>
-                {banks.map((bank) => (
-                  <option key={bank.code} value={bank.code}>
+                {bankOptions.map((bank) => (
+                  <option key={bank.id} value={bank.code}>
                     {bank.name}
                   </option>
                 ))}
