@@ -20,6 +20,12 @@ import InviteUserForm from "@/components/admin/user-form/page";
 import SuspendRentModal from "@/components/resident/suspend-rent-modal/page";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import Loader from "@/components/ui/Loader";
+import Select from "react-select";
+import {
+  DEFAULT_ESTATE_USER_ROLE,
+  ESTATE_USER_ROLE_FILTER_OPTIONS,
+  type EstateUserRoleFilter,
+} from "@/lib/estate-user-roles";
 
 interface AdminUserData {
   id?: string;
@@ -80,6 +86,8 @@ export default function AdminUserPage() {
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [roleFilter, setRoleFilter] =
+    useState<EstateUserRoleFilter>(DEFAULT_ESTATE_USER_ROLE);
 
   const { allAdminUsers, pagination, loading } = useSelector(
     (state: RootState) => {
@@ -105,6 +113,7 @@ export default function AdminUserPage() {
           estateId,
           page,
           limit: PAGE_LIMIT,
+          role: roleFilter,
           search: search || undefined,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
@@ -112,7 +121,7 @@ export default function AdminUserPage() {
       ).unwrap();
       setCurrentPage(page);
     },
-    [dispatch, selectedEstate?.value, search, startDate, endDate],
+    [dispatch, selectedEstate?.value, search, startDate, endDate, roleFilter],
   );
 
   // Bootstrap signed-in user and estate only (no user list fetch here).
@@ -412,13 +421,36 @@ export default function AdminUserPage() {
 
       {/* Search */}
       <Card className="p-4">
-        <input
-          type="text"
-          placeholder="Search users by name, email, block or apartment..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        />
+        <div className="flex flex-col sm:flex-row gap-4">
+          <input
+            type="text"
+            placeholder="Search users by name, email, block or apartment..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full max-w-sm px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <div className="w-full max-w-xs">
+            <Select
+              options={ESTATE_USER_ROLE_FILTER_OPTIONS}
+              placeholder="Filter by role"
+              value={ESTATE_USER_ROLE_FILTER_OPTIONS.find(
+                (o) => o.value === roleFilter,
+              )}
+              onChange={(option) =>
+                setRoleFilter(
+                  (option?.value as EstateUserRoleFilter) ??
+                    DEFAULT_ESTATE_USER_ROLE,
+                )
+              }
+              isSearchable={false}
+              styles={{
+                control: (base) => ({ ...base, cursor: "pointer" }),
+                option: (base) => ({ ...base, cursor: "pointer" }),
+                dropdownIndicator: (base) => ({ ...base, cursor: "pointer" }),
+              }}
+            />
+          </div>
+        </div>
       </Card>
 
       {/* Table */}
@@ -460,6 +492,7 @@ export default function AdminUserPage() {
                       estateId: selectedEstate.value,
                       page: 1,
                       limit: 50000,
+                      role: roleFilter,
                       search,
                       startDate: shouldApplyDate ? startDate : undefined,
                       endDate: shouldApplyDate ? endDate : undefined,

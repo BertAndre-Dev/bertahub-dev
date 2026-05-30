@@ -87,6 +87,7 @@ export default function AdminVisitorForm({
               estateId,
               page: 1,
               limit: 500,
+              role: "resident",
             })
           ).unwrap(),
           dispatch(getFieldByEstate(estateId)).unwrap(),

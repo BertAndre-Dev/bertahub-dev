@@ -12,6 +12,7 @@ export const getAllUsersByEstate = createAsyncThunk(
       search,
       startDate,
       endDate,
+      role,
     }: {
       estateId: string | { id?: string; _id?: string };
       page?: number;
@@ -19,6 +20,7 @@ export const getAllUsersByEstate = createAsyncThunk(
       search?: string;
       startDate?: string;
       endDate?: string;
+      role?: string;
     },
     { rejectWithValue },
   ) => {
@@ -37,6 +39,7 @@ export const getAllUsersByEstate = createAsyncThunk(
       const params = new URLSearchParams();
       if (page != null) params.set("page", String(page));
       if (limit != null) params.set("limit", String(limit));
+      params.set("role", role?.trim() || "resident");
       if (search?.trim()) params.set("search", search.trim());
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
