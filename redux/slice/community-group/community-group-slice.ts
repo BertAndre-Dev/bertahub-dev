@@ -3,6 +3,17 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import type { ChatGroup, GroupMessage } from "@/types/community-group";
+import type {
+  SocketGroupAddedPayload,
+  SocketGroupDeletedPayload,
+  SocketGroupRemovedPayload,
+  SocketGroupUpdatedPayload,
+  SocketMessageDeletedPayload,
+  SocketMessageEditedPayload,
+  SocketMessageReceivedPayload,
+  SocketMessagesReadPayload,
+} from "@/types/community-chat-socket";
+import { socketMessageToGroupMessage } from "@/lib/community-chat-socket-map";
 import type { ChatPagination } from "@/types/chat";
 import {
   addGroupMembers,
@@ -123,6 +134,153 @@ const communityGroupSlice = createSlice({
       if (state.groupDetail?._id === groupId) {
         state.groupDetail = { ...state.groupDetail, ...partial };
       }
+    },
+
+    // ─── WebSocket-driven updates ───────────────────────────────────────────
+    socketMessageReceived: (
+      state,
+      action: PayloadAction<{
+        payload: SocketMessageReceivedPayload;
+        currentUserId?: string | null;
+      }>,
+    ) => {
+      const { payload, currentUserId } = action.payload;
+      const msg = socketMessageToGroupMessage(payload);
+      const gid = payload.groupId;
+
+      if (state.activeMessagesGroupId === gid) {
+        const exists = state.groupMessages.some((m) => m._id === msg._id);
+        if (!exists) {
+          state.groupMessages = sortMessagesAsc([...state.groupMessages, msg]);
+        }
+      }
+
+      const preview = (msg.content || "").slice(0, 120);
+      state.groups = state.groups.map((g) => {
+        if (g._id !== gid) return g;
+        const isOwn = currentUserId && msg.senderId === currentUserId;
+        const isActive = state.activeMessagesGroupId === gid;
+        const unreadDelta =
+          !isActive && !isOwn ? (g.unreadCount ?? 0) + 1 : 0;
+        return {
+          ...g,
+          lastMessagePreview: preview || g.lastMessagePreview,
+          unreadCount: unreadDelta > 0 ? unreadDelta : g.unreadCount,
+        };
+      });
+      if (state.groupDetail?._id === gid) {
+        state.groupDetail = {
+          ...state.groupDetail,
+          lastMessagePreview: preview || state.groupDetail.lastMessagePreview,
+        };
+      }
+    },
+
+    socketMessageEdited: (
+      state,
+      action: PayloadAction<SocketMessageEditedPayload>,
+    ) => {
+      const { messageId, groupId, content } = action.payload;
+      if (state.activeMessagesGroupId !== groupId) return;
+      state.groupMessages = state.groupMessages.map((m) =>
+        m._id === messageId ? { ...m, content, isEdited: true } : m,
+      );
+    },
+
+    socketMessageDeleted: (
+      state,
+      action: PayloadAction<SocketMessageDeletedPayload>,
+    ) => {
+      const { messageId, groupId } = action.payload;
+      if (state.activeMessagesGroupId !== groupId) return;
+      state.groupMessages = state.groupMessages.filter(
+        (m) => m._id !== messageId,
+      );
+    },
+
+    socketMessagesRead: (
+      state,
+      action: PayloadAction<SocketMessagesReadPayload>,
+    ) => {
+      const { groupId, userId, messageIds } = action.payload;
+      if (state.activeMessagesGroupId !== groupId) return;
+      const ids = new Set(messageIds);
+      state.groupMessages = state.groupMessages.map((m) =>
+        ids.has(m._id)
+          ? {
+              ...m,
+              readBy: [...new Set([...(m.readBy ?? []), userId])],
+            }
+          : m,
+      );
+    },
+
+    socketGroupAdded: (
+      state,
+      action: PayloadAction<SocketGroupAddedPayload>,
+    ) => {
+      const { groupId, name, description, profileImage } = action.payload;
+      const exists = state.groups.some((g) => g._id === groupId);
+      if (exists) return;
+      const stub: ChatGroup = {
+        _id: groupId,
+        name: name || "New group",
+        description,
+        profileImage,
+        memberCount: 0,
+        unreadCount: 0,
+      };
+      state.groups = [stub, ...state.groups];
+    },
+
+    socketGroupRemoved: (
+      state,
+      action: PayloadAction<SocketGroupRemovedPayload>,
+    ) => {
+      const { groupId } = action.payload;
+      state.groups = state.groups.filter((g) => g._id !== groupId);
+      if (state.groupDetail?._id === groupId) state.groupDetail = null;
+      if (state.activeMessagesGroupId === groupId) {
+        state.groupMessages = [];
+        state.activeMessagesGroupId = null;
+      }
+    },
+
+    socketGroupUpdated: (
+      state,
+      action: PayloadAction<SocketGroupUpdatedPayload>,
+    ) => {
+      const { groupId, name, description, profileImage } = action.payload;
+      const partial: Partial<ChatGroup> = {};
+      if (name != null) partial.name = name;
+      if (description !== undefined) partial.description = description;
+      if (profileImage !== undefined) partial.profileImage = profileImage;
+      state.groups = state.groups.map((g) =>
+        g._id === groupId ? { ...g, ...partial } : g,
+      );
+      if (state.groupDetail?._id === groupId) {
+        state.groupDetail = { ...state.groupDetail, ...partial };
+      }
+    },
+
+    socketGroupDeleted: (
+      state,
+      action: PayloadAction<SocketGroupDeletedPayload>,
+    ) => {
+      const { groupId } = action.payload;
+      state.groups = state.groups.filter((g) => g._id !== groupId);
+      if (state.groupDetail?._id === groupId) state.groupDetail = null;
+      if (state.activeMessagesGroupId === groupId) {
+        state.groupMessages = [];
+        state.activeMessagesGroupId = null;
+      }
+    },
+
+    clearGroupUnread: (state, action: PayloadAction<{ groupId: string }>) => {
+      const { groupId } = action.payload;
+      state.groups = state.groups.map((g) =>
+        g._id === groupId ? { ...g, unreadCount: 0 } : g,
+      );
     },
   },
   extraReducers: (builder) => {
@@ -351,6 +509,15 @@ export const {
   clearGroups,
   clearGroupMessages,
   patchLocalGroup,
+  socketMessageReceived,
+  socketMessageEdited,
+  socketMessageDeleted,
+  socketMessagesRead,
+  socketGroupAdded,
+  socketGroupRemoved,
+  socketGroupUpdated,
+  socketGroupDeleted,
+  clearGroupUnread,
 } = communityGroupSlice.actions;
 
 export default communityGroupSlice.reducer;

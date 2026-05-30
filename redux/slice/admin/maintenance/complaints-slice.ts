@@ -4,6 +4,7 @@ import {
   getComplaintsByEstate,
   getComplaintById,
   updateComplaintStatus,
+  assignComplaintToStaff,
   getCommentsByComplaint,
   createComment,
 } from "./complaints";
@@ -16,6 +17,7 @@ interface ComplaintsState {
   getComplaintsByEstateStatus: AsyncStatus;
   getComplaintByIdStatus: AsyncStatus;
   updateComplaintStatusStatus: AsyncStatus;
+  assignComplaintStatus: AsyncStatus;
   getCommentsByComplaintStatus: AsyncStatus;
   createCommentStatus: AsyncStatus;
   complaintsByEstate: {
@@ -31,6 +33,7 @@ const initialState: ComplaintsState = {
   getComplaintsByEstateStatus: "idle",
   getComplaintByIdStatus: "idle",
   updateComplaintStatusStatus: "idle",
+  assignComplaintStatus: "idle",
   getCommentsByComplaintStatus: "idle",
   createCommentStatus: "idle",
   complaintsByEstate: null,
@@ -57,6 +60,7 @@ function normalizeComplaint(p: Record<string, unknown>): ComplaintItem {
     createdAt: p.createdAt as string,
     updatedAt: p.updatedAt as string,
     image: p.image as string,
+    assignedTo: p.assignedTo as string,
   };
 }
 
@@ -145,6 +149,28 @@ const complaintsSlice = createSlice({
       .addCase(updateComplaintStatus.rejected, (state, action) => {
         state.updateComplaintStatusStatus = "failed";
         state.error = (action.payload as string) ?? "Failed to update status";
+      })
+
+      .addCase(assignComplaintToStaff.pending, (state) => {
+        state.assignComplaintStatus = "isLoading";
+      })
+      .addCase(assignComplaintToStaff.fulfilled, (state, action) => {
+        state.assignComplaintStatus = "succeeded";
+        const updated = action.payload?.data ?? action.payload;
+        if (updated?.id && state.complaintsByEstate?.data) {
+          const id = String(updated.id ?? updated._id ?? "");
+          state.complaintsByEstate.data = state.complaintsByEstate.data.map(
+            (c) =>
+              c.id === id
+                ? { ...c, ...normalizeComplaint(updated as Record<string, unknown>) }
+                : c,
+          );
+        }
+      })
+      .addCase(assignComplaintToStaff.rejected, (state, action) => {
+        state.assignComplaintStatus = "failed";
+        state.error =
+          (action.payload as string) ?? "Failed to assign complaint to staff";
       })
 
       .addCase(getCommentsByComplaint.pending, (state) => {

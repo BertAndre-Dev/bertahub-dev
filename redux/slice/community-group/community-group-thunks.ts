@@ -27,6 +27,10 @@ function isValidObjectId(id: string): boolean {
   return OBJECT_ID_RE.test(id);
 }
 
+export function isValidCommunityObjectId(id: string): boolean {
+  return isValidObjectId(id);
+}
+
 function invalidIdMessage(label: string): RejectValue {
   return { message: `Invalid ${label}.` };
 }
@@ -114,7 +118,7 @@ function normalizePagination(p: ApiPagination | undefined): {
 }
 
 /** API often omits page/limit on pagination; keep the request values. */
-function mergeApiPagination(
+export function mergeCommunityApiPagination(
   api: ApiPagination | undefined,
   requestedPage: number,
   requestedLimit: number,
@@ -131,7 +135,7 @@ function mergeApiPagination(
   return { total, page, limit, pages };
 }
 
-function normalizeGroup(raw: ApiChatGroup): ChatGroup {
+export function normalizeChatGroup(raw: ApiChatGroup): ChatGroup {
   const _id = (raw._id ?? raw.id ?? "").toString();
   const membersList = Array.isArray(raw.members)
     ? raw.members
@@ -187,7 +191,7 @@ export const createChatGroup = createAsyncThunk<
     const raw = res.data as ApiResponse<ApiChatGroup>;
     return {
       ...raw,
-      data: normalizeGroup(raw.data),
+      data: normalizeChatGroup(raw.data),
     };
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
@@ -218,8 +222,8 @@ export const getChatGroups = createAsyncThunk<
     const list = Array.isArray(body.data) ? body.data : [];
     return {
       success: body.success ?? true,
-      data: list.map(normalizeGroup),
-      pagination: mergeApiPagination(
+      data: list.map(normalizeChatGroup),
+      pagination: mergeCommunityApiPagination(
         body.pagination ?? { total: list.length, pages: 1 },
         page,
         limit,
@@ -246,7 +250,7 @@ export const getChatGroupById = createAsyncThunk<
     }
     const res = await axiosInstance.get(`/api/v1/chat/groups/${id}`);
     const raw = res.data as ApiResponse<ApiChatGroup>;
-    return { ...raw, data: normalizeGroup(raw.data) };
+    return { ...raw, data: normalizeChatGroup(raw.data) };
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
     return rejectWithValue({
@@ -276,7 +280,7 @@ export const updateChatGroup = createAsyncThunk<
     }
     const res = await axiosInstance.put(`/api/v1/chat/groups/${id}`, body);
     const raw = res.data as ApiResponse<ApiChatGroup>;
-    return { ...raw, data: normalizeGroup(raw.data) };
+    return { ...raw, data: normalizeChatGroup(raw.data) };
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
     return rejectWithValue({
@@ -353,7 +357,7 @@ function normalizeSender(u: string | ApiUser | undefined): {
   };
 }
 
-function normalizeAttachments(
+export function normalizeAttachments(
   raw: unknown,
 ): GroupMessageAttachment[] | undefined {
   if (!Array.isArray(raw) || raw.length === 0) return undefined;
@@ -541,7 +545,7 @@ export const getGroupMessages = createAsyncThunk<
     return {
       success: body.success ?? true,
       data: list.map(normalizeGroupMessage),
-      pagination: mergeApiPagination(
+      pagination: mergeCommunityApiPagination(
         body.pagination ?? { total: list.length, pages: 1 },
         page,
         limit,

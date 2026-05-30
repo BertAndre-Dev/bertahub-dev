@@ -547,13 +547,13 @@ export default function BillPage() {
           const stats = [
             {
               label: "Total Bills",
-              value: allBills?.length || 0,
+              value: pagination?.total ?? 0,
               icon: ScrollText,
               color: "bg-[#D0DFF280]",
             },
             {
               label: "Total Assigned Bills",
-              value: assignedBills?.length || 0,
+              value: assignedPagination?.total ?? 0,
               icon: ScrollText,
               color: "bg-[#D0DFF280]",
             },

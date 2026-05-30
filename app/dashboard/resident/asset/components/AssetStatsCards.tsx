@@ -12,12 +12,12 @@ import {
 
 const STAT_LIMIT = 1;
 
-function getTotal(pagination: unknown, fallbackLength: number) {
+function getTotal(pagination: unknown) {
   const p = pagination as Record<string, unknown> | null | undefined;
   const raw =
     p?.total ?? (p?.pagination as Record<string, unknown> | undefined)?.total ?? p?.count;
   const total = raw != null ? Number(raw) : Number.NaN;
-  return Number.isFinite(total) ? total : fallbackLength;
+  return Number.isFinite(total) ? total : 0;
 }
 
 type Props = {
@@ -27,16 +27,15 @@ type Props = {
 export default function AssetStatsCards({ estateId }: Readonly<Props>) {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { assetsLen, categoriesLen, assetsPagination, categoriesPagination } =
-    useSelector((state: RootState) => {
+  const { assetsPagination, categoriesPagination } = useSelector(
+    (state: RootState) => {
       const s = state.residentAsset;
       return {
-        assetsLen: s?.assets?.length ?? 0,
-        categoriesLen: s?.categories?.length ?? 0,
         assetsPagination: s?.assetsPagination ?? null,
         categoriesPagination: s?.categoriesPagination ?? null,
       };
-    });
+    },
+  );
 
   useEffect(() => {
     if (!estateId) return;
@@ -49,8 +48,8 @@ export default function AssetStatsCards({ estateId }: Readonly<Props>) {
   }, [dispatch, estateId]);
 
   const stats = useMemo(() => {
-    const totalAssets = getTotal(assetsPagination, assetsLen);
-    const totalCategories = getTotal(categoriesPagination, categoriesLen);
+    const totalAssets = getTotal(assetsPagination);
+    const totalCategories = getTotal(categoriesPagination);
     return [
       {
         key: "total-assets",
@@ -65,7 +64,7 @@ export default function AssetStatsCards({ estateId }: Readonly<Props>) {
         icon: Tags,
       },
     ];
-  }, [assetsLen, assetsPagination, categoriesLen, categoriesPagination]);
+  }, [assetsPagination, categoriesPagination]);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

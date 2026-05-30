@@ -9,7 +9,6 @@ import {
   Power,
   PowerOff,
   Trash2,
-  User2,
   UsersRound,
   Search,
 } from "lucide-react";
@@ -313,23 +312,17 @@ export default function CompanyUsersPage() {
     [pagination?.currentPage],
   );
 
-  const stats = useMemo(() => {
-    const users = allUsers;
-    return [
+  const stats = useMemo(
+    () => [
       {
-        label: "Total Residents",
-        value: users.filter((e) => e.role === "resident").length,
-        icon: User2,
-        color: "bg-[#D0DFF280]",
-      },
-      {
-        label: "Total Admins",
-        value: users.filter((e) => e.role === "admin").length,
+        label: "Total Users",
+        value: pagination?.total ?? 0,
         icon: UsersRound,
         color: "bg-[#FEE6D480]",
       },
-    ];
-  }, [allUsers]);
+    ],
+    [pagination?.total],
+  );
 
   if (!companyId) {
     return (
@@ -396,7 +389,7 @@ export default function CompanyUsersPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (

@@ -9,7 +9,8 @@ export interface InvitedUserData {
   lastName: string;
   email: string;
   role: string;
-  residentType: string;
+  /** Set to "owner" | "tenant" for residents; null for staff, security, admin, etc. */
+  residentType: string | null;
   addressIds: string[];
 }
 

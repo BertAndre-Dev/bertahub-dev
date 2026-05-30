@@ -61,18 +61,6 @@ export default function EstatePage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Fetch estates on mount
-  useEffect(() => {
-    dispatch(
-      getAllEstates({ page: 1, limit: Number(pagination?.pageSize) || 10 }),
-    )
-      .unwrap()
-      .catch(() => {
-        toast.error("Failed to fetch estates");
-      });
-  }, [dispatch]);
-
-  // Refetch on date range changes (only apply when both are selected)
   useEffect(() => {
     const shouldApplyDate = Boolean(startDate && endDate);
     dispatch(
@@ -294,7 +282,7 @@ export default function EstatePage() {
           const stats = [
             {
               label: "Total Estates",
-              value: estates?.length || 0,
+              value: pagination?.total || 0,
               icon: Building2,
               color: "bg-[#D0DFF280]",
             },

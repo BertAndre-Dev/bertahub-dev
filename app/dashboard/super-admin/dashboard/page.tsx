@@ -49,6 +49,7 @@ export default function SuperAdminDashboard() {
   const billsState = useSelector((state: RootState) => (state as any).superAdminBillsAnalytics)
 
   const estates = estateState?.allEstates?.data ?? []
+  const estatesPagination = estateState?.allEstates?.pagination ?? null
   const billsDashboard = billsState?.dashboard ?? null
   const billsLoading = billsState?.status === "isLoading"
 
@@ -92,7 +93,7 @@ export default function SuperAdminDashboard() {
   }, [billsDashboard])
 
   const kpiCards = useMemo(() => {
-    const totalEstates = estates?.length ?? 0
+    const totalEstates = estatesPagination?.total ?? 0
     return [
       {
         label: "Total Estates",
@@ -127,7 +128,7 @@ export default function SuperAdminDashboard() {
         iconBgClassName: "bg-violet-500/10 text-violet-600",
       },
     ]
-  }, [estates?.length])
+  }, [estatesPagination?.total])
 
   const handleExport = () => {}
 

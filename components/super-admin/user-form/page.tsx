@@ -157,7 +157,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
         lastName: formData.lastName,
         email: formData.email,
         role: formData.role,
-        residentType: "owner",
+        residentType: null,
         addressIds: [] as string[],
       };
       const res = await dispatch(iniviteUser(payload) as any).unwrap();

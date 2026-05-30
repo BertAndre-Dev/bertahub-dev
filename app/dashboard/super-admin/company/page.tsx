@@ -459,7 +459,10 @@ export default function SuperAdminCompanyPage() {
           </Button>
         </div>
 
-        <CompanyStatsCards companies={list ?? []} />
+        <CompanyStatsCards
+          companies={list ?? []}
+          total={pagination?.total ?? 0}
+        />
 
         <Card className="p-4">
           <Table

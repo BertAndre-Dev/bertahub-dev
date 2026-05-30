@@ -14,6 +14,7 @@ import {
   residentNav,
   estateAdminNav,
   companyNav,
+  staffNav,
 } from "@/data/page";
 import { AppDispatch, RootState } from "@/redux/store";
 import {
@@ -24,6 +25,8 @@ import {
 } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { clearCsrfToken, ensureCsrfToken } from "@/utils/csrf";
+import { disconnectSocket } from "@/lib/socket";
+import { CommunityChatSocketProvider } from "@/components/providers/CommunityChatSocketProvider";
 import Image from "next/image";
 
 export default function DashboardLayout({
@@ -156,6 +159,7 @@ export default function DashboardLayout({
   // 🔹 Sign out handler (logoutLocally already clears auth & user from localStorage)
   const handleSignOut = () => {
     clearCsrfToken();
+    disconnectSocket();
     dispatch(logoutLocally());
     toast.success("Signed out successfully");
     router.push("/auth/login");
@@ -177,7 +181,9 @@ export default function DashboardLayout({
               ? estateAdminNav
               : role === "resident"
                 ? residentNav
-                : securityNav;
+                : role === "staff"
+                  ? staffNav
+                  : securityNav;
 
     // Residents: hide Tenant Management for residentType=Tenant (owners only)
     if (role === "resident") {
@@ -194,7 +200,12 @@ export default function DashboardLayout({
     }
 
     // Hardcode "Contact Support" entry (not dependent on module access)
-    const rolesWithSupport = new Set(["admin", "resident", "estate admin"]);
+    const rolesWithSupport = new Set([
+      "admin",
+      "resident",
+      "estate admin",
+      "staff",
+    ]);
     if (rolesWithSupport.has(role)) {
       const supportPath =
         role === "admin"
@@ -203,7 +214,9 @@ export default function DashboardLayout({
             ? "/dashboard/resident/support"
             : role === "estate admin"
               ? "/dashboard/estate-admin/support"
-              : "/dashboard/security/support";
+              : role === "staff"
+                ? "/dashboard/staff/support"
+                : "/dashboard/security/support";
 
       const alreadyHasSupport =
         navItems.some((item) => item.label === "Contact Support") ||
@@ -236,6 +249,7 @@ export default function DashboardLayout({
       "resident",
       "security",
       "estate admin",
+      "staff",
     ]);
     if (rolesWithModules.has(role)) {
       const staticLabels = new Set<string>([
@@ -489,7 +503,9 @@ export default function DashboardLayout({
 
         {/* Page Content */}
         <Suspense fallback={<div>Loading...</div>}>
-          <div className="p-4 md:p-6">{children}</div>
+          <CommunityChatSocketProvider>
+            <div className="p-4 md:p-6">{children}</div>
+          </CommunityChatSocketProvider>
         </Suspense>
       </main>
     </div>

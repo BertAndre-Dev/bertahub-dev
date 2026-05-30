@@ -38,6 +38,7 @@ import {
 import type { ChatGroup, ChatGroupRoleToAdd, GroupMessageType } from "@/types/community-group";
 import type { RootState, AppDispatch } from "@/redux/store";
 import Loader from "@/components/ui/Loader";
+import { useCommunityChatGroupRoom } from "@/hooks/useCommunityChatGroupRoom";
 
 export default function AdminCommunityChatPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -50,6 +51,14 @@ export default function AdminCommunityChatPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Estate");
   const [messageSelfLabel, setMessageSelfLabel] = useState("You");
+
+  const authToken = useSelector((state: RootState) => state.auth.token);
+
+  useCommunityChatGroupRoom({
+    groupId: selectedId,
+    token: authToken,
+    currentUserId,
+  });
 
   const {
     groups,

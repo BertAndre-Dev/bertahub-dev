@@ -6,7 +6,7 @@ import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
 import { toast } from "react-toastify";
 import { RootState, AppDispatch } from "@/redux/store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getVisitorsByEstate,
@@ -32,6 +32,22 @@ import {
   type QrCodeVisitor,
 } from "@/components/resident/visitor-management/VisitorQrCodeModal";
 import { formatAddressEntryLabel } from "@/lib/address";
+
+const PAGE_LIMIT = 10;
+
+/** Example dates for empty inputs (display only; not sent until the user picks a range). */
+function getDateRangePlaceholders(): { start: string; end: string } {
+  const now = new Date();
+  const start = new Date(now);
+  start.setUTCDate(start.getUTCDate() - 30);
+  const toIso = (d: Date) =>
+    new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+      .toISOString()
+      .slice(0, 10);
+  return { start: toIso(start), end: toIso(now) };
+}
+
+const DATE_RANGE_PLACEHOLDERS = getDateRangePlaceholders();
 
 export default function AdminVisitorManagement() {
   const dispatch = useDispatch<AppDispatch>();
@@ -79,7 +95,24 @@ export default function AdminVisitorManagement() {
     );
   });
 
-  // Fetch user + visitors
+  const fetchVisitors = useCallback(
+    async (page = 1) => {
+      if (!estateId) return;
+      const shouldApplyDate = Boolean(startDate && endDate);
+      await dispatch(
+        getVisitorsByEstate({
+          estateId,
+          page,
+          limit: PAGE_LIMIT,
+          startDate: shouldApplyDate ? startDate : undefined,
+          endDate: shouldApplyDate ? endDate : undefined,
+        }),
+      ).unwrap();
+    },
+    [dispatch, estateId, startDate, endDate],
+  );
+
+  // Bootstrap signed-in user and estate only (no visitor fetch here).
   useEffect(() => {
     (async () => {
       try {
@@ -109,48 +142,21 @@ export default function AdminVisitorManagement() {
         }
 
         setEstateId(foundEstateId);
-
-        await dispatch(
-          getVisitorsByEstate({ estateId: foundEstateId, page: 1, limit: 10 }),
-        ).unwrap();
       } catch (error: any) {
         toast.error(error?.message);
       }
     })();
   }, [dispatch]);
 
-  // Refetch visitors when date range changes (only apply when both are selected)
+  // Single fetch when estate or date range changes.
   useEffect(() => {
     if (!estateId) return;
-    const shouldApplyDate = Boolean(startDate && endDate);
-    dispatch(
-      getVisitorsByEstate({
-        estateId,
-        page: 1,
-        limit: pagination.limit,
-        startDate: shouldApplyDate ? startDate : undefined,
-        endDate: shouldApplyDate ? endDate : undefined,
-      }),
-    )
-      .unwrap()
-      .catch(() => toast.error("Failed to fetch visitors"));
-  }, [dispatch, estateId, startDate, endDate, pagination.limit]);
+    fetchVisitors(1).catch(() => toast.error("Failed to fetch visitors"));
+  }, [estateId, fetchVisitors]);
 
-  // Pagination handler
   const handlePageChange = async (page: number) => {
-    if (!estateId) return;
-
     try {
-      const shouldApplyDate = Boolean(startDate && endDate);
-      await dispatch(
-        getVisitorsByEstate({
-          estateId,
-          page,
-          limit: pagination.limit,
-          startDate: shouldApplyDate ? startDate : undefined,
-          endDate: shouldApplyDate ? endDate : undefined,
-        }),
-      ).unwrap();
+      await fetchVisitors(page);
     } catch {
       toast.error("Failed to change page");
     }
@@ -173,33 +179,16 @@ export default function AdminVisitorManagement() {
       ).unwrap();
       toast.success(res.message);
       setVerifyModalVisitor(null);
-      if (estateId) {
-        await dispatch(
-          getVisitorsByEstate({
-            estateId,
-            page: pagination.page,
-            limit: pagination.limit,
-          }),
-        );
-      }
+      await fetchVisitors(pagination.page);
     } catch (error: any) {
       toast.error(error?.message);
     }
   };
 
   const refreshVisitors = () => {
-    if (estateId) {
-      const shouldApplyDate = Boolean(startDate && endDate);
-      dispatch(
-        getVisitorsByEstate({
-          estateId,
-          page: pagination.page,
-          limit: pagination.limit,
-          startDate: shouldApplyDate ? startDate : undefined,
-          endDate: shouldApplyDate ? endDate : undefined,
-        }),
-      );
-    }
+    fetchVisitors(pagination.page).catch(() =>
+      toast.error("Failed to fetch visitors"),
+    );
   };
 
   const handleOpenDeleteModal = (visitor: any, e?: React.MouseEvent) => {
@@ -442,7 +431,7 @@ export default function AdminVisitorManagement() {
           const stats = [
             {
               label: "Total Visitors",
-              value: filteredVisitors?.length || 0,
+              value: pagination?.total ?? 0,
               icon: UserPlus2,
               color: "bg-[#FEE6D480]",
             },
@@ -568,8 +557,11 @@ export default function AdminVisitorManagement() {
           data={filteredVisitors}
           emptyMessage="No visitors found."
           enableDateRangeFilter
+          defaultDateRangeDays={0}
           startDate={startDate}
           endDate={endDate}
+          startDatePlaceholder={DATE_RANGE_PLACEHOLDERS.start}
+          endDatePlaceholder={DATE_RANGE_PLACEHOLDERS.end}
           onDateRangeChange={({ startDate, endDate }) => {
             setStartDate(startDate);
             setEndDate(endDate);

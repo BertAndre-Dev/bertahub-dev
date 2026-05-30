@@ -369,7 +369,7 @@ export default function CompanyMarketplacePage() {
         {[
           {
             label: "Total Businesses",
-            value: String(listings.length),
+            value: String(pagination?.total ?? 0),
             icon: Store,
             color: "bg-[#D0DFF280]",
           },
