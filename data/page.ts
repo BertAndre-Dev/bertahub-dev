@@ -133,6 +133,18 @@ export const staffNav = [
 
 export const companyNav = [
   {
+    label: "Transactions",
+    icon: ArrowLeftRight,
+    path: "/dashboard/company/transactions",
+    moduleKey: "transactions",
+  },
+  {
+    label: "Wallet",
+    icon: Wallet,
+    path: "/dashboard/company/wallet",
+    moduleKey: "wallet",
+  },
+  {
     label: "User Management",
     icon: UserCog,
     path: "/dashboard/company/users",
