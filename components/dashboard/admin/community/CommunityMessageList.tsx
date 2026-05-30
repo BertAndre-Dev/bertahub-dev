@@ -33,6 +33,7 @@ type Props = Readonly<{
   currentUserId?: string | null;
   onEditMessage?: (messageId: string) => void;
   onDeleteMessage?: (messageId: string) => void;
+  onReplyMessage?: (messageId: string) => void;
   messageActionsDisabled?: boolean;
 }>;
 
@@ -41,6 +42,7 @@ export function CommunityMessageList({
   currentUserId,
   onEditMessage,
   onDeleteMessage,
+  onReplyMessage,
   messageActionsDisabled,
 }: Props) {
   const sections = useMemo(() => {
@@ -76,6 +78,7 @@ export function CommunityMessageList({
                 currentUserId={currentUserId}
                 onEditMessage={onEditMessage}
                 onDeleteMessage={onDeleteMessage}
+                onReplyMessage={onReplyMessage}
                 messageActionsDisabled={messageActionsDisabled}
               />
             ))}

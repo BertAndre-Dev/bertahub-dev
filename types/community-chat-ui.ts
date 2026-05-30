@@ -36,6 +36,17 @@ export type CommunityMessage = {
   isDeleted?: boolean;
   /** Normalized from API (URLs + metadata). */
   attachments?: GroupMessageAttachment[];
+  replyPreview?: {
+    id: string;
+    sender: string;
+    text: string;
+  };
+};
+
+export type CommunityReplyTarget = {
+  messageId: string;
+  sender: string;
+  text: string;
 };
 
 export type CommunityMember = {

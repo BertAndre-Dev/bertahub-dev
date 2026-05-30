@@ -118,6 +118,14 @@ export interface SendGroupMessagePayload {
   replyTo?: string;
 }
 
+export interface ReplyToGroupMessagePayload {
+  groupId: string;
+  messageId: string;
+  content: string;
+  messageType?: GroupMessageType;
+  attachments?: string[];
+}
+
 export interface EditGroupMessagePayload {
   messageId: string;
   content: string;

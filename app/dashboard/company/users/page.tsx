@@ -36,6 +36,11 @@ import {
 import { parseCompanyFromUser } from "../lib/company";
 import CompanyInviteUserForm from "./components/CompanyInviteUserForm";
 import { UserStatusModal } from "./components/UserStatusModal";
+import {
+  DEFAULT_ESTATE_USER_ROLE,
+  ESTATE_USER_ROLE_FILTER_OPTIONS,
+  type EstateUserRoleFilter,
+} from "@/lib/estate-user-roles";
 
 interface EstateOption {
   label: string;
@@ -71,12 +76,19 @@ export default function CompanyUsersPage() {
   const [companyId, setCompanyId] = useState("");
   const [companyName, setCompanyName] = useState("Company");
   const [open, setOpen] = useState(false);
-  const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(null);
+  const [selectedEstate, setSelectedEstate] = useState<EstateOption | null>(
+    null,
+  );
+  const [roleFilter, setRoleFilter] = useState<EstateUserRoleFilter>(
+    DEFAULT_ESTATE_USER_ROLE,
+  );
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
   const [statusItem, setStatusItem] = useState<CompanyUserDetails | null>(null);
-  const [statusMode, setStatusMode] = useState<"suspend" | "activate">("suspend");
+  const [statusMode, setStatusMode] = useState<"suspend" | "activate">(
+    "suspend",
+  );
   const [statusSubmitting, setStatusSubmitting] = useState(false);
   const [estatesLoading, setEstatesLoading] = useState(true);
   const [estateOptions, setEstateOptions] = useState<EstateOption[]>([]);
@@ -105,13 +117,22 @@ export default function CompanyUsersPage() {
           estateId: selectedEstate.value,
           page,
           limit: pageSize,
+          role: roleFilter,
           search: search.trim() || undefined,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
         }),
       ).unwrap();
     },
-    [dispatch, selectedEstate, pageSize, search, startDate, endDate],
+    [
+      dispatch,
+      selectedEstate,
+      pageSize,
+      search,
+      startDate,
+      endDate,
+      roleFilter,
+    ],
   );
 
   useEffect(() => {
@@ -147,7 +168,9 @@ export default function CompanyUsersPage() {
               if (!value) return null;
               return { label: e?.name ?? "Unnamed estate", value };
             })
-            .filter((x: EstateOption | null): x is EstateOption => Boolean(x)) ?? [];
+            .filter((x: EstateOption | null): x is EstateOption =>
+              Boolean(x),
+            ) ?? [];
         setEstateOptions(options);
       } catch {
         toast.error("Failed to fetch estates");
@@ -166,7 +189,9 @@ export default function CompanyUsersPage() {
 
   useEffect(() => {
     if (!selectedEstate?.value) return;
-    fetchUsers(1).catch(() => toast.error("Failed to fetch users for selected estate"));
+    fetchUsers(1).catch(() =>
+      toast.error("Failed to fetch users for selected estate"),
+    );
   }, [selectedEstate, fetchUsers]);
 
   const closeStatusModal = () => {
@@ -206,7 +231,8 @@ export default function CompanyUsersPage() {
       await fetchUsers(Number(pagination?.currentPage) || 1);
     } catch (err: unknown) {
       toast.error(
-        (err as { message?: string })?.message ?? "Failed to update user status.",
+        (err as { message?: string })?.message ??
+          "Failed to update user status.",
       );
     } finally {
       setStatusSubmitting(false);
@@ -241,7 +267,8 @@ export default function CompanyUsersPage() {
       {
         key: "serviceCharge" as const,
         header: "Service charge",
-        render: (item: CompanyUserDetails) => String(Boolean(item.serviceCharge)),
+        render: (item: CompanyUserDetails) =>
+          String(Boolean(item.serviceCharge)),
         exportValue: (item: CompanyUserDetails) =>
           String(Boolean(item.serviceCharge)),
       },
@@ -324,17 +351,6 @@ export default function CompanyUsersPage() {
     [pagination?.total],
   );
 
-  if (!companyId) {
-    return (
-      <div className="space-y-6">
-        <h1 className="font-heading text-3xl font-bold">User Management</h1>
-        <p className="text-muted-foreground">
-          No company is linked to your account. Contact support.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="relative">
       {pageLoading && (
@@ -346,11 +362,13 @@ export default function CompanyUsersPage() {
       <div
         className={[
           "space-y-6",
-          pageLoading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
+          pageLoading
+            ? "blur-sm opacity-60 pointer-events-none select-none"
+            : "",
         ].join(" ")}
       >
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between flex-wrap gap-4">
-          <div>
+          <div className="flex flex-col gap-2">
             <h1 className="font-heading text-3xl font-bold">User Management</h1>
             <p className="text-muted-foreground mt-1">
               Manage users for{" "}
@@ -359,6 +377,27 @@ export default function CompanyUsersPage() {
               </span>
               .
             </p>
+            <div className="w-48 min-w-[12rem]">
+              <Select
+                options={ESTATE_USER_ROLE_FILTER_OPTIONS}
+                placeholder="Filter by role"
+                value={ESTATE_USER_ROLE_FILTER_OPTIONS.find(
+                  (o) => o.value === roleFilter,
+                )}
+                onChange={(option) =>
+                  setRoleFilter(
+                    (option?.value as EstateUserRoleFilter) ??
+                      DEFAULT_ESTATE_USER_ROLE,
+                  )
+                }
+                isSearchable={false}
+                styles={{
+                  control: (base) => ({ ...base, cursor: "pointer" }),
+                  option: (base) => ({ ...base, cursor: "pointer" }),
+                  dropdownIndicator: (base) => ({ ...base, cursor: "pointer" }),
+                }}
+              />
+            </div>
           </div>
 
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -396,8 +435,12 @@ export default function CompanyUsersPage() {
               <Card key={stat.label} className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="font-heading text-2xl font-bold mt-2">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {stat.label}
+                    </p>
+                    <p className="font-heading text-2xl font-bold mt-2">
+                      {stat.value}
+                    </p>
                   </div>
                   <div className={`p-3 rounded-lg ${stat.color}`}>
                     <Icon className="w-6 h-6" />
@@ -441,12 +484,15 @@ export default function CompanyUsersPage() {
               total: pagination?.total || 0,
               current:
                 Number(
-                  pagination?.currentPage ?? (pagination as { page?: number })?.page,
+                  pagination?.currentPage ??
+                    (pagination as { page?: number })?.page,
                 ) || 1,
               pageSize,
             }}
             onPageChange={(page) => {
-              fetchUsers(page).catch(() => toast.error("Failed to change page"));
+              fetchUsers(page).catch(() =>
+                toast.error("Failed to change page"),
+              );
             }}
             enableExport
             exportFileName="company-users"
@@ -459,6 +505,7 @@ export default function CompanyUsersPage() {
                         estateId: selectedEstate.value,
                         page: 1,
                         limit: 50000,
+                        role: roleFilter,
                         search: search.trim() || undefined,
                         startDate: shouldApplyDate ? startDate : undefined,
                         endDate: shouldApplyDate ? endDate : undefined,

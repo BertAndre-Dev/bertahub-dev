@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Paperclip, SendHorizontal } from "lucide-react";
+import { Paperclip, SendHorizontal, X } from "lucide-react";
 import { toast } from "react-toastify";
 import ChatFilePreview from "@/components/chat/ChatFilePreview";
 import { Input } from "@/components/ui/input";
 import type { GroupMessageType } from "@/types/community-group";
+import type { CommunityReplyTarget } from "@/types/community-chat-ui";
 
 export type CommunitySendOptions = Readonly<{
   attachments?: string[];
@@ -19,6 +20,8 @@ type Props = Readonly<{
   placeholder?: string;
   disabled?: boolean;
   sending?: boolean;
+  replyingTo?: CommunityReplyTarget | null;
+  onCancelReply?: () => void;
 }>;
 
 function fileToBase64(file: File): Promise<string> {
@@ -37,6 +40,8 @@ export function CommunityMessageInput({
   placeholder = "Write a message",
   disabled = false,
   sending = false,
+  replyingTo = null,
+  onCancelReply,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [fileData, setFileData] = useState<string | null>(null);
@@ -92,6 +97,28 @@ export function CommunityMessageInput({
 
   return (
     <div className="border-t border-border bg-card p-3">
+      {replyingTo ? (
+        <div className="mb-2 flex items-start justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-primary">
+              Replying to {replyingTo.sender}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {replyingTo.text}
+            </p>
+          </div>
+          {onCancelReply ? (
+            <button
+              type="button"
+              onClick={onCancelReply}
+              className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Cancel reply"
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {fileData ? (
         <div className="mb-2">
           <ChatFilePreview

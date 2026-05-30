@@ -1,5 +1,6 @@
 import type { GroupMessage } from "@/types/community-group";
 import type { CommunityMessage } from "@/types/community-chat-ui";
+import { isSameUserId } from "@/lib/user-id";
 
 function isoDateOnly(iso?: string): string {
   if (!iso) return new Date().toISOString().slice(0, 10);
@@ -25,11 +26,9 @@ export function groupMessageToCommunity(
   m: GroupMessage,
   currentUserId: string | null,
   selfLabel = "You",
+  messageById?: Map<string, GroupMessage>,
 ): CommunityMessage {
-  const outgoing =
-    Boolean(currentUserId) &&
-    Boolean(m.senderId) &&
-    m.senderId === currentUserId;
+  const outgoing = isSameUserId(m.senderId, currentUserId);
   const isDeleted = Boolean(m.isDeleted);
 
   let text = (m.content ?? "").trim();
@@ -59,6 +58,25 @@ export function groupMessageToCommunity(
     text = `${text} (edited)`;
   }
 
+  let replyPreview: CommunityMessage["replyPreview"];
+  if (m.replyTo && messageById) {
+    const parent = messageById.get(m.replyTo);
+    if (parent) {
+      const parentDeleted = Boolean(parent.isDeleted);
+      let parentText = (parent.content ?? "").trim();
+      if (parentDeleted) {
+        parentText = "This message was deleted.";
+      } else if (!parentText && parent.messageType && parent.messageType !== "text") {
+        parentText = "[Attachment]";
+      }
+      replyPreview = {
+        id: parent._id,
+        sender: parent.senderName || "Someone",
+        text: parentText.slice(0, 160),
+      };
+    }
+  }
+
   return {
     id: m._id,
     senderId: m.senderId,
@@ -74,5 +92,6 @@ export function groupMessageToCommunity(
       : hasRenderableAttachments
         ? attachments
         : undefined,
+    replyPreview,
   };
 }
