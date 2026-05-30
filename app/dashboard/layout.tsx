@@ -27,6 +27,7 @@ import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { clearCsrfToken, ensureCsrfToken } from "@/utils/csrf";
 import { disconnectSocket } from "@/lib/socket";
 import { CommunityChatSocketProvider } from "@/components/providers/CommunityChatSocketProvider";
+import { WalletRequiredAlert } from "@/components/wallet/WalletRequiredAlert";
 import Image from "next/image";
 
 export default function DashboardLayout({
@@ -500,6 +501,8 @@ export default function DashboardLayout({
             </div>
           </div>
         </header>
+
+        <WalletRequiredAlert />
 
         {/* Page Content */}
         <Suspense fallback={<div>Loading...</div>}>
