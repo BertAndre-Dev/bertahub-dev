@@ -1,18 +1,10 @@
 import { createSelector } from "@reduxjs/toolkit";
 import type { RootState } from "@/redux/store";
+import {
+  getAddressDisplay,
+  getResidentName,
+} from "@/app/dashboard/staff/maintenance/lib/format";
 import type { StaffComplaintItem } from "./staff-maintenance";
-
-function residentName(item: StaffComplaintItem) {
-  const resident =
-    item.resident ??
-    (item.residentId &&
-    typeof item.residentId === "object" &&
-    "firstName" in item.residentId
-      ? item.residentId
-      : null);
-  if (!resident) return "";
-  return [resident.firstName, resident.lastName].filter(Boolean).join(" ");
-}
 
 function ticketLabel(item: StaffComplaintItem) {
   if (item.ticketNumber) return `#${item.ticketNumber}`;
@@ -28,7 +20,8 @@ function matchesSearch(item: StaffComplaintItem, query: string) {
   const haystack = [
     ticketLabel(item),
     item.title ?? "",
-    residentName(item),
+    getResidentName(item),
+    getAddressDisplay(item),
   ]
     .join(" ")
     .toLowerCase();

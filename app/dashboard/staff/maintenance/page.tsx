@@ -127,6 +127,14 @@ export default function StaffMaintenancePage() {
 
   const columns = [
     {
+      key: "assignedOn",
+      header: "Assigned On",
+      render: (item: StaffComplaintItem) =>
+        formatAssignedOn(item.updatedAt || item.createdAt),
+      exportValue: (item: StaffComplaintItem) =>
+        formatAssignedOn(item.updatedAt || item.createdAt),
+    },
+    {
       key: "title",
       header: "Request Title",
       render: (item: StaffComplaintItem) => (
@@ -191,7 +199,7 @@ export default function StaffMaintenancePage() {
           onChange={(e) => handleStatusChange(item, e.target.value)}
           disabled={updatingStatus}
           aria-label={`Update status for ${item.title || "maintenance request"} (${getTicketDisplay(item)})`}
-          className={`min-w-[140px] rounded-full px-3 py-1.5 text-xs font-semibold border-0 cursor-pointer ${getStatusStyle(item.status)}`}
+          className={`min-w-[100px] rounded-full px-3 py-1.5 text-xs font-semibold border-0 cursor-pointer ${getStatusStyle(item.status)}`}
         >
           {STAFF_STATUS_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -203,21 +211,13 @@ export default function StaffMaintenancePage() {
       exportable: false,
     },
     {
-      key: "assignedOn",
-      header: "Assigned On",
-      render: (item: StaffComplaintItem) =>
-        formatAssignedOn(item.updatedAt || item.createdAt),
-      exportValue: (item: StaffComplaintItem) =>
-        formatAssignedOn(item.updatedAt || item.createdAt),
-    },
-    {
       key: "actions",
       header: "Actions",
       render: (item: StaffComplaintItem) => (
         <Button
           size="sm"
           variant="outline"
-          className="rounded-full border-[#93C5FD] text-[#2563EB] hover:bg-[#EFF6FF]"
+          className="rounded-full border-[#93C5FD] text-[#2563EB] hover:bg-[#EFF6FF] cursor-pointer"
           onClick={() =>
             dispatch(setStaffMaintenanceSelectedComplaintId(item.id))
           }

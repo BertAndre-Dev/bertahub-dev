@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getAllVisitors } from "./visitor";
+import { getAllVisitors, scanVisitor } from "./visitor";
 
 export interface SecurityVisitorItem {
   id: string;
@@ -36,13 +36,17 @@ export interface SecurityAllVisitorsResponse {
 
 export interface SecurityVisitorState {
   getAllVisitorsStatus: "idle" | "isLoading" | "succeeded" | "failed";
+  scanVisitorStatus: "idle" | "isLoading" | "succeeded" | "failed";
   allVisitors: SecurityAllVisitorsResponse | null;
+  lastScannedVisitor: SecurityVisitorItem | null;
   error: string | null;
 }
 
 const initialState: SecurityVisitorState = {
   getAllVisitorsStatus: "idle",
+  scanVisitorStatus: "idle",
   allVisitors: null,
+  lastScannedVisitor: null,
   error: null,
 };
 
@@ -52,7 +56,9 @@ const securityVisitorSlice = createSlice({
   reducers: {
     resetSecurityVisitorState: (state) => {
       state.getAllVisitorsStatus = "idle";
+      state.scanVisitorStatus = "idle";
       state.allVisitors = null;
+      state.lastScannedVisitor = null;
       state.error = null;
     },
   },
@@ -72,6 +78,23 @@ const securityVisitorSlice = createSlice({
           (action.payload as { message?: string })?.message ??
           action.error.message ??
           "Failed to fetch visitors";
+      })
+
+      .addCase(scanVisitor.pending, (state) => {
+        state.scanVisitorStatus = "isLoading";
+        state.error = null;
+      })
+      .addCase(scanVisitor.fulfilled, (state, action) => {
+        state.scanVisitorStatus = "succeeded";
+        const data = (action.payload as { data?: SecurityVisitorItem })?.data;
+        if (data) state.lastScannedVisitor = data;
+      })
+      .addCase(scanVisitor.rejected, (state, action) => {
+        state.scanVisitorStatus = "failed";
+        state.error =
+          (action.payload as { message?: string })?.message ??
+          action.error.message ??
+          "Failed to verify visitor";
       });
   },
 });

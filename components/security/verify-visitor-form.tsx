@@ -8,28 +8,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
-import { verifyVisitor } from "@/redux/slice/admin/visitor/visitor";
-import { formatVisitorCode } from "@/lib/utils";
-import { CheckCircle, XCircle } from "lucide-react";
+import { scanVisitor } from "@/redux/slice/security/visitor/visitor";
+import {
+  buildScanPayload,
+  mapScanResponseToVisitorDetails,
+} from "@/lib/security-visitor";
+import { formatVisitorCode, normalizeBarcodeInput } from "@/lib/utils";
+import { CheckCircle } from "lucide-react";
 import type { VisitorDetailsData } from "@/app/dashboard/security/types";
 
 interface VerifyVisitorFormProps {
   visitorDetails?: VisitorDetailsData | null;
   initialCode?: string;
+  onVerified?: (visitor: VisitorDetailsData | null) => void;
 }
 
 export default function VerifyVisitorForm({
   visitorDetails,
   initialCode: initialCodeProp,
+  onVerified,
 }: VerifyVisitorFormProps = {}) {
   const dispatch = useDispatch<AppDispatch>();
   const searchParams = useSearchParams();
 
   const codeFromUrl = searchParams.get("code") ?? "";
   const initialCode = initialCodeProp ?? codeFromUrl;
-  const [code, setCode] = useState(() => formatVisitorCode(initialCode));
+  const [code, setCode] = useState(() => normalizeBarcodeInput(initialCode));
   const [loading, setLoading] = useState(false);
-  const [denyLoading, setDenyLoading] = useState(false);
 
   useEffect(() => {
     if (visitorDetails?.visitorCode) {
@@ -38,16 +43,26 @@ export default function VerifyVisitorForm({
   }, [visitorDetails?.visitorCode]);
 
   const handleVerify = async () => {
-    if (!code.trim()) {
-      toast.warning("Enter visitor code");
+    const barcode = code.trim();
+    if (!barcode) {
+      toast.warning("Enter or scan a visitor barcode");
       return;
     }
+
     try {
       setLoading(true);
-      const res = await dispatch(verifyVisitor({ visitorCode: code })).unwrap();
-      toast.success(res.message ?? "Visitor verified");
+      const res = await dispatch(
+        scanVisitor(buildScanPayload(barcode, visitorDetails)),
+      ).unwrap();
+      const verified = mapScanResponseToVisitorDetails(res);
+      onVerified?.(verified);
+      toast.success(
+        (res as { message?: string })?.message ?? "Visitor verified successfully",
+      );
     } catch (error: unknown) {
-      toast.error((error as { message?: string })?.message ?? "Verification failed");
+      toast.error(
+        (error as { message?: string })?.message ?? "Verification failed",
+      );
     } finally {
       setLoading(false);
     }
@@ -86,12 +101,15 @@ export default function VerifyVisitorForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-sm text-gray-600">Visitor Code</Label>
+        <Label className="text-sm text-gray-600">
+          Barcode / QR code / Visitor code
+        </Label>
         <Input
           value={code}
-          onChange={(e) => setCode(formatVisitorCode(e.target.value))}
-          title="Visitor Code"
-          placeholder="EZR-HP5O"
+          onChange={(e) => setCode(e.target.value)}
+          onBlur={(e) => setCode(normalizeBarcodeInput(e.target.value))}
+          title="Barcode / QR code / Visitor code"
+          placeholder="EZR-4FTX or scan QR code"
         />
       </div>
 
@@ -113,20 +131,12 @@ export default function VerifyVisitorForm({
       <div className="grid grid-cols-1 gap-4 pt-2">
         <Button
           onClick={handleVerify}
-          disabled={loading || denyLoading}
+          disabled={loading}
           className="w-full bg-[#0150AC] hover:bg-[#0150Ad] text-white rounded-xl py-6 text-base font-medium flex items-center justify-center gap-2"
         >
           <CheckCircle className="w-5 h-5" />
           {loading ? "Verifying..." : "Verify & Allow Access"}
         </Button>
-        {/* <Button
-          disabled={loading || denyLoading}
-          variant="destructive"
-          className="w-full rounded-xl py-6 text-base font-medium flex items-center justify-center gap-2"
-        >
-          <XCircle className="w-5 h-5" />
-          {denyLoading ? "Denying..." : "Deny Access"}
-        </Button> */}
       </div>
     </div>
   );

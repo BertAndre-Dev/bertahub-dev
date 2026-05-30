@@ -114,6 +114,14 @@ export default function VisitorManagementPage() {
           <VerifyVisitorForm
             visitorDetails={visitorDetails}
             initialCode={visitorDetails?.visitorCode}
+            onVerified={(visitor) => {
+              if (visitor) setVisitorDetails(visitor);
+              if (estateId) {
+                dispatch(
+                  getAllVisitors({ estateId, page: 1, limit: 20 }),
+                ).catch(() => {});
+              }
+            }}
           />
           <ResidentDetails visitorDetails={visitorDetails} />
         </div>

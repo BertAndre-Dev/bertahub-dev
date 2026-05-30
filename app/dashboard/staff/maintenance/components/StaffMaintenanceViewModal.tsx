@@ -21,7 +21,6 @@ import type { StaffComplaintItem } from "@/redux/slice/staff/maintenance/staff-m
 import {
   createStaffComplaintComment,
   getStaffComplaintById,
-  getStaffComplaintComments,
   updateStaffComplaintStatus,
 } from "@/redux/slice/staff/maintenance/staff-maintenance";
 import {
@@ -38,6 +37,7 @@ import {
   getResidentName,
   getStatusStyle,
   getTicketDisplay,
+  mergeStaffComplaintDetails,
 } from "../lib/format";
 
 type Props = {
@@ -80,10 +80,6 @@ export default function StaffMaintenanceViewModal({
   const dispatch = useDispatch<AppDispatch>();
   const [commentText, setCommentText] = useState("");
 
-  const userId = useSelector(
-    (state: RootState) => state.auth.user?.id ?? state.auth.user?._id ?? "",
-  );
-
   const {
     fetchedComplaint,
     comments,
@@ -105,11 +101,19 @@ export default function StaffMaintenanceViewModal({
     };
   });
 
-  const complaint = useMemo(() => {
-    if (fetchedComplaint?.id === complaintId) return fetchedComplaint;
-    if (initialComplaint?.id === complaintId) return initialComplaint;
-    return fetchedComplaint ?? initialComplaint;
-  }, [complaintId, fetchedComplaint, initialComplaint]);
+  const complaint = useMemo(
+    () =>
+      mergeStaffComplaintDetails(
+        initialComplaint?.id === complaintId ? initialComplaint : null,
+        fetchedComplaint?.id === complaintId ? fetchedComplaint : null,
+      ),
+    [complaintId, fetchedComplaint, initialComplaint],
+  );
+
+  const displayComments = useMemo(() => {
+    if (comments.length) return comments;
+    return complaint?.comments ?? [];
+  }, [comments, complaint?.comments]);
 
   useEffect(() => {
     if (!complaintId) return;
@@ -118,9 +122,6 @@ export default function StaffMaintenanceViewModal({
         (err as { message?: string })?.message ?? "Failed to load request.",
       ),
     );
-    dispatch(
-      getStaffComplaintComments({ complaintId, page: 1, limit: 50 }),
-    ).catch(() => {});
   }, [complaintId, dispatch]);
 
   const handleStatusChange = async (newStatus: string) => {
@@ -142,16 +143,11 @@ export default function StaffMaintenanceViewModal({
     e.preventDefault();
     const text = commentText.trim();
     if (!text || !complaintId) return;
-    if (!userId) {
-      toast.error("You must be signed in to comment");
-      return;
-    }
     try {
       await dispatch(
         createStaffComplaintComment({
           complaintId,
-          userId: String(userId),
-          text,
+          comment: text,
         }),
       ).unwrap();
       setCommentText("");
@@ -163,7 +159,7 @@ export default function StaffMaintenanceViewModal({
     }
   };
 
-  const requesterName = complaint ? getResidentName(complaint) : "Resident";
+  const requesterName = complaint ? getResidentName(complaint) : "—";
   const requesterImage = complaint ? getResidentImage(complaint) : undefined;
   const locationLine = complaint
     ? [getAddressDisplay(complaint), estateName].filter((p) => p && p !== "—").join(" · ") ||
@@ -175,7 +171,7 @@ export default function StaffMaintenanceViewModal({
   if (complaint) {
     modalBody = (
       <div className="space-y-6 max-h-[min(80vh,720px)] overflow-y-auto pr-1">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pt-1">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-primary">
               {getTicketDisplay(complaint)}
@@ -193,7 +189,7 @@ export default function StaffMaintenanceViewModal({
             onChange={(e) => handleStatusChange(e.target.value)}
             disabled={updateLoading}
             aria-label={`Update status for ${complaint.title || "maintenance request"} (${getTicketDisplay(complaint)})`}
-            className={`shrink-0 min-w-[140px] rounded-full px-3 py-2 text-xs font-semibold border-0 cursor-pointer ${getStatusStyle(complaint.status)}`}
+            className={`shrink-0 min-w-[100px] rounded-full px-3 py-2 text-xs font-semibold border-0 cursor-pointer ${getStatusStyle(complaint.status)}`}
           >
             {STAFF_STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -292,21 +288,37 @@ export default function StaffMaintenanceViewModal({
           </p>
         </div>
 
-        {comments.length > 0 ? (
+        {displayComments.length > 0 ? (
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Comments ({comments.length})</p>
+            <p className="text-sm font-semibold">
+              Comments ({displayComments.length})
+            </p>
             <div className="space-y-2 max-h-48 overflow-y-auto">
-              {comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="rounded-xl border border-border p-3 bg-muted/10"
-                >
-                  <p className="text-xs text-muted-foreground">
-                    {formatAssignedOn(comment.createdAt)}
-                  </p>
-                  <p className="text-sm mt-1">{comment.text}</p>
-                </div>
-              ))}
+              {displayComments.map((comment) => {
+                const author =
+                  comment.userName?.trim() ||
+                  [comment.user?.firstName, comment.user?.lastName]
+                    .filter(Boolean)
+                    .join(" ")
+                    .trim() ||
+                  "Staff";
+                return (
+                  <div
+                    key={comment.id}
+                    className="rounded-xl border border-border p-3 bg-muted/10"
+                  >
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        {author}
+                      </span>
+                      {comment.createdAt
+                        ? ` · ${formatAssignedOn(comment.createdAt)}`
+                        : null}
+                    </p>
+                    <p className="text-sm mt-1">{comment.text}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : (
@@ -337,18 +349,6 @@ export default function StaffMaintenanceViewModal({
           </Button>
         </div>
       </div>
-    );
-  } else if (loading) {
-    modalBody = (
-      <p className="text-center text-muted-foreground py-10">
-        Loading maintenance request...
-      </p>
-    );
-  } else {
-    modalBody = (
-      <p className="text-center text-muted-foreground py-10">
-        Maintenance request not found.
-      </p>
     );
   }
 

@@ -11,3 +11,14 @@ export function formatVisitorCode(raw: string): string {
   if (cleaned.length <= 3) return cleaned
   return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`
 }
+
+/** Keep scanned QR / verification tokens intact; format short manual visitor codes. */
+export function normalizeBarcodeInput(raw: string): string {
+  const trimmed = (raw ?? "").trim()
+  if (!trimmed) return ""
+  if (/[=+/]/.test(trimmed) || trimmed.length > 20) return trimmed
+  if (/^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$/.test(trimmed)) {
+    return trimmed.toUpperCase()
+  }
+  return formatVisitorCode(trimmed)
+}
