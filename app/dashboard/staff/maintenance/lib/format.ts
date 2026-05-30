@@ -1,7 +1,7 @@
 import type {
   StaffComplaintItem,
   StaffComplaintResident,
-} from "@/redux/slice/staff/maintenance/staff-maintenance-slice";
+} from "@/redux/slice/staff/maintenance/staff-maintenance";
 import { formatAddressEntryLabel } from "@/lib/address";
 
 export const STAFF_STATUS_OPTIONS = [
