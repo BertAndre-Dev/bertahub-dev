@@ -1,6 +1,6 @@
 "use client";
 
-import type { CommunityChatGroup, CommunityMessage } from "@/types/community-chat-ui";
+import type { CommunityChatGroup, CommunityMessage, CommunityReplyTarget } from "@/types/community-chat-ui";
 import type { CommunitySendOptions } from "./CommunityMessageInput";
 import { CommunityChatHeader } from "./CommunityChatHeader";
 import { CommunityMessageList } from "./CommunityMessageList";
@@ -19,7 +19,10 @@ type Props = Readonly<{
   currentUserId?: string | null;
   onEditMessage?: (messageId: string) => void;
   onDeleteMessage?: (messageId: string) => void;
+  onReplyMessage?: (messageId: string) => void;
   messageActionsDisabled?: boolean;
+  replyingTo?: CommunityReplyTarget | null;
+  onCancelReply?: () => void;
 }>;
 
 export function CommunityChatWindow({
@@ -35,7 +38,10 @@ export function CommunityChatWindow({
   currentUserId,
   onEditMessage,
   onDeleteMessage,
+  onReplyMessage,
   messageActionsDisabled,
+  replyingTo = null,
+  onCancelReply,
 }: Props) {
   return (
     <div className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:min-h-[calc(100vh-220px)]">
@@ -50,6 +56,7 @@ export function CommunityChatWindow({
           currentUserId={currentUserId}
           onEditMessage={onEditMessage}
           onDeleteMessage={onDeleteMessage}
+          onReplyMessage={onReplyMessage}
           messageActionsDisabled={messageActionsDisabled}
         />
       )}
@@ -59,6 +66,8 @@ export function CommunityChatWindow({
         onSend={onSend}
         disabled={sendDisabled}
         sending={sending}
+        replyingTo={replyingTo}
+        onCancelReply={onCancelReply}
       />
     </div>
   );
