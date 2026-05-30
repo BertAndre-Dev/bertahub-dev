@@ -34,7 +34,7 @@ export interface StaffComplaintItem {
   priority?: string;
   residentId?: string | StaffComplaintResident;
   resident?: StaffComplaintResident;
-  addressId?: StaffComplaintAddress | string;
+  addressId?: StaffComplaintAddress | StaffComplaintAddress[] | string;
   estateId?: string;
   assignedTo?: string | StaffComplaintAssignee;
   comments?: StaffComplaintComment[];
@@ -47,11 +47,13 @@ export interface StaffComplaintItem {
 export interface StaffComplaintComment {
   id: string;
   _id?: string;
-  complaintId: string;
+  complaintId?: string;
   userId: string;
   text: string;
+  userName?: string;
   user?: { firstName?: string; lastName?: string };
   createdAt?: string;
+  updatedAt?: string;
   image?: string;
 }
 
@@ -204,30 +206,18 @@ export const getStaffComplaintComments = createAsyncThunk(
   },
 );
 
-/** POST /api/v1/comments */
+/** POST /api/v1/complaints/:id/comments */
 export const createStaffComplaintComment = createAsyncThunk(
   "staffMaintenance/createStaffComplaintComment",
   async (
-    {
-      complaintId,
-      userId,
-      text,
-      image,
-    }: {
-      complaintId: string;
-      userId: string;
-      text: string;
-      image?: string;
-    },
+    { complaintId, comment }: { complaintId: string; comment: string },
     { rejectWithValue },
   ) => {
     try {
-      const res = await axiosInstance.post("/api/v1/comments", {
-        complaintId,
-        userId,
-        text,
-        ...(image ? { image } : {}),
-      });
+      const res = await axiosInstance.post(
+        `/api/v1/complaints/${complaintId}/comments`,
+        { comment },
+      );
       return res.data;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
@@ -257,6 +247,11 @@ export function normalizeStaffComplaint(
     assignedTo: p.assignedTo as StaffComplaintItem["assignedTo"],
     ticketNumber: p.ticketNumber as string,
     image: p.image as string,
+    comments: Array.isArray(p.comments)
+      ? p.comments.map((c) =>
+          normalizeStaffComment(c as Record<string, unknown>, id),
+        )
+      : undefined,
     createdAt: p.createdAt as string,
     updatedAt: p.updatedAt as string,
   };
@@ -264,16 +259,20 @@ export function normalizeStaffComplaint(
 
 export function normalizeStaffComment(
   c: Record<string, unknown>,
+  complaintId?: string,
 ): StaffComplaintComment {
   const id = String(c._id ?? c.id ?? "");
+  const text = String(c.text ?? c.comment ?? "").trim();
   return {
     id,
     _id: id,
-    complaintId: String(c.complaintId ?? ""),
+    complaintId: String(c.complaintId ?? complaintId ?? ""),
     userId: String(c.userId ?? ""),
-    text: (c.text as string) ?? "",
+    text,
+    userName: (c.userName as string) ?? undefined,
     user: c.user as StaffComplaintComment["user"],
     createdAt: c.createdAt as string,
+    updatedAt: c.updatedAt as string,
     image: c.image as string,
   };
 }

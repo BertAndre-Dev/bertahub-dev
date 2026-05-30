@@ -8,23 +8,32 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { getVisitorDetailsByCode } from "@/redux/slice/admin/visitor/visitor";
-import { formatVisitorCode } from "@/lib/utils";
+import { scanVisitor } from "@/redux/slice/security/visitor/visitor";
+import {
+  buildScanPayload,
+  mapScanResponseToVisitorDetails,
+} from "@/lib/security-visitor";
+import { normalizeBarcodeInput } from "@/lib/utils";
+import { QrCode, Search } from "lucide-react";
 import type { VisitorDetailsData } from "@/app/dashboard/security/types";
 
 interface ViewVisitorSearchProps {
   onDetailsLoaded?: (visitor: VisitorDetailsData | null) => void;
 }
 
-export default function ViewVisitorSearch({ onDetailsLoaded }: ViewVisitorSearchProps = {}) {
+export default function ViewVisitorSearch({
+  onDetailsLoaded,
+}: ViewVisitorSearchProps = {}) {
   const dispatch = useDispatch<AppDispatch>();
 
   const [code, setCode] = useState("");
-  const [visitor, setVisitor] = useState<VisitorDetailsData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [scanLoading, setScanLoading] = useState(false);
 
   const handleView = async () => {
-    if (!code.trim()) {
-      toast.warning("Enter visitor code");
+    const trimmed = normalizeBarcodeInput(code);
+    if (!trimmed) {
+      toast.warning("Enter visitor code or scan value");
       return;
     }
 
@@ -32,154 +41,89 @@ export default function ViewVisitorSearch({ onDetailsLoaded }: ViewVisitorSearch
       setLoading(true);
 
       const res: { data: VisitorDetailsData } = await dispatch(
-        getVisitorDetailsByCode({ code: code.trim() })
+        getVisitorDetailsByCode({ code: trimmed }),
       ).unwrap();
 
-      setVisitor(res.data);
+      setCode(trimmed);
       onDetailsLoaded?.(res.data);
       toast.success("Visitor details retrieved");
     } catch (error: unknown) {
-      toast.error((error as { message?: string })?.message || "Invalid visitor code");
-      setVisitor(null);
+      toast.error(
+        (error as { message?: string })?.message || "Invalid visitor code",
+      );
       onDetailsLoaded?.(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const handleScanVerify = async () => {
+    const barcode = code.trim();
+    if (!barcode) {
+      toast.warning("Enter or scan a barcode / QR code");
+      return;
+    }
+
+    try {
+      setScanLoading(true);
+      const res = await dispatch(
+        scanVisitor(buildScanPayload(barcode)),
+      ).unwrap();
+      const visitor = mapScanResponseToVisitorDetails(res);
+      if (visitor) {
+        setCode(visitor.visitorCode ?? barcode);
+        onDetailsLoaded?.(visitor);
+      }
+      toast.success(
+        (res as { message?: string })?.message ??
+          "Visitor verified successfully",
+      );
+    } catch (error: unknown) {
+      toast.error(
+        (error as { message?: string })?.message ?? "Scan verification failed",
+      );
+    } finally {
+      setScanLoading(false);
+    }
   };
 
   return (
     <div className="mx-auto bg-white rounded-lg p-6 space-y-6">
       <h2 className="text-xl sm:text-2xl font-semibold">Visitor Verification</h2>
+      <p className="text-sm text-muted-foreground -mt-4">
+        Search to view visitor details, or scan to verify at the gate. Accepts
+        visitor codes, verification codes, and QR barcode values.
+      </p>
 
       <div className="space-y-2">
-        <Label>Visitor Code</Label>
-        <div className="flex gap-2">
+        <Label>Barcode / QR code / Visitor code</Label>
+        <div className="flex flex-col sm:flex-row gap-2">
           <Input
             value={code}
-            onChange={(e) => setCode(formatVisitorCode(e.target.value))}
-            placeholder="EZR-HP5O"
-            className="flex-1 w-2/3"
+            onChange={(e) => setCode(e.target.value)}
+            onBlur={(e) => setCode(normalizeBarcodeInput(e.target.value))}
+            placeholder="EZR-4FTX or scan QR code"
+            className="flex-1"
           />
-          <Button onClick={handleView} disabled={loading} className="w-1/3">
-            {loading ? "Loading..." : "Search"}
+          <Button
+            onClick={handleView}
+            disabled={loading || scanLoading}
+            variant="outline"
+            className="sm:w-auto"
+          >
+            <Search className="w-4 h-4 mr-2" />
+            {loading ? "Loading..." : "View details"}
+          </Button>
+          <Button
+            onClick={handleScanVerify}
+            disabled={loading || scanLoading}
+            className="sm:w-auto"
+          >
+            <QrCode className="w-4 h-4 mr-2" />
+            {scanLoading ? "Scanning..." : "Scan & verify"}
           </Button>
         </div>
       </div>
-
-      {/* {visitor && (
-        <div className="border rounded-lg p-4 sm:p-6 space-y-5 bg-white shadow-sm">
-          <div className="pb-4 border-b">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Visitor Information
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-1">
-                First Name
-              </p>
-              <p className="font-medium text-gray-900">{visitor.firstName}</p>
-            </div>
-
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-1">
-                Last Name
-              </p>
-              <p className="font-medium text-gray-900">{visitor.lastName}</p>
-            </div>
-
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-1">
-                Phone Number
-              </p>
-              <p className="font-medium text-gray-900">{visitor.phone}</p>
-            </div>
-
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-1">
-                Visitor Code
-              </p>
-              <p className="font-medium text-blue-600">{formatVisitorCode(visitor.visitorCode)}</p>
-            </div>
-
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-1">
-                Purpose of Visit
-              </p>
-              <p className="font-medium text-gray-900">{visitor.purpose}</p>
-            </div>
-
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-1">Status</p>
-              <span
-                className={`inline-block px-3 py-1 text-xs sm:text-sm font-medium rounded-full ${
-                  visitor.isVerified
-                    ? "bg-green-100 text-green-700"
-                    : "bg-yellow-100 text-yellow-700"
-                }`}
-              >
-                {visitor.isVerified ? "Verified" : "Not Verified"}
-              </span>
-            </div>
-
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-1">Estate</p>
-              <p className="font-medium text-gray-900">
-                {visitor.estateId?.name || "N/A"}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-1">Address</p>
-              <p className="font-medium text-gray-900">
-                {visitor.addressId?.data?.block},{" "}
-                {visitor.addressId?.data?.unit}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-1">
-                Visiting Resident
-              </p>
-              <p className="font-medium text-gray-900">
-                {visitor.residentId?.firstName} {visitor.residentId?.lastName}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-1">
-                Created At
-              </p>
-              <p className="font-medium text-gray-900">
-                {formatDate(visitor.createdAt ?? "")}
-              </p>
-            </div>
-
-            {visitor.updatedAt !== visitor.createdAt && (
-              <div className="sm:col-span-2">
-                <p className="text-xs sm:text-sm text-gray-500 mb-1">
-                  Last Updated
-                </p>
-                <p className="font-medium text-gray-900">
-                  {formatDate(visitor.updatedAt ?? "")}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )} */}
     </div>
   );
 }

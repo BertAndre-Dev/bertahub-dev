@@ -205,9 +205,13 @@ const staffMaintenanceSlice = createSlice({
       .addCase(getStaffComplaintById.fulfilled, (state, action) => {
         state.getComplaintByIdStatus = "succeeded";
         const d = (action.payload as { data?: unknown })?.data ?? action.payload;
-        state.currentComplaint = d
+        const complaint = d
           ? normalizeStaffComplaint(d as Record<string, unknown>)
           : null;
+        state.currentComplaint = complaint;
+        if (complaint?.id && complaint.comments?.length) {
+          state.commentsByComplaintId[complaint.id] = complaint.comments;
+        }
       })
       .addCase(getStaffComplaintById.rejected, (state, action) => {
         state.getComplaintByIdStatus = "failed";
@@ -292,14 +296,18 @@ const staffMaintenanceSlice = createSlice({
       .addCase(createStaffComplaintComment.fulfilled, (state, action) => {
         state.createCommentStatus = "succeeded";
         const complaintId = action.meta.arg.complaintId;
-        const newComment =
+        const complaintRaw =
           (action.payload as { data?: unknown })?.data ?? action.payload;
-        if (!newComment || !complaintId) return;
-        const list = state.commentsByComplaintId[complaintId] ?? [];
-        state.commentsByComplaintId[complaintId] = [
-          ...list,
-          normalizeStaffComment(newComment as Record<string, unknown>),
-        ];
+        if (!complaintRaw || !complaintId) return;
+        const complaint = normalizeStaffComplaint(
+          complaintRaw as Record<string, unknown>,
+        );
+        if (state.currentComplaint?.id === complaint.id) {
+          state.currentComplaint = complaint;
+        }
+        if (complaint.comments?.length) {
+          state.commentsByComplaintId[complaintId] = complaint.comments;
+        }
       })
       .addCase(createStaffComplaintComment.rejected, (state, action) => {
         state.createCommentStatus = "failed";

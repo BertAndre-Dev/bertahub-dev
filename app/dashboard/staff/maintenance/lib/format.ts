@@ -1,4 +1,8 @@
-import type { StaffComplaintItem } from "@/redux/slice/staff/maintenance/staff-maintenance-slice";
+import type {
+  StaffComplaintItem,
+  StaffComplaintResident,
+} from "@/redux/slice/staff/maintenance/staff-maintenance-slice";
+import { formatAddressEntryLabel } from "@/lib/address";
 
 export const STAFF_STATUS_OPTIONS = [
   { value: "pending", label: "Pending", className: "bg-[#D0DFF2] text-[#1E4F91]" },
@@ -66,47 +70,120 @@ export function getTicketDisplay(complaint: StaffComplaintItem) {
   return `#MR-${year}-${suffix}`;
 }
 
+export function getResidentFromComplaint(
+  complaint: StaffComplaintItem,
+): StaffComplaintResident | null {
+  if (complaint.resident && typeof complaint.resident === "object") {
+    return complaint.resident;
+  }
+  const r = complaint.residentId;
+  if (r && typeof r === "object" && !Array.isArray(r)) {
+    return r as StaffComplaintResident;
+  }
+  return null;
+}
+
 export function getResidentName(complaint: StaffComplaintItem) {
-  const resident =
-    complaint.resident ??
-    (complaint.residentId &&
-    typeof complaint.residentId === "object" &&
-    "firstName" in complaint.residentId
-      ? complaint.residentId
-      : null);
-  if (!resident) return "Resident";
-  const name = [resident.firstName, resident.lastName].filter(Boolean).join(" ");
-  return name || "Resident";
+  const resident = getResidentFromComplaint(complaint);
+  if (!resident) return "—";
+  const name = [resident.firstName, resident.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return name || resident.email?.trim() || "—";
 }
 
 export function getResidentImage(complaint: StaffComplaintItem) {
-  const resident =
-    complaint.resident ??
-    (complaint.residentId &&
-    typeof complaint.residentId === "object" &&
-    "image" in complaint.residentId
-      ? complaint.residentId
-      : null);
-  return resident?.image;
+  return getResidentFromComplaint(complaint)?.image;
+}
+
+function formatAddressEntryData(
+  data?: Record<string, string> | Record<string, unknown>,
+) {
+  if (!data || typeof data !== "object") return "";
+  const values = Object.values(data)
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  if (values.length) return values.join(", ");
+  return formatAddressEntryLabel(data as Record<string, unknown>);
 }
 
 export function getAddressDisplay(complaint: StaffComplaintItem) {
   const addressId = complaint.addressId;
   if (!addressId) return "—";
-  if (typeof addressId === "string") return addressId;
-  const parts = Object.values(addressId.data ?? {}).filter(Boolean);
-  return parts.length ? parts.join(", ") : addressId.id ?? addressId._id ?? "—";
+
+  if (typeof addressId === "string") {
+    return addressId.trim() || "—";
+  }
+
+  if (Array.isArray(addressId)) {
+    const labels = addressId
+      .map((entry) => formatAddressEntryData(entry?.data))
+      .filter(Boolean);
+    return labels.length ? labels.join(" · ") : "—";
+  }
+
+  const label = formatAddressEntryData(addressId.data);
+  if (label) return label;
+  return addressId.id ?? addressId._id ?? "—";
 }
 
 export function getResidentEmail(complaint: StaffComplaintItem) {
-  const resident =
-    complaint.resident ??
-    (complaint.residentId &&
-    typeof complaint.residentId === "object" &&
-    "email" in complaint.residentId
-      ? complaint.residentId
-      : null);
-  return resident?.email?.trim() || "—";
+  return getResidentFromComplaint(complaint)?.email?.trim() || "—";
+}
+
+function hasPopulatedResident(value: StaffComplaintItem["residentId"]) {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Boolean(
+      (value as StaffComplaintResident).firstName ||
+        (value as StaffComplaintResident).lastName ||
+        (value as StaffComplaintResident).email,
+    )
+  );
+}
+
+function hasPopulatedAddress(value: StaffComplaintItem["addressId"]) {
+  if (value == null) return false;
+  if (Array.isArray(value)) {
+    return value.some((entry) => entry?.data && Object.keys(entry.data).length > 0);
+  }
+  if (typeof value === "string") return false;
+  return Boolean(value.data && Object.keys(value.data).length > 0);
+}
+
+/** Prefer list payload when detail fetch returns only ids for nested fields. */
+export function mergeStaffComplaintDetails(
+  fromList: StaffComplaintItem | null | undefined,
+  fromDetail: StaffComplaintItem | null | undefined,
+): StaffComplaintItem | null {
+  if (!fromList && !fromDetail) return null;
+  if (!fromDetail) return fromList ?? null;
+  if (!fromList) return fromDetail;
+
+  return {
+    ...fromList,
+    ...fromDetail,
+    residentId: hasPopulatedResident(fromDetail.residentId)
+      ? fromDetail.residentId
+      : fromList.residentId,
+    resident: fromDetail.resident ?? fromList.resident,
+    addressId: hasPopulatedAddress(fromDetail.addressId)
+      ? fromDetail.addressId
+      : fromList.addressId,
+    assignedTo:
+      fromDetail.assignedTo &&
+      typeof fromDetail.assignedTo === "object" &&
+      !Array.isArray(fromDetail.assignedTo)
+        ? fromDetail.assignedTo
+        : fromList.assignedTo,
+    image: fromDetail.image ?? fromList.image,
+    comments: fromDetail.comments?.length
+      ? fromDetail.comments
+      : fromList.comments,
+  };
 }
 
 export function getAssignedToName(complaint: StaffComplaintItem) {
