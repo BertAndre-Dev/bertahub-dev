@@ -279,10 +279,6 @@ export default function AdminVisitorForm({
                 isClearable
                 noOptionsMessage={() => "No addresses found in this estate"}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Defaults to the selected resident&apos;s address when
-                available. You can override it.
-              </p>
             </div>
 
             <div>

@@ -110,10 +110,6 @@ export default function AssetMaintenanceTab({
 
   return (
     <div className="space-y-6">
-      <p className="text-muted-foreground text-sm -mt-2 mb-4">
-        Schedule and track maintenance for assets under{" "}
-        <span className="font-bold uppercase text-black">{estateName}</span>.
-      </p>
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">

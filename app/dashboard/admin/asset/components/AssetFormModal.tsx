@@ -10,20 +10,10 @@ import type {
   CreateAssetItemPayload,
 } from "@/redux/slice/admin/asset-mgt/admin-asset";
 
-export const ASSET_STATUSES = [
-  "Active",
-  "Faulty",
-  "Under Maintenance",
-  "Retired",
-] as const;
-
-export type AssetStatus = (typeof ASSET_STATUSES)[number];
-
 type DraftRow = {
   id: string;
   name: string;
   tag: string;
-  status: AssetStatus;
 };
 
 type Props = {
@@ -44,7 +34,6 @@ function createDraftRow(baseName: string, index: number): DraftRow {
     id,
     name: baseName ? `${baseName} ${index + 1}` : "",
     tag: "",
-    status: "Active",
   };
 }
 
@@ -263,7 +252,7 @@ export default function AssetFormModal({
           {rows.map((row, idx) => (
             <div
               key={row.id}
-              className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_1fr] items-center gap-2"
+              className="grid grid-cols-1 md:grid-cols-3 items-center gap-2"
             >
               <Input
                 value={row.name}
@@ -282,20 +271,6 @@ export default function AssetFormModal({
                 className="h-11"
                 aria-label={`Asset ${idx + 1} code`}
               />
-              <select
-                value={row.status}
-                onChange={(e) =>
-                  updateRow(row.id, { status: e.target.value as AssetStatus })
-                }
-                aria-label={`Asset ${idx + 1} status`}
-                className="h-11 cursor-pointer rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-              >
-                {ASSET_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
             </div>
           ))}
         </div>

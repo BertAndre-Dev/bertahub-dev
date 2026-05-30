@@ -9,7 +9,6 @@ import type {
   AssetCategory,
   UpdateAssetPayload,
 } from "@/redux/slice/admin/asset-mgt/admin-asset";
-import { ASSET_STATUSES, type AssetStatus } from "./AssetFormModal";
 
 type Props = {
   visible: boolean;
@@ -23,10 +22,19 @@ type Props = {
 type FormState = {
   name: string;
   tag: string;
-  status: AssetStatus;
+  amount: string;
+  useFullLife: string;
+  datePurchased: string;
 };
 
-const STATUS_DEFAULT: AssetStatus = "Active";
+function toDateInputValue(value?: string): string {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  const d = new Date(trimmed);
+  if (Number.isNaN(d.getTime())) return trimmed.slice(0, 10);
+  return d.toISOString().slice(0, 10);
+}
 
 export default function AssetEditModal({
   visible,
@@ -40,7 +48,9 @@ export default function AssetEditModal({
     () => ({
       name: asset?.name ?? "",
       tag: asset?.tag ?? "",
-      status: STATUS_DEFAULT,
+      amount: asset?.amount != null ? String(asset.amount) : "",
+      useFullLife: asset?.useFullLife != null ? String(asset.useFullLife) : "",
+      datePurchased: toDateInputValue(asset?.datePurchased),
     }),
     [asset],
   );
@@ -51,8 +61,19 @@ export default function AssetEditModal({
     setForm(initial);
   }, [initial, visible]);
 
+  const amountNum = Number(form.amount);
+  const lifeNum = Number(form.useFullLife);
+  const validNumbers =
+    !Number.isNaN(amountNum) &&
+    amountNum > 0 &&
+    !Number.isNaN(lifeNum) &&
+    lifeNum > 0 &&
+    Boolean(form.datePurchased);
+
   const canSubmit =
-    form.name.trim().length >= 2 && form.tag.trim().length >= 1;
+    form.name.trim().length >= 2 &&
+    form.tag.trim().length >= 1 &&
+    validNumbers;
 
   return (
     <Modal visible={visible} onClose={onClose}>
@@ -70,6 +91,55 @@ export default function AssetEditModal({
             disabled
             className="h-11 bg-gray-50"
           />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="space-y-2">
+            <label htmlFor="edit-asset-amount" className="text-sm font-medium">
+              Amount (₦)
+            </label>
+            <Input
+              id="edit-asset-amount"
+              inputMode="numeric"
+              value={form.amount}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, amount: e.target.value }))
+              }
+              placeholder="50000"
+              className="h-11"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="edit-asset-life" className="text-sm font-medium">
+              Useful life (yrs)
+            </label>
+            <Input
+              id="edit-asset-life"
+              inputMode="numeric"
+              value={form.useFullLife}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, useFullLife: e.target.value }))
+              }
+              placeholder="5"
+              className="h-11"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="edit-asset-date" className="text-sm font-medium">
+              Date Purchased
+            </label>
+            <Input
+              id="edit-asset-date"
+              type="date"
+              value={form.datePurchased}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, datePurchased: e.target.value }))
+              }
+              className="h-11"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -98,27 +168,6 @@ export default function AssetEditModal({
           />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="edit-asset-status" className="text-sm font-medium">
-            Status
-          </label>
-          <select
-            id="edit-asset-status"
-            aria-label="Asset status"
-            className="h-11 w-full cursor-pointer rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-            value={form.status}
-            onChange={(e) =>
-              setForm((s) => ({ ...s, status: e.target.value as AssetStatus }))
-            }
-          >
-            {ASSET_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="flex flex-col-reverse sm:grid sm:grid-cols-2 gap-3 pt-2">
           <Button
             variant="outline"
@@ -136,6 +185,9 @@ export default function AssetEditModal({
               onSubmit({
                 name: form.name.trim(),
                 tag: form.tag.trim(),
+                amount: amountNum,
+                useFullLife: lifeNum,
+                datePurchased: form.datePurchased,
               })
             }
           >
