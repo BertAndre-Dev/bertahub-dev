@@ -10,6 +10,14 @@ export interface StaffComplaintResident {
   image?: string;
 }
 
+export interface StaffComplaintAssignee {
+  id?: string;
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
 export interface StaffComplaintAddress {
   id?: string;
   _id?: string;
@@ -28,7 +36,8 @@ export interface StaffComplaintItem {
   resident?: StaffComplaintResident;
   addressId?: StaffComplaintAddress | string;
   estateId?: string;
-  assignedTo?: string;
+  assignedTo?: string | StaffComplaintAssignee;
+  comments?: StaffComplaintComment[];
   ticketNumber?: string;
   image?: string;
   createdAt?: string;
@@ -245,7 +254,7 @@ export function normalizeStaffComplaint(
     resident: p.resident as StaffComplaintItem["resident"],
     addressId: p.addressId as StaffComplaintItem["addressId"],
     estateId: p.estateId as string,
-    assignedTo: p.assignedTo as string,
+    assignedTo: p.assignedTo as StaffComplaintItem["assignedTo"],
     ticketNumber: p.ticketNumber as string,
     image: p.image as string,
     createdAt: p.createdAt as string,
@@ -317,6 +326,43 @@ export const fetchStaffMaintenanceStats = createAsyncThunk(
       return rejectWithValue({
         message:
           err?.response?.data?.message ?? "Failed to fetch maintenance stats",
+      });
+    }
+  },
+);
+
+export const DEFAULT_STAFF_MAINTENANCE_PAGE_SIZE = 10;
+
+/** Load stats + assigned complaints using current UI filters from Redux. */
+export const fetchStaffMaintenancePage = createAsyncThunk(
+  "staffMaintenance/fetchStaffMaintenancePage",
+  async (_, { dispatch, getState, rejectWithValue }) => {
+    try {
+      const state = getState() as {
+        staffMaintenance: {
+          ui: {
+            page: number;
+            pageSize: number;
+            statusFilter: string;
+          };
+        };
+      };
+      const { page, pageSize, statusFilter } = state.staffMaintenance.ui;
+
+      await Promise.all([
+        dispatch(fetchStaffMaintenanceStats()).unwrap(),
+        dispatch(
+          getStaffAssignedComplaints({
+            page,
+            limit: pageSize,
+            status: statusFilter.trim() || undefined,
+          }),
+        ).unwrap(),
+      ]);
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      return rejectWithValue({
+        message: err?.message ?? "Failed to load maintenance requests.",
       });
     }
   },

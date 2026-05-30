@@ -1,15 +1,23 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { MapPin, MessageCircle } from "lucide-react";
+import {
+  Calendar,
+  Mail,
+  MapPin,
+  MessageCircle,
+  User,
+  Wrench,
+} from "lucide-react";
 import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AppDispatch, RootState } from "@/redux/store";
+import type { StaffComplaintItem } from "@/redux/slice/staff/maintenance/staff-maintenance-slice";
 import {
   createStaffComplaintComment,
   getStaffComplaintById,
@@ -20,8 +28,12 @@ import {
   STAFF_STATUS_OPTIONS,
   formatAssignedOn,
   formatCategoryLabel,
+  formatStatusLabel,
   getAddressDisplay,
+  getAssignedToEmail,
+  getAssignedToName,
   getInitials,
+  getResidentEmail,
   getResidentImage,
   getResidentName,
   getStatusStyle,
@@ -30,13 +42,37 @@ import {
 
 type Props = {
   complaintId: string | null;
+  initialComplaint?: StaffComplaintItem | null;
   estateName?: string;
   onClose: () => void;
   onUpdated?: () => void;
 };
 
+function InfoCard({
+  label,
+  value,
+  icon: Icon,
+}: Readonly<{
+  label: string;
+  value: React.ReactNode;
+  icon?: React.ComponentType<{ className?: string }>;
+}>) {
+  return (
+    <div className="rounded-xl border border-border p-4 bg-muted/5">
+      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+        {Icon ? <Icon className="w-3.5 h-3.5 shrink-0" /> : null}
+        {label}
+      </p>
+      <div className="font-medium mt-1.5 text-sm text-foreground break-words">
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export default function StaffMaintenanceViewModal({
   complaintId,
+  initialComplaint = null,
   estateName = "",
   onClose,
   onUpdated,
@@ -49,7 +85,7 @@ export default function StaffMaintenanceViewModal({
   );
 
   const {
-    complaint,
+    fetchedComplaint,
     comments,
     loading,
     updateLoading,
@@ -59,7 +95,7 @@ export default function StaffMaintenanceViewModal({
     const current = maintenance.currentComplaint;
     const matchesCurrent = current?.id === complaintId;
     return {
-      complaint: matchesCurrent ? current : null,
+      fetchedComplaint: matchesCurrent ? current : null,
       comments: complaintId
         ? (maintenance.commentsByComplaintId[complaintId] ?? [])
         : [],
@@ -68,6 +104,12 @@ export default function StaffMaintenanceViewModal({
       commentLoading: maintenance.createCommentStatus === "isLoading",
     };
   });
+
+  const complaint = useMemo(() => {
+    if (fetchedComplaint?.id === complaintId) return fetchedComplaint;
+    if (initialComplaint?.id === complaintId) return initialComplaint;
+    return fetchedComplaint ?? initialComplaint;
+  }, [complaintId, fetchedComplaint, initialComplaint]);
 
   useEffect(() => {
     if (!complaintId) return;
@@ -123,24 +165,27 @@ export default function StaffMaintenanceViewModal({
 
   const requesterName = complaint ? getResidentName(complaint) : "Resident";
   const requesterImage = complaint ? getResidentImage(complaint) : undefined;
+  const locationLine = complaint
+    ? [getAddressDisplay(complaint), estateName].filter((p) => p && p !== "—").join(" · ") ||
+      estateName ||
+      "—"
+    : "—";
 
   let modalBody: React.ReactNode;
   if (complaint) {
     modalBody = (
-      <div className="space-y-5">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">
+      <div className="space-y-6 max-h-[min(80vh,720px)] overflow-y-auto pr-1">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-primary">
               {getTicketDisplay(complaint)}
             </p>
-            <h2 className="font-heading text-2xl font-bold mt-1">
+            <h2 className="font-heading text-xl sm:text-2xl font-bold mt-1 break-words">
               {complaint.title || "Maintenance Request"}
             </h2>
-            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
-              <MapPin className="w-4 h-4 shrink-0" />
-              {[getAddressDisplay(complaint), estateName]
-                .filter(Boolean)
-                .join(" · ")}
+            <p className="text-sm text-muted-foreground mt-2 flex items-start gap-1.5">
+              <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{locationLine}</span>
             </p>
           </div>
           <select
@@ -148,7 +193,7 @@ export default function StaffMaintenanceViewModal({
             onChange={(e) => handleStatusChange(e.target.value)}
             disabled={updateLoading}
             aria-label={`Update status for ${complaint.title || "maintenance request"} (${getTicketDisplay(complaint)})`}
-            className={`min-w-[160px] rounded-full px-3 py-1.5 text-xs font-semibold border-0 ${getStatusStyle(complaint.status)}`}
+            className={`shrink-0 min-w-[140px] rounded-full px-3 py-2 text-xs font-semibold border-0 cursor-pointer ${getStatusStyle(complaint.status)}`}
           >
             {STAFF_STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -158,89 +203,139 @@ export default function StaffMaintenanceViewModal({
           </select>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="rounded-xl border border-border p-4">
-            <p className="text-xs text-muted-foreground">Category</p>
-            <p className="font-medium mt-1">
-              {formatCategoryLabel(complaint.category)}
+        {complaint.image ? (
+          <div>
+            <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+              <Wrench className="w-4 h-4 text-muted-foreground" />
+              Issue photo
             </p>
-          </div>
-          <div className="rounded-xl border border-border p-4">
-            <p className="text-xs text-muted-foreground">Requested By</p>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-xs font-semibold">
-                {requesterImage ? (
-                  <Image
-                    src={requesterImage}
-                    alt={requesterName}
-                    width={32}
-                    height={32}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  getInitials(requesterName)
-                )}
-              </div>
-              <span className="font-medium">{requesterName}</span>
+            <div className="rounded-xl border border-border overflow-hidden bg-muted/20">
+              <Image
+                src={complaint.image}
+                alt={complaint.title ?? "Maintenance issue photo"}
+                width={800}
+                height={450}
+                className="w-full max-h-80 object-contain"
+                unoptimized
+              />
             </div>
           </div>
-          <div className="rounded-xl border border-border p-4">
-            <p className="text-xs text-muted-foreground">Assigned On</p>
-            <p className="font-medium mt-1">
-              {formatAssignedOn(complaint.updatedAt || complaint.createdAt)}
-            </p>
+        ) : null}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <InfoCard
+            label="Category"
+            value={formatCategoryLabel(complaint.category)}
+          />
+          <InfoCard
+            label="Status"
+            value={formatStatusLabel(complaint.status)}
+          />
+          <InfoCard
+            label="Submitted"
+            icon={Calendar}
+            value={formatAssignedOn(complaint.createdAt)}
+          />
+          <InfoCard
+            label="Last updated"
+            icon={Calendar}
+            value={formatAssignedOn(complaint.updatedAt)}
+          />
+        </div>
+
+        <div className="rounded-xl border border-border p-4 space-y-3">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+            Requested by
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-sm font-semibold shrink-0">
+              {requesterImage ? (
+                <Image
+                  src={requesterImage}
+                  alt={requesterName}
+                  width={44}
+                  height={44}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                getInitials(requesterName)
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-foreground">{requesterName}</p>
+              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5 break-all">
+                <Mail className="w-3.5 h-3.5 shrink-0" />
+                {getResidentEmail(complaint)}
+              </p>
+            </div>
           </div>
+        </div>
+
+        <div className="rounded-xl border border-border p-4 space-y-2">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5">
+            <User className="w-3.5 h-3.5" />
+            Assigned to
+          </p>
+          <p className="font-semibold">{getAssignedToName(complaint)}</p>
+          {getAssignedToEmail(complaint) !== "—" ? (
+            <p className="text-sm text-muted-foreground break-all">
+              {getAssignedToEmail(complaint)}
+            </p>
+          ) : null}
         </div>
 
         <div>
           <p className="text-sm font-semibold mb-2">Description</p>
-          <p className="text-sm whitespace-pre-wrap rounded-xl border border-border p-4 bg-muted/20">
+          <p className="text-sm whitespace-pre-wrap rounded-xl border border-border p-4 bg-muted/20 text-foreground">
             {complaint.description || "No description provided."}
           </p>
         </div>
 
-        {complaint.image && (
-          <div>
-            <p className="text-sm font-semibold mb-2">Attachment</p>
-            <Image
-              src={complaint.image}
-              alt="Maintenance attachment"
-              width={640}
-              height={360}
-              className="rounded-xl border border-border max-h-72 w-auto object-contain"
-            />
-          </div>
-        )}
-
-        {comments.length > 0 && (
+        {comments.length > 0 ? (
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Comments</p>
-            {comments.map((comment) => (
-              <div
-                key={comment.id}
-                className="rounded-xl border border-border p-3 bg-muted/10"
-              >
-                <p className="text-xs text-muted-foreground">
-                  {formatAssignedOn(comment.createdAt)}
-                </p>
-                <p className="text-sm mt-1">{comment.text}</p>
-              </div>
-            ))}
+            <p className="text-sm font-semibold">Comments ({comments.length})</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className="rounded-xl border border-border p-3 bg-muted/10"
+                >
+                  <p className="text-xs text-muted-foreground">
+                    {formatAssignedOn(comment.createdAt)}
+                  </p>
+                  <p className="text-sm mt-1">{comment.text}</p>
+                </div>
+              ))}
+            </div>
           </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No comments yet.</p>
         )}
 
-        <form onSubmit={handleSubmitComment} className="flex gap-2">
+        <form onSubmit={handleSubmitComment} className="flex flex-col sm:flex-row gap-2">
           <Input
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Write a comment..."
             disabled={commentLoading}
+            aria-label="Comment text"
           />
-          <Button type="submit" disabled={commentLoading}>
+          <Button
+            type="submit"
+            disabled={commentLoading}
+            className="shrink-0"
+          >
             <MessageCircle className="w-4 h-4 mr-1.5" />
             Comment
           </Button>
         </form>
+
+        <div className="flex justify-end pt-2 border-t border-border">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
       </div>
     );
   } else if (loading) {
@@ -258,10 +353,12 @@ export default function StaffMaintenanceViewModal({
   }
 
   return (
-    <Modal visible={Boolean(complaintId)} onClose={onClose}>
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl p-6 md:p-8">
-        {modalBody}
-      </div>
+    <Modal
+      visible={Boolean(complaintId)}
+      onClose={onClose}
+      contentClassName="max-w-3xl w-full max-h-[90vh] overflow-hidden"
+    >
+      <div className="p-4 sm:p-6">{modalBody}</div>
     </Modal>
   );
 }

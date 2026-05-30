@@ -12,7 +12,6 @@ import {
   Power,
   PowerOff,
   Trash2,
-  User2,
   UsersRound,
   Search,
 } from "lucide-react";
@@ -447,20 +446,12 @@ export default function SuperAdminUserPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {(() => {
-            const users = allSuperAdminUsers as SuperAdminUserData[];
-
             const stats = [
               {
-                label: "Total Residents",
-                value: users?.filter((e) => e.role === "resident")?.length || 0,
-                icon: User2,
-                color: "bg-[#D0DFF280]",
-              },
-              {
-                label: "Total Admins",
-                value: users?.filter((e) => e.role === "admin")?.length || 0,
+                label: "Total Users",
+                value: pagination?.total ?? 0,
                 icon: UsersRound,
                 color: "bg-[#FEE6D480]",
               },

@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type {
   StaffComplaintComment,
   StaffComplaintItem,
@@ -7,6 +7,7 @@ import type {
 import {
   assignComplaintToStaff,
   createStaffComplaintComment,
+  fetchStaffMaintenancePage,
   fetchStaffMaintenanceStats,
   getStaffAssignedComplaints,
   getStaffComplaintById,
@@ -19,6 +20,16 @@ import {
 export type { StaffComplaintItem, StaffComplaintComment, StaffComplaintStats };
 
 export type AsyncStatus = "idle" | "isLoading" | "succeeded" | "failed";
+
+export interface StaffMaintenanceUiState {
+  page: number;
+  pageSize: number;
+  search: string;
+  statusFilter: string;
+  categoryFilter: string;
+  selectedComplaintId: string | null;
+  hasInitialized: boolean;
+}
 
 interface StaffMaintenanceState {
   getComplaintsByStaffStatus: AsyncStatus;
@@ -35,6 +46,7 @@ interface StaffMaintenanceState {
   currentComplaint: StaffComplaintItem | null;
   commentsByComplaintId: Record<string, StaffComplaintComment[]>;
   stats: StaffComplaintStats;
+  ui: StaffMaintenanceUiState;
   error: string | null;
 }
 
@@ -57,6 +69,15 @@ const initialState: StaffMaintenanceState = {
   currentComplaint: null,
   commentsByComplaintId: {},
   stats: initialStats,
+  ui: {
+    page: 1,
+    pageSize: 10,
+    search: "",
+    statusFilter: "",
+    categoryFilter: "",
+    selectedComplaintId: null,
+    hasInitialized: false,
+  },
   error: null,
 };
 
@@ -96,6 +117,33 @@ const staffMaintenanceSlice = createSlice({
       state.error = null;
     },
     resetStaffMaintenanceState: () => initialState,
+    setStaffMaintenanceSearch: (state, action: PayloadAction<string>) => {
+      state.ui.search = action.payload;
+      state.ui.page = 1;
+    },
+    setStaffMaintenanceStatusFilter: (state, action: PayloadAction<string>) => {
+      state.ui.statusFilter = action.payload;
+      state.ui.page = 1;
+    },
+    setStaffMaintenanceCategoryFilter: (
+      state,
+      action: PayloadAction<string>,
+    ) => {
+      state.ui.categoryFilter = action.payload;
+      state.ui.page = 1;
+    },
+    setStaffMaintenancePage: (state, action: PayloadAction<number>) => {
+      state.ui.page = action.payload;
+    },
+    setStaffMaintenanceSelectedComplaintId: (
+      state,
+      action: PayloadAction<string | null>,
+    ) => {
+      state.ui.selectedComplaintId = action.payload;
+    },
+    clearStaffMaintenanceSelectedComplaint: (state) => {
+      state.ui.selectedComplaintId = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -105,6 +153,7 @@ const staffMaintenanceSlice = createSlice({
       })
       .addCase(getStaffAssignedComplaints.fulfilled, (state, action) => {
         state.getComplaintsByStaffStatus = "succeeded";
+        state.ui.hasInitialized = true;
         const pl = action.payload as Record<string, unknown> | undefined;
         const list = extractList(pl).map((p) =>
           normalizeStaffComplaint(p as Record<string, unknown>),
@@ -117,6 +166,19 @@ const staffMaintenanceSlice = createSlice({
         if (summary && typeof summary.assigned === "number") {
           state.stats = summary;
         }
+      })
+      .addCase(fetchStaffMaintenancePage.pending, (state) => {
+        state.getComplaintsByStaffStatus = "isLoading";
+        state.error = null;
+      })
+      .addCase(fetchStaffMaintenancePage.fulfilled, (state) => {
+        state.getComplaintsByStaffStatus = "succeeded";
+      })
+      .addCase(fetchStaffMaintenancePage.rejected, (state, action) => {
+        state.getComplaintsByStaffStatus = "failed";
+        state.error =
+          (action.payload as { message?: string })?.message ??
+          "Failed to load maintenance requests";
       })
       .addCase(getStaffAssignedComplaints.rejected, (state, action) => {
         state.getComplaintsByStaffStatus = "failed";
@@ -248,6 +310,14 @@ const staffMaintenanceSlice = createSlice({
   },
 });
 
-export const { clearStaffMaintenanceError, resetStaffMaintenanceState } =
-  staffMaintenanceSlice.actions;
+export const {
+  clearStaffMaintenanceError,
+  resetStaffMaintenanceState,
+  setStaffMaintenanceSearch,
+  setStaffMaintenanceStatusFilter,
+  setStaffMaintenanceCategoryFilter,
+  setStaffMaintenancePage,
+  setStaffMaintenanceSelectedComplaintId,
+  clearStaffMaintenanceSelectedComplaint,
+} = staffMaintenanceSlice.actions;
 export default staffMaintenanceSlice.reducer;

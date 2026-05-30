@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -10,14 +10,31 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import Table from "@/components/tables/list/page";
 import Loader from "@/components/ui/Loader";
-import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
-  fetchStaffMaintenanceStats,
-  getStaffAssignedComplaints,
+  fetchStaffMaintenancePage,
   updateStaffComplaintStatus,
 } from "@/redux/slice/staff/maintenance/staff-maintenance";
+import {
+  clearStaffMaintenanceSelectedComplaint,
+  setStaffMaintenanceCategoryFilter,
+  setStaffMaintenancePage,
+  setStaffMaintenanceSearch,
+  setStaffMaintenanceSelectedComplaintId,
+  setStaffMaintenanceStatusFilter,
+} from "@/redux/slice/staff/maintenance/staff-maintenance-slice";
+import {
+  selectFilteredStaffComplaints,
+  selectSelectedStaffComplaint,
+  selectStaffEstateName,
+  selectStaffFirstName,
+  selectStaffMaintenancePageLoading,
+  selectStaffMaintenancePagination,
+  selectStaffMaintenanceStats,
+  selectStaffMaintenanceUi,
+  selectStaffMaintenanceUpdatingStatus,
+} from "@/redux/slice/staff/maintenance/staff-maintenance-selectors";
 import type { StaffComplaintItem } from "@/redux/slice/staff/maintenance/staff-maintenance-slice";
-import type { AppDispatch, RootState } from "@/redux/store";
+import type { AppDispatch } from "@/redux/store";
 import StaffMaintenanceViewModal from "./components/StaffMaintenanceViewModal";
 import {
   STAFF_CATEGORY_FILTER_OPTIONS,
@@ -34,109 +51,35 @@ import {
   getTicketDisplay,
 } from "./lib/format";
 
-const PAGE_SIZE = 10;
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-  return debouncedValue;
-}
-
-function matchesSearch(item: StaffComplaintItem, query: string) {
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-  const ticket = getTicketDisplay(item).toLowerCase();
-  const title = (item.title ?? "").toLowerCase();
-  const requester = getResidentName(item).toLowerCase();
-  return ticket.includes(q) || title.includes(q) || requester.includes(q);
-}
-
-function matchesCategory(item: StaffComplaintItem, category: string) {
-  if (!category) return true;
-  return (item.category ?? "").trim().toLowerCase() === category.toLowerCase();
-}
-
 export default function StaffMaintenancePage() {
   const dispatch = useDispatch<AppDispatch>();
-  const [firstName, setFirstName] = useState("");
-  const [estateName, setEstateName] = useState("Estate");
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [page, setPage] = useState(1);
-  const [viewComplaintId, setViewComplaintId] = useState<string | null>(null);
-  const [bootstrapping, setBootstrapping] = useState(true);
-  const searchDebounced = useDebounce(search, 400);
 
-  const { complaints, pagination, stats, loading, updatingStatus } =
-    useSelector((state: RootState) => {
-      const maintenance = state.staffMaintenance;
-      return {
-        complaints: maintenance.assignedComplaints?.data ?? [],
-        pagination: maintenance.assignedComplaints?.pagination ?? null,
-        stats: maintenance.stats,
-        loading: maintenance.getComplaintsByStaffStatus === "isLoading",
-        updatingStatus:
-          maintenance.updateComplaintStatusStatus === "isLoading",
-      };
-    });
+  const ui = useSelector(selectStaffMaintenanceUi);
+  const filteredComplaints = useSelector(selectFilteredStaffComplaints);
+  const selectedComplaint = useSelector(selectSelectedStaffComplaint);
+  const pagination = useSelector(selectStaffMaintenancePagination);
+  const stats = useSelector(selectStaffMaintenanceStats);
+  const pageLoading = useSelector(selectStaffMaintenancePageLoading);
+  const updatingStatus = useSelector(selectStaffMaintenanceUpdatingStatus);
+  const firstName = useSelector(selectStaffFirstName);
+  const estateName = useSelector(selectStaffEstateName);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const userRes = await dispatch(getSignedInUser()).unwrap();
-        const data = (userRes?.data ?? userRes) as Record<string, unknown>;
+  const { page, pageSize, search, statusFilter, categoryFilter } = ui;
 
-        const rawEstate = data.estateId ?? data.estate;
-        let estateLabel = "Estate";
-        if (typeof rawEstate === "object" && rawEstate) {
-          estateLabel =
-            (rawEstate as { name?: string }).name ??
-            (data.estateName as string) ??
-            "Estate";
-        } else if (typeof data.estateName === "string") {
-          estateLabel = data.estateName;
-        }
-
-        setFirstName(String(data.firstName ?? ""));
-        setEstateName(estateLabel);
-      } catch {
-        toast.error("Failed to load your profile.");
-      } finally {
-        setBootstrapping(false);
-      }
-    })();
+  const loadPage = useCallback(() => {
+    return dispatch(fetchStaffMaintenancePage())
+      .unwrap()
+      .catch((err: unknown) =>
+        toast.error(
+          (err as { message?: string })?.message ??
+            "Failed to load maintenance requests.",
+        ),
+      );
   }, [dispatch]);
 
-  const refreshData = useCallback(async () => {
-    await Promise.all([
-      dispatch(fetchStaffMaintenanceStats()).unwrap().catch(() => null),
-      dispatch(
-        getStaffAssignedComplaints({
-          page,
-          limit: PAGE_SIZE,
-          status: statusFilter || undefined,
-        }),
-      ).unwrap(),
-    ]).catch((err: unknown) =>
-      toast.error(
-        (err as { message?: string })?.message ??
-          "Failed to load maintenance requests.",
-      ),
-    );
-  }, [dispatch, page, statusFilter]);
-
   useEffect(() => {
-    setPage(1);
-  }, [searchDebounced, statusFilter, categoryFilter]);
-
-  useEffect(() => {
-    if (bootstrapping) return;
-    refreshData().catch(() => {});
-  }, [bootstrapping, refreshData]);
+    loadPage().catch(() => {});
+  }, [loadPage, page, statusFilter]);
 
   const handleStatusChange = async (
     complaint: StaffComplaintItem,
@@ -148,24 +91,13 @@ export default function StaffMaintenancePage() {
         updateStaffComplaintStatus({ id: complaint.id, status: newStatus }),
       ).unwrap();
       toast.success("Status updated");
-      dispatch(fetchStaffMaintenanceStats()).catch(() => {});
-      await refreshData();
+      await loadPage();
     } catch (err: unknown) {
       toast.error(
         (err as { message?: string })?.message ?? "Failed to update status",
       );
     }
   };
-
-  const filteredComplaints = useMemo(
-    () =>
-      complaints.filter(
-        (item) =>
-          matchesSearch(item, searchDebounced) &&
-          matchesCategory(item, categoryFilter),
-      ),
-    [complaints, searchDebounced, categoryFilter],
-  );
 
   const statCards = useMemo(
     () => [
@@ -286,7 +218,9 @@ export default function StaffMaintenancePage() {
           size="sm"
           variant="outline"
           className="rounded-full border-[#93C5FD] text-[#2563EB] hover:bg-[#EFF6FF]"
-          onClick={() => setViewComplaintId(item.id)}
+          onClick={() =>
+            dispatch(setStaffMaintenanceSelectedComplaintId(item.id))
+          }
         >
           View
         </Button>
@@ -296,7 +230,6 @@ export default function StaffMaintenancePage() {
   ];
 
   const total = pagination?.total ?? 0;
-  const pageLoading = bootstrapping || loading;
 
   return (
     <div className="relative">
@@ -351,19 +284,25 @@ export default function StaffMaintenancePage() {
               type="text"
               placeholder="Search by name or ticket ID"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                dispatch(setStaffMaintenanceSearch(e.target.value))
+              }
               className="flex-1 px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <Select
               options={STAFF_STATUS_FILTER_OPTIONS}
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) =>
+                dispatch(setStaffMaintenanceStatusFilter(e.target.value))
+              }
               className="lg:max-w-[220px] rounded-xl"
             />
             <Select
               options={STAFF_CATEGORY_FILTER_OPTIONS}
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
+              onChange={(e) =>
+                dispatch(setStaffMaintenanceCategoryFilter(e.target.value))
+              }
               className="lg:max-w-[220px] rounded-xl"
             />
           </div>
@@ -376,19 +315,22 @@ export default function StaffMaintenancePage() {
             paginationInfo={{
               total,
               current: page,
-              pageSize: PAGE_SIZE,
+              pageSize,
             }}
-            onPageChange={(nextPage) => setPage(nextPage)}
+            onPageChange={(nextPage) =>
+              dispatch(setStaffMaintenancePage(nextPage))
+            }
           />
         </Card>
       </div>
 
       <StaffMaintenanceViewModal
-        complaintId={viewComplaintId}
+        complaintId={ui.selectedComplaintId}
+        initialComplaint={selectedComplaint}
         estateName={estateName}
-        onClose={() => setViewComplaintId(null)}
+        onClose={() => dispatch(clearStaffMaintenanceSelectedComplaint())}
         onUpdated={() => {
-          dispatch(fetchStaffMaintenanceStats()).catch(() => {});
+          loadPage().catch(() => {});
         }}
       />
     </div>

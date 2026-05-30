@@ -92,9 +92,46 @@ export function getResidentImage(complaint: StaffComplaintItem) {
 
 export function getAddressDisplay(complaint: StaffComplaintItem) {
   const addressId = complaint.addressId;
-  if (!addressId || typeof addressId === "string") return "—";
+  if (!addressId) return "—";
+  if (typeof addressId === "string") return addressId;
   const parts = Object.values(addressId.data ?? {}).filter(Boolean);
-  return parts.length ? parts.join(", ") : "—";
+  return parts.length ? parts.join(", ") : addressId.id ?? addressId._id ?? "—";
+}
+
+export function getResidentEmail(complaint: StaffComplaintItem) {
+  const resident =
+    complaint.resident ??
+    (complaint.residentId &&
+    typeof complaint.residentId === "object" &&
+    "email" in complaint.residentId
+      ? complaint.residentId
+      : null);
+  return resident?.email?.trim() || "—";
+}
+
+export function getAssignedToName(complaint: StaffComplaintItem) {
+  const assignee = complaint.assignedTo;
+  if (!assignee) return "—";
+  if (typeof assignee === "string") return assignee;
+  const name = [assignee.firstName, assignee.lastName].filter(Boolean).join(" ");
+  return name || assignee.email || "—";
+}
+
+export function getAssignedToEmail(complaint: StaffComplaintItem) {
+  const assignee = complaint.assignedTo;
+  if (!assignee || typeof assignee === "string") return "—";
+  return assignee.email?.trim() || "—";
+}
+
+export function formatStatusLabel(status?: string) {
+  const normalized = (status ?? "").trim().toLowerCase();
+  const found = STAFF_STATUS_OPTIONS.find((o) => o.value === normalized);
+  if (found) return found.label;
+  if (!status) return "—";
+  return status
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
 }
 
 export function formatAssignedOn(dateString?: string) {
