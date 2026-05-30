@@ -62,6 +62,11 @@ import communityGroupSliceReducer from "@/redux/slice/community-group/community-
 import mapsSliceReducer from "@/redux/slice/maps/maps-slice";
 import { mapsApi } from "@/redux/api/mapsApi";
 import residentBillsPaymentSliceReducer from "@/redux/slice/resident/bills-payment/bills-payment-slice";
+import staffUserProfileSliceReducer from "@/redux/slice/staff/user-profile/staff-user-profile-slice";
+import staffSupportSliceReducer from "@/redux/slice/staff/support/staff-support-slice";
+import staffMaintenanceSliceReducer from "@/redux/slice/staff/maintenance/staff-maintenance-slice";
+import staffCommunitySliceReducer from "@/redux/slice/staff/community/staff-community-slice";
+import staffAnnouncementsSliceReducer from "@/redux/slice/staff/announcements/staff-announcements-slice";
 
 const persistConfig = {
   key: "root",
@@ -197,6 +202,22 @@ const persistedCompanyUserSliceReducer = persistReducer(
   companyUserSliceReducer,
 );
 
+const persistedStaffUserProfileSliceReducer = persistReducer(
+  persistConfig,
+  staffUserProfileSliceReducer,
+);
+
+const persistedStaffMaintenanceSliceReducer = persistReducer(
+  persistConfig,
+  staffMaintenanceSliceReducer,
+);
+
+const persistedStaffCommunitySliceReducer = persistReducer(
+  persistConfig,
+  staffCommunitySliceReducer,
+);
+
+
 export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
@@ -258,6 +279,11 @@ export const store = configureStore({
     chat: chatSliceReducer,
     communityGroup: communityGroupSliceReducer,
     maps: mapsSliceReducer,
+    staffUserProfile: persistedStaffUserProfileSliceReducer,
+    staffSupport: staffSupportSliceReducer,
+    staffMaintenance: persistedStaffMaintenanceSliceReducer,
+    staffCommunity: persistedStaffCommunitySliceReducer,
+    staffAnnouncements: staffAnnouncementsSliceReducer,
     [mapsApi.reducerPath]: mapsApi.reducer,
   },
 

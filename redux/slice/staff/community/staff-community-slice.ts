@@ -16,34 +16,22 @@ import type {
 import { socketMessageToGroupMessage } from "@/lib/community-chat-socket-map";
 import type { ChatPagination } from "@/types/chat";
 import {
-  addGroupMembers,
-  createChatGroup,
-  deleteChatGroup,
-  deleteGroupMessage,
-  editGroupMessage,
-  getChatGroupById,
-  getChatGroups,
-  getGroupMessages,
-  promoteGroupAdmin,
-  removeGroupMembers,
-  sendGroupMessage,
-  updateChatGroup,
-} from "@/redux/slice/community-group/community-group-thunks";
+  deleteStaffGroupMessage,
+  editStaffGroupMessage,
+  getStaffChatGroupById,
+  getStaffChatGroups,
+  getStaffGroupMessages,
+  sendStaffGroupMessage,
+} from "./staff-community-thunks";
 
 type LoadingState = "idle" | "isLoading" | "succeeded" | "failed";
 
-interface CommunityGroupState {
+interface StaffCommunityState {
   groups: ChatGroup[];
   listLoading: LoadingState;
   listPagination: ChatPagination | null;
-
   groupDetail: ChatGroup | null;
   detailLoading: LoadingState;
-
-  createLoading: LoadingState;
-  updateLoading: LoadingState;
-  deleteLoading: LoadingState;
-
   activeMessagesGroupId: string | null;
   groupMessages: GroupMessage[];
   messagesLoading: LoadingState;
@@ -51,8 +39,6 @@ interface CommunityGroupState {
   sendMessageLoading: LoadingState;
   editMessageLoading: LoadingState;
   deleteMessageLoading: LoadingState;
-  membersActionLoading: LoadingState;
-
   error: string | null;
 }
 
@@ -63,18 +49,12 @@ const initialPagination: ChatPagination = {
   pages: 0,
 };
 
-const initialState: CommunityGroupState = {
+const initialState: StaffCommunityState = {
   groups: [],
   listLoading: "idle",
   listPagination: null,
-
   groupDetail: null,
   detailLoading: "idle",
-
-  createLoading: "idle",
-  updateLoading: "idle",
-  deleteLoading: "idle",
-
   activeMessagesGroupId: null,
   groupMessages: [],
   messagesLoading: "idle",
@@ -82,8 +62,6 @@ const initialState: CommunityGroupState = {
   sendMessageLoading: "idle",
   editMessageLoading: "idle",
   deleteMessageLoading: "idle",
-  membersActionLoading: "idle",
-
   error: null,
 };
 
@@ -102,42 +80,24 @@ function sortMessagesAsc(list: GroupMessage[]): GroupMessage[] {
   );
 }
 
-const communityGroupSlice = createSlice({
-  name: "communityGroup",
+const staffCommunitySlice = createSlice({
+  name: "staffCommunity",
   initialState,
   reducers: {
-    clearGroupDetail: (state) => {
+    clearStaffGroupDetail: (state) => {
       state.groupDetail = null;
       state.detailLoading = "idle";
     },
-    clearCommunityGroupError: (state) => {
+    clearStaffCommunityError: (state) => {
       state.error = null;
     },
-    clearGroups: (state) => {
-      state.groups = [];
-      state.listPagination = null;
-    },
-    clearGroupMessages: (state) => {
+    clearStaffGroupMessages: (state) => {
       state.groupMessages = [];
       state.activeMessagesGroupId = null;
       state.messagesPagination = initialPagination;
       state.messagesLoading = "idle";
     },
-    patchLocalGroup: (
-      state,
-      action: PayloadAction<{ groupId: string; partial: Partial<ChatGroup> }>,
-    ) => {
-      const { groupId, partial } = action.payload;
-      state.groups = state.groups.map((g) =>
-        g._id === groupId ? { ...g, ...partial } : g,
-      );
-      if (state.groupDetail?._id === groupId) {
-        state.groupDetail = { ...state.groupDetail, ...partial };
-      }
-    },
-
-    // ─── WebSocket-driven updates ───────────────────────────────────────────
-    socketMessageReceived: (
+    staffSocketMessageReceived: (
       state,
       action: PayloadAction<{
         payload: SocketMessageReceivedPayload;
@@ -175,8 +135,7 @@ const communityGroupSlice = createSlice({
         };
       }
     },
-
-    socketMessageEdited: (
+    staffSocketMessageEdited: (
       state,
       action: PayloadAction<SocketMessageEditedPayload>,
     ) => {
@@ -186,8 +145,7 @@ const communityGroupSlice = createSlice({
         m._id === messageId ? { ...m, content, isEdited: true } : m,
       );
     },
-
-    socketMessageDeleted: (
+    staffSocketMessageDeleted: (
       state,
       action: PayloadAction<SocketMessageDeletedPayload>,
     ) => {
@@ -197,8 +155,7 @@ const communityGroupSlice = createSlice({
         (m) => m._id !== messageId,
       );
     },
-
-    socketMessagesRead: (
+    staffSocketMessagesRead: (
       state,
       action: PayloadAction<SocketMessagesReadPayload>,
     ) => {
@@ -214,26 +171,25 @@ const communityGroupSlice = createSlice({
           : m,
       );
     },
-
-    socketGroupAdded: (
+    staffSocketGroupAdded: (
       state,
       action: PayloadAction<SocketGroupAddedPayload>,
     ) => {
       const { groupId, name, description, profileImage } = action.payload;
-      const exists = state.groups.some((g) => g._id === groupId);
-      if (exists) return;
-      const stub: ChatGroup = {
-        _id: groupId,
-        name: name || "New group",
-        description,
-        profileImage,
-        memberCount: 0,
-        unreadCount: 0,
-      };
-      state.groups = [stub, ...state.groups];
+      if (state.groups.some((g) => g._id === groupId)) return;
+      state.groups = [
+        {
+          _id: groupId,
+          name: name || "New group",
+          description,
+          profileImage,
+          memberCount: 0,
+          unreadCount: 0,
+        },
+        ...state.groups,
+      ];
     },
-
-    socketGroupRemoved: (
+    staffSocketGroupRemoved: (
       state,
       action: PayloadAction<SocketGroupRemovedPayload>,
     ) => {
@@ -245,8 +201,7 @@ const communityGroupSlice = createSlice({
         state.activeMessagesGroupId = null;
       }
     },
-
-    socketGroupUpdated: (
+    staffSocketGroupUpdated: (
       state,
       action: PayloadAction<SocketGroupUpdatedPayload>,
     ) => {
@@ -262,8 +217,7 @@ const communityGroupSlice = createSlice({
         state.groupDetail = { ...state.groupDetail, ...partial };
       }
     },
-
-    socketGroupDeleted: (
+    staffSocketGroupDeleted: (
       state,
       action: PayloadAction<SocketGroupDeletedPayload>,
     ) => {
@@ -275,21 +229,21 @@ const communityGroupSlice = createSlice({
         state.activeMessagesGroupId = null;
       }
     },
-
-    clearGroupUnread: (state, action: PayloadAction<{ groupId: string }>) => {
+    clearStaffGroupUnread: (state, action: PayloadAction<{ groupId: string }>) => {
       const { groupId } = action.payload;
       state.groups = state.groups.map((g) =>
         g._id === groupId ? { ...g, unreadCount: 0 } : g,
       );
     },
+    resetStaffCommunityState: () => initialState,
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getChatGroups.pending, (state) => {
+      .addCase(getStaffChatGroups.pending, (state) => {
         state.listLoading = "isLoading";
         state.error = null;
       })
-      .addCase(getChatGroups.fulfilled, (state, action) => {
+      .addCase(getStaffChatGroups.fulfilled, (state, action) => {
         state.listLoading = "succeeded";
         state.groups = action.payload.data;
         const p = action.payload.pagination;
@@ -302,79 +256,26 @@ const communityGroupSlice = createSlice({
           };
         }
       })
-      .addCase(getChatGroups.rejected, (state, action) => {
+      .addCase(getStaffChatGroups.rejected, (state, action) => {
         state.listLoading = "failed";
         state.error = action.payload?.message ?? "Failed to load groups.";
       })
 
-      .addCase(getChatGroupById.pending, (state) => {
+      .addCase(getStaffChatGroupById.pending, (state) => {
         state.detailLoading = "isLoading";
         state.error = null;
       })
-      .addCase(getChatGroupById.fulfilled, (state, action) => {
+      .addCase(getStaffChatGroupById.fulfilled, (state, action) => {
         state.detailLoading = "succeeded";
         state.groupDetail = action.payload.data;
         state.groups = upsertGroup(state.groups, action.payload.data);
       })
-      .addCase(getChatGroupById.rejected, (state, action) => {
+      .addCase(getStaffChatGroupById.rejected, (state, action) => {
         state.detailLoading = "failed";
         state.error = action.payload?.message ?? "Failed to load group.";
       })
 
-      .addCase(createChatGroup.pending, (state) => {
-        state.createLoading = "isLoading";
-        state.error = null;
-      })
-      .addCase(createChatGroup.fulfilled, (state, action) => {
-        state.createLoading = "succeeded";
-        const g = action.payload.data;
-        state.groups = upsertGroup(state.groups, g);
-      })
-      .addCase(createChatGroup.rejected, (state, action) => {
-        state.createLoading = "failed";
-        state.error = action.payload?.message ?? "Failed to create group.";
-      })
-
-      .addCase(updateChatGroup.pending, (state) => {
-        state.updateLoading = "isLoading";
-        state.error = null;
-      })
-      .addCase(updateChatGroup.fulfilled, (state, action) => {
-        state.updateLoading = "succeeded";
-        const g = action.payload.data;
-        state.groups = upsertGroup(state.groups, g);
-        if (state.groupDetail?._id === g._id) {
-          state.groupDetail = g;
-        }
-      })
-      .addCase(updateChatGroup.rejected, (state, action) => {
-        state.updateLoading = "failed";
-        state.error = action.payload?.message ?? "Failed to update group.";
-      })
-
-      .addCase(deleteChatGroup.pending, (state) => {
-        state.deleteLoading = "isLoading";
-        state.error = null;
-      })
-      .addCase(deleteChatGroup.fulfilled, (state, action) => {
-        state.deleteLoading = "succeeded";
-        const id = action.meta.arg.groupId;
-        state.groups = state.groups.filter((g) => g._id !== id);
-        if (state.groupDetail?._id === id) {
-          state.groupDetail = null;
-        }
-        if (state.activeMessagesGroupId === id) {
-          state.groupMessages = [];
-          state.activeMessagesGroupId = null;
-        }
-      })
-      .addCase(deleteChatGroup.rejected, (state, action) => {
-        state.deleteLoading = "failed";
-        state.error = action.payload?.message ?? "Failed to delete group.";
-      })
-
-      // messages
-      .addCase(getGroupMessages.pending, (state, action) => {
+      .addCase(getStaffGroupMessages.pending, (state, action) => {
         state.messagesLoading = "isLoading";
         state.error = null;
         const gid = action.meta.arg.groupId;
@@ -383,21 +284,15 @@ const communityGroupSlice = createSlice({
           state.groupMessages = [];
         }
       })
-      .addCase(getGroupMessages.fulfilled, (state, action) => {
+      .addCase(getStaffGroupMessages.fulfilled, (state, action) => {
         const { groupId, page = 1 } = action.meta.arg;
-        if (groupId !== state.activeMessagesGroupId) {
-          return;
-        }
+        if (groupId !== state.activeMessagesGroupId) return;
         state.messagesLoading = "succeeded";
         const incoming = action.payload.data;
-        if (page <= 1) {
-          state.groupMessages = sortMessagesAsc(incoming);
-        } else {
-          state.groupMessages = sortMessagesAsc([
-            ...state.groupMessages,
-            ...incoming,
-          ]);
-        }
+        state.groupMessages =
+          page <= 1
+            ? sortMessagesAsc(incoming)
+            : sortMessagesAsc([...state.groupMessages, ...incoming]);
         const p = action.payload.pagination;
         if (p) {
           state.messagesPagination = {
@@ -408,16 +303,16 @@ const communityGroupSlice = createSlice({
           };
         }
       })
-      .addCase(getGroupMessages.rejected, (state, action) => {
+      .addCase(getStaffGroupMessages.rejected, (state, action) => {
         state.messagesLoading = "failed";
         state.error = action.payload?.message ?? "Failed to load messages.";
       })
 
-      .addCase(sendGroupMessage.pending, (state) => {
+      .addCase(sendStaffGroupMessage.pending, (state) => {
         state.sendMessageLoading = "isLoading";
         state.error = null;
       })
-      .addCase(sendGroupMessage.fulfilled, (state, action) => {
+      .addCase(sendStaffGroupMessage.fulfilled, (state, action) => {
         state.sendMessageLoading = "succeeded";
         const gid = action.meta.arg.groupId;
         const msg = action.payload.data;
@@ -431,93 +326,57 @@ const communityGroupSlice = createSlice({
           }
         }
       })
-      .addCase(sendGroupMessage.rejected, (state, action) => {
+      .addCase(sendStaffGroupMessage.rejected, (state, action) => {
         state.sendMessageLoading = "failed";
         state.error = action.payload?.message ?? "Failed to send message.";
       })
 
-      .addCase(editGroupMessage.pending, (state) => {
+      .addCase(editStaffGroupMessage.pending, (state) => {
         state.editMessageLoading = "isLoading";
         state.error = null;
       })
-      .addCase(editGroupMessage.fulfilled, (state, action) => {
+      .addCase(editStaffGroupMessage.fulfilled, (state, action) => {
         state.editMessageLoading = "succeeded";
         const updated = action.payload.data;
         state.groupMessages = state.groupMessages.map((m) =>
           m._id === updated._id ? { ...m, ...updated } : m,
         );
       })
-      .addCase(editGroupMessage.rejected, (state, action) => {
+      .addCase(editStaffGroupMessage.rejected, (state, action) => {
         state.editMessageLoading = "failed";
         state.error = action.payload?.message ?? "Failed to edit message.";
       })
 
-      .addCase(deleteGroupMessage.pending, (state) => {
+      .addCase(deleteStaffGroupMessage.pending, (state) => {
         state.deleteMessageLoading = "isLoading";
         state.error = null;
       })
-      .addCase(deleteGroupMessage.fulfilled, (state, action) => {
+      .addCase(deleteStaffGroupMessage.fulfilled, (state, action) => {
         state.deleteMessageLoading = "succeeded";
         const id = action.meta.arg.messageId;
         state.groupMessages = state.groupMessages.filter((m) => m._id !== id);
       })
-      .addCase(deleteGroupMessage.rejected, (state, action) => {
+      .addCase(deleteStaffGroupMessage.rejected, (state, action) => {
         state.deleteMessageLoading = "failed";
         state.error = action.payload?.message ?? "Failed to delete message.";
-      })
-
-      // members / promote
-      .addCase(addGroupMembers.pending, (state) => {
-        state.membersActionLoading = "isLoading";
-        state.error = null;
-      })
-      .addCase(addGroupMembers.fulfilled, (state) => {
-        state.membersActionLoading = "succeeded";
-      })
-      .addCase(addGroupMembers.rejected, (state, action) => {
-        state.membersActionLoading = "failed";
-        state.error = action.payload?.message ?? "Failed to add members.";
-      })
-      .addCase(removeGroupMembers.pending, (state) => {
-        state.membersActionLoading = "isLoading";
-        state.error = null;
-      })
-      .addCase(removeGroupMembers.fulfilled, (state) => {
-        state.membersActionLoading = "succeeded";
-      })
-      .addCase(removeGroupMembers.rejected, (state, action) => {
-        state.membersActionLoading = "failed";
-        state.error = action.payload?.message ?? "Failed to remove members.";
-      })
-      .addCase(promoteGroupAdmin.pending, (state) => {
-        state.membersActionLoading = "isLoading";
-        state.error = null;
-      })
-      .addCase(promoteGroupAdmin.fulfilled, (state) => {
-        state.membersActionLoading = "succeeded";
-      })
-      .addCase(promoteGroupAdmin.rejected, (state, action) => {
-        state.membersActionLoading = "failed";
-        state.error = action.payload?.message ?? "Failed to promote member.";
       });
   },
 });
 
 export const {
-  clearGroupDetail,
-  clearCommunityGroupError,
-  clearGroups,
-  clearGroupMessages,
-  patchLocalGroup,
-  socketMessageReceived,
-  socketMessageEdited,
-  socketMessageDeleted,
-  socketMessagesRead,
-  socketGroupAdded,
-  socketGroupRemoved,
-  socketGroupUpdated,
-  socketGroupDeleted,
-  clearGroupUnread,
-} = communityGroupSlice.actions;
+  clearStaffGroupDetail,
+  clearStaffCommunityError,
+  clearStaffGroupMessages,
+  staffSocketMessageReceived,
+  staffSocketMessageEdited,
+  staffSocketMessageDeleted,
+  staffSocketMessagesRead,
+  staffSocketGroupAdded,
+  staffSocketGroupRemoved,
+  staffSocketGroupUpdated,
+  staffSocketGroupDeleted,
+  clearStaffGroupUnread,
+  resetStaffCommunityState,
+} = staffCommunitySlice.actions;
 
-export default communityGroupSlice.reducer;
+export default staffCommunitySlice.reducer;

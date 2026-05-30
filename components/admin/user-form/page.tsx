@@ -24,13 +24,14 @@ interface InviteUserFormData {
   firstName: string;
   lastName: string;
   email: string;
-  role: "resident" | "security" | "company" | "";
-  residentType: string;
+  role: "resident" | "security" | "company" | "staff" | "";
+  residentType: string | null;
   addressIds: string[];
 }
 
 const roleOptions = [
   { label: "Resident", value: "resident" },
+  { label: "Staff", value: "staff" },
   { label: "Security", value: "security" },
   { label: "Company", value: "company" },
 ];
@@ -48,7 +49,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
     lastName: "",
     email: "",
     role: "",
-    residentType: "",
+    residentType: null,
     addressIds: [],
   });
 
@@ -216,7 +217,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close, refresh }) => {
                 setFormData((prev) => ({
                   ...prev,
                   role,
-                  residentType: role === "resident" ? prev.residentType : "",
+                  residentType: role === "resident" ? prev.residentType ?? "owner" : null,
                   addressIds: role === "resident" ? prev.addressIds : [],
                 }));
               }}

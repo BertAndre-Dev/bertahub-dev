@@ -284,7 +284,7 @@ export default function CompanyEstatePage() {
   const stats = [
     {
       label: "Total Estates",
-      value: pagination?.total ?? estates.length,
+      value: pagination?.total ?? 0,
       icon: Building2,
       color: "bg-[#D0DFF280]",
     },

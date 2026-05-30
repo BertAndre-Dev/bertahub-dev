@@ -145,6 +145,10 @@ async function doRefresh(): Promise<string | null> {
     if (newToken) {
       const { setToken } = await getAuthActions();
       dispatchToStore(setToken(newToken));
+      if (typeof window !== "undefined") {
+        const { reconnectSocket } = await import("@/lib/socket");
+        reconnectSocket(newToken);
+      }
       console.log("[auth] Token refreshed successfully");
     } else {
       console.warn("[auth] Refresh response had no accessToken:", res.data);
@@ -165,6 +169,10 @@ async function doRefresh(): Promise<string | null> {
 async function clearSession() {
   console.warn("[auth] Refresh failed — logging out");
   clearCsrfToken();
+  if (typeof window !== "undefined") {
+    const { disconnectSocket } = await import("@/lib/socket");
+    disconnectSocket();
+  }
   try {
     const { logoutLocally } = await getAuthActions();
     dispatchToStore(logoutLocally());

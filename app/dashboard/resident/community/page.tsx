@@ -30,6 +30,7 @@ import {
 } from "@/redux/slice/community-group/community-group-thunks";
 import type { ChatGroup, GroupMessageType } from "@/types/community-group";
 import type { RootState, AppDispatch } from "@/redux/store";
+import { useCommunityChatGroupRoom } from "@/hooks/useCommunityChatGroupRoom";
 
 export default function ResidentCommunityChatPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,6 +42,14 @@ export default function ResidentCommunityChatPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Estate");
   const [messageSelfLabel, setMessageSelfLabel] = useState("You");
+
+  const authToken = useSelector((state: RootState) => state.auth.token);
+
+  useCommunityChatGroupRoom({
+    groupId: selectedId,
+    token: authToken,
+    currentUserId,
+  });
 
   const {
     groups,

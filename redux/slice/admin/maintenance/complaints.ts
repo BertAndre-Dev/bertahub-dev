@@ -31,6 +31,7 @@ export interface ComplaintItem {
   createdAt?: string;
   updatedAt?: string;
   image?: string;
+  assignedTo?: string;
 }
 
 export interface CommentItem {
@@ -116,6 +117,27 @@ export const updateComplaintStatus = createAsyncThunk(
       );
     }
   }
+);
+
+/** POST /api/v1/complaints/:id/assign */
+export const assignComplaintToStaff = createAsyncThunk(
+  "complaints/assignComplaintToStaff",
+  async (
+    { id, staffId }: { id: string; staffId: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const res = await axiosInstance.post(`/api/v1/complaints/${id}/assign`, {
+        staffId,
+      });
+      return res.data;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(
+        err?.response?.data?.message ?? "Failed to assign complaint to staff",
+      );
+    }
+  },
 );
 
 /** GET /api/v1/comments/complaint/:complaintId */

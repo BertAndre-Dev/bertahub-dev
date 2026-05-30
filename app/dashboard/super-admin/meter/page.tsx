@@ -333,8 +333,8 @@ export default function AdminMeterManagement() {
 
             const stats = [
               {
-                label: "Total Estates",
-                value: meters?.length || 0,
+                label: "Total Meters",
+                value: pagination?.total ?? 0,
                 icon: IoSpeedometerOutline,
                 color: "bg-[#D0DFF280]",
               },

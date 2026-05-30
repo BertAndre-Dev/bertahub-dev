@@ -110,6 +110,12 @@ export const staffNav = [
     path: "/dashboard/staff/community",
   },
   {
+    label: "Announcements",
+    icon: Bell,
+    path: "/dashboard/staff/announcements",
+    moduleKey: "announcements",
+  },
+  {
     label: "Contact Support",
     icon: MessageCircle,
     path: "/dashboard/staff/support",

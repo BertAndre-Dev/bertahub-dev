@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 import { CommunityPageHeader } from "@/components/dashboard/admin/community/CommunityPageHeader";
 import { CommunityChatSidebar } from "@/components/dashboard/admin/community/CommunityChatSidebar";
 import { CommunityChatWindow } from "@/components/dashboard/admin/community/CommunityChatWindow";
-import { CreateGroupChatModal } from "@/components/dashboard/admin/community/CreateGroupChatModal";
 import { GroupInfoModal } from "@/components/dashboard/admin/community/GroupInfoModal";
 import {
   chatGroupToCommunity,
@@ -17,36 +16,29 @@ import { displayNameFromSignedInUser } from "@/lib/user-display-name";
 import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
-  clearGroupDetail,
-  clearCommunityGroupError,
-  clearGroupMessages,
-} from "@/redux/slice/community-group/community-group-slice";
+  clearStaffGroupDetail,
+  clearStaffCommunityError,
+  clearStaffGroupMessages,
+} from "@/redux/slice/staff/community/staff-community-slice";
 import {
-  addGroupMembers,
-  createChatGroup,
-  deleteChatGroup,
-  deleteGroupMessage,
-  editGroupMessage,
-  getChatGroupById,
-  getChatGroups,
-  getGroupMessages,
-  promoteGroupAdmin,
-  removeGroupMembers,
-  sendGroupMessage,
-  updateChatGroup,
-} from "@/redux/slice/community-group/community-group-thunks";
-import type { ChatGroup, ChatGroupRoleToAdd, GroupMessageType } from "@/types/community-group";
+  deleteStaffGroupMessage,
+  editStaffGroupMessage,
+  getStaffChatGroupById,
+  getStaffChatGroups,
+  getStaffGroupMessages,
+  sendStaffGroupMessage,
+} from "@/redux/slice/staff/community/staff-community-thunks";
+import type { ChatGroup, GroupMessageType } from "@/types/community-group";
 import type { RootState, AppDispatch } from "@/redux/store";
 import Loader from "@/components/ui/Loader";
-import { useCommunityChatGroupRoom } from "@/hooks/useCommunityChatGroupRoom";
+import { useStaffCommunityChatGroupRoom } from "@/hooks/useStaffCommunityChatGroupRoom";
 
-export default function AdminCommunityChatPage() {
+export default function StaffCommunityChatPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [draftByGroup, setDraftByGroup] = useState<Record<string, string>>({});
-  const [createOpen, setCreateOpen] = useState(false);
   const [groupInfoOpen, setGroupInfoOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Estate");
@@ -54,7 +46,7 @@ export default function AdminCommunityChatPage() {
 
   const authToken = useSelector((state: RootState) => state.auth.token);
 
-  useCommunityChatGroupRoom({
+  useStaffCommunityChatGroupRoom({
     groupId: selectedId,
     token: authToken,
     currentUserId,
@@ -63,8 +55,6 @@ export default function AdminCommunityChatPage() {
   const {
     groups,
     listLoading,
-    createLoading,
-    updateLoading,
     groupDetail,
     detailLoading,
     groupMessages,
@@ -72,14 +62,11 @@ export default function AdminCommunityChatPage() {
     sendMessageLoading,
     editMessageLoading,
     deleteMessageLoading,
-    membersActionLoading,
   } = useSelector((state: RootState) => {
-    const s = state.communityGroup;
+    const s = state.staffCommunity;
     return {
       groups: s.groups,
       listLoading: s.listLoading,
-      createLoading: s.createLoading,
-      updateLoading: s.updateLoading,
       groupDetail: s.groupDetail,
       detailLoading: s.detailLoading,
       groupMessages: s.groupMessages,
@@ -87,7 +74,6 @@ export default function AdminCommunityChatPage() {
       sendMessageLoading: s.sendMessageLoading,
       editMessageLoading: s.editMessageLoading,
       deleteMessageLoading: s.deleteMessageLoading,
-      membersActionLoading: s.membersActionLoading,
     };
   });
 
@@ -130,14 +116,14 @@ export default function AdminCommunityChatPage() {
     (async () => {
       try {
         await dispatch(
-          getChatGroups({
+          getStaffChatGroups({
             page: 1,
             limit: 50,
             search: debouncedSearch.trim() || undefined,
           }),
         ).unwrap();
         if (cancelled) return;
-        dispatch(clearCommunityGroupError());
+        dispatch(clearStaffCommunityError());
       } catch (e: unknown) {
         if (cancelled) return;
         const msg =
@@ -168,13 +154,13 @@ export default function AdminCommunityChatPage() {
 
   useEffect(() => {
     if (!selectedId) {
-      dispatch(clearGroupDetail());
+      dispatch(clearStaffGroupDetail());
       return;
     }
     let cancelled = false;
     (async () => {
       try {
-        await dispatch(getChatGroupById({ groupId: selectedId })).unwrap();
+        await dispatch(getStaffChatGroupById({ groupId: selectedId })).unwrap();
       } catch (e: unknown) {
         if (cancelled) return;
         const msg =
@@ -194,15 +180,15 @@ export default function AdminCommunityChatPage() {
 
   useEffect(() => {
     if (!selectedId) {
-      dispatch(clearGroupMessages());
+      dispatch(clearStaffGroupMessages());
       return;
     }
-    dispatch(clearGroupMessages());
+    dispatch(clearStaffGroupMessages());
     let cancelled = false;
     (async () => {
       try {
         await dispatch(
-          getGroupMessages({ groupId: selectedId, page: 1, limit: 50 }),
+          getStaffGroupMessages({ groupId: selectedId, page: 1, limit: 50 }),
         ).unwrap();
       } catch (e: unknown) {
         if (cancelled) return;
@@ -288,7 +274,7 @@ export default function AdminCommunityChatPage() {
       if (!text && !hasAtt) return;
       try {
         await dispatch(
-          sendGroupMessage({
+          sendStaffGroupMessage({
             groupId: selectedId,
             content: text,
             messageType: opts?.messageType ?? "text",
@@ -319,7 +305,7 @@ export default function AdminCommunityChatPage() {
       void (async () => {
         try {
           await dispatch(
-            editGroupMessage({ messageId, content: next.trim() }),
+            editStaffGroupMessage({ messageId, content: next.trim() }),
           ).unwrap();
           toast.success("Message updated.");
         } catch (e: unknown) {
@@ -342,173 +328,13 @@ export default function AdminCommunityChatPage() {
       confirmDeleteToast({
         name: "this message",
         onConfirm: async () => {
-          await dispatch(deleteGroupMessage({ messageId })).unwrap();
+          await dispatch(deleteStaffGroupMessage({ messageId })).unwrap();
           toast.success("Message deleted.");
         },
       });
     },
     [dispatch],
   );
-
-  const handleCreateGroup = async (payload: {
-    name: string;
-    description: string;
-    profileImage?: string;
-  }) => {
-    try {
-      const res = await dispatch(
-        createChatGroup({
-          name: payload.name,
-          description: payload.description || undefined,
-          profileImage: payload.profileImage,
-        }),
-      ).unwrap();
-      toast.success("Group created.");
-      setCreateOpen(false);
-      if (res.data?._id) setSelectedId(res.data._id);
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Could not create group.";
-      toast.error(msg);
-    }
-  };
-
-  const handleUpdateGroup = async (p: { name: string; description: string }) => {
-    if (!selectedId) return;
-    try {
-      await dispatch(
-        updateChatGroup({
-          groupId: selectedId,
-          name: p.name,
-          description: p.description,
-        }),
-      ).unwrap();
-      toast.success("Group updated.");
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Could not update group.";
-      toast.error(msg);
-      throw e;
-    }
-  };
-
-  const handleDeleteGroup = () => {
-    if (!selectedId || !selectedGroupUi) return;
-    confirmDeleteToast({
-      name: selectedGroupUi.name,
-      onConfirm: async () => {
-        await dispatch(deleteChatGroup({ groupId: selectedId })).unwrap();
-        toast.success("Group deleted.");
-        setGroupInfoOpen(false);
-      },
-    });
-  };
-
-  const refreshGroupMeta = async () => {
-    if (!selectedId) return;
-    await dispatch(getChatGroupById({ groupId: selectedId })).unwrap();
-    await dispatch(
-      getChatGroups({
-        page: 1,
-        limit: 50,
-        search: debouncedSearch.trim() || undefined,
-      }),
-    ).unwrap();
-  };
-
-  const handleAddMembersByIds = async (memberIds: string[]) => {
-    if (!selectedId || !memberIds.length) return;
-    try {
-      await dispatch(addGroupMembers({ groupId: selectedId, memberIds })).unwrap();
-      toast.success("Members added.");
-      await refreshGroupMeta();
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Failed to add members.";
-      toast.error(msg);
-      throw e;
-    }
-  };
-
-  const handleAddAllSameRole = async (roleToAdd: ChatGroupRoleToAdd) => {
-    if (!selectedId) return;
-    try {
-      await dispatch(
-        addGroupMembers({
-          groupId: selectedId,
-          addAllSameRole: true,
-          roleToAdd,
-        }),
-      ).unwrap();
-      toast.success("Members added.");
-      await refreshGroupMeta();
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Failed to add members.";
-      toast.error(msg);
-      throw e;
-    }
-  };
-
-  const handleRemoveMembersByIds = async (memberIds: string[]) => {
-    if (!selectedId || !memberIds.length) return;
-    try {
-      await dispatch(
-        removeGroupMembers({ groupId: selectedId, memberIds }),
-      ).unwrap();
-      toast.success("Members removed.");
-      await refreshGroupMeta();
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Failed to remove members.";
-      toast.error(msg);
-      throw e;
-    }
-  };
-
-  const handlePromoteMember = async (userId: string) => {
-    if (!selectedId) return;
-    try {
-      await dispatch(promoteGroupAdmin({ groupId: selectedId, userId })).unwrap();
-      toast.success("Member promoted.");
-      await refreshGroupMeta();
-    } catch (e: unknown) {
-      const msg =
-        e &&
-        typeof e === "object" &&
-        "message" in e &&
-        typeof (e as { message?: string }).message === "string"
-          ? (e as { message: string }).message
-          : "Failed to promote member.";
-      toast.error(msg);
-      throw e;
-    }
-  };
 
   const emptySidebar =
     listLoading !== "isLoading" &&
@@ -517,7 +343,8 @@ export default function AdminCommunityChatPage() {
 
   let emptyPanelTitle = "No group selected.";
   if (listLoading === "isLoading") emptyPanelTitle = "Loading groups…";
-  else if (emptySidebar) emptyPanelTitle = "No community groups yet.";
+  else if (emptySidebar)
+    emptyPanelTitle = "You are not in any community groups yet.";
 
   const pageLoading = listLoading === "isLoading";
 
@@ -535,86 +362,70 @@ export default function AdminCommunityChatPage() {
           pageLoading ? "blur-sm opacity-60 pointer-events-none select-none" : "",
         ].join(" ")}
       >
-      <CommunityPageHeader
-        estateName={estateName}
-        onCreateGroup={() => setCreateOpen(true)}
-      />
-
-      <div className="grid min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-[minmax(260px,340px)_1fr] lg:gap-6">
-        <CommunityChatSidebar
-          groups={displayGroups}
-          selectedId={selectedId}
-          search={search}
-          onSearchChange={setSearch}
-          onSelectGroup={setSelectedId}
+        <CommunityPageHeader
+          estateName={estateName}
+          showCreateGroup={false}
+          subtitle={`Connect with residents and team members in ${estateName}`}
         />
-        {selectedGroupUi ? (
-          <CommunityChatWindow
-            group={selectedGroupUi}
-            messages={messages}
-            messagesLoading={messagesLoading === "isLoading"}
-            draft={draft}
-            onDraftChange={(v) =>
-              selectedId &&
-              setDraftByGroup((prev) => ({ ...prev, [selectedId]: v }))
-            }
-            onSend={handleSend}
-            onOpenGroupInfo={() => setGroupInfoOpen(true)}
-            sendDisabled={sendMessageLoading === "isLoading"}
-            sending={sendMessageLoading === "isLoading"}
-            currentUserId={currentUserId}
-            onEditMessage={handleEditMessage}
-            onDeleteMessage={handleDeleteMessage}
-            messageActionsDisabled={
-              editMessageLoading === "isLoading" ||
-              deleteMessageLoading === "isLoading"
-            }
+
+        <div className="grid min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-[minmax(260px,340px)_1fr] lg:gap-6">
+          <CommunityChatSidebar
+            groups={displayGroups}
+            selectedId={selectedId}
+            search={search}
+            onSearchChange={setSearch}
+            onSelectGroup={setSelectedId}
           />
-        ) : (
-          <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center md:min-h-[calc(100vh-220px)]">
-            <p className="text-sm font-medium text-foreground">
-              {emptyPanelTitle}
-            </p>
-            {listLoading !== "isLoading" && emptySidebar ? (
-              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                Create a group so residents can chat within {estateName}.
+          {selectedGroupUi ? (
+            <CommunityChatWindow
+              group={selectedGroupUi}
+              messages={messages}
+              messagesLoading={messagesLoading === "isLoading"}
+              draft={draft}
+              onDraftChange={(v) =>
+                selectedId &&
+                setDraftByGroup((prev) => ({ ...prev, [selectedId]: v }))
+              }
+              onSend={handleSend}
+              onOpenGroupInfo={() => setGroupInfoOpen(true)}
+              sendDisabled={sendMessageLoading === "isLoading"}
+              sending={sendMessageLoading === "isLoading"}
+              currentUserId={currentUserId}
+              onEditMessage={handleEditMessage}
+              onDeleteMessage={handleDeleteMessage}
+              messageActionsDisabled={
+                editMessageLoading === "isLoading" ||
+                deleteMessageLoading === "isLoading"
+              }
+            />
+          ) : (
+            <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center md:min-h-[calc(100vh-220px)]">
+              <p className="text-sm font-medium text-foreground">
+                {emptyPanelTitle}
               </p>
-            ) : null}
-          </div>
-        )}
-      </div>
+              {!pageLoading && emptySidebar ? (
+                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                  When an admin adds you to a group, it will appear here.
+                </p>
+              ) : null}
+            </div>
+          )}
+        </div>
 
-      <CreateGroupChatModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        estateDisplayName={estateName}
-        isSubmitting={createLoading === "isLoading"}
-        onCreate={handleCreateGroup}
-      />
-
-      {selectedGroupUi ? (
-        <GroupInfoModal
-          open={groupInfoOpen}
-          onClose={() => setGroupInfoOpen(false)}
-          group={selectedGroupUi}
-          members={infoModalMembers}
-          memberTotal={selectedGroupUi.memberCount}
-          estateDisplayName={estateName}
-          estateId={selectedGroupUi.estateId}
-          detailLoading={detailLoading === "isLoading"}
-          updateLoading={updateLoading === "isLoading"}
-          membersActionLoading={membersActionLoading === "isLoading"}
-          showMemberAdminTools
-          canUpdateGroupProfile
-          canDeleteGroup
-          onUpdateGroup={handleUpdateGroup}
-          onDeleteGroup={handleDeleteGroup}
-          onAddMembersByIds={handleAddMembersByIds}
-          onAddAllSameRole={handleAddAllSameRole}
-          onRemoveMembersByIds={handleRemoveMembersByIds}
-          onPromoteMember={handlePromoteMember}
-        />
-      ) : null}
+        {selectedGroupUi ? (
+          <GroupInfoModal
+            open={groupInfoOpen}
+            onClose={() => setGroupInfoOpen(false)}
+            group={selectedGroupUi}
+            members={infoModalMembers}
+            memberTotal={selectedGroupUi.memberCount}
+            estateDisplayName={estateName}
+            detailLoading={detailLoading === "isLoading"}
+            showMemberAdminTools={false}
+            canUpdateGroupProfile={false}
+            canDeleteGroup={false}
+          />
+        ) : null}
       </div>
     </div>
   );

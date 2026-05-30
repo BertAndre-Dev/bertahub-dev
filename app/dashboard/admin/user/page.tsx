@@ -277,7 +277,14 @@ export default function AdminUserPage() {
     { key: "email", header: "Email" },
     ...getAddressColumns(allAdminUsers),
     { key: "role", header: "Role" },
-    { key: "residentType", header: "Resident Type" },
+    {
+      key: "residentType",
+      header: "Resident Type",
+      render: (item: AdminUserData) =>
+        item.role?.toLowerCase() === "resident"
+          ? item.residentType || "-"
+          : "-",
+    },
     {
       key: "invitationStatus",
       header: "Invitation Status",
@@ -373,7 +380,7 @@ export default function AdminUserPage() {
         {(() => {
           const stats = [
             {
-              label: "Total Residents",
+              label: "Total Users",
               value: pagination?.total ?? 0,
               icon: UsersRound,
               color: "bg-[#FEE6D480]",
