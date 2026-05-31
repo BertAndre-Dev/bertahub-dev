@@ -14,6 +14,8 @@ export interface ExpenseHeadCardProps {
   onView: (item: ExpenseHead) => void;
   onEdit: (item: ExpenseHead) => void;
   onDelete: (item: ExpenseHead) => void;
+  detailBasePath?: string;
+  estateId?: string;
 }
 
 export function ExpenseHeadCard({
@@ -21,11 +23,14 @@ export function ExpenseHeadCard({
   onView,
   onEdit,
   onDelete,
+  detailBasePath = "/dashboard/admin/expenses",
+  estateId,
 }: Readonly<ExpenseHeadCardProps>) {
   const router = useRouter();
   const slug = slugify(item.name ?? "");
   const id = item.id ?? item._id;
-  const href = id ? `/dashboard/admin/expenses/${id}` : `/dashboard/admin/expenses/${slug}`;
+  const base = id ? `${detailBasePath}/${id}` : `${detailBasePath}/${slug}`;
+  const href = estateId ? `${base}?estateId=${encodeURIComponent(estateId)}` : base;
 
   return (
     <Card

@@ -166,10 +166,22 @@ export const companyNav = [
     moduleKey: "asset-maintenance",
   },
   {
+    label: "Expenses",
+    icon: CircleDollarSign,
+    path: "/dashboard/company/expenses",
+    moduleKey: "expense",
+  },
+  {
     label: "Operations Reporting",
     icon: ClipboardList,
     path: "/dashboard/company/operations",
     moduleKey: "operations-reporting",
+  },
+  {
+    label: "Report",
+    icon: BarChart,
+    path: "/dashboard/company/reports",
+    moduleKey: "reporting",
   },
   // {
   //   label: "Community Chat",
@@ -181,11 +193,6 @@ export const companyNav = [
     icon: MessageCircle,
     path: "/dashboard/company/support",
   },
-  // {
-  //   label: "Marketplace",
-  //   icon: Store,
-  //   path: "/dashboard/company/marketplace",
-  // },
   {
     label: "Settings",
     icon: FiSettings,

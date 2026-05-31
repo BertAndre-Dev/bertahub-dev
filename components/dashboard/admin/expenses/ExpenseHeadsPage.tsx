@@ -31,6 +31,9 @@ import {
 import type { AppDispatch, RootState } from "@/redux/store";
 import { Card } from "@/components/ui/card";
 import Loader from "@/components/ui/Loader";
+import Pagination from "@/components/pagination/page";
+
+const PAGE_SIZE = 12;
 
 function normalizeEstate(user: any): { estateId: string; estateName: string } {
   const rawEstateId = user?.estateId as
@@ -80,6 +83,7 @@ export default function ExpenseHeadsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ExpenseHead | null>(null);
@@ -108,19 +112,23 @@ export default function ExpenseHeadsPage() {
   }, [dispatch]);
 
   useEffect(() => {
+    setPage(1);
+  }, [estateId, startDate, endDate]);
+
+  useEffect(() => {
     if (!estateId) return;
     dispatch(
       fetchExpenseHeads({
         estateId,
-        page: 1,
-        limit: 100,
+        page,
+        limit: PAGE_SIZE,
         startDate: toIsoIfPresent(startDate),
         endDate: toIsoIfPresent(endDate),
       }),
     )
       .unwrap()
       .catch(() => toast.error("Failed to fetch expense heads."));
-  }, [dispatch, estateId, startDate, endDate]);
+  }, [dispatch, estateId, startDate, endDate, page]);
 
   useEffect(() => {
     if (error) toast.error(error);
@@ -214,6 +222,17 @@ export default function ExpenseHeadsPage() {
 
   const total = pagination?.total ?? items.length ?? 0;
 
+  const paginationInfo = {
+    total: pagination?.total ?? items.length ?? 0,
+    current: pagination?.currentPage ?? page,
+    pageSize: pagination?.pageSize ?? PAGE_SIZE,
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const content = useMemo(() => {
     if (filtered.length === 0) {
       return (
@@ -275,6 +294,13 @@ export default function ExpenseHeadsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {content}
         </div>
+
+        <Pagination
+          paginationInfo={paginationInfo}
+          onPageChange={handlePageChange}
+          disabled={loading}
+          itemLabel="expense heads"
+        />
 
         <ExpenseHeadModal
           open={modalOpen}
