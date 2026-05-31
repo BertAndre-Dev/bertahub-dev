@@ -23,7 +23,7 @@ import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import type { RootState, AppDispatch } from "@/redux/store";
 import AnnouncementsPageHeader from "@/components/admin/announcements/announcements-page-header/page";
 import AnnouncementsStatsGrid from "@/components/admin/announcements/announcements-stats-grid/page";
-import AnnouncementsPagination from "@/components/admin/announcements/announcements-pagination/page";
+import Pagination from "@/components/pagination/page";
 import AnnouncementsListSection from "@/components/admin/announcements/announcements-list-section/page";
 import { buildAdminAnnouncementStatsCards } from "@/lib/announcement-stats";
 import Modal from "@/components/modal/page";
@@ -250,10 +250,11 @@ export default function AdminAnnouncementsPage() {
           />
         </div>
 
-        <AnnouncementsPagination
+        <Pagination
           paginationInfo={paginationInfo}
           onPageChange={handlePageChange}
           disabled={listLoading}
+          itemLabel="announcements"
         />
 
         <AnnouncementFormModal
