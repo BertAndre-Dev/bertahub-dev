@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import type { AppDispatch } from "@/redux/store";
-import { getAssetCategories, type AssetCategory } from "@/redux/slice/admin/asset-mgt/admin-asset";
+import { getAssetCategories, getAssets, type AssetCategory } from "@/redux/slice/admin/asset-mgt/admin-asset";
 import {
   createAssetMaintenance,
   getAssetMaintenanceList,
@@ -12,6 +12,7 @@ import {
   type AssetMaintenanceRecord,
 } from "@/redux/slice/admin/asset-maintenance/admin-asset-maintenance";
 import { selectAdminAssetMaintenance } from "@/redux/slice/admin/asset-maintenance/admin-asset-maintenance-slice";
+import { buildAssetNameMap } from "@/lib/maintenance-schedule-calendar";
 import MaintenanceFormModal from "./MaintenanceFormModal";
 import MaintenanceScheduleCalendar from "./MaintenanceScheduleCalendar";
 import MaintenanceRecordsTable from "./MaintenanceRecordsTable";
@@ -40,6 +41,9 @@ export default function AssetMaintenanceTab({
     [],
   );
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [assetNamesById, setAssetNamesById] = useState<Map<string, string>>(
+    () => new Map(),
+  );
   const [recordsRefreshKey, setRecordsRefreshKey] = useState(0);
 
   const { createStatus, updateStatus } = useSelector(selectAdminAssetMaintenance);
@@ -99,6 +103,23 @@ export default function AssetMaintenanceTab({
     })();
   }, [dispatch, estateId]);
 
+  useEffect(() => {
+    if (!estateId) {
+      setAssetNamesById(new Map());
+      return;
+    }
+    (async () => {
+      try {
+        const res = await dispatch(
+          getAssets({ estateId, page: 1, limit: 500 }),
+        ).unwrap();
+        setAssetNamesById(buildAssetNameMap(res?.data ?? []));
+      } catch {
+        setAssetNamesById(new Map());
+      }
+    })();
+  }, [dispatch, estateId]);
+
   const openCreate = () => {
     if (!estateId) {
       toast.info("No estate linked to your account.");
@@ -131,6 +152,7 @@ export default function AssetMaintenanceTab({
 
       <MaintenanceScheduleCalendar
         records={scheduleRecords}
+        assetNamesById={assetNamesById}
         loading={scheduleLoading}
         scheduleDisabled={!estateId}
         onSchedule={openCreate}

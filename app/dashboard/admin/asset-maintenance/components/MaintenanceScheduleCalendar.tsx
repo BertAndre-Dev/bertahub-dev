@@ -10,15 +10,15 @@ import {
   buildMaintenanceScheduleEvents,
   formatMonthYear,
   getCalendarMonthBounds,
-  getServiceBadgeStyle,
-  SCHEDULE_BADGE_STYLES,
+  SCHEDULE_EVENT_BADGE_STYLE,
   type MaintenanceScheduleEvent,
-} from "../lib/maintenance-schedule";
+} from "@/lib/maintenance-schedule-calendar";
 
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
 
 type Props = {
   records: AssetMaintenanceRecord[];
+  assetNamesById?: Map<string, string>;
   loading?: boolean;
   onSchedule?: () => void;
   onEventClick?: (record: AssetMaintenanceRecord) => void;
@@ -33,27 +33,24 @@ function EventBadge({
   event: MaintenanceScheduleEvent;
   onClick?: () => void;
 }) {
-  const styles =
-    event.kind === "service"
-      ? getServiceBadgeStyle(event.tag)
-      : SCHEDULE_BADGE_STYLES[event.kind];
-
   return (
     <button
       type="button"
       onClick={onClick}
       className={`mb-1 w-full rounded-md px-1.5 py-1 text-center text-[10px] leading-tight transition-opacity hover:opacity-90 ${
         onClick ? "cursor-pointer" : "cursor-default"
-      } ${styles.container}`}
+      } ${SCHEDULE_EVENT_BADGE_STYLE.container}`}
     >
-      <div className={`truncate ${styles.tag}`}>{event.tag}</div>
-      <div className={`truncate ${styles.label}`}>{event.label}</div>
+      <div className={`truncate ${SCHEDULE_EVENT_BADGE_STYLE.title}`}>
+        {event.title}
+      </div>
     </button>
   );
 }
 
 export default function MaintenanceScheduleCalendar({
   records,
+  assetNamesById,
   loading,
   onSchedule,
   onEventClick,
@@ -71,8 +68,14 @@ export default function MaintenanceScheduleCalendar({
   }, [viewDate]);
 
   const events = useMemo(
-    () => buildMaintenanceScheduleEvents(records, rangeStart, rangeEnd),
-    [records, rangeStart, rangeEnd],
+    () =>
+      buildMaintenanceScheduleEvents(
+        records,
+        rangeStart,
+        rangeEnd,
+        assetNamesById,
+      ),
+    [records, rangeStart, rangeEnd, assetNamesById],
   );
 
   const cells = useMemo(
@@ -170,7 +173,10 @@ export default function MaintenanceScheduleCalendar({
                       event={event}
                       onClick={
                         onEventClick
-                          ? () => onEventClick(event.record)
+                          ? () =>
+                              onEventClick(
+                                event.record as AssetMaintenanceRecord,
+                              )
                           : undefined
                       }
                     />

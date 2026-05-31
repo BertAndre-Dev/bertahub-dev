@@ -20,6 +20,7 @@ export type AssetMaintenanceRecord = {
   categoryId?: string | { id?: string; _id?: string; name?: string };
   tag?: string;
   lastMaintenanceDate?: string;
+  nextMaintenanceDate?: string;
   frequency?: string;
   note?: string;
   isActive?: boolean;
