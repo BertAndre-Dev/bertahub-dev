@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import Modal from "@/components/modal/page";
 import { Select } from "@/components/ui/select";
 import type { AnnouncementItem } from "@/redux/slice/admin/announcements/announcements";
+import { fileToBase64 } from "@/lib/file-to-base64";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
@@ -30,8 +31,10 @@ export interface AnnouncementFormData {
   isPinned: boolean;
   priority: string;
   sendNow: boolean;
-  image: File | null;
-  file: File | null;
+  /** Full data URL, e.g. `data:image/png;base64,...`. */
+  image: string | null;
+  /** Full data URL, e.g. `data:application/pdf;base64,...`. */
+  file: string | null;
 }
 
 export interface AnnouncementFormModalProps {
@@ -175,6 +178,14 @@ export default function AnnouncementFormModal({
       .map((s) => s.trim())
       .filter(Boolean);
     try {
+      let imageDataUrl: string | null = null;
+      let fileDataUrl: string | null = null;
+      if (formImage) {
+        imageDataUrl = await fileToBase64(formImage);
+      }
+      if (formFile) {
+        fileDataUrl = await fileToBase64(formFile);
+      }
       await onSubmit({
         title: t,
         content: formContent.trim(),
@@ -188,12 +199,14 @@ export default function AnnouncementFormModal({
         isPinned: formIsPinned,
         priority: formPriority,
         sendNow: sendMode === "send_now",
-        image: formImage,
-        file: formFile,
+        image: imageDataUrl,
+        file: fileDataUrl,
       });
       onClose();
-    } catch {
-      // Caller can toast
+    } catch (err: unknown) {
+      const msg =
+        (err as { message?: string })?.message ?? "Failed to process image.";
+      toast.error(msg);
     }
   };
 
