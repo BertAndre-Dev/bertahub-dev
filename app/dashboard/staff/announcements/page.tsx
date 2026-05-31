@@ -13,7 +13,12 @@ import {
   getStaffAnnouncements,
   type StaffAnnouncementItem,
 } from "@/redux/slice/staff/announcements/staff-announcements";
+import AnnouncementsStatsGrid from "@/components/admin/announcements/announcements-stats-grid/page";
+import AnnouncementsPagination from "@/components/admin/announcements/announcements-pagination/page";
+import { buildReadOnlyAnnouncementStatsCards } from "@/lib/announcement-stats";
 import type { RootState, AppDispatch } from "@/redux/store";
+
+const PAGE_SIZE = 10;
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return "—";
@@ -100,16 +105,19 @@ function StaffAnnouncementCard({
 
 export default function StaffAnnouncementsPage() {
   const dispatch = useDispatch<AppDispatch>();
+  const [estateId, setEstateId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Estate");
   const [viewingItem, setViewingItem] = useState<StaffAnnouncementItem | null>(
     null,
   );
   const [bootstrapping, setBootstrapping] = useState(true);
+  const [page, setPage] = useState(1);
 
-  const { list, getListStatus } = useSelector((state: RootState) => {
+  const { list, pagination, getListStatus } = useSelector((state: RootState) => {
     const s = state.staffAnnouncements;
     return {
       list: s?.list ?? null,
+      pagination: s?.pagination ?? null,
       getListStatus: s?.getListStatus ?? "idle",
     };
   });
@@ -135,14 +143,7 @@ export default function StaffAnnouncementsPage() {
           (data?.estateName as string) ??
           "Estate";
         setEstateName(name);
-        if (eId) {
-          dispatch(getStaffAnnouncements({ estateId: eId })).catch(
-            (err: unknown) => {
-              const e = err as { message?: string };
-              toast.error(e?.message ?? "Failed to load announcements.");
-            },
-          );
-        }
+        setEstateId(eId);
       } catch {
         // keep default
       } finally {
@@ -151,11 +152,35 @@ export default function StaffAnnouncementsPage() {
     })();
   }, [dispatch]);
 
-  const pageLoading = bootstrapping || getListStatus === "isLoading";
+  useEffect(() => {
+    if (!estateId || bootstrapping) return;
+    dispatch(
+      getStaffAnnouncements({ estateId, page, limit: PAGE_SIZE }),
+    ).catch((err: unknown) => {
+      const e = err as { message?: string };
+      toast.error(e?.message ?? "Failed to load announcements.");
+    });
+  }, [dispatch, estateId, page, bootstrapping]);
+
+  const listLoading = getListStatus === "isLoading";
+  const fullPageLoading = bootstrapping || (listLoading && !list);
+  const statsCards = buildReadOnlyAnnouncementStatsCards(
+    pagination?.total ?? announcements.length,
+  );
+  const paginationInfo = {
+    total: pagination?.total ?? announcements.length,
+    current: pagination?.page ?? page,
+    pageSize: pagination?.limit ?? PAGE_SIZE,
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="relative">
-      {pageLoading && (
+      {fullPageLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
           <Loader label="Loading announcements..." />
         </div>
@@ -164,7 +189,7 @@ export default function StaffAnnouncementsPage() {
       <div
         className={[
           "space-y-6 pb-8",
-          pageLoading
+          fullPageLoading
             ? "blur-sm opacity-60 pointer-events-none select-none"
             : "",
         ].join(" ")}
@@ -185,7 +210,9 @@ export default function StaffAnnouncementsPage() {
           </div>
         </div>
 
-        {announcements.length === 0 ? (
+        <AnnouncementsStatsGrid stats={statsCards} />
+
+        {announcements.length === 0 && !listLoading ? (
           <Card className="p-12 text-center">
             <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground">
@@ -203,6 +230,12 @@ export default function StaffAnnouncementsPage() {
             ))}
           </div>
         )}
+
+        <AnnouncementsPagination
+          paginationInfo={paginationInfo}
+          onPageChange={handlePageChange}
+          disabled={listLoading}
+        />
 
         <Modal visible={!!viewingItem} onClose={() => setViewingItem(null)}>
           {viewingItem && (

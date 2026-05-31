@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { Megaphone, Calendar, Eye, Mail, Pencil, FileText } from "lucide-react";
+import { Pencil, FileText } from "lucide-react";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
   getAnnouncements,
@@ -23,7 +23,9 @@ import { confirmDeleteToast } from "@/lib/confirm-delete-toast";
 import type { RootState, AppDispatch } from "@/redux/store";
 import AnnouncementsPageHeader from "@/components/admin/announcements/announcements-page-header/page";
 import AnnouncementsStatsGrid from "@/components/admin/announcements/announcements-stats-grid/page";
+import AnnouncementsPagination from "@/components/admin/announcements/announcements-pagination/page";
 import AnnouncementsListSection from "@/components/admin/announcements/announcements-list-section/page";
+import { buildAdminAnnouncementStatsCards } from "@/lib/announcement-stats";
 import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/ui/Loader";
@@ -44,6 +46,8 @@ function formatAnnouncementDate(dateStr?: string) {
   }
 }
 
+const PAGE_SIZE = 10;
+
 export default function AdminAnnouncementsPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [estateName, setEstateName] = useState("Estate");
@@ -52,12 +56,14 @@ export default function AdminAnnouncementsPage() {
   const [editingItem, setEditingItem] = useState<AnnouncementItem | null>(null);
   const [viewingItem, setViewingItem] = useState<AnnouncementItem | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
+  const [page, setPage] = useState(1);
 
-  const { list, stats, getStatus, getStatsStatus, createStatus, updateStatus } =
+  const { list, pagination, stats, getStatus, getStatsStatus, createStatus, updateStatus } =
     useSelector((state: RootState) => {
       const s = (state as RootState).adminAnnouncements;
       return {
         list: s?.list ?? null,
+        pagination: s?.pagination ?? null,
         stats: s?.stats ?? null,
         getStatus: s?.getStatus ?? "idle",
         getStatsStatus: s?.getStatsStatus ?? "idle",
@@ -96,12 +102,6 @@ export default function AdminAnnouncementsPage() {
         setEstateName(estateNameFinal);
 
         if (normalizedEstateId) {
-          dispatch(getAnnouncements({ estateId: normalizedEstateId })).catch(
-            (err: unknown) => {
-              const e = err as { message?: string };
-              toast.error(e?.message ?? "Failed to load announcements.");
-            },
-          );
           dispatch(getAnnouncementStats(normalizedEstateId)).catch(() => {});
         }
       } catch {
@@ -112,10 +112,45 @@ export default function AdminAnnouncementsPage() {
     })();
   }, [dispatch]);
 
+  const fetchAnnouncements = (targetPage = page) => {
+    if (!estateId) return;
+    dispatch(
+      getAnnouncements({ estateId, page: targetPage, limit: PAGE_SIZE }),
+    ).catch((err: unknown) => {
+      const e = err as { message?: string };
+      toast.error(e?.message ?? "Failed to load announcements.");
+    });
+  };
+
+  useEffect(() => {
+    if (!estateId || bootstrapping) return;
+    fetchAnnouncements(page);
+  }, [estateId, page, bootstrapping]);
+
   const announcements = list ?? [];
-  const pageLoading =
-    getStatus === "isLoading" || getStatsStatus === "isLoading";
-  const fullPageLoading = bootstrapping || pageLoading;
+  const listLoading = getStatus === "isLoading";
+  const fullPageLoading =
+    bootstrapping || (listLoading && !list) || getStatsStatus === "isLoading";
+  const statsCards = buildAdminAnnouncementStatsCards(
+    stats,
+    pagination?.total ?? announcements.length,
+  );
+  const paginationInfo = {
+    total: pagination?.total ?? announcements.length,
+    current: pagination?.page ?? page,
+    pageSize: pagination?.limit ?? PAGE_SIZE,
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const refreshAfterMutation = (targetPage = page) => {
+    if (!estateId) return;
+    fetchAnnouncements(targetPage);
+    dispatch(getAnnouncementStats(estateId)).catch(() => {});
+  };
 
   const handleCreate = async (data: AnnouncementFormData) => {
     if (!estateId) {
@@ -139,10 +174,8 @@ export default function AdminAnnouncementsPage() {
     await dispatch(createAnnouncement(payload)).unwrap();
     toast.success("Announcement created.");
     setAddModalOpen(false);
-    if (estateId) {
-      dispatch(getAnnouncements({ estateId }));
-      dispatch(getAnnouncementStats(estateId));
-    }
+    setPage(1);
+    refreshAfterMutation(1);
   };
 
   const handleUpdate = async (data: AnnouncementFormData) => {
@@ -165,6 +198,7 @@ export default function AdminAnnouncementsPage() {
     await dispatch(updateAnnouncement(payload)).unwrap();
     toast.success("Announcement updated.");
     setEditingItem(null);
+    refreshAfterMutation();
   };
 
   const handleDelete = (item: AnnouncementItem) => {
@@ -174,56 +208,13 @@ export default function AdminAnnouncementsPage() {
       onConfirm: async () => {
         await dispatch(deleteAnnouncement({ estateId, id: item.id! })).unwrap();
         toast.success("Announcement deleted.");
-        dispatch(getAnnouncements({ estateId }));
-        dispatch(getAnnouncementStats(estateId));
+        const nextPage =
+          announcements.length <= 1 && page > 1 ? page - 1 : page;
+        if (nextPage !== page) setPage(nextPage);
+        refreshAfterMutation(nextPage);
       },
     });
   };
-
-  const statsCards = [
-    {
-      label: "Total",
-      value: stats?.totalAnnouncements ?? 0,
-      icon: Megaphone,
-      color: "bg-[#D0DFF280]",
-    },
-    {
-      label: "Published",
-      value: stats?.publishedCount ?? 0,
-      icon: Eye,
-      color: "bg-green-100",
-    },
-    {
-      label: "Scheduled",
-      value: stats?.scheduledCount ?? 0,
-      icon: Calendar,
-      color: "bg-amber-100",
-    },
-    {
-      label: "Draft",
-      value: stats?.draftCount ?? 0,
-      icon: Megaphone,
-      color: "bg-gray-100",
-    },
-    {
-      label: "Total views",
-      value: stats?.totalViews ?? 0,
-      icon: Eye,
-      color: "bg-blue-100",
-    },
-    {
-      label: "Emails sent",
-      value: stats?.totalEmailsSent ?? 0,
-      icon: Mail,
-      color: "bg-blue-100",
-    },
-    {
-      label: "Avg views/ann.",
-      value: stats?.averageViewsPerAnnouncement ?? 0,
-      icon: Eye,
-      color: "bg-purple-100",
-    },
-  ];
 
   return (
     <div className="relative">
@@ -247,19 +238,23 @@ export default function AdminAnnouncementsPage() {
           addDisabled={!estateId}
         />
 
-        {getStatsStatus === "succeeded" && (
-          <AnnouncementsStatsGrid stats={statsCards} />
-        )}
+        <AnnouncementsStatsGrid stats={statsCards} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <AnnouncementsListSection
-            loading={getStatus === "isLoading" && !fullPageLoading}
+            loading={listLoading && !fullPageLoading}
             announcements={announcements}
             onView={setViewingItem}
             onEdit={setEditingItem}
             onDelete={handleDelete}
           />
         </div>
+
+        <AnnouncementsPagination
+          paginationInfo={paginationInfo}
+          onPageChange={handlePageChange}
+          disabled={listLoading}
+        />
 
         <AnnouncementFormModal
           visible={addModalOpen}

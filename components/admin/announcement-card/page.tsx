@@ -105,7 +105,7 @@ export default function AnnouncementCard({
 
   return (
     <Card
-      className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+      className="rounded-xl overflow-hidden h-[200px] overflow-y-auto shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col"
       onClick={handleCardClick}
       role="button"
       tabIndex={0}
