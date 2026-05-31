@@ -40,6 +40,9 @@ import {
 } from "@/app/dashboard/company/asset/lib/estate";
 import { Card } from "@/components/ui/card";
 import Loader from "@/components/ui/Loader";
+import Pagination from "@/components/pagination/page";
+
+const PAGE_SIZE = 12;
 
 type EstateSelectOption = { label: string; value: string };
 
@@ -75,6 +78,7 @@ export default function CompanyExpenseHeadsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CompanyExpenseHead | null>(null);
@@ -133,20 +137,24 @@ export default function CompanyExpenseHeadsPage() {
   );
 
   useEffect(() => {
+    setPage(1);
+  }, [estateId, startDate, endDate]);
+
+  useEffect(() => {
     if (!estateId) return;
     dispatch(setCompanyExpenseHeadEstate(estateId));
     dispatch(
       fetchCompanyExpenseHeads({
         estateId,
-        page: 1,
-        limit: 100,
+        page,
+        limit: PAGE_SIZE,
         startDate: toIsoIfPresent(startDate),
         endDate: toIsoIfPresent(endDate),
       }),
     )
       .unwrap()
       .catch(() => toast.error("Failed to fetch expense heads."));
-  }, [dispatch, estateId, startDate, endDate]);
+  }, [dispatch, estateId, startDate, endDate, page]);
 
   useEffect(() => {
     if (error) toast.error(error);
@@ -243,6 +251,18 @@ export default function CompanyExpenseHeadsPage() {
   };
 
   const total = pagination?.total ?? items.length ?? 0;
+
+  const paginationInfo = {
+    total: pagination?.total ?? items.length ?? 0,
+    current: pagination?.currentPage ?? page,
+    pageSize: pagination?.pageSize ?? PAGE_SIZE,
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const pageLoading = estatesLoading || loading;
 
   const content = useMemo(() => {
@@ -352,6 +372,13 @@ export default function CompanyExpenseHeadsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {content}
             </div>
+
+            <Pagination
+              paginationInfo={paginationInfo}
+              onPageChange={handlePageChange}
+              disabled={loading}
+              itemLabel="expense heads"
+            />
           </>
         )}
 

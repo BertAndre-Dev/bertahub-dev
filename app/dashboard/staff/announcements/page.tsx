@@ -14,7 +14,7 @@ import {
   type StaffAnnouncementItem,
 } from "@/redux/slice/staff/announcements/staff-announcements";
 import AnnouncementsStatsGrid from "@/components/admin/announcements/announcements-stats-grid/page";
-import AnnouncementsPagination from "@/components/admin/announcements/announcements-pagination/page";
+import Pagination from "@/components/pagination/page";
 import { buildReadOnlyAnnouncementStatsCards } from "@/lib/announcement-stats";
 import type { RootState, AppDispatch } from "@/redux/store";
 
@@ -231,10 +231,11 @@ export default function StaffAnnouncementsPage() {
           </div>
         )}
 
-        <AnnouncementsPagination
+        <Pagination
           paginationInfo={paginationInfo}
           onPageChange={handlePageChange}
           disabled={listLoading}
+          itemLabel="announcements"
         />
 
         <Modal visible={!!viewingItem} onClose={() => setViewingItem(null)}>
