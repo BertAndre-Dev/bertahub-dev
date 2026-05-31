@@ -10,12 +10,14 @@ import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { getCompanyEstates } from "@/redux/slice/company/estate-mgt/company-estate";
 import {
   getAssetCategories,
+  getAssets,
   type AssetCategory,
 } from "@/redux/slice/company/asset-mgt/company-asset";
 import {
   getAssetMaintenanceList,
   type AssetMaintenanceRecord,
 } from "@/redux/slice/company/asset-maintenance/company-asset-maintenance";
+import { buildAssetNameMap } from "@/lib/maintenance-schedule-calendar";
 import { parseCompanyFromUser } from "../lib/company";
 import {
   mapCompanyEstateRows,
@@ -42,6 +44,9 @@ export default function CompanyAssetMaintenancePage() {
     [],
   );
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [assetNamesById, setAssetNamesById] = useState<Map<string, string>>(
+    () => new Map(),
+  );
 
   const selectedEstateId = selectedEstate?.value ?? "";
 
@@ -140,6 +145,23 @@ export default function CompanyAssetMaintenancePage() {
     })();
   }, [dispatch, selectedEstateId]);
 
+  useEffect(() => {
+    if (!selectedEstateId) {
+      setAssetNamesById(new Map());
+      return;
+    }
+    (async () => {
+      try {
+        const res = await dispatch(
+          getAssets({ estateId: selectedEstateId, page: 1, limit: 500 }),
+        ).unwrap();
+        setAssetNamesById(buildAssetNameMap(res?.data ?? []));
+      } catch {
+        setAssetNamesById(new Map());
+      }
+    })();
+  }, [dispatch, selectedEstateId]);
+
   return (
     <div className="relative space-y-6">
       {pageLoading && (
@@ -205,6 +227,7 @@ export default function CompanyAssetMaintenancePage() {
 
         <MaintenanceScheduleCalendar
           records={scheduleRecords}
+          assetNamesById={assetNamesById}
           loading={scheduleLoading}
           showScheduleButton={false}
         />

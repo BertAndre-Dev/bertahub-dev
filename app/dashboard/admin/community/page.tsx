@@ -8,6 +8,9 @@ import { CommunityChatSidebar } from "@/components/dashboard/admin/community/Com
 import { CommunityChatWindow } from "@/components/dashboard/admin/community/CommunityChatWindow";
 import { CreateGroupChatModal } from "@/components/dashboard/admin/community/CreateGroupChatModal";
 import { GroupInfoModal } from "@/components/dashboard/admin/community/GroupInfoModal";
+import CommunityEditMessageModal, {
+  getCommunityActionError,
+} from "@/components/dashboard/admin/community/CommunityEditMessageModal";
 import {
   chatGroupToCommunity,
   chatGroupMemberRowsFromApi,
@@ -52,6 +55,11 @@ export default function AdminCommunityChatPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [groupInfoOpen, setGroupInfoOpen] = useState(false);
   const [replyingTo, setReplyingTo] = useState<CommunityReplyTarget | null>(null);
+  const [editingMessage, setEditingMessage] = useState<{
+    id: string;
+    text: string;
+  } | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const authUserId = useSelector((state: RootState) =>
     extractUserId((state.auth.user ?? null) as Record<string, unknown> | null),
@@ -345,29 +353,40 @@ export default function AdminCommunityChatPage() {
 
   const handleEditMessage = useCallback(
     (messageId: string) => {
-      const current = messages.find((m) => m.id === messageId)?.text ?? "";
-      const next = globalThis.prompt("Edit message", current);
-      if (next == null || next.trim() === "" || next === current) return;
-      void (async () => {
-        try {
-          await dispatch(
-            editGroupMessage({ messageId, content: next.trim() }),
-          ).unwrap();
-          toast.success("Message updated.");
-        } catch (e: unknown) {
-          const msg =
-            e &&
-            typeof e === "object" &&
-            "message" in e &&
-            typeof (e as { message?: string }).message === "string"
-              ? (e as { message: string }).message
-              : "Could not update message.";
-          toast.error(msg);
-        }
-      })();
+      const message = messages.find((m) => m.id === messageId);
+      if (!message || message.isDeleted) return;
+      setEditError(null);
+      setEditingMessage({ id: messageId, text: message.text });
     },
-    [dispatch, messages],
+    [messages],
   );
+
+  const handleEditSubmit = useCallback(
+    async (content: string) => {
+      if (!editingMessage) return;
+      setEditError(null);
+      try {
+        await dispatch(
+          editGroupMessage({
+            messageId: editingMessage.id,
+            content,
+          }),
+        ).unwrap();
+        toast.success("Message updated.");
+        setEditingMessage(null);
+        setEditError(null);
+      } catch (e: unknown) {
+        setEditError(getCommunityActionError(e, "Could not update message."));
+      }
+    },
+    [dispatch, editingMessage],
+  );
+
+  const closeEditModal = useCallback(() => {
+    if (editMessageLoading === "isLoading") return;
+    setEditingMessage(null);
+    setEditError(null);
+  }, [editMessageLoading]);
 
   const handleDeleteMessage = useCallback(
     (messageId: string) => {
@@ -650,6 +669,15 @@ export default function AdminCommunityChatPage() {
           onPromoteMember={handlePromoteMember}
         />
       ) : null}
+
+      <CommunityEditMessageModal
+        visible={Boolean(editingMessage)}
+        initialContent={editingMessage?.text ?? ""}
+        loading={editMessageLoading === "isLoading"}
+        error={editError}
+        onClose={closeEditModal}
+        onSubmit={handleEditSubmit}
+      />
       </div>
     </div>
   );

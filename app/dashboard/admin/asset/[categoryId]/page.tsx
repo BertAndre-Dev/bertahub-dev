@@ -43,29 +43,6 @@ function getId(v: { id?: string; _id?: string } | undefined) {
   return v?.id || v?._id || "";
 }
 
-type StatusKey =
-  | "Active"
-  | "Faulty"
-  | "Under Maintenance"
-  | "Retired";
-
-function StatusBadge({ value }: { value: StatusKey | string }) {
-  const styles: Record<string, string> = {
-    Active: "bg-green-100 text-green-700",
-    Faulty: "bg-rose-100 text-rose-700",
-    "Under Maintenance": "bg-amber-100 text-amber-700",
-    Retired: "bg-gray-100 text-gray-700",
-  };
-  const cls = styles[value as string] ?? "bg-gray-100 text-gray-700";
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}
-    >
-      {value}
-    </span>
-  );
-}
-
 export default function AssetCategoryDetailPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -146,14 +123,20 @@ export default function AssetCategoryDetailPage() {
   const categoryId = getId(category ?? undefined);
 
   useEffect(() => {
-    if (!estateId) return;
+    if (!estateId || !categoryId) return;
     dispatch(
-      getAssets({ estateId, page, limit: PAGE_SIZE, search }),
+      getAssets({
+        estateId,
+        page,
+        limit: PAGE_SIZE,
+        search,
+        assetCategoryId: categoryId,
+      }),
     ).catch(() => toast.error("Failed to load assets."));
-  }, [dispatch, estateId, page, search]);
+  }, [dispatch, estateId, categoryId, page, search]);
 
-  const filteredAssets = useMemo(() => {
-    if (!categoryId) return [];
+  const visibleAssets = useMemo(() => {
+    if (!categoryId) return assets;
     return assets.filter((a) => {
       const aid =
         typeof a.assetCategoryId === "string"
@@ -186,16 +169,31 @@ export default function AssetCategoryDetailPage() {
       { key: "name" as const, header: "Asset Name" },
       { key: "tag" as const, header: "Asset Code" },
       {
-        key: "status" as const,
-        header: "Status",
-        render: (item: Asset) => {
-          const status =
-            ((item as Asset & { status?: string }).status as string) ||
-            "Active";
-          return <StatusBadge value={status} />;
-        },
+        key: "amount" as const,
+        header: "Amount (₦)",
+        render: (item: Asset) =>
+          item.amount != null
+            ? new Intl.NumberFormat("en-NG").format(Number(item.amount))
+            : "—",
         exportValue: (item: Asset) =>
-          ((item as Asset & { status?: string }).status as string) ?? "Active",
+          item.amount != null ? String(item.amount) : "",
+      },
+      {
+        key: "useFullLife" as const,
+        header: "Useful life",
+        render: (item: Asset) =>
+          item.useFullLife != null ? `${item.useFullLife} year(s)` : "—",
+        exportValue: (item: Asset) =>
+          item.useFullLife != null ? String(item.useFullLife) : "",
+      },
+      {
+        key: "datePurchased" as const,
+        header: "Purchased",
+        render: (item: Asset) =>
+          item.datePurchased
+            ? new Date(item.datePurchased).toLocaleDateString()
+            : "—",
+        exportValue: (item: Asset) => item.datePurchased ?? "",
       },
       {
         key: "actions" as const,
@@ -286,7 +284,13 @@ export default function AssetCategoryDetailPage() {
       setAddAssetOpen(false);
       if (estateId) {
         dispatch(
-          getAssets({ estateId, page, limit: PAGE_SIZE, search }),
+          getAssets({
+            estateId,
+            page,
+            limit: PAGE_SIZE,
+            search,
+            assetCategoryId: categoryId,
+          }),
         ).catch(() => {});
       }
     } catch (err: unknown) {
@@ -315,7 +319,7 @@ export default function AssetCategoryDetailPage() {
   };
 
   const totalAssets = Number(
-    assetsPagination?.total ?? filteredAssets.length ?? 0,
+    assetsPagination?.total ?? visibleAssets.length ?? 0,
   );
 
   const pageLoading = categoriesLoading || assetsLoading;
@@ -420,7 +424,7 @@ export default function AssetCategoryDetailPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Asset</p>
                   <p className="font-heading text-3xl font-bold mt-1">
-                    {filteredAssets.length}
+                    {visibleAssets.length}
                   </p>
                 </div>
                 <div className="p-3 rounded-full bg-[#D0DFF280]">
@@ -432,7 +436,7 @@ export default function AssetCategoryDetailPage() {
             <Card className="p-2 mt-0">
               <Table
                 columns={columns}
-                data={filteredAssets}
+                data={visibleAssets}
                 emptyMessage={
                   search.trim()
                     ? "No assets match your search."

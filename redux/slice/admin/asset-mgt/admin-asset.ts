@@ -1,5 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
+import {
+  normalizeAssetList,
+  normalizeAssetPagination,
+} from "@/lib/asset-api";
 
 export type ApiPagination = {
   total?: number;
@@ -56,6 +60,7 @@ export type GetListParams = {
 
 export type GetAssetsParams = GetListParams & {
   estateId: string;
+  assetCategoryId?: string;
 };
 
 export type GetAssetCategoriesParams = GetListParams & {
@@ -224,7 +229,7 @@ export const getAssets = createAsyncThunk(
   "admin-asset/getAssets",
   async (params: GetAssetsParams, { rejectWithValue }) => {
     try {
-      const { estateId, page = 1, limit = 10, search } = params;
+      const { estateId, page = 1, limit = 10, search, assetCategoryId } = params;
       const estateIdValue = normalizeId(estateId).trim();
       if (!estateIdValue) {
         return rejectWithValue({ message: "Estate is required to load assets." });
@@ -235,9 +240,14 @@ export const getAssets = createAsyncThunk(
           page,
           limit,
           search: search?.trim() || undefined,
+          assetCategoryId: assetCategoryId?.trim() || undefined,
         },
       });
-      return res.data;
+      return {
+        ...res.data,
+        data: normalizeAssetList(res.data?.data),
+        pagination: normalizeAssetPagination(res.data?.pagination),
+      };
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue({
