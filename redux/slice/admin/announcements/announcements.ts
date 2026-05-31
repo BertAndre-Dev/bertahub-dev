@@ -44,10 +44,10 @@ export interface CreateAnnouncementPayload {
   priority?: string;
   /** When true, send immediately; schedule field is ignored. */
   sendNow?: boolean;
-  /** Optional image (JPEG, PNG, WebP, GIF) up to 5MB. */
-  image?: File | null;
-  /** Optional attachment (PDF, DOCX, etc.) up to 10MB. */
-  file?: File | null;
+  /** Optional image data URL, e.g. `data:image/png;base64,...` (JPEG, PNG, WebP, GIF) up to 5MB. */
+  image?: string | null;
+  /** Optional attachment data URL, e.g. `data:application/pdf;base64,...` up to 10MB. */
+  file?: string | null;
 }
 
 export interface UpdateAnnouncementPayload {
@@ -62,18 +62,11 @@ export interface UpdateAnnouncementPayload {
   isPinned?: boolean;
   priority?: string;
   sendNow?: boolean;
-  image?: File | null;
-  file?: File | null;
+  image?: string | null;
+  file?: string | null;
 }
 
-type AnnouncementRequestBody =
-  | { body: FormData; isMultipart: true }
-  | { body: Record<string, unknown>; isMultipart: false };
-
-/** Returns true if the payload contains at least one File (image / attachment). */
-function payloadHasFile(payload: Record<string, unknown>): boolean {
-  return Object.values(payload).some((v) => v instanceof File);
-}
+type AnnouncementRequestBody = Record<string, unknown>;
 
 /**
  * Strip `undefined` / `null` / empty-string / empty-array entries so unset
@@ -92,44 +85,11 @@ function compactPayload(
   return cleaned;
 }
 
-/**
- * Build the request body for create/update endpoints.
- *
- * - When no file is being uploaded → use `application/json` so booleans,
- *   numbers and arrays travel as their native JSON types. This is required
- *   because the backend validates with `@IsBoolean()` / `@IsArray()`, which
- *   reject the "true"/"false" strings that multipart would otherwise force.
- * - When a file is present → fall back to `multipart/form-data`, encoding
- *   booleans/numbers as plain strings and arrays as JSON strings. For this
- *   path to validate cleanly the backend MUST apply a `@Transform` on
- *   boolean/array fields (e.g. `@Transform(({ value }) => JSON.parse(value))`).
- */
+/** Build JSON request body; image/file are sent as data URLs in the payload. */
 function buildAnnouncementRequest(
   payload: Record<string, unknown>,
 ): AnnouncementRequestBody {
-  const cleaned = compactPayload(payload);
-
-  if (!payloadHasFile(cleaned)) {
-    return { body: cleaned, isMultipart: false };
-  }
-
-  const form = new FormData();
-  for (const [key, value] of Object.entries(cleaned)) {
-    if (value instanceof File) {
-      form.append(key, value);
-      continue;
-    }
-    if (Array.isArray(value)) {
-      form.append(key, JSON.stringify(value));
-      continue;
-    }
-    if (typeof value === "boolean" || typeof value === "number") {
-      form.append(key, String(value));
-      continue;
-    }
-    form.append(key, value as string);
-  }
-  return { body: form, isMultipart: true };
+  return compactPayload(payload);
 }
 
 export interface AnnouncementsListResponse {
@@ -197,21 +157,17 @@ export const getAnnouncementStats = createAsyncThunk(
   },
 );
 
-/** Create announcement. POST /api/v1/estates/announcements (JSON or multipart/form-data) */
+/** Create announcement. POST /api/v1/estates/announcements (application/json) */
 export const createAnnouncement = createAsyncThunk(
   "admin-announcements/createAnnouncement",
   async (payload: CreateAnnouncementPayload, { rejectWithValue }) => {
     try {
-      const { body, isMultipart } = buildAnnouncementRequest(
+      const body = buildAnnouncementRequest(
         payload as unknown as Record<string, unknown>,
       );
-      const res = await axiosInstance.post(
-        "/api/v1/estates/announcements",
-        body,
-        isMultipart
-          ? { headers: { "Content-Type": "multipart/form-data" } }
-          : { headers: { "Content-Type": "application/json" } },
-      );
+      const res = await axiosInstance.post("/api/v1/estates/announcements", body, {
+        headers: { "Content-Type": "application/json" },
+      });
       return res.data;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
@@ -241,22 +197,20 @@ export const getAnnouncementById = createAsyncThunk(
   },
 );
 
-/** Update announcement. PUT /api/v1/estates/announcements/:id (JSON or multipart/form-data, allowed when < 1 hour since posted) */
+/** Update announcement. PUT /api/v1/estates/announcements/:id (application/json, allowed when < 1 hour since posted) */
 export const updateAnnouncement = createAsyncThunk(
   "admin-announcements/updateAnnouncement",
   async (payload: UpdateAnnouncementPayload, { rejectWithValue }) => {
     try {
       const { id, ...rest } = payload;
       if (!id) throw new Error("Announcement id is required");
-      const { body, isMultipart } = buildAnnouncementRequest(
+      const body = buildAnnouncementRequest(
         rest as unknown as Record<string, unknown>,
       );
       const res = await axiosInstance.put(
         `/api/v1/estates/announcements/${id}`,
         body,
-        isMultipart
-          ? { headers: { "Content-Type": "multipart/form-data" } }
-          : { headers: { "Content-Type": "application/json" } },
+        { headers: { "Content-Type": "application/json" } },
       );
       return res.data;
     } catch (error: unknown) {
