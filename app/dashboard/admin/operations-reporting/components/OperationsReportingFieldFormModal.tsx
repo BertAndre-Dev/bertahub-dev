@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { OperationsReportingField } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting";
 import { labelToReportingFieldKey } from "@/lib/operations-reporting-field-key";
 
@@ -25,16 +26,20 @@ export default function OperationsReportingFieldFormModal({
   submitLabel = "Save",
 }: Readonly<Props>) {
   const initialLabel = useMemo(() => initial?.label ?? "", [initial]);
-  const initialKey = useMemo(() => initial?.key ?? "", [initial]);
   const [label, setLabel] = useState(initialLabel);
-  const [key, setKey] = useState(initialKey);
 
   useEffect(() => {
     setLabel(initialLabel);
-    setKey(initialKey);
-  }, [initialLabel, initialKey, visible]);
+  }, [initialLabel, visible]);
 
-  const canSubmit = label.trim().length >= 2 && key.trim().length >= 1;
+  const canSubmit = label.trim().length >= 2;
+
+  const handleSubmit = async () => {
+    const trimmedLabel = label.trim();
+    const key = labelToReportingFieldKey(trimmedLabel);
+    if (!trimmedLabel || !key) return;
+    await onSubmit({ label: trimmedLabel, key });
+  };
 
   return (
     <Modal visible={visible} onClose={onClose}>
@@ -43,40 +48,19 @@ export default function OperationsReportingFieldFormModal({
           <h2 className="text-xl font-semibold text-gray-900">
             {initial ? "Edit report field" : "Create report field"}
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Set a display label and a key used in report entry data (e.g.
-            &quot;Block/Unit&quot;).
+          <p className="mt-1 text-sm text-muted-foreground">
+            Enter a display label. The field key is generated automatically, like address
+            fields.
           </p>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="ops-field-label" className="text-sm font-medium">
-            Label
-          </label>
+          <Label htmlFor="ops-field-label">Label</Label>
           <Input
             id="ops-field-label"
             value={label}
-            onChange={(e) => {
-              const value = e.target.value;
-              setLabel(value);
-              if (!initial && !key.trim()) {
-                setKey(labelToReportingFieldKey(value));
-              }
-            }}
-            placeholder='e.g. "Address Name"'
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="ops-field-key" className="text-sm font-medium">
-            Key
-          </label>
-          <Input
-            id="ops-field-key"
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            placeholder='e.g. "Block/Unit"'
-            className="font-mono text-sm"
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Block Name, Street, Flat Number"
           />
         </div>
 
@@ -88,9 +72,7 @@ export default function OperationsReportingFieldFormModal({
             className="text-white"
             style={{ backgroundColor: "#0150AC" }}
             disabled={!canSubmit || loading}
-            onClick={async () =>
-              onSubmit({ label: label.trim(), key: key.trim() })
-            }
+            onClick={handleSubmit}
           >
             {loading ? "Saving..." : submitLabel}
           </Button>
