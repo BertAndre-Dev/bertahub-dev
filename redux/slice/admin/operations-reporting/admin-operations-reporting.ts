@@ -293,13 +293,18 @@ export const updateOperationsReportingField = createAsyncThunk(
       fieldId,
       label,
       key,
-    }: { fieldId: string; label: string; key: string },
+    }: { fieldId: string; label: string; key?: string },
     { rejectWithValue },
   ) => {
+    const trimmedLabel = label.trim();
+    const resolvedKey = key?.trim() || labelToReportingFieldKey(trimmedLabel);
+    if (!trimmedLabel || !resolvedKey) {
+      return rejectWithValue({ message: "Field label is required." });
+    }
     try {
       const res = await axiosInstance.put(
         `/api/v1/operations-reporting/fields/${normalizeId(fieldId)}`,
-        { label, key },
+        { label: trimmedLabel, key: resolvedKey },
       );
       return { ...(res.data as object), fieldId };
     } catch (error: unknown) {

@@ -11,7 +11,6 @@ import { labelToReportingFieldKey } from "@/lib/operations-reporting-field-key";
 type FieldRow = {
   id: string;
   label: string;
-  key: string;
 };
 
 type Props = {
@@ -26,7 +25,7 @@ type Props = {
 };
 
 function newRow(): FieldRow {
-  return { id: `row-${Date.now()}-${Math.random()}`, label: "", key: "" };
+  return { id: `row-${Date.now()}-${Math.random()}`, label: "" };
 }
 
 export default function OperationsReportingConfigureFieldsModal({
@@ -53,21 +52,16 @@ export default function OperationsReportingConfigureFieldsModal({
     setRows((prev) => (prev.length <= 1 ? prev : prev.filter((r) => r.id !== id)));
   };
 
-  const updateRow = (id: string, patch: Partial<Pick<FieldRow, "label" | "key">>) => {
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r;
-        const next = { ...r, ...patch };
-        if (patch.label !== undefined && !r.key.trim()) {
-          next.key = labelToReportingFieldKey(patch.label);
-        }
-        return next;
-      }),
-    );
+  const updateRowLabel = (id: string, label: string) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, label } : r)));
   };
 
   const newFieldPayloads = rows
-    .map((r) => ({ label: r.label.trim(), key: r.key.trim() }))
+    .map((r) => {
+      const trimmedLabel = r.label.trim();
+      const key = labelToReportingFieldKey(trimmedLabel);
+      return { label: trimmedLabel, key };
+    })
     .filter((r) => r.label.length >= 2 && r.key.length >= 1);
 
   const canSubmit = newFieldPayloads.length > 0;
@@ -81,7 +75,8 @@ export default function OperationsReportingConfigureFieldsModal({
               Add fields to report type
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Configure the input fields required for this report type.
+              Configure the input fields required for this report type. Keys are generated
+              from labels automatically.
             </p>
           </div>
 
@@ -101,9 +96,8 @@ export default function OperationsReportingConfigureFieldsModal({
             <p className="text-sm font-medium text-foreground">Existing fields</p>
             <ul className="max-h-32 space-y-1 overflow-y-auto rounded-lg border border-border bg-muted/20 p-3 text-sm">
               {existingFields.map((f) => (
-                <li key={f.id ?? f._id ?? f.label} className="text-muted-foreground">
-                  <span className="font-medium text-foreground">{f.label}</span>
-                  <span className="ml-2 font-mono text-xs">({f.key})</span>
+                <li key={f.id ?? f._id ?? f.label} className="text-foreground">
+                  {f.label}
                 </li>
               ))}
             </ul>
@@ -127,7 +121,7 @@ export default function OperationsReportingConfigureFieldsModal({
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="text-xs font-medium text-muted-foreground">
-                    Input field label
+                    Field label
                   </span>
                   <Button
                     type="button"
@@ -141,22 +135,11 @@ export default function OperationsReportingConfigureFieldsModal({
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="space-y-3">
-                  <Input
-                    value={row.label}
-                    onChange={(e) => updateRow(row.id, { label: e.target.value })}
-                    placeholder="e.g. Address Name"
-                  />
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">Key</label>
-                    <Input
-                      value={row.key}
-                      onChange={(e) => updateRow(row.id, { key: e.target.value })}
-                      placeholder='e.g. Block/Unit'
-                      className="font-mono text-sm"
-                    />
-                  </div>
-                </div>
+                <Input
+                  value={row.label}
+                  onChange={(e) => updateRowLabel(row.id, e.target.value)}
+                  placeholder="Block Name, Street, Flat Number"
+                />
               </div>
             ))}
           </div>

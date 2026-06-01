@@ -5,8 +5,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import DeleteModal from "@/components/resident/delete-modal/page";
+import { labelToReportingFieldKey } from "@/lib/operations-reporting-field-key";
 import type { AppDispatch } from "@/redux/store";
 import {
   createOperationsReportingField,
@@ -163,6 +163,8 @@ export default function OperationsReportingTypesTab({
       toast.info("Select a report type first.");
       return;
     }
+    const trimmedLabel = payload.label.trim();
+    const key = payload.key.trim() || labelToReportingFieldKey(trimmedLabel);
     try {
       if (editingField) {
         const id = getId(editingField);
@@ -170,8 +172,8 @@ export default function OperationsReportingTypesTab({
         await dispatch(
           updateOperationsReportingField({
             fieldId: id,
-            label: payload.label,
-            key: payload.key,
+            label: trimmedLabel,
+            key,
           }),
         ).unwrap();
         toast.success("Report field updated.");
@@ -237,41 +239,36 @@ export default function OperationsReportingTypesTab({
                 ) : (
                   <div className="space-y-4">
                     {fields.map((field) => (
-                      <div key={getId(field)} className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <label className="text-sm font-medium text-foreground">
-                            {field.label}
-                          </label>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-[#0150AC]"
-                              onClick={() => {
-                                setConfigureTypeId(typeId);
-                                setEditingField(field);
-                                setFieldModalOpen(true);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive"
-                              disabled={deleteFieldStatus === "isLoading"}
-                              onClick={() => setFieldToDelete(field)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                      <div
+                        key={getId(field)}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/20 px-4 py-3"
+                      >
+                        <span className="text-sm font-medium text-foreground">
+                          {field.label}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-[#0150AC]"
+                            onClick={() => {
+                              setConfigureTypeId(typeId);
+                              setEditingField(field);
+                              setFieldModalOpen(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            disabled={deleteFieldStatus === "isLoading"}
+                            onClick={() => setFieldToDelete(field)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Input
-                          readOnly
-                          value={field.key}
-                          placeholder="input field"
-                          className="bg-muted/30"
-                        />
                       </div>
                     ))}
                   </div>
