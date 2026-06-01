@@ -71,14 +71,12 @@ function entryInDateRange(
 
 type Props = {
   estateId: string;
-  fillReportNonce: number;
   onEditType: (type: OperationsReportingType) => void;
   onDeleteType: (type: OperationsReportingType) => void;
 };
 
 export default function OperationsReportingReportsTab({
   estateId,
-  fillReportNonce,
   onEditType,
   onDeleteType,
 }: Readonly<Props>) {
@@ -194,21 +192,6 @@ export default function OperationsReportingReportsTab({
   useEffect(() => {
     if (expandedFieldId) void loadEntriesForField(expandedFieldId);
   }, [expandedFieldId, loadEntriesForField]);
-
-  useEffect(() => {
-    if (fillReportNonce <= 0) return;
-    const typeId = expandedTypeId;
-    const fieldId = typeId ? getFilters(typeId).fieldId : "";
-    if (!typeId || !fieldId) {
-      toast.info("Expand a report type and select a section first.");
-      return;
-    }
-    setFillTypeId(typeId);
-    setFillFieldId(fieldId);
-    setEditing(null);
-    setModalOpen(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- nonce-driven
-  }, [fillReportNonce]);
 
   const handleToggle = (typeId: string) => {
     setExpandedTypeId((prev) => (prev === typeId ? "" : typeId));

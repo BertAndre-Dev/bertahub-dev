@@ -28,14 +28,12 @@ function getId(v: { id?: string; _id?: string } | undefined) {
 
 type Props = {
   estateId: string;
-  configureNonce: number;
   onEditType: (type: OperationsReportingType) => void;
   onDeleteType: (type: OperationsReportingType) => void;
 };
 
 export default function OperationsReportingTypesTab({
   estateId,
-  configureNonce,
   onEditType,
   onDeleteType,
 }: Readonly<Props>) {
@@ -98,17 +96,6 @@ export default function OperationsReportingTypesTab({
       void loadFieldsForType(expandedTypeId);
     }
   }, [expandedTypeId, loadFieldsForType]);
-
-  useEffect(() => {
-    if (configureNonce <= 0) return;
-    if (!expandedTypeId) {
-      toast.info("Expand a report type first, then click Configure.");
-      return;
-    }
-    setConfigureTypeId(expandedTypeId);
-    setEditingField(null);
-    setFieldModalOpen(true);
-  }, [configureNonce, expandedTypeId]);
 
   const handleToggle = (typeId: string) => {
     setExpandedTypeId((prev) => (prev === typeId ? "" : typeId));
@@ -188,7 +175,7 @@ export default function OperationsReportingTypesTab({
                   <p className="text-sm text-muted-foreground">Loading fields...</p>
                 ) : fields.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No fields for this type yet. Click Configure to add fields.
+                    No fields for this type yet. Use + Create Type to add a field.
                   </p>
                 ) : (
                   <div className="space-y-4">

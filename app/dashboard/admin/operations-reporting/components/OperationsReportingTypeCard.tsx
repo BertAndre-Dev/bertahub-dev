@@ -27,40 +27,68 @@ export default function OperationsReportingTypeCard({
   deleteDisabled = false,
   children,
 }: Readonly<Props>) {
+  const titleContent = (
+    <>
+      <h3 className="font-heading text-lg font-bold text-foreground">{title}</h3>
+      {description ? (
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{description}</p>
+      ) : (
+        <p className="mt-1 text-sm text-muted-foreground">No description</p>
+      )}
+    </>
+  );
+
+  const headerToggleClassName = "min-w-0 flex-1 cursor-pointer text-left";
+
   return (
     <Card className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
       <div className="flex items-start gap-3 p-4 sm:p-5">
-        <button
-          type="button"
-          onClick={onToggle}
-          className="min-w-0 flex-1 cursor-pointer text-left"
-          aria-expanded={expanded}
-        >
-          <h3 className="font-heading text-lg font-bold text-foreground">{title}</h3>
-          {description ? (
-            <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-              {description}
-            </p>
-          ) : (
-            <p className="mt-1 text-sm text-muted-foreground">No description</p>
-          )}
-        </button>
+        {expanded ? (
+          <button
+            type="button"
+            onClick={onToggle}
+            className={headerToggleClassName}
+            aria-expanded="true"
+          >
+            {titleContent}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onToggle}
+            className={headerToggleClassName}
+            aria-expanded="false"
+          >
+            {titleContent}
+          </button>
+        )}
 
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full"
-            onClick={onToggle}
-            aria-label={expanded ? "Collapse" : "Expand"}
-          >
-            {expanded ? (
+          {expanded ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={onToggle}
+              aria-expanded="true"
+              aria-label="Collapse"
+            >
               <ChevronUp className="h-5 w-5 text-muted-foreground" />
-            ) : (
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={onToggle}
+              aria-expanded="false"
+              aria-label="Expand"
+            >
               <ChevronDown className="h-5 w-5 text-muted-foreground" />
-            )}
-          </Button>
+            </Button>
+          )}
           <Button
             type="button"
             variant="ghost"

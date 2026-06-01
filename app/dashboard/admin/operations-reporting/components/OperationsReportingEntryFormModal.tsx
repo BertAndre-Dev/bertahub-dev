@@ -18,6 +18,7 @@ type Props = {
   onSubmit: (data: Record<string, unknown>) => Promise<void> | void;
   loading?: boolean;
   initial?: OperationsReportingEntry | null;
+  submitLabel?: string;
 };
 
 const STANDARD_METRICS = [
@@ -127,6 +128,7 @@ export default function OperationsReportingEntryFormModal({
   onSubmit,
   loading = false,
   initial,
+  submitLabel,
 }: Readonly<Props>) {
   const [reportDate, setReportDate] = useState("");
   const [metrics, setMetrics] = useState<Record<string, string>>({});
@@ -339,7 +341,9 @@ export default function OperationsReportingEntryFormModal({
             disabled={!canSubmit || loading}
             onClick={async () => onSubmit(buildPayload(reportDate, metrics, customRows))}
           >
-            {loading ? "Saving..." : initial ? "Update entry" : "Save entry"}
+            {loading
+              ? "Saving..."
+              : (submitLabel ?? (initial ? "Update entry" : "Save entry"))}
           </Button>
         </div>
       </div>
