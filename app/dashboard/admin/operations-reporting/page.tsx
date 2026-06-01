@@ -12,20 +12,18 @@ import type { AppDispatch } from "@/redux/store";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { parseAdminEstate } from "../asset/lib/estate";
 import {
-  createOperationsReportingEntry,
   createOperationsReportingField,
-  createOperationsReportingType,
   deleteOperationsReportingType,
   getOperationsReportingTypes,
   updateOperationsReportingType,
+  createOperationsReportingType,
   type OperationsReportingType,
 } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting";
 import { selectAdminOperationsReporting } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting-slice";
 import OperationsReportingTypesTab from "./components/OperationsReportingTypesTab";
 import OperationsReportingReportsTab from "./components/OperationsReportingReportsTab";
 import OperationsReportingTypeFormModal from "./components/OperationsReportingTypeFormModal";
-import OperationsReportingFieldFormModal from "./components/OperationsReportingFieldFormModal";
-import OperationsReportingEntryFormModal from "./components/OperationsReportingEntryFormModal";
+import OperationsReportingConfigureFieldsModal from "./components/OperationsReportingConfigureFieldsModal";
 
 const TABS = ["Configure Report", "Fill Report"] as const;
 type TabTitle = (typeof TABS)[number];
@@ -42,21 +40,23 @@ export default function AdminOperationsReportingPage() {
   const [estateLoading, setEstateLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabTitle>("Configure Report");
   const [typeModalOpen, setTypeModalOpen] = useState(false);
-  const [fieldModalOpen, setFieldModalOpen] = useState(false);
-  const [entryModalOpen, setEntryModalOpen] = useState(false);
+  const [configureModalOpen, setConfigureModalOpen] = useState(false);
   const [createFlowActive, setCreateFlowActive] = useState(false);
-  const [flowTypeId, setFlowTypeId] = useState("");
-  const [flowField, setFlowField] = useState({ id: "", label: "", key: "" });
+  const [flowType, setFlowType] = useState<{
+    id: string;
+    name: string;
+    description: string;
+  } | null>(null);
   const [editingType, setEditingType] = useState<OperationsReportingType | null>(null);
   const [typeToDelete, setTypeToDelete] = useState<OperationsReportingType | null>(null);
   const [listRefreshKey, setListRefreshKey] = useState(0);
+  const [fillReportTabNonce, setFillReportTabNonce] = useState(0);
 
   const {
     createTypeStatus,
     updateTypeStatus,
     deleteTypeStatus,
     createFieldStatus,
-    createEntryStatus,
   } = useSelector(selectAdminOperationsReporting);
 
   useEffect(() => {
@@ -88,14 +88,13 @@ export default function AdminOperationsReportingPage() {
   const closeCreateFlow = useCallback(() => {
     setCreateFlowActive(false);
     setTypeModalOpen(false);
-    setFieldModalOpen(false);
-    setEntryModalOpen(false);
-    setFlowTypeId("");
-    setFlowField({ id: "", label: "", key: "" });
+    setConfigureModalOpen(false);
+    setFlowType(null);
   }, []);
 
   const handleEditType = useCallback((type: OperationsReportingType) => {
     setCreateFlowActive(false);
+    setFlowType(null);
     setEditingType(type);
     setTypeModalOpen(true);
   }, []);
@@ -107,8 +106,7 @@ export default function AdminOperationsReportingPage() {
   const startCreateFlow = () => {
     setEditingType(null);
     setCreateFlowActive(true);
-    setFlowTypeId("");
-    setFlowField({ id: "", label: "", key: "" });
+    setFlowType(null);
     setTypeModalOpen(true);
   };
 
@@ -153,9 +151,13 @@ export default function AdminOperationsReportingPage() {
         toast.error("Type was created but no id was returned.");
         return;
       }
-      setFlowTypeId(typeId);
+      setFlowType({
+        id: typeId,
+        name: payload.name,
+        description: payload.description,
+      });
       setTypeModalOpen(false);
-      setFieldModalOpen(true);
+      setConfigureModalOpen(true);
     } catch (err: unknown) {
       toast.error(
         (err as { message?: string })?.message ?? "Failed to create reporting type.",
@@ -163,48 +165,33 @@ export default function AdminOperationsReportingPage() {
     }
   };
 
-  const handleFlowFieldNext = async (payload: { label: string; key: string }) => {
-    if (!estateId || !flowTypeId) return;
-    try {
-      const created = await dispatch(
-        createOperationsReportingField({
-          estateId,
-          typeId: flowTypeId,
-          label: payload.label,
-          key: payload.key,
-        }),
-      ).unwrap();
-      const fieldId = getId(created?.data);
-      if (!fieldId) {
-        toast.error("Field was created but no id was returned.");
-        return;
-      }
-      setFlowField({
-        id: fieldId,
-        label: payload.label,
-        key: payload.key,
-      });
-      setFieldModalOpen(false);
-      setEntryModalOpen(true);
-    } catch (err: unknown) {
-      toast.error(
-        (err as { message?: string })?.message ?? "Failed to create report field.",
-      );
-    }
-  };
+  const handleConfigureFieldsSave = async (
+    fields: { label: string; key: string }[],
+  ) => {
+    const typeId = flowType?.id;
+    if (!estateId || !typeId) return;
 
-  const handleFlowEntrySave = async (data: Record<string, unknown>) => {
-    if (!flowField.id) return;
     try {
-      await dispatch(
-        createOperationsReportingEntry({ fieldId: flowField.id, data }),
-      ).unwrap();
-      toast.success("Report type, field, and entry saved.");
+      for (const field of fields) {
+        await dispatch(
+          createOperationsReportingField({
+            estateId,
+            typeId,
+            label: field.label,
+            key: field.key,
+          }),
+        ).unwrap();
+      }
+      toast.success(
+        fields.length === 1
+          ? "Report type and field saved."
+          : `Report type saved with ${fields.length} fields.`,
+      );
       closeCreateFlow();
       await refreshLists();
     } catch (err: unknown) {
       toast.error(
-        (err as { message?: string })?.message ?? "Failed to save report entry.",
+        (err as { message?: string })?.message ?? "Failed to save report fields.",
       );
     }
   };
@@ -259,7 +246,7 @@ export default function AdminOperationsReportingPage() {
           </p>
         ) : (
           <>
-            <div className="border-b border-border pb-4">
+            <div className="space-y-3 border-b border-border pb-4">
               <div className="flex space-x-4">
                 {TABS.map((title) => (
                   <button
@@ -276,6 +263,18 @@ export default function AdminOperationsReportingPage() {
                   </button>
                 ))}
               </div>
+
+              {activeTab === "Fill Report" ? (
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => setFillReportTabNonce((n) => n + 1)}
+                    className="shrink-0 text-white"
+                    style={{ backgroundColor: "#0150AC" }}
+                  >
+                    Fill report
+                  </Button>
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-2">
@@ -290,6 +289,7 @@ export default function AdminOperationsReportingPage() {
                 <OperationsReportingReportsTab
                   key={`fill-${listRefreshKey}`}
                   estateId={estateId}
+                  fillReportTabNonce={fillReportTabNonce}
                   onEditType={handleEditType}
                   onDeleteType={handleDeleteType}
                 />
@@ -315,22 +315,14 @@ export default function AdminOperationsReportingPage() {
         onSubmit={handleTypeSubmit}
       />
 
-      <OperationsReportingFieldFormModal
-        visible={fieldModalOpen}
+      <OperationsReportingConfigureFieldsModal
+        visible={configureModalOpen && !!flowType}
         onClose={closeCreateFlow}
+        typeName={flowType?.name ?? ""}
+        typeDescription={flowType?.description}
         loading={createFieldStatus === "isLoading"}
-        submitLabel="Next"
-        onSubmit={handleFlowFieldNext}
-      />
-
-      <OperationsReportingEntryFormModal
-        visible={entryModalOpen}
-        onClose={closeCreateFlow}
-        fieldLabel={flowField.label}
-        fieldKey={flowField.key}
-        loading={createEntryStatus === "isLoading"}
         submitLabel="Save"
-        onSubmit={handleFlowEntrySave}
+        onSubmit={handleConfigureFieldsSave}
       />
 
       <DeleteModal
