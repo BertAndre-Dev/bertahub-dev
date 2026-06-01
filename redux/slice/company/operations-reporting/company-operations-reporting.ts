@@ -47,18 +47,13 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 /** GET /api/v1/operations-reporting/types?estateId=... */
-export const getCompanyOperationsReportingTypes = createAsyncThunk(
-  "company-operations-reporting/getTypes",
+export const fetchCompanyOperationsReportingTypes = createAsyncThunk(
+  "companyOperationsReporting/fetchTypes",
   async (estateId: string, { rejectWithValue }) => {
-    const estateIdValue = normalizeId(estateId).trim();
-    if (!estateIdValue) {
-      return rejectWithValue({ message: "Estate is required." });
-    }
     try {
-      const res = await axiosInstance.get(
-        "/api/v1/operations-reporting/types",
-        { params: { estateId: estateIdValue } },
-      );
+      const res = await axiosInstance.get("/api/v1/operations-reporting/types", {
+        params: { estateId: normalizeId(estateId).trim() },
+      });
       return res.data as {
         success?: boolean;
         message?: string;
@@ -74,16 +69,12 @@ export const getCompanyOperationsReportingTypes = createAsyncThunk(
 );
 
 /** GET /api/v1/operations-reporting/fields?typeId=... */
-export const getCompanyOperationsReportingFields = createAsyncThunk(
-  "company-operations-reporting/getFields",
+export const fetchCompanyOperationsReportingFields = createAsyncThunk(
+  "companyOperationsReporting/fetchFields",
   async (typeId: string, { rejectWithValue }) => {
-    const typeIdValue = normalizeId(typeId).trim();
-    if (!typeIdValue) {
-      return rejectWithValue({ message: "Reporting type is required." });
-    }
     try {
       const res = await axiosInstance.get("/api/v1/operations-reporting/fields", {
-        params: { typeId: typeIdValue },
+        params: { typeId: normalizeId(typeId).trim() },
       });
       return res.data as {
         success?: boolean;
@@ -93,23 +84,19 @@ export const getCompanyOperationsReportingFields = createAsyncThunk(
       };
     } catch (error: unknown) {
       return rejectWithValue({
-        message: getErrorMessage(error, "Failed to fetch reporting fields"),
+        message: getErrorMessage(error, "Failed to fetch report fields"),
       });
     }
   },
 );
 
 /** GET /api/v1/operations-reporting/fields/{fieldId}/entries */
-export const getCompanyOperationsReportingEntries = createAsyncThunk(
-  "company-operations-reporting/getEntries",
+export const fetchCompanyOperationsReportingEntries = createAsyncThunk(
+  "companyOperationsReporting/fetchEntries",
   async (fieldId: string, { rejectWithValue }) => {
-    const fieldIdValue = normalizeId(fieldId).trim();
-    if (!fieldIdValue) {
-      return rejectWithValue({ message: "Report field is required." });
-    }
     try {
       const res = await axiosInstance.get(
-        `/api/v1/operations-reporting/fields/${fieldIdValue}/entries`,
+        `/api/v1/operations-reporting/fields/${normalizeId(fieldId)}/entries`,
       );
       return res.data as {
         success?: boolean;

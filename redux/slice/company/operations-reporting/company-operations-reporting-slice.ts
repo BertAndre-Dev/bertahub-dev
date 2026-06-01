@@ -1,9 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { RootState } from "@/redux/store";
+
 import {
-  getCompanyOperationsReportingEntries,
-  getCompanyOperationsReportingFields,
-  getCompanyOperationsReportingTypes,
+  fetchCompanyOperationsReportingEntries,
+  fetchCompanyOperationsReportingFields,
+  fetchCompanyOperationsReportingTypes,
   type ApiPagination,
   type CompanyOperationsReportingEntry,
   type CompanyOperationsReportingField,
@@ -13,15 +14,13 @@ import {
 type AsyncStatus = "idle" | "isLoading" | "succeeded" | "failed";
 
 export interface CompanyOperationsReportingState {
+  estateId: string | null;
   types: CompanyOperationsReportingType[];
-  typesPagination: ApiPagination | null;
   fields: CompanyOperationsReportingField[];
-  fieldsPagination: ApiPagination | null;
   entries: CompanyOperationsReportingEntry[];
+  typesPagination: ApiPagination | null;
+  fieldsPagination: ApiPagination | null;
   entriesPagination: ApiPagination | null;
-  selectedEstateId: string | null;
-  selectedTypeId: string | null;
-  selectedFieldId: string | null;
   getTypesStatus: AsyncStatus;
   getFieldsStatus: AsyncStatus;
   getEntriesStatus: AsyncStatus;
@@ -29,15 +28,13 @@ export interface CompanyOperationsReportingState {
 }
 
 const initialState: CompanyOperationsReportingState = {
+  estateId: null,
   types: [],
-  typesPagination: null,
   fields: [],
-  fieldsPagination: null,
   entries: [],
+  typesPagination: null,
+  fieldsPagination: null,
   entriesPagination: null,
-  selectedEstateId: null,
-  selectedTypeId: null,
-  selectedFieldId: null,
   getTypesStatus: "idle",
   getFieldsStatus: "idle",
   getEntriesStatus: "idle",
@@ -51,37 +48,45 @@ const companyOperationsReportingSlice = createSlice({
     clearCompanyOperationsReportingError: (state) => {
       state.error = null;
     },
-    setCompanySelectedEstate: (state, action) => {
-      state.selectedEstateId = action.payload;
+    setCompanyOperationsReportingEstate: (state, action: { payload: string }) => {
+      state.estateId = action.payload;
       state.types = [];
       state.fields = [];
       state.entries = [];
-      state.selectedTypeId = null;
-      state.selectedFieldId = null;
+      state.typesPagination = null;
+      state.fieldsPagination = null;
+      state.entriesPagination = null;
+      state.getTypesStatus = "idle";
+      state.getFieldsStatus = "idle";
+      state.getEntriesStatus = "idle";
+      state.error = null;
     },
-    setCompanySelectedType: (state, action) => {
-      state.selectedTypeId = action.payload;
+    resetCompanyOperationsReportingFields: (state) => {
       state.fields = [];
       state.entries = [];
-      state.selectedFieldId = null;
+      state.fieldsPagination = null;
+      state.entriesPagination = null;
+      state.getFieldsStatus = "idle";
+      state.getEntriesStatus = "idle";
     },
-    setCompanySelectedField: (state, action) => {
-      state.selectedFieldId = action.payload;
+    resetCompanyOperationsReportingEntries: (state) => {
       state.entries = [];
+      state.entriesPagination = null;
+      state.getEntriesStatus = "idle";
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getCompanyOperationsReportingTypes.pending, (state) => {
+      .addCase(fetchCompanyOperationsReportingTypes.pending, (state) => {
         state.getTypesStatus = "isLoading";
         state.error = null;
       })
-      .addCase(getCompanyOperationsReportingTypes.fulfilled, (state, action) => {
+      .addCase(fetchCompanyOperationsReportingTypes.fulfilled, (state, action) => {
         state.getTypesStatus = "succeeded";
         state.types = action.payload?.data ?? [];
         state.typesPagination = action.payload?.pagination ?? null;
       })
-      .addCase(getCompanyOperationsReportingTypes.rejected, (state, action) => {
+      .addCase(fetchCompanyOperationsReportingTypes.rejected, (state, action) => {
         state.getTypesStatus = "failed";
         state.types = [];
         state.typesPagination = null;
@@ -89,35 +94,39 @@ const companyOperationsReportingSlice = createSlice({
           (action.payload as { message?: string } | undefined)?.message ??
           action.error.message ??
           "Failed to fetch reporting types";
-      })
-      .addCase(getCompanyOperationsReportingFields.pending, (state) => {
+      });
+
+    builder
+      .addCase(fetchCompanyOperationsReportingFields.pending, (state) => {
         state.getFieldsStatus = "isLoading";
         state.error = null;
       })
-      .addCase(getCompanyOperationsReportingFields.fulfilled, (state, action) => {
+      .addCase(fetchCompanyOperationsReportingFields.fulfilled, (state, action) => {
         state.getFieldsStatus = "succeeded";
         state.fields = action.payload?.data ?? [];
         state.fieldsPagination = action.payload?.pagination ?? null;
       })
-      .addCase(getCompanyOperationsReportingFields.rejected, (state, action) => {
+      .addCase(fetchCompanyOperationsReportingFields.rejected, (state, action) => {
         state.getFieldsStatus = "failed";
         state.fields = [];
         state.fieldsPagination = null;
         state.error =
           (action.payload as { message?: string } | undefined)?.message ??
           action.error.message ??
-          "Failed to fetch reporting fields";
-      })
-      .addCase(getCompanyOperationsReportingEntries.pending, (state) => {
+          "Failed to fetch report fields";
+      });
+
+    builder
+      .addCase(fetchCompanyOperationsReportingEntries.pending, (state) => {
         state.getEntriesStatus = "isLoading";
         state.error = null;
       })
-      .addCase(getCompanyOperationsReportingEntries.fulfilled, (state, action) => {
+      .addCase(fetchCompanyOperationsReportingEntries.fulfilled, (state, action) => {
         state.getEntriesStatus = "succeeded";
         state.entries = action.payload?.data ?? [];
         state.entriesPagination = action.payload?.pagination ?? null;
       })
-      .addCase(getCompanyOperationsReportingEntries.rejected, (state, action) => {
+      .addCase(fetchCompanyOperationsReportingEntries.rejected, (state, action) => {
         state.getEntriesStatus = "failed";
         state.entries = [];
         state.entriesPagination = null;
@@ -131,14 +140,13 @@ const companyOperationsReportingSlice = createSlice({
 
 export const {
   clearCompanyOperationsReportingError,
-  setCompanySelectedEstate,
-  setCompanySelectedType,
-  setCompanySelectedField,
+  setCompanyOperationsReportingEstate,
+  resetCompanyOperationsReportingFields,
+  resetCompanyOperationsReportingEntries,
 } = companyOperationsReportingSlice.actions;
 
 export default companyOperationsReportingSlice.reducer;
 
 export const selectCompanyOperationsReporting = (state: RootState) =>
-  (state.companyOperationsReporting as
-    | CompanyOperationsReportingState
-    | undefined) ?? initialState;
+  (state.companyOperationsReporting as CompanyOperationsReportingState | undefined) ??
+  initialState;

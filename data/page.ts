@@ -427,6 +427,12 @@ export const estateAdminNav = [
     moduleKey: "wallet",
   },
   {
+    label: "Community Chat",
+    icon: MessagesSquare,
+    path: "/dashboard/estate-admin/chat",
+    moduleKey: "chat",
+  },
+  {
     label: "Reports",
     icon: BarChart,
     path: "/dashboard/estate-admin/reports",
