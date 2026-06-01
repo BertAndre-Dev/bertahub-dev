@@ -214,7 +214,7 @@ export default function DashboardLayout({
           : role === "resident"
             ? "/dashboard/resident/support"
             : role === "estate admin"
-              ? "/dashboard/estate-admin/support"
+              ? "/dashboard/estate-admin/chat"
               : role === "staff"
                 ? "/dashboard/staff/support"
                 : "/dashboard/security/support";
