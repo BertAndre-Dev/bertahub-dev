@@ -6,11 +6,7 @@ import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { OperationsReportingField } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting";
-
-const toFieldKey = (str: string) =>
-  str
-    .replace(/[^a-zA-Z0-9 /]/g, "")
-    .trim();
+import { labelToReportingFieldKey } from "@/lib/operations-reporting-field-key";
 
 type FieldRow = {
   id: string;
@@ -62,8 +58,8 @@ export default function OperationsReportingConfigureFieldsModal({
       prev.map((r) => {
         if (r.id !== id) return r;
         const next = { ...r, ...patch };
-        if (patch.label !== undefined && !r.key) {
-          next.key = toFieldKey(patch.label);
+        if (patch.label !== undefined && !r.key.trim()) {
+          next.key = labelToReportingFieldKey(patch.label);
         }
         return next;
       }),
@@ -149,14 +145,14 @@ export default function OperationsReportingConfigureFieldsModal({
                   <Input
                     value={row.label}
                     onChange={(e) => updateRow(row.id, { label: e.target.value })}
-                    placeholder="e.g. Generator Color"
+                    placeholder="e.g. Address Name"
                   />
                   <div className="space-y-1">
                     <label className="text-xs text-muted-foreground">Key</label>
                     <Input
                       value={row.key}
                       onChange={(e) => updateRow(row.id, { key: e.target.value })}
-                      placeholder="e.g. generatorColor"
+                      placeholder='e.g. Block/Unit'
                       className="font-mono text-sm"
                     />
                   </div>

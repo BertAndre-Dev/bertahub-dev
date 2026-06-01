@@ -1,24 +1,27 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { toast } from "react-toastify";
+import React, { useEffect, useMemo, useState } from "react";
 import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ClipboardList } from "lucide-react";
-import type { AppDispatch } from "@/redux/store";
-import {
-  getOperationsReportingFieldById,
-  type OperationsReportingEntry,
-  type OperationsReportingField,
+import type {
+  OperationsReportingEntry,
+  OperationsReportingField,
 } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting";
+
+type FieldLike = Pick<OperationsReportingField, "label" | "key"> & {
+  id?: string;
+  _id?: string;
+};
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-  fieldId: string;
+  typeName: string;
+  typeDescription?: string;
+  fields: FieldLike[];
   onSubmit: (data: Record<string, unknown>) => Promise<void> | void;
   loading?: boolean;
   initial?: OperationsReportingEntry | null;
@@ -37,82 +40,94 @@ function parseInputValue(raw: string): string | number | boolean {
   return trimmed;
 }
 
+function isDateField(field: FieldLike): boolean {
+  const key = field.key.toLowerCase();
+  const label = field.label.toLowerCase();
+  return key === "date" || label === "date" || label.includes("date");
+}
+
+function toDateInputValue(value: unknown): string {
+  if (value == null || value === "") return "";
+  const raw = String(value);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function buildInitialValues(
+  fields: FieldLike[],
+  initial?: OperationsReportingEntry | null,
+): Record<string, string> {
+  const next: Record<string, string> = {};
+  for (const field of fields) {
+    const key = field.key;
+    const val = initial?.data?.[key];
+    if (val == null) {
+      next[key] = "";
+    } else if (isDateField(field)) {
+      next[key] = toDateInputValue(val);
+    } else {
+      next[key] = String(val);
+    }
+  }
+  return next;
+}
+
 export default function OperationsReportingEntryFormModal({
   visible,
   onClose,
-  fieldId,
+  typeName,
+  typeDescription,
+  fields,
   onSubmit,
   loading = false,
   initial,
   submitLabel,
 }: Readonly<Props>) {
-  const dispatch = useDispatch<AppDispatch>();
-  const [field, setField] = useState<OperationsReportingField | null>(null);
-  const [fieldLoading, setFieldLoading] = useState(false);
+  const sortedFields = useMemo(
+    () =>
+      [...fields].sort((a, b) => {
+        const aDate = isDateField(a);
+        const bDate = isDateField(b);
+        if (aDate && !bDate) return -1;
+        if (!aDate && bDate) return 1;
+        return a.label.localeCompare(b.label);
+      }),
+    [fields],
+  );
+
   const [values, setValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!visible || !fieldId) {
-      setField(null);
+    if (!visible) {
       setValues({});
       return;
     }
+    setValues(buildInitialValues(sortedFields, initial));
+  }, [visible, initial, sortedFields]);
 
-    (async () => {
-      setFieldLoading(true);
-      try {
-        const res = await dispatch(getOperationsReportingFieldById(fieldId)).unwrap();
-        const loaded = res?.data ?? null;
-        setField(loaded);
-
-        if (initial?.data && Object.keys(initial.data).length > 0) {
-          const next: Record<string, string> = {};
-          for (const [k, v] of Object.entries(initial.data)) {
-            next[k] = v == null ? "" : String(v);
-          }
-          setValues(next);
-        } else if (loaded?.key) {
-          const existing = initial?.data?.[loaded.key];
-          setValues({
-            [loaded.key]: existing == null ? "" : String(existing),
-          });
-        } else {
-          setValues({ value: "" });
-        }
-      } catch {
-        toast.error("Failed to load report field.");
-        setField(null);
-        setValues({});
-      } finally {
-        setFieldLoading(false);
-      }
-    })();
-  }, [visible, fieldId, initial, dispatch]);
-
-  const dataKeys = Object.keys(values);
-  const canSubmit = dataKeys.some((k) => values[k].trim().length > 0);
+  const canSubmit = sortedFields.some((f) => (values[f.key] ?? "").trim().length > 0);
 
   const handleSubmit = async () => {
     const data: Record<string, unknown> = {};
-    for (const [key, raw] of Object.entries(values)) {
+    for (const field of sortedFields) {
+      const raw = values[field.key] ?? "";
       const trimmed = raw.trim();
       if (!trimmed) continue;
-      data[key] = parseInputValue(trimmed);
+      data[field.key] = parseInputValue(trimmed);
     }
     if (!Object.keys(data).length) return;
     await onSubmit(data);
   };
 
-  const primaryKey = field?.key ?? "value";
-  const displayKeys =
-    initial?.data && Object.keys(initial.data).length > 0
-      ? Object.keys(values)
-      : field?.key
-        ? [field.key]
-        : ["value"];
-
   return (
-    <Modal visible={visible} onClose={onClose}>
+    <Modal
+      visible={visible}
+      onClose={onClose}
+      contentClassName="md:w-[min(560px,95vw)]"
+    >
       <div className="flex max-h-[85vh] w-full min-w-0 flex-col">
         <div className="shrink-0 space-y-4 pr-2">
           <div className="flex items-start gap-3">
@@ -127,48 +142,53 @@ export default function OperationsReportingEntryFormModal({
                 {initial ? "Edit report entry" : "Fill report"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Enter values for this report section. Data is saved as open-ended
-                key-value pairs.
+                Enter values for each field configured on this report type.
               </p>
             </div>
           </div>
 
-          {field ? (
+          {typeName ? (
             <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Report section
+                Report type
               </p>
-              <p className="mt-1 font-semibold text-foreground">{field.label}</p>
-              <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                {field.key}
-              </p>
+              <p className="mt-1 font-semibold text-foreground">{typeName}</p>
+              {typeDescription ? (
+                <p className="mt-1 text-sm text-muted-foreground">{typeDescription}</p>
+              ) : null}
             </div>
           ) : null}
         </div>
 
         <div className="mt-5 min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
-          {fieldLoading ? (
-            <p className="text-sm text-muted-foreground">Loading field...</p>
-          ) : !field && fieldId ? (
-            <p className="text-sm text-muted-foreground">Could not load field.</p>
+          {!sortedFields.length ? (
+            <p className="text-sm text-muted-foreground">
+              No fields configured for this type. Add fields under Configure Report first.
+            </p>
           ) : (
-            displayKeys.map((key) => (
-              <div key={key} className="space-y-2">
-                <Label htmlFor={`ops-entry-${key}`} className="text-sm font-medium">
-                  {key === primaryKey && field?.label
-                    ? field.label
-                    : key.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                </Label>
-                <Input
-                  id={`ops-entry-${key}`}
-                  value={values[key] ?? ""}
-                  onChange={(e) =>
-                    setValues((prev) => ({ ...prev, [key]: e.target.value }))
-                  }
-                  placeholder={`Enter ${field?.label ?? key}`}
-                />
-              </div>
-            ))
+            sortedFields.map((field) => {
+              const key = field.key;
+              const inputId = `ops-entry-${key.replace(/\s+/g, "-")}`;
+              const useDateInput = isDateField(field);
+
+              return (
+                <div key={key} className="space-y-2">
+                  <Label htmlFor={inputId} className="text-sm font-medium">
+                    {field.label}
+                  </Label>
+                  <Input
+                    id={inputId}
+                    type={useDateInput ? "date" : "text"}
+                    value={values[key] ?? ""}
+                    onChange={(e) =>
+                      setValues((prev) => ({ ...prev, [key]: e.target.value }))
+                    }
+                    placeholder={`Enter ${field.label}`}
+                  />
+                  <p className="text-xs text-muted-foreground font-mono">{key}</p>
+                </div>
+              );
+            })
           )}
         </div>
 
@@ -179,7 +199,7 @@ export default function OperationsReportingEntryFormModal({
           <Button
             className="min-w-[100px] text-white"
             style={{ backgroundColor: "#0150AC" }}
-            disabled={!canSubmit || loading || fieldLoading}
+            disabled={!canSubmit || loading || !sortedFields.length}
             onClick={handleSubmit}
           >
             {loading

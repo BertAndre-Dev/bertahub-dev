@@ -30,6 +30,13 @@ import {
   selectCompanyOperationsReporting,
   setCompanyOperationsReportingEstate,
 } from "@/redux/slice/company/operations-reporting/company-operations-reporting-slice";
+import Pagination from "@/components/pagination/page";
+import {
+  OPERATIONS_REPORT_ENTRIES_PAGE_SIZE,
+  OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+  toPaginationInfo,
+  type OperationsReportingApiPagination,
+} from "@/lib/operations-reporting-pagination";
 import OperationsReportingTypeCard from "./OperationsReportingTypeCard";
 import OperationsReportingTypeEntriesList from "./OperationsReportingTypeEntriesList";
 import OperationsReportingEntryFormModal from "./OperationsReportingEntryFormModal";
@@ -67,22 +74,33 @@ export default function OperationsReportingFillReportPanel({
   const [fieldsLoadingByType, setFieldsLoadingByType] = useState<
     Record<string, boolean>
   >({});
+  const [typesPage, setTypesPage] = useState(1);
   const [entriesByField, setEntriesByField] = useState<Record<string, ReportEntry[]>>(
     {},
   );
+  const [entriesPaginationByField, setEntriesPaginationByField] = useState<
+    Record<string, OperationsReportingApiPagination | null>
+  >({});
   const [entriesLoadingByField, setEntriesLoadingByField] = useState<
     Record<string, boolean>
   >({});
   const [modalOpen, setModalOpen] = useState(false);
-  const [fillFieldId, setFillFieldId] = useState("");
+  const [fillTypeId, setFillTypeId] = useState("");
+  const [fillTypeName, setFillTypeName] = useState("");
+  const [fillTypeDescription, setFillTypeDescription] = useState<string | undefined>();
+  const [fillFields, setFillFields] = useState<ReportField[]>([]);
+  const [editingFieldId, setEditingFieldId] = useState("");
   const [editing, setEditing] = useState<ReportEntry | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<ReportEntry | null>(null);
+  const [deleteFieldId, setDeleteFieldId] = useState("");
 
   const adminState = useSelector(selectAdminOperationsReporting);
   const companyState = useSelector(selectCompanyOperationsReporting);
 
   const types =
     variant === "admin" ? adminState.types : companyState.types;
+  const typesPagination =
+    variant === "admin" ? adminState.typesPagination : companyState.typesPagination;
   const getTypesStatus =
     variant === "admin" ? adminState.getTypesStatus : companyState.getTypesStatus;
   const createEntryStatus =
@@ -93,25 +111,42 @@ export default function OperationsReportingFillReportPanel({
     variant === "admin" ? adminState.deleteEntryStatus : "idle";
   const companyError = companyState.error;
 
-  const loadTypes = useCallback(async () => {
-    if (!estateId) return;
-    if (variant === "company") {
-      dispatch(setCompanyOperationsReportingEstate(estateId));
-    }
-    setExpandedTypeId("");
-    setFieldsByType({});
-    setEntriesByField({});
-    const action =
-      variant === "admin"
-        ? getOperationsReportingTypes(estateId)
-        : fetchCompanyOperationsReportingTypes(estateId);
-    await dispatch(action).unwrap();
-  }, [dispatch, estateId, variant]);
+  const loadTypes = useCallback(
+    async (page = typesPage) => {
+      if (!estateId) return;
+      if (variant === "company") {
+        dispatch(setCompanyOperationsReportingEstate(estateId));
+      }
+      const action =
+        variant === "admin"
+          ? getOperationsReportingTypes({
+              estateId,
+              page,
+              limit: OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+            })
+          : fetchCompanyOperationsReportingTypes({
+              estateId,
+              page,
+              limit: OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+            });
+      await dispatch(action).unwrap();
+    },
+    [dispatch, estateId, variant, typesPage],
+  );
 
   useEffect(() => {
     if (!estateId) return;
-    loadTypes().catch(() => toast.error("Failed to load reporting types."));
-  }, [loadTypes, estateId]);
+    setTypesPage(1);
+    setExpandedTypeId("");
+    setFieldsByType({});
+    setEntriesByField({});
+    setEntriesPaginationByField({});
+  }, [estateId]);
+
+  useEffect(() => {
+    if (!estateId) return;
+    loadTypes(typesPage).catch(() => toast.error("Failed to load reporting types."));
+  }, [estateId, typesPage, loadTypes]);
 
   useEffect(() => {
     if (variant === "company" && companyError) {
@@ -121,19 +156,32 @@ export default function OperationsReportingFillReportPanel({
   }, [companyError, dispatch, variant]);
 
   const loadEntriesForField = useCallback(
-    async (fieldId: string) => {
+    async (fieldId: string, page = 1) => {
       if (!fieldId) return;
       setEntriesLoadingByField((prev) => ({ ...prev, [fieldId]: true }));
       try {
         const action =
           variant === "admin"
-            ? getOperationsReportingEntries(fieldId)
-            : fetchCompanyOperationsReportingEntries(fieldId);
+            ? getOperationsReportingEntries({
+                fieldId,
+                page,
+                limit: OPERATIONS_REPORT_ENTRIES_PAGE_SIZE,
+              })
+            : fetchCompanyOperationsReportingEntries({
+                fieldId,
+                page,
+                limit: OPERATIONS_REPORT_ENTRIES_PAGE_SIZE,
+              });
         const res = await dispatch(action).unwrap();
         setEntriesByField((prev) => ({ ...prev, [fieldId]: res?.data ?? [] }));
+        setEntriesPaginationByField((prev) => ({
+          ...prev,
+          [fieldId]: res?.pagination ?? null,
+        }));
       } catch {
         toast.error("Failed to load report entries.");
         setEntriesByField((prev) => ({ ...prev, [fieldId]: [] }));
+        setEntriesPaginationByField((prev) => ({ ...prev, [fieldId]: null }));
       } finally {
         setEntriesLoadingByField((prev) => ({ ...prev, [fieldId]: false }));
       }
@@ -148,15 +196,31 @@ export default function OperationsReportingFillReportPanel({
       try {
         const action =
           variant === "admin"
-            ? getOperationsReportingFields(typeId)
-            : fetchCompanyOperationsReportingFields(typeId);
+            ? getOperationsReportingFields({ typeId, page: 1, limit: 50 })
+            : fetchCompanyOperationsReportingFields({ typeId, page: 1, limit: 50 });
         const res = await dispatch(action).unwrap();
         const list = res?.data ?? [];
         setFieldsByType((prev) => ({ ...prev, [typeId]: list }));
+        setEntriesByField((prev) => {
+          const next = { ...prev };
+          for (const f of list) {
+            const id = getId(f);
+            if (id) delete next[id];
+          }
+          return next;
+        });
+        setEntriesPaginationByField((prev) => {
+          const next = { ...prev };
+          for (const f of list) {
+            const id = getId(f);
+            if (id) delete next[id];
+          }
+          return next;
+        });
         await Promise.all(
           list.map((f) => {
             const id = getId(f);
-            return id ? loadEntriesForField(id) : Promise.resolve();
+            return id ? loadEntriesForField(id, 1) : Promise.resolve();
           }),
         );
       } catch {
@@ -176,15 +240,44 @@ export default function OperationsReportingFillReportPanel({
 
   useEffect(() => {
     if (readOnly || fillReportTabNonce <= 0) return;
-    const fields = fieldsByType[expandedTypeId] ?? [];
-    const fieldId = getId(fields[0]);
-    if (!expandedTypeId || !fieldId) {
-      toast.info("Expand a report type with at least one section first.");
+    if (!expandedTypeId) {
+      toast.info("Expand a report type first, then click Fill report.");
       return;
     }
-    setFillFieldId(fieldId);
-    setEditing(null);
-    setModalOpen(true);
+
+    (async () => {
+      let fields = fieldsByType[expandedTypeId] ?? [];
+      if (!fields.length) {
+        try {
+          const action =
+            variant === "admin"
+              ? getOperationsReportingFields({ typeId: expandedTypeId, page: 1, limit: 50 })
+              : fetchCompanyOperationsReportingFields({
+                  typeId: expandedTypeId,
+                  page: 1,
+                  limit: 50,
+                });
+          const res = await dispatch(action).unwrap();
+          fields = res?.data ?? [];
+          setFieldsByType((prev) => ({ ...prev, [expandedTypeId]: fields }));
+        } catch {
+          toast.error("Failed to load report fields.");
+          return;
+        }
+      }
+      if (!fields.length) {
+        toast.info("Configure at least one field for this report type.");
+        return;
+      }
+      const type = types.find((t) => getId(t) === expandedTypeId);
+      setFillTypeId(expandedTypeId);
+      setFillTypeName(type?.name ?? "Report type");
+      setFillTypeDescription(type?.description);
+      setFillFields(fields);
+      setEditingFieldId("");
+      setEditing(null);
+      setModalOpen(true);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- nonce-driven
   }, [fillReportTabNonce]);
 
@@ -192,28 +285,70 @@ export default function OperationsReportingFillReportPanel({
     setExpandedTypeId((prev) => (prev === typeId ? "" : typeId));
   };
 
+  const handleTypesPageChange = (page: number) => {
+    setTypesPage(page);
+    setExpandedTypeId("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleEntriesPageChange = (fieldId: string, page: number) => {
+    void loadEntriesForField(fieldId, page);
+  };
+
+  const typesPaginationInfo = toPaginationInfo(typesPagination, {
+    page: typesPage,
+    pageSize: OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+    total: types.length,
+  });
+
   const handleEntrySubmit = async (data: Record<string, unknown>) => {
-    if (!fillFieldId) {
-      toast.info("No report section selected.");
+    if (!fillTypeId || !fillFields.length) {
+      toast.info("No report type selected.");
       return;
     }
     try {
       if (editing) {
         const id = getId(editing);
-        if (!id) return;
+        if (!id || !editingFieldId) return;
         await dispatch(
           updateOperationsReportingEntry({ entryId: id, data }),
         ).unwrap();
         toast.success("Report entry updated.");
-      } else {
-        await dispatch(
-          createOperationsReportingEntry({ fieldId: fillFieldId, data }),
-        ).unwrap();
-        toast.success("Report entry created.");
+        setModalOpen(false);
+        setEditing(null);
+        setEditingFieldId("");
+        const editPage = entriesPaginationByField[editingFieldId]?.page ?? 1;
+        await loadEntriesForField(editingFieldId, editPage);
+        return;
       }
+
+      let created = 0;
+      for (const field of fillFields) {
+        const fieldId = getId(field);
+        const key = field.key;
+        if (!fieldId || !(key in data)) continue;
+        const value = data[key];
+        if (value === "" || value == null) continue;
+        await dispatch(
+          createOperationsReportingEntry({
+            fieldId,
+            data: { [key]: value },
+          }),
+        ).unwrap();
+        created += 1;
+      }
+
+      if (created === 0) {
+        toast.info("Enter at least one field value.");
+        return;
+      }
+
+      toast.success(
+        created === 1 ? "Report entry created." : `${created} report entries created.`,
+      );
       setModalOpen(false);
       setEditing(null);
-      await loadEntriesForField(fillFieldId);
+      await loadFieldsAndEntriesForType(fillTypeId);
     } catch (err: unknown) {
       toast.error(
         (err as { message?: string })?.message ?? "Failed to save report entry.",
@@ -261,12 +396,18 @@ export default function OperationsReportingFillReportPanel({
                   fieldsLoading={fieldsLoading}
                   entriesByField={entriesByField}
                   entriesLoadingByField={entriesLoadingByField}
+                  entriesPaginationByField={entriesPaginationByField}
+                  onEntriesPageChange={handleEntriesPageChange}
                   deleteEntryLoading={deleteEntryStatus === "isLoading"}
                   onEditEntry={
                     readOnly
                       ? undefined
                       : (fieldId, entry) => {
-                          setFillFieldId(fieldId);
+                          setFillTypeId(typeId);
+                          setFillTypeName(type.name);
+                          setFillTypeDescription(type.description);
+                          setFillFields(fields);
+                          setEditingFieldId(fieldId);
                           setEditing(entry);
                           setModalOpen(true);
                         }
@@ -275,7 +416,7 @@ export default function OperationsReportingFillReportPanel({
                     readOnly
                       ? undefined
                       : (fieldId, entry) => {
-                          setFillFieldId(fieldId);
+                          setDeleteFieldId(fieldId);
                           setEntryToDelete(entry);
                         }
                   }
@@ -286,16 +427,29 @@ export default function OperationsReportingFillReportPanel({
         </div>
       )}
 
+      {!typesLoading && typesPaginationInfo.total > 0 ? (
+        <Pagination
+          paginationInfo={typesPaginationInfo}
+          onPageChange={handleTypesPageChange}
+          disabled={typesLoading}
+          itemLabel="report types"
+        />
+      ) : null}
+
       {!readOnly ? (
         <>
           <OperationsReportingEntryFormModal
-            visible={modalOpen && !!fillFieldId}
+            visible={modalOpen && !!fillTypeId && fillFields.length > 0}
             onClose={() => {
               setModalOpen(false);
               setEditing(null);
-              setFillFieldId("");
+              setEditingFieldId("");
+              setFillTypeId("");
+              setFillFields([]);
             }}
-            fieldId={fillFieldId}
+            typeName={fillTypeName}
+            typeDescription={fillTypeDescription}
+            fields={fillFields}
             initial={editing as OperationsReportingEntry | null}
             loading={
               createEntryStatus === "isLoading" || updateEntryStatus === "isLoading"
@@ -306,17 +460,23 @@ export default function OperationsReportingFillReportPanel({
 
           <DeleteModal
             visible={!!entryToDelete}
-            onClose={() => setEntryToDelete(null)}
+            onClose={() => {
+              setEntryToDelete(null);
+              setDeleteFieldId("");
+            }}
             itemName="this report entry"
             title="Delete report entry"
             loading={deleteEntryStatus === "isLoading"}
             onConfirm={async () => {
               const id = getId(entryToDelete ?? undefined);
-              if (!id || !fillFieldId) return;
+              const fieldId = deleteFieldId;
+              if (!id || !fieldId) return;
               await dispatch(deleteOperationsReportingEntry(id)).unwrap();
               toast.success("Report entry deleted.");
               setEntryToDelete(null);
-              await loadEntriesForField(fillFieldId);
+              const page = entriesPaginationByField[fieldId]?.page ?? 1;
+              await loadEntriesForField(fieldId, page);
+              setDeleteFieldId("");
             }}
           />
         </>

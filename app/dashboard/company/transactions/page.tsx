@@ -76,8 +76,8 @@ export default function CompanyTransactionPage() {
 
   const buildHistoryParams = useCallback(
     (page: number) => ({
-      companyId: companyId!,
-      estateId: selectedEstateId,
+      estateId: selectedEstateId!,
+      companyId: companyId ?? undefined,
       page,
       limit,
       search: search.trim() || undefined,
@@ -176,7 +176,6 @@ export default function CompanyTransactionPage() {
         const shouldApplyVendsDateFilter = Boolean(vendsStartDate && vendsEndDate);
         const res = await dispatch(
           getCompanyVends({
-            companyId,
             estateId: selectedEstateId,
             page: vendsPage,
             limit,
@@ -206,13 +205,12 @@ export default function CompanyTransactionPage() {
 
   const PAID_BILLS_FETCH_LIMIT = 2000;
   useEffect(() => {
-    if (activeTab !== "paid-bills" || !companyId || !selectedEstateId) return;
+    if (activeTab !== "paid-bills" || !selectedEstateId) return;
     (async () => {
       setLoadingPaidBills(true);
       try {
         const res = await dispatch(
           getCompanyPaidBills({
-            companyId,
             estateId: selectedEstateId,
             page: 1,
             limit: PAID_BILLS_FETCH_LIMIT,
@@ -227,7 +225,7 @@ export default function CompanyTransactionPage() {
         setLoadingPaidBills(false);
       }
     })();
-  }, [activeTab, companyId, selectedEstateId, dispatch, paidBillsStartDate, paidBillsEndDate]);
+  }, [activeTab, selectedEstateId, dispatch, paidBillsStartDate, paidBillsEndDate]);
 
   const handlePageChange = async (newPage: number) => {
     if (!companyId || !selectedEstateId) return;
@@ -433,18 +431,21 @@ export default function CompanyTransactionPage() {
     {
       key: "paymentStatus",
       header: "Status",
-      render: (item: any) =>
-        item.paymentStatus === "successful" ? (
-          <span className="text-green-600 font-medium">Successful</span>
+      render: (item: any) => {
+        const status = (item.paymentStatus ?? "").toString().toLowerCase();
+        const isPaid =
+          status === "paid" || status === "successful" || status === "success";
+        return isPaid ? (
+          <span className="text-green-600 font-medium capitalize">
+            {item.paymentStatus || "Paid"}
+          </span>
         ) : (
-          <span className="text-yellow-600 font-medium">
+          <span className="text-yellow-600 font-medium capitalize">
             {item.paymentStatus || "Pending"}
           </span>
-        ),
-      exportValue: (item: any) =>
-        item.paymentStatus === "successful"
-          ? "Successful"
-          : String(item.paymentStatus || "Pending"),
+        );
+      },
+      exportValue: (item: any) => String(item.paymentStatus ?? "Pending"),
     },
   ];
 
@@ -726,7 +727,7 @@ export default function CompanyTransactionPage() {
             currentPage={currentPage}
             totalPages={pagination?.totalPages || 1}
             onExportRequest={
-              companyId && selectedEstateId
+              selectedEstateId
                 ? async () => {
                     const res = await dispatch(
                       getCompanyTransactionHistory({
@@ -771,11 +772,10 @@ export default function CompanyTransactionPage() {
             }}
             onPageChange={(p: number) => setVendsPage(p)}
             onExportRequest={
-              companyId && selectedEstateId
+              selectedEstateId
                 ? async () => {
                     const res = await dispatch(
                       getCompanyVends({
-                        companyId,
                         estateId: selectedEstateId,
                         page: 1,
                         limit: 50000,

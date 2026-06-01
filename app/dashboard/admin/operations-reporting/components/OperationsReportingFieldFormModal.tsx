@@ -5,11 +5,7 @@ import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { OperationsReportingField } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting";
-
-const toFieldKey = (str: string) =>
-  str
-    .replace(/[^a-zA-Z0-9 /]/g, "")
-    .trim();
+import { labelToReportingFieldKey } from "@/lib/operations-reporting-field-key";
 
 type Props = {
   visible: boolean;
@@ -48,7 +44,8 @@ export default function OperationsReportingFieldFormModal({
             {initial ? "Edit report field" : "Create report field"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Fields define report rows (e.g. Block/Unit).
+            Set a display label and a key used in report entry data (e.g.
+            &quot;Block/Unit&quot;).
           </p>
         </div>
 
@@ -62,7 +59,9 @@ export default function OperationsReportingFieldFormModal({
             onChange={(e) => {
               const value = e.target.value;
               setLabel(value);
-              if (!initial) setKey(toFieldKey(value));
+              if (!initial && !key.trim()) {
+                setKey(labelToReportingFieldKey(value));
+              }
             }}
             placeholder='e.g. "Address Name"'
           />
@@ -77,6 +76,7 @@ export default function OperationsReportingFieldFormModal({
             value={key}
             onChange={(e) => setKey(e.target.value)}
             placeholder='e.g. "Block/Unit"'
+            className="font-mono text-sm"
           />
         </div>
 
