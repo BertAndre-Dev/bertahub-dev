@@ -370,6 +370,12 @@ export const residentNav = [
   //   moduleKey: "asset",
   // },
   {
+    label: "Pay Bills",
+    icon: Banknote,
+    path: "/dashboard/resident/pay-bills",
+    moduleKey: "bills",
+  },
+  {
     label: "Marketplace",
     icon: Store,
     path: "/dashboard/resident/marketplace",
