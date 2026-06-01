@@ -81,7 +81,9 @@ export default function AdminOperationsReportingPage() {
 
   const refreshLists = useCallback(async () => {
     if (!estateId) return;
-    await dispatch(getOperationsReportingTypes(estateId)).unwrap();
+    await dispatch(
+      getOperationsReportingTypes({ estateId, page: 1, limit: 10 }),
+    ).unwrap();
     setListRefreshKey((k) => k + 1);
   }, [dispatch, estateId]);
 

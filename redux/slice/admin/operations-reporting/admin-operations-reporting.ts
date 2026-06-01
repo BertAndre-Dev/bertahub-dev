@@ -1,5 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
+import { labelToReportingFieldKey } from "@/lib/operations-reporting-field-key";
 
 export type ApiPagination = {
   total?: number;
@@ -71,14 +72,29 @@ export const createOperationsReportingType = createAsyncThunk(
   },
 );
 
+export type GetOperationsReportingTypesParams = {
+  estateId: string;
+  page?: number;
+  limit?: number;
+};
+
 /** GET /api/v1/operations-reporting/types?estateId=... */
 export const getOperationsReportingTypes = createAsyncThunk(
   "admin-operations-reporting/getTypes",
-  async (estateId: string, { rejectWithValue }) => {
+  async (
+    { estateId, page = 1, limit = 10 }: GetOperationsReportingTypesParams,
+    { rejectWithValue },
+  ) => {
     try {
       const res = await axiosInstance.get(
         "/api/v1/operations-reporting/types",
-        { params: { estateId: normalizeId(estateId).trim() } },
+        {
+          params: {
+            estateId: normalizeId(estateId).trim(),
+            page,
+            limit,
+          },
+        },
       );
       return res.data as {
         success?: boolean;
@@ -172,24 +188,32 @@ export const createOperationsReportingField = createAsyncThunk(
       estateId: string;
       typeId: string;
       label: string;
-      key: string;
+      key?: string;
     },
     { rejectWithValue },
   ) => {
     const estateIdValue = normalizeId(payload.estateId).trim();
     const typeIdValue = normalizeId(payload.typeId).trim();
+    const label = payload.label.trim();
+    const key = payload.key?.trim() || labelToReportingFieldKey(label);
     if (!estateIdValue || !typeIdValue) {
       return rejectWithValue({
         message: "Estate and reporting type are required.",
+      });
+    }
+    if (!label || !key) {
+      return rejectWithValue({
+        message: "Field label is required.",
       });
     }
     try {
       const res = await axiosInstance.post(
         "/api/v1/operations-reporting/fields",
         {
-          ...payload,
           estateId: estateIdValue,
           typeId: typeIdValue,
+          label,
+          key,
         },
       );
       return res.data as {
@@ -205,17 +229,26 @@ export const createOperationsReportingField = createAsyncThunk(
   },
 );
 
+export type GetOperationsReportingFieldsParams = {
+  typeId: string;
+  page?: number;
+  limit?: number;
+};
+
 /** GET /api/v1/operations-reporting/fields?typeId=... */
 export const getOperationsReportingFields = createAsyncThunk(
   "admin-operations-reporting/getFields",
-  async (typeId: string, { rejectWithValue }) => {
+  async (
+    { typeId, page = 1, limit = 50 }: GetOperationsReportingFieldsParams,
+    { rejectWithValue },
+  ) => {
     const typeIdValue = normalizeId(typeId).trim();
     if (!typeIdValue) {
       return rejectWithValue({ message: "Reporting type is required." });
     }
     try {
       const res = await axiosInstance.get("/api/v1/operations-reporting/fields", {
-        params: { typeId: typeIdValue },
+        params: { typeId: typeIdValue, page, limit },
       });
       return res.data as {
         success?: boolean;
@@ -319,13 +352,23 @@ export const createOperationsReportingEntry = createAsyncThunk(
   },
 );
 
+export type GetOperationsReportingEntriesParams = {
+  fieldId: string;
+  page?: number;
+  limit?: number;
+};
+
 /** GET /api/v1/operations-reporting/fields/{fieldId}/entries */
 export const getOperationsReportingEntries = createAsyncThunk(
   "admin-operations-reporting/getEntries",
-  async (fieldId: string, { rejectWithValue }) => {
+  async (
+    { fieldId, page = 1, limit = 10 }: GetOperationsReportingEntriesParams,
+    { rejectWithValue },
+  ) => {
     try {
       const res = await axiosInstance.get(
         `/api/v1/operations-reporting/fields/${normalizeId(fieldId)}/entries`,
+        { params: { page, limit } },
       );
       return res.data as {
         success?: boolean;

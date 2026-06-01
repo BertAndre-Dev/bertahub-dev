@@ -18,6 +18,11 @@ import {
   type OperationsReportingType,
 } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting";
 import { selectAdminOperationsReporting } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting-slice";
+import Pagination from "@/components/pagination/page";
+import {
+  OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+  toPaginationInfo,
+} from "@/lib/operations-reporting-pagination";
 import OperationsReportingTypeCard from "./OperationsReportingTypeCard";
 import OperationsReportingFieldFormModal from "./OperationsReportingFieldFormModal";
 import OperationsReportingConfigureFieldsModal from "./OperationsReportingConfigureFieldsModal";
@@ -38,6 +43,7 @@ export default function OperationsReportingTypesTab({
   onDeleteType,
 }: Readonly<Props>) {
   const dispatch = useDispatch<AppDispatch>();
+  const [typesPage, setTypesPage] = useState(1);
   const [expandedTypeId, setExpandedTypeId] = useState("");
   const [fieldsByType, setFieldsByType] = useState<
     Record<string, OperationsReportingField[]>
@@ -57,6 +63,7 @@ export default function OperationsReportingTypesTab({
 
   const {
     types,
+    typesPagination,
     getTypesStatus,
     createFieldStatus,
     updateFieldStatus,
@@ -65,21 +72,37 @@ export default function OperationsReportingTypesTab({
 
   const configureType = types.find((t) => getId(t) === configureTypeId) ?? null;
 
-  const loadTypes = useCallback(async () => {
-    if (!estateId) return;
-    await dispatch(getOperationsReportingTypes(estateId)).unwrap();
-  }, [dispatch, estateId]);
+  const loadTypes = useCallback(
+    async (page = typesPage) => {
+      if (!estateId) return;
+      await dispatch(
+        getOperationsReportingTypes({
+          estateId,
+          page,
+          limit: OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+        }),
+      ).unwrap();
+    },
+    [dispatch, estateId, typesPage],
+  );
 
   useEffect(() => {
-    loadTypes().catch(() => toast.error("Failed to load reporting types."));
-  }, [loadTypes]);
+    setTypesPage(1);
+    setExpandedTypeId("");
+  }, [estateId]);
+
+  useEffect(() => {
+    loadTypes(typesPage).catch(() => toast.error("Failed to load reporting types."));
+  }, [loadTypes, typesPage]);
 
   const loadFieldsForType = useCallback(
     async (typeId: string) => {
       if (!typeId) return;
       setFieldsLoadingByType((prev) => ({ ...prev, [typeId]: true }));
       try {
-        const res = await dispatch(getOperationsReportingFields(typeId)).unwrap();
+        const res = await dispatch(
+          getOperationsReportingFields({ typeId, page: 1, limit: 50 }),
+        ).unwrap();
         setFieldsByType((prev) => ({
           ...prev,
           [typeId]: res?.data ?? [],
@@ -165,6 +188,18 @@ export default function OperationsReportingTypesTab({
 
   const typesLoading = getTypesStatus === "isLoading";
 
+  const typesPaginationInfo = toPaginationInfo(typesPagination, {
+    page: typesPage,
+    pageSize: OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+    total: types.length,
+  });
+
+  const handleTypesPageChange = (page: number) => {
+    setTypesPage(page);
+    setExpandedTypeId("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="space-y-4">
       {typesLoading ? (
@@ -246,6 +281,15 @@ export default function OperationsReportingTypesTab({
           })}
         </div>
       )}
+
+      {!typesLoading && typesPaginationInfo.total > 0 ? (
+        <Pagination
+          paginationInfo={typesPaginationInfo}
+          onPageChange={handleTypesPageChange}
+          disabled={typesLoading}
+          itemLabel="report types"
+        />
+      ) : null}
 
       <OperationsReportingConfigureFieldsModal
         visible={configureModalOpen}

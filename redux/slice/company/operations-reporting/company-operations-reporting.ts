@@ -46,13 +46,26 @@ function getErrorMessage(error: unknown, fallback: string) {
   return Array.isArray(msg) ? msg[0] : msg ?? fallback;
 }
 
+export type FetchCompanyOperationsReportingTypesParams = {
+  estateId: string;
+  page?: number;
+  limit?: number;
+};
+
 /** GET /api/v1/operations-reporting/types?estateId=... */
 export const fetchCompanyOperationsReportingTypes = createAsyncThunk(
   "companyOperationsReporting/fetchTypes",
-  async (estateId: string, { rejectWithValue }) => {
+  async (
+    { estateId, page = 1, limit = 10 }: FetchCompanyOperationsReportingTypesParams,
+    { rejectWithValue },
+  ) => {
     try {
       const res = await axiosInstance.get("/api/v1/operations-reporting/types", {
-        params: { estateId: normalizeId(estateId).trim() },
+        params: {
+          estateId: normalizeId(estateId).trim(),
+          page,
+          limit,
+        },
       });
       return res.data as {
         success?: boolean;
@@ -68,13 +81,26 @@ export const fetchCompanyOperationsReportingTypes = createAsyncThunk(
   },
 );
 
+export type FetchCompanyOperationsReportingFieldsParams = {
+  typeId: string;
+  page?: number;
+  limit?: number;
+};
+
 /** GET /api/v1/operations-reporting/fields?typeId=... */
 export const fetchCompanyOperationsReportingFields = createAsyncThunk(
   "companyOperationsReporting/fetchFields",
-  async (typeId: string, { rejectWithValue }) => {
+  async (
+    { typeId, page = 1, limit = 50 }: FetchCompanyOperationsReportingFieldsParams,
+    { rejectWithValue },
+  ) => {
     try {
       const res = await axiosInstance.get("/api/v1/operations-reporting/fields", {
-        params: { typeId: normalizeId(typeId).trim() },
+        params: {
+          typeId: normalizeId(typeId).trim(),
+          page,
+          limit,
+        },
       });
       return res.data as {
         success?: boolean;
@@ -90,13 +116,23 @@ export const fetchCompanyOperationsReportingFields = createAsyncThunk(
   },
 );
 
+export type FetchCompanyOperationsReportingEntriesParams = {
+  fieldId: string;
+  page?: number;
+  limit?: number;
+};
+
 /** GET /api/v1/operations-reporting/fields/{fieldId}/entries */
 export const fetchCompanyOperationsReportingEntries = createAsyncThunk(
   "companyOperationsReporting/fetchEntries",
-  async (fieldId: string, { rejectWithValue }) => {
+  async (
+    { fieldId, page = 1, limit = 10 }: FetchCompanyOperationsReportingEntriesParams,
+    { rejectWithValue },
+  ) => {
     try {
       const res = await axiosInstance.get(
         `/api/v1/operations-reporting/fields/${normalizeId(fieldId)}/entries`,
+        { params: { page, limit } },
       );
       return res.data as {
         success?: boolean;
