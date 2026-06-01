@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { ArrowLeft } from "lucide-react";
 import Loader from "@/components/ui/Loader";
@@ -12,17 +12,20 @@ import type { AppDispatch } from "@/redux/store";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { parseAdminEstate } from "../asset/lib/estate";
 import {
+  createOperationsReportingEntry,
+  createOperationsReportingField,
   createOperationsReportingType,
   deleteOperationsReportingType,
   getOperationsReportingTypes,
   updateOperationsReportingType,
   type OperationsReportingType,
 } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting";
+import { selectAdminOperationsReporting } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting-slice";
 import OperationsReportingTypesTab from "./components/OperationsReportingTypesTab";
 import OperationsReportingReportsTab from "./components/OperationsReportingReportsTab";
 import OperationsReportingTypeFormModal from "./components/OperationsReportingTypeFormModal";
-import { useSelector } from "react-redux";
-import { selectAdminOperationsReporting } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting-slice";
+import OperationsReportingFieldFormModal from "./components/OperationsReportingFieldFormModal";
+import OperationsReportingEntryFormModal from "./components/OperationsReportingEntryFormModal";
 
 const TABS = ["Configure Report", "Fill Report"] as const;
 type TabTitle = (typeof TABS)[number];
@@ -38,15 +41,23 @@ export default function AdminOperationsReportingPage() {
   const [estateId, setEstateId] = useState("");
   const [estateLoading, setEstateLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabTitle>("Configure Report");
-  const [configureNonce, setConfigureNonce] = useState(0);
-  const [fillReportNonce, setFillReportNonce] = useState(0);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
+  const [fieldModalOpen, setFieldModalOpen] = useState(false);
+  const [entryModalOpen, setEntryModalOpen] = useState(false);
+  const [createFlowActive, setCreateFlowActive] = useState(false);
+  const [flowTypeId, setFlowTypeId] = useState("");
+  const [flowField, setFlowField] = useState({ id: "", label: "", key: "" });
   const [editingType, setEditingType] = useState<OperationsReportingType | null>(null);
   const [typeToDelete, setTypeToDelete] = useState<OperationsReportingType | null>(null);
+  const [listRefreshKey, setListRefreshKey] = useState(0);
 
-  const { createTypeStatus, updateTypeStatus, deleteTypeStatus } = useSelector(
-    selectAdminOperationsReporting,
-  );
+  const {
+    createTypeStatus,
+    updateTypeStatus,
+    deleteTypeStatus,
+    createFieldStatus,
+    createEntryStatus,
+  } = useSelector(selectAdminOperationsReporting);
 
   useEffect(() => {
     (async () => {
@@ -68,7 +79,23 @@ export default function AdminOperationsReportingPage() {
     })();
   }, [dispatch]);
 
+  const refreshLists = useCallback(async () => {
+    if (!estateId) return;
+    await dispatch(getOperationsReportingTypes(estateId)).unwrap();
+    setListRefreshKey((k) => k + 1);
+  }, [dispatch, estateId]);
+
+  const closeCreateFlow = useCallback(() => {
+    setCreateFlowActive(false);
+    setTypeModalOpen(false);
+    setFieldModalOpen(false);
+    setEntryModalOpen(false);
+    setFlowTypeId("");
+    setFlowField({ id: "", label: "", key: "" });
+  }, []);
+
   const handleEditType = useCallback((type: OperationsReportingType) => {
+    setCreateFlowActive(false);
     setEditingType(type);
     setTypeModalOpen(true);
   }, []);
@@ -77,10 +104,19 @@ export default function AdminOperationsReportingPage() {
     setTypeToDelete(type);
   }, []);
 
+  const startCreateFlow = () => {
+    setEditingType(null);
+    setCreateFlowActive(true);
+    setFlowTypeId("");
+    setFlowField({ id: "", label: "", key: "" });
+    setTypeModalOpen(true);
+  };
+
   const handleTypeSubmit = async (payload: { name: string; description: string }) => {
     if (!estateId) return;
-    try {
-      if (editingType) {
+
+    if (editingType && !createFlowActive) {
+      try {
         const id = getId(editingType);
         if (!id) return;
         await dispatch(
@@ -91,22 +127,84 @@ export default function AdminOperationsReportingPage() {
           }),
         ).unwrap();
         toast.success("Reporting type updated.");
-      } else {
-        await dispatch(
-          createOperationsReportingType({
-            estateId,
-            name: payload.name,
-            description: payload.description,
-          }),
-        ).unwrap();
-        toast.success("Reporting type created.");
+        setTypeModalOpen(false);
+        setEditingType(null);
+        await refreshLists();
+      } catch (err: unknown) {
+        toast.error(
+          (err as { message?: string })?.message ?? "Failed to save reporting type.",
+        );
       }
+      return;
+    }
+
+    if (!createFlowActive) return;
+
+    try {
+      const created = await dispatch(
+        createOperationsReportingType({
+          estateId,
+          name: payload.name,
+          description: payload.description,
+        }),
+      ).unwrap();
+      const typeId = getId(created?.data);
+      if (!typeId) {
+        toast.error("Type was created but no id was returned.");
+        return;
+      }
+      setFlowTypeId(typeId);
       setTypeModalOpen(false);
-      setEditingType(null);
-      await dispatch(getOperationsReportingTypes(estateId)).unwrap();
+      setFieldModalOpen(true);
     } catch (err: unknown) {
       toast.error(
-        (err as { message?: string })?.message ?? "Failed to save reporting type.",
+        (err as { message?: string })?.message ?? "Failed to create reporting type.",
+      );
+    }
+  };
+
+  const handleFlowFieldNext = async (payload: { label: string; key: string }) => {
+    if (!estateId || !flowTypeId) return;
+    try {
+      const created = await dispatch(
+        createOperationsReportingField({
+          estateId,
+          typeId: flowTypeId,
+          label: payload.label,
+          key: payload.key,
+        }),
+      ).unwrap();
+      const fieldId = getId(created?.data);
+      if (!fieldId) {
+        toast.error("Field was created but no id was returned.");
+        return;
+      }
+      setFlowField({
+        id: fieldId,
+        label: payload.label,
+        key: payload.key,
+      });
+      setFieldModalOpen(false);
+      setEntryModalOpen(true);
+    } catch (err: unknown) {
+      toast.error(
+        (err as { message?: string })?.message ?? "Failed to create report field.",
+      );
+    }
+  };
+
+  const handleFlowEntrySave = async (data: Record<string, unknown>) => {
+    if (!flowField.id) return;
+    try {
+      await dispatch(
+        createOperationsReportingEntry({ fieldId: flowField.id, data }),
+      ).unwrap();
+      toast.success("Report type, field, and entry saved.");
+      closeCreateFlow();
+      await refreshLists();
+    } catch (err: unknown) {
+      toast.error(
+        (err as { message?: string })?.message ?? "Failed to save report entry.",
       );
     }
   };
@@ -147,10 +245,7 @@ export default function AdminOperationsReportingPage() {
           </div>
 
           <Button
-            onClick={() => {
-              setEditingType(null);
-              setTypeModalOpen(true);
-            }}
+            onClick={startCreateFlow}
             className="shrink-0 text-white"
             style={{ backgroundColor: "#0150AC" }}
           >
@@ -164,7 +259,7 @@ export default function AdminOperationsReportingPage() {
           </p>
         ) : (
           <>
-            <div className="space-y-3 border-b border-border pb-4">
+            <div className="border-b border-border pb-4">
               <div className="flex space-x-4">
                 {TABS.map((title) => (
                   <button
@@ -181,40 +276,20 @@ export default function AdminOperationsReportingPage() {
                   </button>
                 ))}
               </div>
-
-              <div className="flex justify-end">
-                {activeTab === "Configure Report" ? (
-                  <Button
-                    onClick={() => setConfigureNonce((n) => n + 1)}
-                    className="shrink-0 text-white"
-                    style={{ backgroundColor: "#0150AC" }}
-                  >
-                    Configure
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => setFillReportNonce((n) => n + 1)}
-                    className="shrink-0 text-white"
-                    style={{ backgroundColor: "#0150AC" }}
-                  >
-                    Fill report
-                  </Button>
-                )}
-              </div>
             </div>
 
             <div className="mt-2">
               {activeTab === "Configure Report" ? (
                 <OperationsReportingTypesTab
+                  key={`configure-${listRefreshKey}`}
                   estateId={estateId}
-                  configureNonce={configureNonce}
                   onEditType={handleEditType}
                   onDeleteType={handleDeleteType}
                 />
               ) : (
                 <OperationsReportingReportsTab
+                  key={`fill-${listRefreshKey}`}
                   estateId={estateId}
-                  fillReportNonce={fillReportNonce}
                   onEditType={handleEditType}
                   onDeleteType={handleDeleteType}
                 />
@@ -227,12 +302,35 @@ export default function AdminOperationsReportingPage() {
       <OperationsReportingTypeFormModal
         visible={typeModalOpen}
         onClose={() => {
-          setTypeModalOpen(false);
-          setEditingType(null);
+          if (createFlowActive) {
+            closeCreateFlow();
+          } else {
+            setTypeModalOpen(false);
+            setEditingType(null);
+          }
         }}
         initial={editingType}
         loading={createTypeStatus === "isLoading" || updateTypeStatus === "isLoading"}
+        submitLabel={createFlowActive ? "Next" : "Save"}
         onSubmit={handleTypeSubmit}
+      />
+
+      <OperationsReportingFieldFormModal
+        visible={fieldModalOpen}
+        onClose={closeCreateFlow}
+        loading={createFieldStatus === "isLoading"}
+        submitLabel="Next"
+        onSubmit={handleFlowFieldNext}
+      />
+
+      <OperationsReportingEntryFormModal
+        visible={entryModalOpen}
+        onClose={closeCreateFlow}
+        fieldLabel={flowField.label}
+        fieldKey={flowField.key}
+        loading={createEntryStatus === "isLoading"}
+        submitLabel="Save"
+        onSubmit={handleFlowEntrySave}
       />
 
       <DeleteModal
@@ -247,7 +345,7 @@ export default function AdminOperationsReportingPage() {
           await dispatch(deleteOperationsReportingType(id)).unwrap();
           toast.success("Reporting type deleted.");
           setTypeToDelete(null);
-          await dispatch(getOperationsReportingTypes(estateId)).unwrap();
+          await refreshLists();
         }}
       />
     </div>

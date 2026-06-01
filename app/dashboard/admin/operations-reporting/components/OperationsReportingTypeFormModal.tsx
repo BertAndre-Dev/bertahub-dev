@@ -12,6 +12,7 @@ type Props = {
   onSubmit: (payload: { name: string; description: string }) => Promise<void> | void;
   loading?: boolean;
   initial?: OperationsReportingType | null;
+  submitLabel?: string;
 };
 
 export default function OperationsReportingTypeFormModal({
@@ -20,6 +21,7 @@ export default function OperationsReportingTypeFormModal({
   onSubmit,
   loading = false,
   initial,
+  submitLabel = "Save",
 }: Readonly<Props>) {
   const initialName = useMemo(() => initial?.name ?? "", [initial]);
   const initialDescription = useMemo(() => initial?.description ?? "", [initial]);
@@ -65,7 +67,7 @@ export default function OperationsReportingTypeFormModal({
             id="ops-type-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional description"
+            placeholder="Enter description"
           />
         </div>
 
@@ -81,7 +83,7 @@ export default function OperationsReportingTypeFormModal({
               onSubmit({ name: name.trim(), description: description.trim() })
             }
           >
-            {loading ? "Saving..." : "Save"}
+            {loading ? "Saving..." : submitLabel}
           </Button>
         </div>
       </div>

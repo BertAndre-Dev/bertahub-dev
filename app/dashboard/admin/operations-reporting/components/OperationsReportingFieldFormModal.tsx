@@ -17,6 +17,7 @@ type Props = {
   onSubmit: (payload: { label: string; key: string }) => Promise<void> | void;
   loading?: boolean;
   initial?: OperationsReportingField | null;
+  submitLabel?: string;
 };
 
 export default function OperationsReportingFieldFormModal({
@@ -25,6 +26,7 @@ export default function OperationsReportingFieldFormModal({
   onSubmit,
   loading = false,
   initial,
+  submitLabel = "Save",
 }: Readonly<Props>) {
   const initialLabel = useMemo(() => initial?.label ?? "", [initial]);
   const initialKey = useMemo(() => initial?.key ?? "", [initial]);
@@ -90,7 +92,7 @@ export default function OperationsReportingFieldFormModal({
               onSubmit({ label: label.trim(), key: key.trim() })
             }
           >
-            {loading ? "Saving..." : "Save"}
+            {loading ? "Saving..." : submitLabel}
           </Button>
         </div>
       </div>
