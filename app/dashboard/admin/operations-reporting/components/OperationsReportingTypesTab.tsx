@@ -11,7 +11,6 @@ import type { AppDispatch } from "@/redux/store";
 import {
   createOperationsReportingField,
   deleteOperationsReportingField,
-  deleteOperationsReportingType,
   getOperationsReportingFields,
   getOperationsReportingTypes,
   updateOperationsReportingField,
@@ -21,6 +20,7 @@ import {
 import { selectAdminOperationsReporting } from "@/redux/slice/admin/operations-reporting/admin-operations-reporting-slice";
 import OperationsReportingTypeCard from "./OperationsReportingTypeCard";
 import OperationsReportingFieldFormModal from "./OperationsReportingFieldFormModal";
+import OperationsReportingConfigureFieldsModal from "./OperationsReportingConfigureFieldsModal";
 
 function getId(v: { id?: string; _id?: string } | undefined) {
   return v?.id || v?._id || "";
@@ -45,8 +45,9 @@ export default function OperationsReportingTypesTab({
   const [fieldsLoadingByType, setFieldsLoadingByType] = useState<
     Record<string, boolean>
   >({});
-  const [fieldModalOpen, setFieldModalOpen] = useState(false);
+  const [configureModalOpen, setConfigureModalOpen] = useState(false);
   const [configureTypeId, setConfigureTypeId] = useState("");
+  const [fieldModalOpen, setFieldModalOpen] = useState(false);
   const [editingField, setEditingField] = useState<OperationsReportingField | null>(
     null,
   );
@@ -61,6 +62,8 @@ export default function OperationsReportingTypesTab({
     updateFieldStatus,
     deleteFieldStatus,
   } = useSelector(selectAdminOperationsReporting);
+
+  const configureType = types.find((t) => getId(t) === configureTypeId) ?? null;
 
   const loadTypes = useCallback(async () => {
     if (!estateId) return;
@@ -101,6 +104,36 @@ export default function OperationsReportingTypesTab({
     setExpandedTypeId((prev) => (prev === typeId ? "" : typeId));
   };
 
+  const handleConfigureFieldsSave = async (
+    fields: { label: string; key: string }[],
+  ) => {
+    if (!estateId || !configureTypeId) return;
+    try {
+      for (const field of fields) {
+        await dispatch(
+          createOperationsReportingField({
+            estateId,
+            typeId: configureTypeId,
+            label: field.label,
+            key: field.key,
+          }),
+        ).unwrap();
+      }
+      toast.success(
+        fields.length === 1
+          ? "Field added."
+          : `${fields.length} fields added.`,
+      );
+      setConfigureModalOpen(false);
+      await loadFieldsForType(configureTypeId);
+      if (expandedTypeId !== configureTypeId) setExpandedTypeId(configureTypeId);
+    } catch (err: unknown) {
+      toast.error(
+        (err as { message?: string })?.message ?? "Failed to save report fields.",
+      );
+    }
+  };
+
   const handleFieldSubmit = async (payload: { label: string; key: string }) => {
     const typeId = configureTypeId || expandedTypeId;
     if (!estateId || !typeId) {
@@ -119,21 +152,10 @@ export default function OperationsReportingTypesTab({
           }),
         ).unwrap();
         toast.success("Report field updated.");
-      } else {
-        await dispatch(
-          createOperationsReportingField({
-            estateId,
-            typeId,
-            label: payload.label,
-            key: payload.key,
-          }),
-        ).unwrap();
-        toast.success("Report field created.");
       }
       setFieldModalOpen(false);
       setEditingField(null);
       await loadFieldsForType(typeId);
-      if (expandedTypeId !== typeId) setExpandedTypeId(typeId);
     } catch (err: unknown) {
       toast.error(
         (err as { message?: string })?.message ?? "Failed to save report field.",
@@ -175,7 +197,7 @@ export default function OperationsReportingTypesTab({
                   <p className="text-sm text-muted-foreground">Loading fields...</p>
                 ) : fields.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No fields for this type yet. Use + Create Type to add a field.
+                    No fields for this type yet. Use + Create Type to add fields.
                   </p>
                 ) : (
                   <div className="space-y-4">
@@ -225,6 +247,20 @@ export default function OperationsReportingTypesTab({
         </div>
       )}
 
+      <OperationsReportingConfigureFieldsModal
+        visible={configureModalOpen}
+        onClose={() => {
+          setConfigureModalOpen(false);
+          setConfigureTypeId("");
+        }}
+        typeName={configureType?.name ?? ""}
+        typeDescription={configureType?.description}
+        existingFields={fieldsByType[configureTypeId] ?? []}
+        loading={createFieldStatus === "isLoading"}
+        submitLabel="Save"
+        onSubmit={handleConfigureFieldsSave}
+      />
+
       <OperationsReportingFieldFormModal
         visible={fieldModalOpen}
         onClose={() => {
@@ -232,7 +268,7 @@ export default function OperationsReportingTypesTab({
           setEditingField(null);
         }}
         initial={editingField}
-        loading={createFieldStatus === "isLoading" || updateFieldStatus === "isLoading"}
+        loading={updateFieldStatus === "isLoading"}
         onSubmit={handleFieldSubmit}
       />
 

@@ -11,9 +11,10 @@ type Props = {
   description?: string;
   expanded: boolean;
   onToggle: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   deleteDisabled?: boolean;
+  readOnly?: boolean;
   children?: React.ReactNode;
 };
 
@@ -25,6 +26,7 @@ export default function OperationsReportingTypeCard({
   onEdit,
   onDelete,
   deleteDisabled = false,
+  readOnly = false,
   children,
 }: Readonly<Props>) {
   const titleContent = (
@@ -89,33 +91,37 @@ export default function OperationsReportingTypeCard({
               <ChevronDown className="h-5 w-5 text-muted-foreground" />
             </Button>
           )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full text-[#0150AC]"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            aria-label="Edit"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full text-destructive"
-            disabled={deleteDisabled}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            aria-label="Delete"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {!readOnly && onEdit ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full text-[#0150AC]"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              aria-label="Edit"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {!readOnly && onDelete ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full text-destructive"
+              disabled={deleteDisabled}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              aria-label="Delete"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
       </div>
 
