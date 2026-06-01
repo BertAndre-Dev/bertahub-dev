@@ -23,6 +23,7 @@ import {
   OPERATIONS_REPORT_TYPES_PAGE_SIZE,
   toPaginationInfo,
 } from "@/lib/operations-reporting-pagination";
+import { formatOperationsReportingDate } from "@/lib/operations-reporting-date";
 import OperationsReportingTypeCard from "./OperationsReportingTypeCard";
 import OperationsReportingFieldFormModal from "./OperationsReportingFieldFormModal";
 import OperationsReportingConfigureFieldsModal from "./OperationsReportingConfigureFieldsModal";
@@ -225,6 +226,7 @@ export default function OperationsReportingTypesTab({
                 key={typeId}
                 title={type.name}
                 description={type.description}
+                createdAt={type.createdAt}
                 expanded={expanded}
                 onToggle={() => handleToggle(typeId)}
                 onEdit={() => onEditType(type)}
@@ -243,9 +245,16 @@ export default function OperationsReportingTypesTab({
                         key={getId(field)}
                         className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/20 px-4 py-3"
                       >
-                        <span className="text-sm font-medium text-foreground">
-                          {field.label}
-                        </span>
+                        <div className="min-w-0">
+                          <span className="text-sm font-medium text-foreground">
+                            {field.label}
+                          </span>
+                          {field.createdAt ? (
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              Created {formatOperationsReportingDate(field.createdAt)}
+                            </p>
+                          ) : null}
+                        </div>
                         <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"

@@ -14,12 +14,14 @@ import {
   toPaginationInfo,
   type OperationsReportingApiPagination,
 } from "@/lib/operations-reporting-pagination";
+import { formatOperationsReportingDate } from "@/lib/operations-reporting-date";
 
 type Field = {
   id?: string;
   _id?: string;
   label: string;
   key: string;
+  createdAt?: string;
 };
 
 type Entry = {
@@ -82,7 +84,14 @@ export default function OperationsReportingTypeEntriesList({
 
         return (
           <div key={fieldId} className="space-y-3">
-            <p className="text-sm font-semibold text-foreground">{field.label}</p>
+            <div>
+              <p className="text-sm font-semibold text-foreground">{field.label}</p>
+              {field.createdAt ? (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Created {formatOperationsReportingDate(field.createdAt)}
+                </p>
+              ) : null}
+            </div>
 
             {entriesLoading ? (
               <p className="text-sm text-muted-foreground">Loading entries...</p>

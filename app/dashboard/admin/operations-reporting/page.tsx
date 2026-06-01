@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
@@ -47,8 +46,10 @@ export default function AdminOperationsReportingPage() {
     name: string;
     description: string;
   } | null>(null);
-  const [editingType, setEditingType] = useState<OperationsReportingType | null>(null);
-  const [typeToDelete, setTypeToDelete] = useState<OperationsReportingType | null>(null);
+  const [editingType, setEditingType] =
+    useState<OperationsReportingType | null>(null);
+  const [typeToDelete, setTypeToDelete] =
+    useState<OperationsReportingType | null>(null);
   const [listRefreshKey, setListRefreshKey] = useState(0);
   const [fillReportTabNonce, setFillReportTabNonce] = useState(0);
 
@@ -112,7 +113,10 @@ export default function AdminOperationsReportingPage() {
     setTypeModalOpen(true);
   };
 
-  const handleTypeSubmit = async (payload: { name: string; description: string }) => {
+  const handleTypeSubmit = async (payload: {
+    name: string;
+    description: string;
+  }) => {
     if (!estateId) return;
 
     if (editingType && !createFlowActive) {
@@ -132,7 +136,8 @@ export default function AdminOperationsReportingPage() {
         await refreshLists();
       } catch (err: unknown) {
         toast.error(
-          (err as { message?: string })?.message ?? "Failed to save reporting type.",
+          (err as { message?: string })?.message ??
+            "Failed to save reporting type.",
         );
       }
       return;
@@ -162,7 +167,8 @@ export default function AdminOperationsReportingPage() {
       setConfigureModalOpen(true);
     } catch (err: unknown) {
       toast.error(
-        (err as { message?: string })?.message ?? "Failed to create reporting type.",
+        (err as { message?: string })?.message ??
+          "Failed to create reporting type.",
       );
     }
   };
@@ -193,7 +199,8 @@ export default function AdminOperationsReportingPage() {
       await refreshLists();
     } catch (err: unknown) {
       toast.error(
-        (err as { message?: string })?.message ?? "Failed to save report fields.",
+        (err as { message?: string })?.message ??
+          "Failed to save report fields.",
       );
     }
   };
@@ -208,7 +215,9 @@ export default function AdminOperationsReportingPage() {
 
       <div
         className={
-          estateLoading ? "pointer-events-none select-none blur-sm opacity-60" : ""
+          estateLoading
+            ? "pointer-events-none select-none blur-sm opacity-60"
+            : ""
         }
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -226,9 +235,12 @@ export default function AdminOperationsReportingPage() {
                 Create Weekly Operations Report
               </h1>
               <p className="mt-1 text-muted-foreground">
-                Customize the sections, fields and requirements for the weekly report
-                submitted by your staff for{" "}
-                <span className="font-bold uppercase text-black">{estateName}</span>.
+                Customize the sections, fields and requirements for the weekly
+                report submitted by your staff for{" "}
+                <span className="font-bold uppercase text-black">
+                  {estateName}
+                </span>
+                .
               </p>
             </div>
           </div>
@@ -312,7 +324,9 @@ export default function AdminOperationsReportingPage() {
           }
         }}
         initial={editingType}
-        loading={createTypeStatus === "isLoading" || updateTypeStatus === "isLoading"}
+        loading={
+          createTypeStatus === "isLoading" || updateTypeStatus === "isLoading"
+        }
         submitLabel={createFlowActive ? "Next" : "Save"}
         onSubmit={handleTypeSubmit}
       />

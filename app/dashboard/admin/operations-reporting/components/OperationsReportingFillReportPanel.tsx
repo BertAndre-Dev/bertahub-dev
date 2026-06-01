@@ -385,6 +385,7 @@ export default function OperationsReportingFillReportPanel({
                 key={typeId}
                 title={type.name}
                 description={type.description}
+                createdAt={type.createdAt}
                 expanded={expanded}
                 onToggle={() => handleToggle(typeId)}
                 readOnly={readOnly}

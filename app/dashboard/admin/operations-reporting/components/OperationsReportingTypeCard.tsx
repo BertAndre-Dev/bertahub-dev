@@ -4,11 +4,13 @@ import React from "react";
 import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { formatOperationsReportingDate } from "@/lib/operations-reporting-date";
 import { cn } from "@/lib/utils";
 
 type Props = {
   title: string;
   description?: string;
+  createdAt?: string;
   expanded: boolean;
   onToggle: () => void;
   onEdit?: () => void;
@@ -21,6 +23,7 @@ type Props = {
 export default function OperationsReportingTypeCard({
   title,
   description,
+  createdAt,
   expanded,
   onToggle,
   onEdit,
@@ -37,6 +40,11 @@ export default function OperationsReportingTypeCard({
       ) : (
         <p className="mt-1 text-sm text-muted-foreground">No description</p>
       )}
+      {createdAt ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Created {formatOperationsReportingDate(createdAt)}
+        </p>
+      ) : null}
     </>
   );
 
