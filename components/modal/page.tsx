@@ -48,7 +48,7 @@ const Modal: React.FC<ModalProps> = ({
           <motion.div
             className={cn(
               "bg-white rounded-xl shadow-xl p-5 overflow-y-auto overflow-x-hidden max-h-[70vh] flex flex-col relative min-w-0 w-full",
-              contentClassName ?? "md:w-[45%] lg:w-[35%] xl:w-[35%]",
+              contentClassName ?? "md:w-[45%] lg:w-[40%] xl:w-[40%]",
             )}
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
