@@ -36,6 +36,7 @@ const residentTypeOptions: AddressSelectOption[] = [
   { label: "Tenant", value: "tenant" },
 ];
 
+
 export type EditableUser = {
   id?: string;
   _id?: string;
