@@ -141,6 +141,7 @@ export type UpdateAdminUserPayload = {
     gender?: string;
     phoneNumber?: string;
     address?: string;
+    addressIds?: string[];
     role?: string;
     image?: string;
     residentType?: string | null;

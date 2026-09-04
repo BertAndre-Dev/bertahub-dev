@@ -164,7 +164,7 @@ export function CountryCodeSelect({
           aria-expanded={open}
           aria-controls={listId}
           className={cn(
-            "flex h-10 items-center gap-2 bg-background text-left text-sm outline-none",
+            "flex h-10 cursor-pointer items-center gap-2 bg-background text-left text-sm outline-none",
             "transition-[transform,box-shadow,border-color] duration-100 ease-out",
             "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
             "motion-reduce:transition-none motion-reduce:active:scale-100",
@@ -294,7 +294,7 @@ export function CountryCodeSelect({
                           onPointerDown={() => setHighlightedIndex(index)}
                           onClick={() => selectOption(option)}
                           className={cn(
-                            "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm outline-none",
+                            "flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm outline-none",
                             "transition-colors duration-100 ease-out active:bg-black/10 dark:active:bg-white/15",
                             "motion-reduce:transition-none",
                             isHighlighted && "bg-black/5 dark:bg-white/10",

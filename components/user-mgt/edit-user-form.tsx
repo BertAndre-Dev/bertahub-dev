@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
+import { useDispatch } from "react-redux";
+import Select from "react-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,6 +23,18 @@ import {
   splitPhoneFields,
   toE164PhoneNumber,
 } from "@/lib/phone-e164";
+import { formatAddressEntryLabel, normalizeAddresses } from "@/lib/address";
+import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import { getFieldByEstate } from "@/redux/slice/admin/address-mgt/fields/fields";
+import { getEntriesByField } from "@/redux/slice/admin/address-mgt/entry/entry";
+import type { AppDispatch } from "@/redux/store";
+
+type AddressSelectOption = { label: string; value: string };
+
+const residentTypeOptions: AddressSelectOption[] = [
+  { label: "Owner", value: "owner" },
+  { label: "Tenant", value: "tenant" },
+];
 
 export type EditableUser = {
   id?: string;
@@ -29,6 +49,12 @@ export type EditableUser = {
   address?: string;
   role?: string;
   residentType?: string | null;
+  estateId?: string | { id?: string; _id?: string };
+  addressId?: string | { id?: string; _id?: string; data?: Record<string, string> };
+  addressIds?: (
+    | string
+    | { id?: string; _id?: string; data?: Record<string, string> }
+  )[];
 };
 
 export type UpdateUserDetailsData = {
@@ -40,6 +66,7 @@ export type UpdateUserDetailsData = {
   gender?: string;
   phoneNumber?: string;
   address?: string;
+  addressIds?: string[];
   role?: string;
   residentType?: string | null;
 };
@@ -106,6 +133,47 @@ function asEditableUser(res: unknown): EditableUser {
   return (res ?? {}) as EditableUser;
 }
 
+function resolveEstateId(
+  raw: string | { id?: string; _id?: string } | null | undefined,
+): string {
+  if (!raw) return "";
+  if (typeof raw === "string") return raw.trim();
+  return (raw._id || raw.id || "").trim();
+}
+
+function isResidentRole(role?: string | null) {
+  return (role ?? "").trim().toLowerCase() === "resident";
+}
+
+function optionsFromUserAddresses(user: EditableUser): AddressSelectOption[] {
+  const raw = user.addressIds ?? (user.addressId != null ? [user.addressId] : []);
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .map((item) => {
+      if (typeof item === "string") {
+        return { value: item, label: item };
+      }
+      const id = item?.id || item?._id || "";
+      if (!id) return null;
+      const label = formatAddressEntryLabel(item.data) || id;
+      return { value: id, label };
+    })
+    .filter((opt): opt is AddressSelectOption => Boolean(opt));
+}
+
+function mergeAddressOptions(
+  estateOptions: AddressSelectOption[],
+  userOptions: AddressSelectOption[],
+): AddressSelectOption[] {
+  const byId = new Map<string, AddressSelectOption>();
+  for (const opt of estateOptions) byId.set(opt.value, opt);
+  for (const opt of userOptions) {
+    if (!byId.has(opt.value)) byId.set(opt.value, opt);
+  }
+  return Array.from(byId.values());
+}
+
 export default function EditUserForm({
   userId,
   close,
@@ -113,10 +181,14 @@ export default function EditUserForm({
   fetchUser,
   saveUser,
 }: EditUserFormProps) {
+  const dispatch = useDispatch<AppDispatch>();
   const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [role, setRole] = useState<string | undefined>();
   const [residentType, setResidentType] = useState<string | null | undefined>();
+  const [addressIds, setAddressIds] = useState<string[]>([]);
+  const [entryOptions, setEntryOptions] = useState<AddressSelectOption[]>([]);
   const [formData, setFormData] = useState<EditUserFormData>(emptyForm);
   const fetchUserRef = useRef(fetchUser);
   const closeRef = useRef(close);
@@ -135,26 +207,90 @@ export default function EditUserForm({
     (async () => {
       try {
         setLoadingUser(true);
+        setLoadingAddresses(true);
+
         const res = await fetchUserRef.current(userId);
         const user = asEditableUser(res);
         if (cancelled) return;
+
         setFormData(mapUserToForm(user));
         setRole(user.role);
         setResidentType(user.residentType);
+        const selectedIds = normalizeAddresses(
+          user as Record<string, unknown>,
+        ).map((addr) => addr.id);
+        setAddressIds(selectedIds);
+
+        const userAddressOptions = optionsFromUserAddresses(user);
+        let estateId = resolveEstateId(user.estateId);
+
+        if (!estateId) {
+          try {
+            const signedIn = await dispatch(getSignedInUser()).unwrap();
+            const data =
+              signedIn?.data ?? (signedIn as Record<string, unknown>);
+            estateId = resolveEstateId(
+              (data as { estateId?: string | { id?: string; _id?: string } })
+                ?.estateId,
+            );
+          } catch {
+            // non-blocking — address dropdown may stay empty
+          }
+        }
+
+        if (cancelled) return;
+
+        if (!estateId) {
+          setEntryOptions(userAddressOptions);
+          return;
+        }
+
+        const fieldRes = await dispatch(getFieldByEstate(estateId)).unwrap();
+        const fields = fieldRes?.data || [];
+        if (!fields.length) {
+          setEntryOptions(userAddressOptions);
+          return;
+        }
+
+        const primaryFieldId = fields[0].id;
+        const entryRes = await dispatch(
+          getEntriesByField({ fieldId: primaryFieldId, page: 1, limit: 200 }),
+        ).unwrap();
+        const entries = entryRes?.data || [];
+
+        const estateOptions: AddressSelectOption[] = entries.map(
+          (entry: { id?: string; data?: Record<string, unknown> }) => {
+            const label =
+              formatAddressEntryLabel(entry.data) ||
+              Object.entries(entry.data || {})
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(", ") ||
+              entry.id ||
+              "";
+            return { label, value: entry.id || "" };
+          },
+        ).filter((opt: AddressSelectOption) => Boolean(opt.value));
+
+        if (!cancelled) {
+          setEntryOptions(mergeAddressOptions(estateOptions, userAddressOptions));
+        }
       } catch (err: unknown) {
         if (cancelled) return;
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
         closeRef.current();
       } finally {
-        if (!cancelled) setLoadingUser(false);
+        if (!cancelled) {
+          setLoadingUser(false);
+          setLoadingAddresses(false);
+        }
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [dispatch, userId]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -186,6 +322,18 @@ export default function EditUserForm({
       return;
     }
 
+    const resident = isResidentRole(role);
+    const cleanedAddressIds = addressIds.map((id) => id.trim()).filter(Boolean);
+
+    if (resident && cleanedAddressIds.length === 0) {
+      toast.error("Please select at least one address");
+      return;
+    }
+    if (resident && !residentType) {
+      toast.error("Please select a resident type");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await saveUser(userId, {
@@ -197,8 +345,9 @@ export default function EditUserForm({
         gender: formData.gender,
         phoneNumber: e164Phone || undefined,
         address: formData.address.trim(),
+        addressIds: resident ? cleanedAddressIds : [],
         role,
-        residentType: residentType ?? undefined,
+        residentType: resident ? (residentType ?? undefined) : undefined,
       });
       toast.success(
         getApiSuccessMessage(res) || "User details updated successfully",
@@ -212,6 +361,13 @@ export default function EditUserForm({
       setSubmitting(false);
     }
   };
+
+  const showResidentFields = isResidentRole(role);
+  const selectedAddressOptions = entryOptions.filter((opt) =>
+    addressIds.includes(opt.value),
+  );
+  const selectedResidentType =
+    residentTypeOptions.find((opt) => opt.value === residentType) ?? null;
 
   return (
     <Card className="max-w-lg mx-auto mt-2 relative min-h-[200px]">
@@ -276,7 +432,7 @@ export default function EditUserForm({
                   }
                   disabled={submitting}
                   placeholder="+234"
-                  className="mt-1"
+                  className="mt-1 cursor-pointer"
                 />
               </div>
               <div>
@@ -316,7 +472,7 @@ export default function EditUserForm({
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, gender: e.target.value }))
                   }
-                  className="w-full h-10 px-3 mt-1 rounded-lg border border-border bg-background text-sm"
+                  className="w-full h-10 px-3 mt-1 rounded-lg border border-border bg-background text-sm cursor-pointer"
                 >
                   <option value="">Select gender</option>
                   <option value="male">Male</option>
@@ -325,17 +481,81 @@ export default function EditUserForm({
               </div>
             </div>
 
+            {showResidentFields ? (
+              <>
+                <div>
+                  <Label htmlFor="edit-residentType">Resident type</Label>
+                  <Select
+                    inputId="edit-residentType"
+                    options={residentTypeOptions}
+                    value={selectedResidentType}
+                    onChange={(opt) =>
+                      setResidentType(opt?.value ?? null)
+                    }
+                    placeholder="Select resident type"
+                    isDisabled={submitting}
+                    className="mt-1 cursor-pointer"
+                    styles={{
+                      control: (base) => ({ ...base, cursor: "pointer" }),
+                      option: (base) => ({ ...base, cursor: "pointer" }),
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-addressIds">Address(es)</Label>
+                  <Select
+                    inputId="edit-addressIds"
+                    options={entryOptions}
+                    value={selectedAddressOptions}
+                    onChange={(opts) =>
+                      setAddressIds(
+                        (opts ?? []).map((opt) => opt.value).filter(Boolean),
+                      )
+                    }
+                    placeholder={
+                      loadingAddresses
+                        ? "Loading addresses..."
+                        : "Select one or more addresses"
+                    }
+                    isMulti
+                    isLoading={loadingAddresses}
+                    isDisabled={submitting || loadingAddresses}
+                    closeMenuOnSelect={false}
+                    className="mt-1 cursor-pointer"
+                    styles={{
+                      control: (base) => ({ ...base, cursor: "pointer" }),
+                      option: (base) => ({ ...base, cursor: "pointer" }),
+                      multiValueRemove: (base) => ({
+                        ...base,
+                        cursor: "pointer",
+                      }),
+                    }}
+                  />
+                  {addressIds.length > 0 ? (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {addressIds.length} address(es) selected
+                    </p>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+
             <div className="flex gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"
-                className="flex-1"
+                className="flex-1 cursor-pointer"
                 onClick={close}
                 disabled={submitting}
               >
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1" disabled={submitting}>
+              <Button
+                type="submit"
+                className="flex-1 cursor-pointer"
+                disabled={submitting}
+              >
                 {submitting ? "Updating..." : "Update user"}
               </Button>
             </div>
