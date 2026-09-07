@@ -18,7 +18,7 @@ import { getDesignations } from "@/redux/slice/designations/designations";
 import { DESIGNATIONS_PAGE_SIZE, isCompanyScopedDesignation } from "@/lib/designations";
 import {
   DEFAULT_COUNTRY_CODE,
-  PHONE_E164_ERROR,
+  getPhoneValidationError,
   toE164PhoneNumber,
 } from "@/lib/phone-e164";
 import {
@@ -228,7 +228,12 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({
       formData.countryCode,
     );
     if (!e164Phone) {
-      return toast.error(PHONE_E164_ERROR);
+      return toast.error(
+        getPhoneValidationError(
+          formData.phoneNumber,
+          formData.countryCode,
+        ),
+      );
     }
 
     if (formData.role === "resident") {

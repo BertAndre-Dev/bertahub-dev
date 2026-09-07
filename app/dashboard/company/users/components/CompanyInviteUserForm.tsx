@@ -22,7 +22,7 @@ import {
 import InvitePhoneNumberField from "@/components/invite/InvitePhoneNumberField";
 import {
   DEFAULT_COUNTRY_CODE,
-  PHONE_E164_ERROR,
+  getPhoneValidationError,
   toE164PhoneNumber,
 } from "@/lib/phone-e164";
 import { getDesignations } from "@/redux/slice/designations/designations";
@@ -179,7 +179,12 @@ export default function CompanyInviteUserForm({
       formData.countryCode,
     );
     if (!e164Phone) {
-      return toast.error(PHONE_E164_ERROR);
+      return toast.error(
+        getPhoneValidationError(
+          formData.phoneNumber,
+          formData.countryCode,
+        ),
+      );
     }
     if (!formData.firstName.trim())
       return toast.error("Please provide first name.");

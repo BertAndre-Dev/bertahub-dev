@@ -8,8 +8,8 @@ import { Save } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CountryCodeSelect } from "@/components/ui/country-code-select";
 import { IsoDatePicker } from "@/components/ui/iso-date-picker";
+import InvitePhoneNumberField from "@/components/invite/InvitePhoneNumberField";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { resetStaffUserProfileState } from "@/redux/slice/staff/user-profile/staff-user-profile-slice";
 import {
@@ -19,7 +19,7 @@ import {
 import { isBusy, isPending } from "@/lib/async-status";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
-  PHONE_E164_ERROR,
+  getPhoneValidationError,
   splitPhoneFields,
   toE164PhoneNumber,
 } from "@/lib/phone-e164";
@@ -127,8 +127,9 @@ export function StaffGeneralSettingsCard() {
       ? toE164PhoneNumber(phone, formData.countryCode)
       : "";
     if (phone && !e164Phone) {
-      setFormError(PHONE_E164_ERROR);
-      toast.error(PHONE_E164_ERROR);
+      const phoneError = getPhoneValidationError(phone, formData.countryCode);
+      setFormError(phoneError);
+      toast.error(phoneError);
       return;
     }
 
@@ -247,38 +248,19 @@ export function StaffGeneralSettingsCard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium" htmlFor="staff-country-code">
-                Country Code
-              </label>
-              <CountryCodeSelect
-                id="staff-country-code"
-                value={formData.countryCode}
-                onChange={(countryCode) =>
-                  setFormData((prev) => ({ ...prev, countryCode }))
-                }
-                disabled={isLoading}
-                placeholder="+234"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium" htmlFor="staff-phone">
-                Phone
-              </label>
-              <Input
-                id="staff-phone"
-                name="phoneNumber"
-                type="tel"
-                inputMode="numeric"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                placeholder="8100001427"
-                className="mt-2 h-10"
-                disabled={isLoading}
-              />
-            </div>
-          </div>
+          <InvitePhoneNumberField
+            id="staff-phone"
+            label="Phone"
+            showWhatsAppHint={false}
+            required={false}
+            countryCode={formData.countryCode}
+            phoneNumber={formData.phoneNumber}
+            onCountryCodeChange={(countryCode) =>
+              setFormData((prev) => ({ ...prev, countryCode }))
+            }
+            onPhoneNumberChange={handleChange}
+            disabled={isLoading}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

@@ -14,12 +14,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IsoDatePicker } from "@/components/ui/iso-date-picker";
-import { CountryCodeSelect } from "@/components/ui/country-code-select";
+import InvitePhoneNumberField from "@/components/invite/InvitePhoneNumberField";
 import { toast } from "react-toastify";
 import Loader from "@/components/ui/Loader";
 import { getApiErrorMessage, getApiSuccessMessage } from "@/lib/api-error";
 import {
-  PHONE_E164_ERROR,
+  getPhoneValidationError,
   splitPhoneFields,
   toE164PhoneNumber,
 } from "@/lib/phone-e164";
@@ -319,7 +319,7 @@ export default function EditUserForm({
       ? toE164PhoneNumber(phone, formData.countryCode)
       : "";
     if (phone && !e164Phone) {
-      toast.error(PHONE_E164_ERROR);
+      toast.error(getPhoneValidationError(phone, formData.countryCode));
       return;
     }
 
@@ -422,34 +422,19 @@ export default function EditUserForm({
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="edit-countryCode">Country Code</Label>
-                <CountryCodeSelect
-                  id="edit-countryCode"
-                  value={formData.countryCode}
-                  onChange={(countryCode) =>
-                    setFormData((prev) => ({ ...prev, countryCode }))
-                  }
-                  disabled={submitting}
-                  placeholder="+234"
-                  className="mt-1 cursor-pointer"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-phoneNumber">Phone Number</Label>
-                <Input
-                  id="edit-phoneNumber"
-                  name="phoneNumber"
-                  type="tel"
-                  inputMode="numeric"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  placeholder="8100001427"
-                  className="mt-1"
-                />
-              </div>
-            </div>
+            <InvitePhoneNumberField
+              id="edit-phoneNumber"
+              label="Phone Number"
+              showWhatsAppHint={false}
+              required={false}
+              countryCode={formData.countryCode}
+              phoneNumber={formData.phoneNumber}
+              onCountryCodeChange={(countryCode) =>
+                setFormData((prev) => ({ ...prev, countryCode }))
+              }
+              onPhoneNumberChange={handleChange}
+              disabled={submitting}
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

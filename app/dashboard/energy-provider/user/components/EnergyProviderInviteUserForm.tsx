@@ -17,7 +17,7 @@ import { buildEnergyProviderInviteHomeOwnerPayload } from "@/lib/invite-user-rol
 import InvitePhoneNumberField from "@/components/invite/InvitePhoneNumberField";
 import {
   DEFAULT_COUNTRY_CODE,
-  PHONE_E164_ERROR,
+  getPhoneValidationError,
   toE164PhoneNumber,
 } from "@/lib/phone-e164";
 
@@ -188,7 +188,12 @@ export default function EnergyProviderInviteUserForm({
       formData.countryCode,
     );
     if (!e164Phone) {
-      return toast.error(PHONE_E164_ERROR);
+      return toast.error(
+        getPhoneValidationError(
+          formData.phoneNumber,
+          formData.countryCode,
+        ),
+      );
     }
     if (!formData.firstName.trim()) return toast.error("Please provide first name.");
     if (!formData.lastName.trim()) return toast.error("Please provide last name.");

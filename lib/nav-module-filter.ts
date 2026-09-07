@@ -77,18 +77,19 @@ export function filterNavItemsByEstateModules<T extends NavItemWithModule>(
 
     const children = item.children;
     if (children?.length) {
-      const filteredChildren = children.filter((child) => {
-        const key = child.moduleKey ?? child.module;
-        if (!key) return true;
-        return isNavModuleEnabled(key, estateModules);
-      });
-
       const parentKey = item.moduleKey ?? item.module;
       const parentEnabled = parentKey
         ? isNavModuleEnabled(parentKey, estateModules)
-        : false;
+        : true;
 
-      if (filteredChildren.length === 0 && !parentEnabled) return [];
+      const filteredChildren = children.filter((child) => {
+        const key = child.moduleKey ?? child.module;
+        // Children without their own key inherit the parent module gate
+        // (e.g. User Management → Residents/Staff/Security under "users").
+        if (!key) return parentEnabled;
+        return isNavModuleEnabled(key, estateModules);
+      });
+
       if (filteredChildren.length === 0) return [];
 
       return [{ ...item, children: filteredChildren }];

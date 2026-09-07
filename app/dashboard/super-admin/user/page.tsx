@@ -42,10 +42,11 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { UserStatusModal } from "./components/UserStatusModal";
 import {
   DEFAULT_ESTATE_USER_ROLE,
-  ESTATE_USER_ROLE_FILTER_OPTIONS,
+  DEFAULT_SUPER_ADMIN_COMPANY_SCOPE_ROLE,
   ESTATE_SCOPE_ROLE_FILTER_OPTIONS,
-  getEstateUserRoleTotalLabel,
-  type EstateUserRoleFilter,
+  SUPER_ADMIN_COMPANY_SCOPE_ROLE_FILTER_OPTIONS,
+  getCompanyUserRoleTotalLabel,
+  type CompanyUserRoleFilter,
 } from "@/lib/estate-user-roles";
 
 interface UserAddress {
@@ -183,7 +184,7 @@ export default function SuperAdminUserPage() {
   );
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [roleFilter, setRoleFilter] = useState<EstateUserRoleFilter>(
+  const [roleFilter, setRoleFilter] = useState<CompanyUserRoleFilter>(
     DEFAULT_ESTATE_USER_ROLE,
   );
   const [editingUser, setEditingUser] = useState<SuperAdminUserData | null>(
@@ -349,20 +350,29 @@ export default function SuperAdminUserPage() {
     if (scope === "estate") {
       setSelectedCompany(null);
       if (estateOptions.length) setSelectedEstate(estateOptions[0]);
-      // Company role is not valid under estate filter.
-      if (roleFilter === "company") {
+      // Company / energy provider roles are not valid under estate filter.
+      if (
+        roleFilter === "company" ||
+        roleFilter === "energy provider"
+      ) {
         setRoleFilter(DEFAULT_ESTATE_USER_ROLE);
       }
     } else {
       setSelectedEstate(null);
       if (companyOptions.length) setSelectedCompany(companyOptions[0]);
+      const companyRoleValid = SUPER_ADMIN_COMPANY_SCOPE_ROLE_FILTER_OPTIONS.some(
+        (o) => o.value === roleFilter,
+      );
+      if (!companyRoleValid) {
+        setRoleFilter(DEFAULT_SUPER_ADMIN_COMPANY_SCOPE_ROLE);
+      }
     }
   };
 
   const roleFilterOptions =
     filterScope === "estate"
       ? ESTATE_SCOPE_ROLE_FILTER_OPTIONS
-      : ESTATE_USER_ROLE_FILTER_OPTIONS;
+      : SUPER_ADMIN_COMPANY_SCOPE_ROLE_FILTER_OPTIONS;
 
   const handleInviteModal = () => {
     setInviteOpen(true);
@@ -681,8 +691,10 @@ export default function SuperAdminUserPage() {
                   value={roleFilterOptions.find((o) => o.value === roleFilter)}
                   onChange={(option) =>
                     setRoleFilter(
-                      (option?.value as EstateUserRoleFilter) ??
-                        DEFAULT_ESTATE_USER_ROLE,
+                      (option?.value as CompanyUserRoleFilter) ??
+                        (filterScope === "company"
+                          ? DEFAULT_SUPER_ADMIN_COMPANY_SCOPE_ROLE
+                          : DEFAULT_ESTATE_USER_ROLE),
                     )
                   }
                   isSearchable={false}
@@ -705,7 +717,7 @@ export default function SuperAdminUserPage() {
           {(() => {
             const stats = [
               {
-                label: getEstateUserRoleTotalLabel(roleFilter),
+                label: getCompanyUserRoleTotalLabel(roleFilter),
                 value: userPagination?.total ?? 0,
                 icon: UsersRound,
                 color: "bg-[#FEE6D480]",

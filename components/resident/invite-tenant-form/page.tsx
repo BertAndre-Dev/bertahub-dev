@@ -267,7 +267,7 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import InvitePhoneNumberField from "@/components/invite/InvitePhoneNumberField";
 import {
   DEFAULT_COUNTRY_CODE,
-  PHONE_E164_ERROR,
+  getPhoneValidationError,
   toE164PhoneNumber,
 } from "@/lib/phone-e164";
 
@@ -393,7 +393,12 @@ export default function InviteTenantForm({ close }: InviteTenantFormProps) {
       formData.countryCode,
     );
     if (!e164Phone) {
-      return toast.error(PHONE_E164_ERROR);
+      return toast.error(
+        getPhoneValidationError(
+          formData.phoneNumber,
+          formData.countryCode,
+        ),
+      );
     }
     if (!formData.addressId) return toast.error("Please select an address.");
 

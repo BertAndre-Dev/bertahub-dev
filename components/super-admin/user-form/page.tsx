@@ -23,7 +23,7 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import type { AppDispatch, RootState } from "@/redux/store";
 import {
   DEFAULT_COUNTRY_CODE,
-  PHONE_E164_ERROR,
+  getPhoneValidationError,
   toE164PhoneNumber,
 } from "@/lib/phone-e164";
 
@@ -170,7 +170,12 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({ close }) => {
       formData.countryCode,
     );
     if (!e164Phone) {
-      return toast.error(PHONE_E164_ERROR);
+      return toast.error(
+        getPhoneValidationError(
+          formData.phoneNumber,
+          formData.countryCode,
+        ),
+      );
     }
     if (!formData.firstName) return toast.error("Please provide first name.");
     if (!formData.lastName) return toast.error("Please provide last name.");

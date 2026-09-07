@@ -29,6 +29,26 @@ export const ESTATE_USER_ROLE_FILTER_OPTIONS: {
 export const ESTATE_SCOPE_ROLE_FILTER_OPTIONS =
   ESTATE_USER_ROLE_FILTER_OPTIONS.filter((o) => o.value !== "company");
 
+/**
+ * Super-admin user management when Company scope is toggled.
+ * Resident / security / admin / estate admin are estate-only filters.
+ */
+export const SUPER_ADMIN_COMPANY_SCOPE_ROLE_FILTER_OPTIONS: {
+  label: string;
+  value: CompanyUserRoleFilter;
+}[] = [
+  // { label: "Residents", value: "resident" },
+  { label: "Staff", value: "staff" },
+  // { label: "Security", value: "security" },
+  { label: "Company", value: "company" },
+  // { label: "Admins", value: "admin" },
+  // { label: "Estate admins", value: "estate admin" },
+  { label: "Energy providers", value: "energy provider" },
+];
+
+export const DEFAULT_SUPER_ADMIN_COMPANY_SCOPE_ROLE: CompanyUserRoleFilter =
+  SUPER_ADMIN_COMPANY_SCOPE_ROLE_FILTER_OPTIONS[0]?.value ?? "staff";
+
 /** Stats card label for the active role filter, e.g. "Total Residents". */
 export function getEstateUserRoleTotalLabel(
   role: EstateUserRoleFilter,
