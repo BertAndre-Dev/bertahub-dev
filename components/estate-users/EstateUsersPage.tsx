@@ -582,7 +582,7 @@ export function EstateUsersPage({
                     }}
                     title="View user details"
                     disabled={!item.id}
-                    className="text-[#0150AC] hover:bg-blue-50 hover:text-[#60A5FA]"
+                    className="text-[#0150AC] hover:bg-blue-50 hover:text-[#01408A]"
                   >
                     <Eye className="w-4 h-4" />
                   </Button>

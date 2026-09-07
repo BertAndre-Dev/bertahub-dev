@@ -472,7 +472,7 @@ export default function CompanyUsersPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-[#0150AC] hover:bg-blue-50 hover:text-[#60A5FA] cursor-pointer"
+                      className="text-[#0150AC] hover:bg-blue-50 hover:text-[#01408A] cursor-pointer"
                       onClick={() => {
                         const id = userRowId(item);
                         if (id) router.push(`/dashboard/company/users/${id}`);

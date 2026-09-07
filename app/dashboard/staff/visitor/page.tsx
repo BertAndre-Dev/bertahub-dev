@@ -439,7 +439,7 @@ export default function AdminVisitorManagement() {
                 variant="ghost"
                 size="sm"
                 onClick={() => openVerifyModal(item)}
-                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
                 title="Verify visitor"
               >
                 <ShieldCheck className="w-5 h-5" />
