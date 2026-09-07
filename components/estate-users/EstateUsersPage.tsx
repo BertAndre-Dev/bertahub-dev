@@ -496,6 +496,8 @@ export function EstateUsersPage({
 
   const showResidentColumns = roleFilter === "resident";
   const showStaffColumns = roleFilter === "staff";
+  const hideActionsColumn =
+    roleFilter === "admin" || roleFilter === "security";
 
   const columns = [
     {
@@ -562,66 +564,120 @@ export function EstateUsersPage({
         </span>
       ),
     },
-    {
-      key: "actions",
-      header: "Actions",
-      exportable: false,
-      render: (item: AdminUserData) => (
-        <div className="flex items-center gap-1">
-          {item.role?.toLowerCase() === "resident" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (item.id) router.push(`${basePath}/${item.id}`);
-              }}
-              title="View user details"
-              disabled={!item.id}
-              className="text-[#0150AC] hover:bg-blue-50 hover:text-[#60A5FA]"
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
-          )}
+    // Admin & security: hide Actions column
+    ...(!hideActionsColumn
+      ? [
+          {
+            key: "actions",
+            header: "Actions",
+            exportable: false,
+            render: (item: AdminUserData) => (
+              <div className="flex items-center gap-1">
+                {item.role?.toLowerCase() === "resident" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (item.id) router.push(`${basePath}/${item.id}`);
+                    }}
+                    title="View user details"
+                    disabled={!item.id}
+                    className="text-[#0150AC] hover:bg-blue-50 hover:text-[#60A5FA]"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                )}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEditUser(item)}
-            title="Edit user details"
-          >
-            <Edit className="w-4 h-4 text-blue-600" />
-          </Button>
+                {/* Resident: edit / suspend / delete commented out */}
+                {roleFilter !== "resident" ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditUser(item)}
+                      title="Edit user details"
+                    >
+                      <Edit className="w-4 h-4 text-blue-600" />
+                    </Button>
 
-          {item.isActive ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => openSuspendModal(item)}
-              title="Suspend user"
-            >
-              <PowerOff className="w-4 h-4 text-red-600" />
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleActivateUser(item)}
-              title="Activate user"
-            >
-              <Power className="w-4 h-4 text-green-600" />
-            </Button>
-          )}
+                    {item.isActive ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openSuspendModal(item)}
+                        title="Suspend user"
+                      >
+                        <PowerOff className="w-4 h-4 text-red-600" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleActivateUser(item)}
+                        title="Activate user"
+                      >
+                        <Power className="w-4 h-4 text-green-600" />
+                      </Button>
+                    )}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDeleteUser(item.id, item.firstName)}
-          >
-            <Trash2 className="w-4 h-4 text-red-600" />
-          </Button>
-        </div>
-      ),
-    },
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        handleDeleteUser(item.id, item.firstName)
+                      }
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </Button>
+                  </>
+                ) : null}
+                {/* <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEditUser(item)}
+                  title="Edit user details"
+                >
+                  <Edit className="w-4 h-4 text-blue-600" />
+                </Button>
+
+                {item.isActive ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openSuspendModal(item)}
+                    title="Suspend user"
+                  >
+                    <PowerOff className="w-4 h-4 text-red-600" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleActivateUser(item)}
+                    title="Activate user"
+                  >
+                    <Power className="w-4 h-4 text-green-600" />
+                  </Button>
+                )}
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeleteUser(item.id, item.firstName)}
+                >
+                  <Trash2 className="w-4 h-4 text-red-600" />
+                </Button> */}
+              </div>
+            ),
+          },
+        ]
+      : []),
+    // {
+    //   key: "actions",
+    //   header: "Actions",
+    //   exportable: false,
+    //   render: (item: AdminUserData) => ( ... ),
+    // },
   ];
 
   return (

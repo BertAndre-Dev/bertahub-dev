@@ -388,6 +388,8 @@ export default function CompanyUsersPage() {
 
   const showResidentColumns = roleFilter === "resident";
   const showStaffColumns = roleFilter === "staff";
+  const hideActionsColumn =
+    roleFilter === "admin" || roleFilter === "security";
 
   const columns = useMemo(
     () => [
@@ -455,57 +457,122 @@ export default function CompanyUsersPage() {
           </span>
         ),
       },
-      {
-        key: "actions" as const,
-        header: "Actions",
-        exportable: false,
-        render: (item: CompanyUserDetails) => (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="cursor-pointer"
-              onClick={() => handleEditUser(item)}
-              title="Edit user details"
-            >
-              <Edit className="w-4 h-4 text-blue-600" />
-            </Button>
-            {item.isActive ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="cursor-pointer"
-                onClick={() => openSuspendModal(item)}
-                title="Suspend user"
-              >
-                <PowerOff className="w-4 h-4 text-red-600" />
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="cursor-pointer"
-                onClick={() => openActivateModal(item)}
-                title="Activate user"
-              >
-                <Power className="w-4 h-4 text-green-600" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="cursor-pointer"
-              onClick={() => handleDeleteUser(userRowId(item), item.firstName)}
-              title="Delete user"
-            >
-              <Trash2 className="w-4 h-4 text-red-600" />
-            </Button>
-          </div>
-        ),
-      },
+      // Admin & security: hide Actions column
+      ...(!hideActionsColumn
+        ? [
+            {
+              key: "actions" as const,
+              header: "Actions",
+              exportable: false,
+              render: (item: CompanyUserDetails) => (
+                <div className="flex items-center gap-1">
+                  {/* Resident: edit / suspend / delete commented out */}
+                  {roleFilter !== "resident" ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="cursor-pointer"
+                        onClick={() => handleEditUser(item)}
+                        title="Edit user details"
+                      >
+                        <Edit className="w-4 h-4 text-blue-600" />
+                      </Button>
+                      {item.isActive ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="cursor-pointer"
+                          onClick={() => openSuspendModal(item)}
+                          title="Suspend user"
+                        >
+                          <PowerOff className="w-4 h-4 text-red-600" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="cursor-pointer"
+                          onClick={() => openActivateModal(item)}
+                          title="Activate user"
+                        >
+                          <Power className="w-4 h-4 text-green-600" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="cursor-pointer"
+                        onClick={() =>
+                          handleDeleteUser(userRowId(item), item.firstName)
+                        }
+                        title="Delete user"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                    </>
+                  ) : null}
+                  {/* <Button
+                    variant="ghost"
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={() => handleEditUser(item)}
+                    title="Edit user details"
+                  >
+                    <Edit className="w-4 h-4 text-blue-600" />
+                  </Button>
+                  {item.isActive ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cursor-pointer"
+                      onClick={() => openSuspendModal(item)}
+                      title="Suspend user"
+                    >
+                      <PowerOff className="w-4 h-4 text-red-600" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cursor-pointer"
+                      onClick={() => openActivateModal(item)}
+                      title="Activate user"
+                    >
+                      <Power className="w-4 h-4 text-green-600" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={() =>
+                      handleDeleteUser(userRowId(item), item.firstName)
+                    }
+                    title="Delete user"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-600" />
+                  </Button> */}
+                </div>
+              ),
+            },
+          ]
+        : []),
+      // {
+      //   key: "actions" as const,
+      //   header: "Actions",
+      //   ...
+      // },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pagination?.currentPage, showResidentColumns, showStaffColumns, designationNames],
+    [
+      pagination?.currentPage,
+      showResidentColumns,
+      showStaffColumns,
+      designationNames,
+      hideActionsColumn,
+      roleFilter,
+    ],
   );
 
   const stats = useMemo(
