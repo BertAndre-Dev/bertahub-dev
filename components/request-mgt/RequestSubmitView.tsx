@@ -47,11 +47,13 @@ import {
   getCurrentRequestStep,
   getRequestStatusStyle,
   isUserAssignedToCurrentStep,
+  canUserCancelRequest,
 } from "@/lib/request-record";
 import {
   extractSignedInUserEmail,
   extractSignedInUserIds,
 } from "@/lib/user-id";
+import { selectUserRole } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 import {
   openAttachmentInNewTab,
 } from "@/lib/download-attachment";
@@ -147,6 +149,7 @@ export default function RequestSubmitView({
   );
   const signedInUserIds = extractSignedInUserIds(signedInUser);
   const signedInUserEmail = extractSignedInUserEmail(signedInUser);
+  const role = useSelector(selectUserRole);
 
   const { page, pageSize, search, statusFilter } = ui;
   const listLoading = isPending(getListStatus);
@@ -291,8 +294,11 @@ export default function RequestSubmitView({
   );
   const canDecide =
     viewingLive?.status === "pending_approval" && assignedToCurrentStep;
-  const canCancel =
-    viewingLive?.status === "pending_approval" && assignedToCurrentStep;
+  const canCancel = canUserCancelRequest(viewingLive, {
+    userId: signedInUserIds,
+    email: signedInUserEmail,
+    role,
+  });
 
   useEffect(() => {
     setComment("");

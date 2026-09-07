@@ -28,12 +28,14 @@ import {
   getCurrentRequestStep,
   getRequestStatusStyle,
   isUserAssignedToCurrentStep,
+  canUserCancelRequest,
   formatStepAssignees,
 } from "@/lib/request-record";
 import {
   extractSignedInUserEmail,
   extractSignedInUserIds,
 } from "@/lib/user-id";
+import { selectUserRole } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 
 const STATUS_LABELS: Record<ScopedRequestStatus, string> = {
   draft: "Draft",
@@ -114,6 +116,7 @@ export default function RequestDetailModal({
   );
   const signedInUserIds = extractSignedInUserIds(signedInUser);
   const signedInUserEmail = extractSignedInUserEmail(signedInUser);
+  const role = useSelector(selectUserRole);
 
   const detailLoading = isBusy(getByIdStatus);
   const deciding = isBusy(decideStatus);
@@ -157,9 +160,11 @@ export default function RequestDetailModal({
   );
   const canDecide =
     item?.status === "pending_approval" && assignedToCurrentStep;
-  const canCancel =
-    assignedToCurrentStep &&
-    (item?.status === "pending_approval" || item?.status === "draft");
+  const canCancel = canUserCancelRequest(item, {
+    userId: signedInUserIds,
+    email: signedInUserEmail,
+    role,
+  });
   const currentAssignees = item
     ? formatStepAssignees(getCurrentRequestStep(item))
     : "—";

@@ -182,6 +182,85 @@ export function isUserAssignedToCurrentStep(
   });
 }
 
+/** True when the signed-in user is the request creator (by id or email). */
+export function isRequestCreator(
+  createdBy: unknown,
+  userId: string | string[] | null | undefined,
+  email?: string | null,
+): boolean {
+  const ids = (Array.isArray(userId) ? userId : [userId])
+    .map((id) => normalizeUserId(id))
+    .filter(Boolean);
+  const normalizedEmail = email?.trim().toLowerCase() ?? "";
+  if (ids.length === 0 && !normalizedEmail) return false;
+
+  if (typeof createdBy === "string") {
+    if (ids.some((uid) => isSameUserId(createdBy, uid))) return true;
+    const asEmail = createdBy.trim().toLowerCase();
+    return Boolean(
+      normalizedEmail && asEmail.includes("@") && asEmail === normalizedEmail,
+    );
+  }
+
+  if (!createdBy || typeof createdBy !== "object") return false;
+  const actor = createdBy as {
+    id?: unknown;
+    _id?: unknown;
+    userId?: unknown;
+    email?: unknown;
+  };
+
+  if (
+    ids.some(
+      (uid) =>
+        isSameUserId(actor.id, uid) ||
+        isSameUserId(actor._id, uid) ||
+        isSameUserId(actor.userId, uid),
+    )
+  ) {
+    return true;
+  }
+
+  const actorEmail =
+    typeof actor.email === "string" ? actor.email.trim().toLowerCase() : "";
+  return Boolean(
+    normalizedEmail && actorEmail && actorEmail === normalizedEmail,
+  );
+}
+
+/** Roles the API treats as able to cancel any cancellable request. */
+export function isRequestCancelAdminRole(
+  role: string | null | undefined,
+): boolean {
+  const key = (role ?? "").toLowerCase().trim();
+  return (
+    key === "admin" ||
+    key === "estate admin" ||
+    key === "company" ||
+    key === "super admin"
+  );
+}
+
+/**
+ * Cancel is limited to the creator or an admin (API: 400 otherwise).
+ * Allowed while the request is still draft or pending approval.
+ */
+export function canUserCancelRequest(
+  item: { status?: string; createdBy?: unknown } | null | undefined,
+  opts: {
+    userId: string | string[] | null | undefined;
+    email?: string | null;
+    role?: string | null;
+  },
+): boolean {
+  if (!item) return false;
+  const status = (item.status ?? "").toLowerCase().trim();
+  if (status !== "pending_approval" && status !== "draft") return false;
+
+  if (isRequestCancelAdminRole(opts.role)) return true;
+  return isRequestCreator(item.createdBy, opts.userId, opts.email);
+}
+
 export function currentStepAllowsReject(item: {
   currentStepOrder?: number;
   steps?: RequestWorkflowStep[];
