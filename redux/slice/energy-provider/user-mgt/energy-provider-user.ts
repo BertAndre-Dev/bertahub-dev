@@ -120,9 +120,25 @@ export const deleteEnergyProviderUser = createAsyncThunk(
 /** PUT /api/v1/user-mgt/{id}/suspend-user */
 export const suspendEnergyProviderUser = createAsyncThunk(
   "energy-provider-user/suspendEnergyProviderUser",
-  async (id: string, { rejectWithValue }) => {
+  async (
+    payload: { id: string; reason: string },
+    { rejectWithValue },
+  ) => {
+    const id = payload.id?.trim();
+    const reason = payload.reason?.trim() ?? "";
+    if (!id) {
+      return rejectWithValue({ message: "User id is required." });
+    }
+    if (reason.length < 3) {
+      return rejectWithValue({
+        message: "A suspension reason of at least 3 characters is required.",
+      });
+    }
     try {
-      const res = await axiosInstance.put(`/api/v1/user-mgt/${id}/suspend-user`);
+      const res = await axiosInstance.put(
+        `/api/v1/user-mgt/${id}/suspend-user`,
+        { reason },
+      );
       return res.data;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
@@ -136,9 +152,25 @@ export const suspendEnergyProviderUser = createAsyncThunk(
 /** PUT /api/v1/user-mgt/{id}/activate-user */
 export const activateEnergyProviderUser = createAsyncThunk(
   "energy-provider-user/activateEnergyProviderUser",
-  async (id: string, { rejectWithValue }) => {
+  async (
+    payload: { id: string; note: string },
+    { rejectWithValue },
+  ) => {
+    const id = payload.id?.trim();
+    const note = payload.note?.trim() ?? "";
+    if (!id) {
+      return rejectWithValue({ message: "User id is required." });
+    }
+    if (note.length < 3) {
+      return rejectWithValue({
+        message: "An activation note of at least 3 characters is required.",
+      });
+    }
     try {
-      const res = await axiosInstance.put(`/api/v1/user-mgt/${id}/activate-user`);
+      const res = await axiosInstance.put(
+        `/api/v1/user-mgt/${id}/activate-user`,
+        { note },
+      );
       return res.data;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };

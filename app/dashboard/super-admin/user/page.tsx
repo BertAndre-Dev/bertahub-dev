@@ -78,6 +78,9 @@ interface SuperAdminUserData {
   residentType?: string | null;
   addressIds?: UserAddress[];
   serviceChargesPaidForAddresses?: string[];
+  suspendedAt?: string | null;
+  suspendedBy?: string | null;
+  suspensionReason?: string | null;
 }
 
 function formatAddressLabel(data?: UserAddress["data"]) {
@@ -415,16 +418,16 @@ export default function SuperAdminUserPage() {
     user.email ||
     "this user";
 
-  const handleConfirmStatus = async () => {
+  const handleConfirmStatus = async (text: string) => {
     const user = statusItem;
     if (!user?.id) return;
     setStatusSubmitting(true);
     try {
       if (statusMode === "suspend") {
-        await dispatch(suspendUser(user.id)).unwrap();
+        await dispatch(suspendUser({ id: user.id, reason: text })).unwrap();
         toast.info(`${user.firstName ?? "User"} has been suspended.`);
       } else {
-        await dispatch(activateUser(user.id)).unwrap();
+        await dispatch(activateUser({ id: user.id, note: text })).unwrap();
         toast.success(`${user.firstName ?? "User"} has been activated.`);
       }
       closeStatusModal();
@@ -434,6 +437,7 @@ export default function SuperAdminUserPage() {
     } catch (err: unknown) {
       const message = getApiErrorMessage(err);
       if (message) toast.error(message);
+      throw err;
     } finally {
       setStatusSubmitting(false);
     }
@@ -545,9 +549,42 @@ export default function SuperAdminUserPage() {
               : "bg-red-100 text-red-700"
           }`}
         >
-          {item.isActive ? "Active" : "Inactive"}
+          {item.isActive ? "Active" : "Suspended"}
         </span>
       ),
+      exportValue: (item: SuperAdminUserData) =>
+        item.isActive ? "Active" : "Suspended",
+    },
+    {
+      key: "suspensionReason",
+      header: "Suspension reason",
+      render: (item: SuperAdminUserData) =>
+        item.isActive === false
+          ? item.suspensionReason?.trim() || "—"
+          : "—",
+      exportValue: (item: SuperAdminUserData) =>
+        item.isActive === false ? item.suspensionReason?.trim() || "" : "",
+    },
+    {
+      key: "suspendedAt",
+      header: "Suspended at",
+      render: (item: SuperAdminUserData) => {
+        if (item.isActive !== false || !item.suspendedAt) return "—";
+        const d = new Date(item.suspendedAt);
+        return Number.isNaN(d.getTime())
+          ? "—"
+          : d.toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+      },
+      exportValue: (item: SuperAdminUserData) =>
+        item.isActive === false && item.suspendedAt
+          ? String(item.suspendedAt)
+          : "",
     },
     {
       key: "actions",

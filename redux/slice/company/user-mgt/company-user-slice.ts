@@ -35,6 +35,9 @@ export interface CompanyUserDetails {
     designationId?: string | null;
     isCurrent?: boolean;
   }>;
+  suspendedAt?: string | null;
+  suspendedBy?: string | null;
+  suspensionReason?: string | null;
 }
 
 export interface Pagination {

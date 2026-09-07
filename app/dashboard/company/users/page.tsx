@@ -333,17 +333,17 @@ export default function CompanyUsersPage() {
     user.email ||
     "this user";
 
-  const handleConfirmStatus = async () => {
+  const handleConfirmStatus = async (text: string) => {
     const user = statusItem;
     const id = user ? userRowId(user) : "";
     if (!id) return;
     setStatusSubmitting(true);
     try {
       if (statusMode === "suspend") {
-        await dispatch(suspendCompanyUser(id)).unwrap();
+        await dispatch(suspendCompanyUser({ id, reason: text })).unwrap();
         toast.info(`${user?.firstName ?? "User"} has been suspended.`);
       } else {
-        await dispatch(activateCompanyUser(id)).unwrap();
+        await dispatch(activateCompanyUser({ id, note: text })).unwrap();
         toast.success(`${user?.firstName ?? "User"} has been activated.`);
       }
       closeStatusModal();
@@ -351,6 +351,7 @@ export default function CompanyUsersPage() {
     } catch (err: unknown) {
       const message = getApiErrorMessage(err);
       if (message) toast.error(message);
+      throw err;
     } finally {
       setStatusSubmitting(false);
     }
@@ -455,9 +456,42 @@ export default function CompanyUsersPage() {
                 : "bg-red-100 text-red-700"
             }`}
           >
-            {item.isActive ? "Active" : "Inactive"}
+            {item.isActive ? "Active" : "Suspended"}
           </span>
         ),
+        exportValue: (item: CompanyUserDetails) =>
+          item.isActive ? "Active" : "Suspended",
+      },
+      {
+        key: "suspensionReason" as const,
+        header: "Suspension reason",
+        render: (item: CompanyUserDetails) =>
+          item.isActive === false
+            ? item.suspensionReason?.trim() || "—"
+            : "—",
+        exportValue: (item: CompanyUserDetails) =>
+          item.isActive === false ? item.suspensionReason?.trim() || "" : "",
+      },
+      {
+        key: "suspendedAt" as const,
+        header: "Suspended at",
+        render: (item: CompanyUserDetails) => {
+          if (item.isActive !== false || !item.suspendedAt) return "—";
+          const d = new Date(item.suspendedAt);
+          return Number.isNaN(d.getTime())
+            ? "—"
+            : d.toLocaleString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+        },
+        exportValue: (item: CompanyUserDetails) =>
+          item.isActive === false && item.suspendedAt
+            ? String(item.suspendedAt)
+            : "",
       },
       // Admin & security: hide Actions column
       ...(!hideActionsColumn

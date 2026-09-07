@@ -335,6 +335,18 @@ function UserProfileDetails({
             label="Invitation"
             value={formatLabel(user.invitationStatus) || "—"}
           />
+          {user.isActive === false ? (
+            <>
+              <DetailField
+                label="Suspension reason"
+                value={user.suspensionReason?.trim() || "—"}
+              />
+              <DetailField
+                label="Suspended at"
+                value={formatDateTime(user.suspendedAt)}
+              />
+            </>
+          ) : null}
           {user.serviceCharge != null ? (
             <DetailField
               label="Service charge"
@@ -395,6 +407,16 @@ function UserProfileDetails({
 }
 
 type UserIdThunk = AsyncThunk<unknown, string, object>;
+type SuspendUserThunk = AsyncThunk<
+  unknown,
+  { id: string; reason: string },
+  object
+>;
+type ActivateUserThunk = AsyncThunk<
+  unknown,
+  { id: string; note: string },
+  object
+>;
 type UpdateUserThunk = AsyncThunk<
   unknown,
   { id: string; data: UpdateUserDetailsData },
@@ -403,8 +425,8 @@ type UpdateUserThunk = AsyncThunk<
 
 export type UserMgtActions = {
   getUser: UserIdThunk;
-  activateUser: UserIdThunk;
-  suspendUser: UserIdThunk;
+  activateUser: ActivateUserThunk;
+  suspendUser: SuspendUserThunk;
   deleteUser: UserIdThunk;
   updateUser?: UpdateUserThunk;
 };
@@ -444,7 +466,9 @@ export default function UserDetailView({
   const [visitorsTotal, setVisitorsTotal] = useState(0);
 
   const [suspendOpen, setSuspendOpen] = useState(false);
+  const [activateOpen, setActivateOpen] = useState(false);
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
+  const [activateSubmitting, setActivateSubmitting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -686,34 +710,37 @@ export default function UserDetailView({
     return number || code || "—";
   }, [user]);
 
-  const handleActivate = async () => {
+  const handleActivateConfirm = async (note: string) => {
     const id = getUserId(user);
     if (!id) return;
-    setActionLoading(true);
+    setActivateSubmitting(true);
     try {
-      await dispatch(actions.activateUser(id)).unwrap();
+      await dispatch(actions.activateUser({ id, note })).unwrap();
       toast.success(`${displayName} has been activated.`);
+      setActivateOpen(false);
       await fetchUser();
     } catch (err: unknown) {
       const message = getApiErrorMessage(err);
       if (message) toast.error(message);
+      throw err;
     } finally {
-      setActionLoading(false);
+      setActivateSubmitting(false);
     }
   };
 
-  const handleSuspendConfirm = async (_reason: string) => {
+  const handleSuspendConfirm = async (reason: string) => {
     const id = getUserId(user);
     if (!id) return;
     setSuspendSubmitting(true);
     try {
-      await dispatch(actions.suspendUser(id)).unwrap();
+      await dispatch(actions.suspendUser({ id, reason })).unwrap();
       toast.info(`${displayName} has been suspended.`);
       setSuspendOpen(false);
       await fetchUser();
     } catch (err: unknown) {
       const message = getApiErrorMessage(err);
       if (message) toast.error(message);
+      throw err;
     } finally {
       setSuspendSubmitting(false);
     }
@@ -1024,7 +1051,7 @@ export default function UserDetailView({
                         size="sm"
                         className="gap-2"
                         disabled={actionLoading}
-                        onClick={() => handleActivate()}
+                        onClick={() => setActivateOpen(true)}
                       >
                         <Power className="h-4 w-4" />
                       </Button>
@@ -1208,8 +1235,36 @@ export default function UserDetailView({
         tenantName={displayName}
         title="Suspend user"
         confirmLabel="Suspend"
+        requireReason
+        reasonLabel="Reason"
+        reasonPlaceholder="e.g. Outstanding service charge / policy violation"
+        description={
+          <>
+            Are you sure you want to suspend <strong>{displayName}</strong>?
+            Please provide a reason.
+          </>
+        }
         onConfirm={handleSuspendConfirm}
         loading={suspendSubmitting}
+      />
+
+      <SuspendRentModal
+        visible={activateOpen}
+        onClose={() => setActivateOpen(false)}
+        tenantName={displayName}
+        title="Activate user"
+        confirmLabel="Activate"
+        requireReason
+        reasonLabel="Note"
+        reasonPlaceholder="e.g. Service charge settled — account restored"
+        description={
+          <>
+            Are you sure you want to activate <strong>{displayName}</strong>?
+            Please add a short note.
+          </>
+        }
+        onConfirm={handleActivateConfirm}
+        loading={activateSubmitting}
       />
 
       <DeleteModal

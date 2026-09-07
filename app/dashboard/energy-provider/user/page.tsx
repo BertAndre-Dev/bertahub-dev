@@ -266,17 +266,21 @@ export default function EnergyProviderUserPage() {
     user.email ||
     "this user";
 
-  const handleConfirmStatus = async () => {
+  const handleConfirmStatus = async (text: string) => {
     const user = statusItem;
     const id = user ? userRowId(user) : "";
     if (!id) return;
     setStatusSubmitting(true);
     try {
       if (statusMode === "suspend") {
-        await dispatch(suspendEnergyProviderUser(id)).unwrap();
+        await dispatch(
+          suspendEnergyProviderUser({ id, reason: text }),
+        ).unwrap();
         toast.info(`${user?.firstName ?? "User"} has been suspended.`);
       } else {
-        await dispatch(activateEnergyProviderUser(id)).unwrap();
+        await dispatch(
+          activateEnergyProviderUser({ id, note: text }),
+        ).unwrap();
         toast.success(`${user?.firstName ?? "User"} has been activated.`);
       }
       closeStatusModal();
@@ -286,6 +290,7 @@ export default function EnergyProviderUserPage() {
         (err as { message?: string })?.message ??
           "Failed to update user status.",
       );
+      throw err;
     } finally {
       setStatusSubmitting(false);
     }

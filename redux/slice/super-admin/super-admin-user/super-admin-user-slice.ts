@@ -32,6 +32,9 @@ export interface SuperAdminUserDetails {
   addressId?: string;
   addressIds?: { id: string; data: Record<string, string> }[];
   residentType?: string;
+  suspendedAt?: string | null;
+  suspendedBy?: string | null;
+  suspensionReason?: string | null;
 }
 
 

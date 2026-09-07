@@ -15,8 +15,13 @@ export interface SuspendRentModalProps {
   readonly loading?: boolean;
   /** Modal title. Default "Suspend Rent". */
   readonly title?: string;
-  /** Whether the reason field is shown and required. Default false. */
+  /** Optional body override. Defaults to a suspend confirmation. */
+  readonly description?: React.ReactNode;
+  /** Whether the reason/note field is shown and required. Default false. */
   readonly requireReason?: boolean;
+  readonly reasonLabel?: string;
+  readonly reasonPlaceholder?: string;
+  readonly submittingLabel?: string;
 }
 
 export default function SuspendRentModal({
@@ -27,7 +32,11 @@ export default function SuspendRentModal({
   confirmLabel = "Suspend",
   loading = false,
   title = "Suspend Rent",
+  description,
   requireReason = false,
+  reasonLabel = "Reason",
+  reasonPlaceholder = "e.g. Payment default, lease violation",
+  submittingLabel,
 }: SuspendRentModalProps) {
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -36,8 +45,8 @@ export default function SuspendRentModal({
     e.preventDefault();
     const trimmed = reason.trim();
 
-    if (requireReason && !trimmed) {
-      setError("Reason is required.");
+    if (requireReason && trimmed.length < 3) {
+      setError("Please enter at least 3 characters.");
       return;
     }
 
@@ -57,19 +66,25 @@ export default function SuspendRentModal({
     onClose();
   };
 
+  const defaultDescription = (
+    <>
+      Are you sure you want to suspend{" "}
+      <strong>{tenantName || "this item"}</strong>?
+      {requireReason ? " Please provide a reason." : null}
+    </>
+  );
+
   return (
     <Modal visible={visible} onClose={handleClose}>
       <div className="p-2 max-w-md mx-auto">
         <h2 className="font-heading text-xl font-bold mb-1">{title}</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          Are you sure you want to suspend{" "}
-          <strong>{tenantName || "this item"}</strong>?
-          {requireReason && " Please provide a reason."}
+          {description ?? defaultDescription}
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {requireReason && (
+          {requireReason ? (
             <div>
-              <Label htmlFor="suspend-reason">Reason</Label>
+              <Label htmlFor="suspend-reason">{reasonLabel}</Label>
               <Input
                 id="suspend-reason"
                 value={reason}
@@ -77,16 +92,16 @@ export default function SuspendRentModal({
                   setReason(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="e.g. Payment default, lease violation"
+                placeholder={reasonPlaceholder}
                 className="mt-1"
                 disabled={loading}
                 autoFocus
               />
-              {error && (
+              {error ? (
                 <p className="text-sm text-destructive mt-1">{error}</p>
-              )}
+              ) : null}
             </div>
-          )}
+          ) : null}
           <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
@@ -97,7 +112,12 @@ export default function SuspendRentModal({
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Suspending…" : confirmLabel}
+              {loading
+                ? submittingLabel ||
+                  (confirmLabel.toLowerCase().includes("activate")
+                    ? "Activating…"
+                    : "Suspending…")
+                : confirmLabel}
             </Button>
           </div>
         </form>

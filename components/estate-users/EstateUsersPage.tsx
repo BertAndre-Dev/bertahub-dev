@@ -92,6 +92,9 @@ interface AdminUserData {
     designationId?: string;
     isCurrent?: boolean;
   }>;
+  suspendedAt?: string | null;
+  suspendedBy?: string | null;
+  suspensionReason?: string | null;
 }
 
 interface EstateOption {
@@ -141,8 +144,12 @@ export function EstateUsersPage({
   const [suspendUserItem, setSuspendUserItem] = useState<AdminUserData | null>(
     null,
   );
+  const [activateUserItem, setActivateUserItem] = useState<AdminUserData | null>(
+    null,
+  );
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [suspendSubmitting, setSuspendSubmitting] = useState(false);
+  const [activateSubmitting, setActivateSubmitting] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [roleFilter, setRoleFilter] = useState<EstateUserRoleFilter>(() =>
@@ -382,11 +389,18 @@ export function EstateUsersPage({
     setSuspendUserItem(user);
   };
 
-  const handleSuspendConfirm = async (_reason: string) => {
+  const openActivateModal = (user: AdminUserData) => {
+    if (!user.id || user.isActive) return;
+    setActivateUserItem(user);
+  };
+
+  const handleSuspendConfirm = async (reason: string) => {
     if (!suspendUserItem?.id) return;
     setSuspendSubmitting(true);
     try {
-      await dispatch(suspendUser(suspendUserItem.id)).unwrap();
+      await dispatch(
+        suspendUser({ id: suspendUserItem.id, reason }),
+      ).unwrap();
       toast.info(`${suspendUserItem.firstName} has been suspended.`);
       setSuspendUserItem(null);
       await fetchAdminUsers(1).catch((err: unknown) => {
@@ -396,16 +410,21 @@ export function EstateUsersPage({
     } catch (err: unknown) {
       const message = getApiErrorMessage(err);
       if (message) toast.error(message);
+      throw err;
     } finally {
       setSuspendSubmitting(false);
     }
   };
 
-  const handleActivateUser = async (user: AdminUserData) => {
-    if (!user.id) return;
+  const handleActivateConfirm = async (note: string) => {
+    if (!activateUserItem?.id) return;
+    setActivateSubmitting(true);
     try {
-      await dispatch(activateUser(user.id)).unwrap();
-      toast.success(`${user.firstName} has been activated.`);
+      await dispatch(
+        activateUser({ id: activateUserItem.id, note }),
+      ).unwrap();
+      toast.success(`${activateUserItem.firstName} has been activated.`);
+      setActivateUserItem(null);
       await fetchAdminUsers(1).catch((err: unknown) => {
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
@@ -413,6 +432,9 @@ export function EstateUsersPage({
     } catch (err: unknown) {
       const message = getApiErrorMessage(err);
       if (message) toast.error(message);
+      throw err;
+    } finally {
+      setActivateSubmitting(false);
     }
   };
 
@@ -560,9 +582,53 @@ export function EstateUsersPage({
           {item.invitationStatus === "completed"
             ? "Completed"
             : "Not Completed"}
-          {/* {item.serviceCharge ? "Yes" : "No"} */}
         </span>
       ),
+    },
+    {
+      key: "isActive",
+      header: "Status",
+      render: (item: AdminUserData) => (
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            item.isActive
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
+          {item.isActive ? "Active" : "Suspended"}
+        </span>
+      ),
+      exportValue: (item: AdminUserData) =>
+        item.isActive ? "Active" : "Suspended",
+    },
+    {
+      key: "suspensionReason",
+      header: "Suspension reason",
+      render: (item: AdminUserData) =>
+        item.isActive === false
+          ? item.suspensionReason?.trim() || "—"
+          : "—",
+      exportValue: (item: AdminUserData) =>
+        item.isActive === false ? item.suspensionReason?.trim() || "" : "",
+    },
+    {
+      key: "suspendedAt",
+      header: "Suspended at",
+      render: (item: AdminUserData) =>
+        item.isActive === false && item.suspendedAt
+          ? new Date(item.suspendedAt).toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "—",
+      exportValue: (item: AdminUserData) =>
+        item.isActive === false && item.suspendedAt
+          ? String(item.suspendedAt)
+          : "",
     },
     // Admin & security: hide Actions column
     ...(!hideActionsColumn
@@ -618,7 +684,7 @@ export function EstateUsersPage({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleActivateUser(item)}
+                        onClick={() => openActivateModal(item)}
                         title="Activate user"
                       className="text-green-600 hover:text-green-700"
                     >
@@ -662,7 +728,7 @@ export function EstateUsersPage({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleActivateUser(item)}
+                    onClick={() => openActivateModal(item)}
                     title="Activate user"
                       className="text-green-600 hover:text-green-700"
                     >
@@ -941,8 +1007,53 @@ export function EstateUsersPage({
           }
           title="Suspend user"
           confirmLabel="Suspend"
+          requireReason
+          reasonLabel="Reason"
+          reasonPlaceholder="e.g. Outstanding service charge / policy violation"
+          description={
+            <>
+              Are you sure you want to suspend{" "}
+              <strong>
+                {suspendUserItem
+                  ? `${suspendUserItem.firstName} ${suspendUserItem.lastName}`.trim() ||
+                    suspendUserItem.email
+                  : "this user"}
+              </strong>
+              ? Please provide a reason.
+            </>
+          }
           onConfirm={handleSuspendConfirm}
           loading={suspendSubmitting}
+        />
+
+        <SuspendRentModal
+          visible={!!activateUserItem}
+          onClose={() => setActivateUserItem(null)}
+          tenantName={
+            activateUserItem
+              ? `${activateUserItem.firstName} ${activateUserItem.lastName}`.trim() ||
+                activateUserItem.email
+              : ""
+          }
+          title="Activate user"
+          confirmLabel="Activate"
+          requireReason
+          reasonLabel="Note"
+          reasonPlaceholder="e.g. Service charge settled — account restored"
+          description={
+            <>
+              Are you sure you want to activate{" "}
+              <strong>
+                {activateUserItem
+                  ? `${activateUserItem.firstName} ${activateUserItem.lastName}`.trim() ||
+                    activateUserItem.email
+                  : "this user"}
+              </strong>
+              ? Please add a short note.
+            </>
+          }
+          onConfirm={handleActivateConfirm}
+          loading={activateSubmitting}
         />
       </div>
     

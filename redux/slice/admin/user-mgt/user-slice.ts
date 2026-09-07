@@ -35,6 +35,9 @@ export interface AdminUserDetails {
   addressIds?: AdminUserAddressRef[];
   residentType?: string;
   serviceCharge?: boolean;
+  suspendedAt?: string | null;
+  suspendedBy?: string | null;
+  suspensionReason?: string | null;
 }
 
 
