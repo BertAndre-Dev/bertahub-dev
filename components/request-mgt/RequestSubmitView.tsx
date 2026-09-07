@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { Check, ClipboardList, Paperclip, Plus } from "lucide-react";
+import { Check, ClipboardList, Paperclip, Plus, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ import {
   cancelStaffRequest,
   createStaffRequest,
   decideStaffRequest,
+  getStaffRequestById,
   getStaffRequestCategories,
   getStaffRequests,
   STAFF_REQUEST_STATUS_OPTIONS,
@@ -119,6 +121,9 @@ export default function RequestSubmitView({
   hideHeading = false,
 }: RequestSubmitViewProps) {
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
   const [viewing, setViewing] = useState<StaffRequestItem | null>(null);
   const [searchInput, setSearchInput] = useState("");
@@ -153,6 +158,54 @@ export default function RequestSubmitView({
   const fullPageLoading = bootstrapping || listLoading;
   const showOverlayLoader = fullPageLoading && !embedded;
   const showSectionLoader = fullPageLoading && embedded;
+
+  const clearRequestQuery = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (!params.has("id")) return;
+    params.delete("id");
+    params.delete("estateId");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  // Deep-link from notifications: /request?id=…
+  useEffect(() => {
+    const idFromUrl = searchParams.get("id")?.trim() || "";
+    if (!idFromUrl) return;
+    if (viewing?.id === idFromUrl) return;
+
+    const fromList = list.find((item) => item.id === idFromUrl);
+    if (fromList) {
+      setViewing(fromList);
+      return;
+    }
+
+    if (bootstrapping || listLoading || !estateId) return;
+
+    let cancelled = false;
+    dispatch(getStaffRequestById({ id: idFromUrl, estateId }))
+      .unwrap()
+      .then((item) => {
+        if (!cancelled) setViewing(item);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const message = getApiErrorMessage(err);
+        if (message) toast.error(message);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    bootstrapping,
+    dispatch,
+    estateId,
+    list,
+    listLoading,
+    searchParams,
+    viewing?.id,
+  ]);
 
   const loadRequests = useCallback(() => {
     if (!estateId) return Promise.resolve();
@@ -250,20 +303,28 @@ export default function RequestSubmitView({
     setViewing(null);
     setComment("");
     setConfirmCancel(false);
+    clearRequestQuery();
   };
 
-  const handleDecide = async () => {
+  const handleDecide = async (decision: "approve" | "reject") => {
     if (!viewingLive?.id) return;
+    const trimmed = comment.trim();
+    if (decision === "reject" && trimmed.length < 3) {
+      toast.error("A rejection reason of at least 3 characters is required.");
+      return;
+    }
     try {
       await dispatch(
         decideStaffRequest({
           id: viewingLive.id,
-          decision: "approve",
-          comment: comment.trim() || undefined,
+          decision,
+          comment: trimmed || undefined,
           estateId: estateId || viewingLive.estateId,
         }),
       ).unwrap();
-      toast.success("Request approved.");
+      toast.success(
+        decision === "approve" ? "Request approved." : "Request rejected.",
+      );
       closeViewing();
       await loadRequests();
     } catch (err: unknown) {
@@ -608,14 +669,14 @@ export default function RequestSubmitView({
                     <Label htmlFor="staff-request-decision-comment">
                       Decision note{" "}
                       <span className="text-muted-foreground font-normal">
-                        (optional)
+                        (required to reject, optional to approve)
                       </span>
                     </Label>
                     <Textarea
                       id="staff-request-decision-comment"
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
-                      placeholder="Add a note for this decision..."
+                      placeholder="Add a note or rejection reason..."
                       disabled={mutating}
                       className="min-h-24"
                     />
@@ -657,13 +718,24 @@ export default function RequestSubmitView({
                       </Button>
                     ) : null}
                     {canDecide ? (
-                      <Button
-                        disabled={mutating}
-                        onClick={() => void handleDecide()}
-                      >
-                        <Check className="w-4 h-4 mr-2" />
-                        Approve
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          className={requestDestructiveOutlineButtonClass}
+                          disabled={mutating}
+                          onClick={() => void handleDecide("reject")}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Reject
+                        </Button>
+                        <Button
+                          disabled={mutating}
+                          onClick={() => void handleDecide("approve")}
+                        >
+                          <Check className="w-4 h-4 mr-2" />
+                          Approve
+                        </Button>
+                      </>
                     ) : null}
                   </div>
                 )}

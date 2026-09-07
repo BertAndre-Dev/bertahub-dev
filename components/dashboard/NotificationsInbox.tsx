@@ -114,7 +114,11 @@ export function NotificationsInbox() {
       }
     }
 
-    const href = resolveNotificationHref(item.actionUrl, role || "admin");
+    const href = resolveNotificationHref(item.actionUrl, role || "admin", {
+      estateId: item.estateId,
+      relatedEntityId: item.relatedEntityId,
+      relatedEntityType: item.relatedEntityType,
+    });
     if (!href) return;
     if (/^https?:\/\//i.test(href)) {
       window.open(href, "_blank", "noopener,noreferrer");

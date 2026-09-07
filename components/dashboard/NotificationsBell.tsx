@@ -84,7 +84,11 @@ export function NotificationsBell() {
       }
     }
 
-    const href = resolveNotificationHref(item.actionUrl, role);
+    const href = resolveNotificationHref(item.actionUrl, role, {
+      estateId: item.estateId,
+      relatedEntityId: item.relatedEntityId,
+      relatedEntityType: item.relatedEntityType,
+    });
     if (!href) return;
     if (/^https?:\/\//i.test(href)) {
       window.open(href, "_blank", "noopener,noreferrer");

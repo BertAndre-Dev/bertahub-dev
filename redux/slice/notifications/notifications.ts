@@ -1,5 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
+import { decodeNotificationText } from "@/lib/notifications";
 
 export type NotificationStatus = string;
 
@@ -76,8 +77,8 @@ export function normalizeNotification(raw: unknown): NotificationItem {
     _id: id,
     userId: p.userId != null ? asString(p.userId) : undefined,
     type: asString(p.type),
-    title: asString(p.title),
-    message: asString(p.message),
+    title: decodeNotificationText(asString(p.title)),
+    message: decodeNotificationText(asString(p.message)),
     priority: asString(p.priority, "normal"),
     status: asString(p.status, "unread"),
     estateId: p.estateId != null ? asString(p.estateId) : undefined,

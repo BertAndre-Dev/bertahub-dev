@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { ClipboardList, Trash2 } from "lucide-react";
@@ -77,6 +78,9 @@ export default function RequestManagementView({
   hideHeading = false,
 }: RequestManagementViewProps) {
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const api = useMemo(() => getRequestScopeApi(scope), [scope]);
   const [searchInput, setSearchInput] = useState("");
   const [viewingId, setViewingId] = useState<string | null>(null);
@@ -84,6 +88,48 @@ export default function RequestManagementView({
     useState<ScopedRequestItem | null>(null);
   const [requestToDelete, setRequestToDelete] =
     useState<ScopedRequestItem | null>(null);
+
+  const clearRequestQuery = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (!params.has("id")) return;
+    params.delete("id");
+    params.delete("estateId");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  const closeDetail = useCallback(() => {
+    setViewingId(null);
+    setViewingFallback(null);
+    clearRequestQuery();
+  }, [clearRequestQuery]);
+
+  // Deep-link from notifications: /request?id=…&estateId=…
+  useEffect(() => {
+    const idFromUrl = searchParams.get("id")?.trim() || "";
+    const estateFromUrl = searchParams.get("estateId")?.trim() || "";
+
+    if (
+      estateFromUrl &&
+      onEstateChange &&
+      estateOptions?.length &&
+      selectedEstate?.value !== estateFromUrl
+    ) {
+      const match = estateOptions.find((opt) => opt.value === estateFromUrl);
+      if (match) onEstateChange(match);
+    }
+
+    if (idFromUrl && viewingId !== idFromUrl) {
+      setViewingId(idFromUrl);
+      setViewingFallback(null);
+    }
+  }, [
+    estateOptions,
+    onEstateChange,
+    searchParams,
+    selectedEstate?.value,
+    viewingId,
+  ]);
 
   const { list, pagination, ui, getListStatus, deleteStatus } =
     useSelector(api.selectState);
@@ -405,10 +451,7 @@ export default function RequestManagementView({
           requestId={viewingId}
           estateId={estateId}
           fallback={viewingFallback}
-          onClose={() => {
-            setViewingId(null);
-            setViewingFallback(null);
-          }}
+          onClose={closeDetail}
           onChanged={() => {
             void loadRequests();
           }}

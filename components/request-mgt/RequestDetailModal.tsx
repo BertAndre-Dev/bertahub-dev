@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { Check, Paperclip } from "lucide-react";
+import { Check, Paperclip, X } from "lucide-react";
 import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -184,6 +184,31 @@ export default function RequestDetailModal({
     }
   };
 
+  const handleReject = async () => {
+    if (!item?.id) return;
+    const trimmed = comment.trim();
+    if (trimmed.length < 3) {
+      toast.error("A rejection reason of at least 3 characters is required.");
+      return;
+    }
+    try {
+      await dispatch(
+        api.decide({
+          id: item.id,
+          decision: "reject",
+          comment: trimmed,
+          estateId: resolvedEstateId,
+        }),
+      ).unwrap();
+      toast.success("Request rejected.");
+      setComment("");
+      onChanged?.();
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err);
+      if (message) toast.error(message);
+    }
+  };
+
   const handleCancel = async () => {
     if (!item?.id) return;
     try {
@@ -343,14 +368,14 @@ export default function RequestDetailModal({
                     <Label htmlFor="request-decision-comment">
                       Decision note{" "}
                       <span className="text-muted-foreground font-normal">
-                        (optional)
+                        (required to reject, optional to approve)
                       </span>
                     </Label>
                     <Textarea
                       id="request-decision-comment"
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
-                      placeholder="Add a note for this decision..."
+                      placeholder="Add a note or rejection reason..."
                       disabled={mutating}
                       className="min-h-24"
                     />
@@ -392,13 +417,24 @@ export default function RequestDetailModal({
                       </Button>
                     ) : null}
                     {canDecide ? (
-                      <Button
-                        disabled={mutating}
-                        onClick={() => void handleApprove()}
-                      >
-                        <Check className="w-4 h-4 mr-2" />
-                        Approve
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          className={requestDestructiveOutlineButtonClass}
+                          disabled={mutating}
+                          onClick={() => void handleReject()}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Reject
+                        </Button>
+                        <Button
+                          disabled={mutating}
+                          onClick={() => void handleApprove()}
+                        >
+                          <Check className="w-4 h-4 mr-2" />
+                          Approve
+                        </Button>
+                      </>
                     ) : null}
                   </div>
                 )}

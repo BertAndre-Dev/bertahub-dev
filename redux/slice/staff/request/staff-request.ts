@@ -338,6 +338,39 @@ function extractRequestPayload(data: unknown): StaffRequestItem | null {
   return null;
 }
 
+/** GET /api/v1/requests/{id}?estateId= — get a request by ID */
+export const getStaffRequestById = createAsyncThunk(
+  "staffRequest/getById",
+  async (
+    payload: { id: string; estateId?: string },
+    { rejectWithValue },
+  ) => {
+    const requestId = payload.id?.trim();
+    if (!requestId) {
+      return rejectWithValue({ message: "Request id is required." });
+    }
+
+    try {
+      const estateId = payload.estateId?.trim();
+      const res = await axiosInstance.get(`/api/v1/requests/${requestId}`, {
+        params: estateId ? { estateId } : undefined,
+      });
+      const item = extractRequestPayload(res.data);
+      if (!item) {
+        return rejectWithValue({ message: "Request not found." });
+      }
+      const [enriched] = await enrichRequestItemsWithActorNames([item]);
+      return enriched ?? item;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue({
+        message:
+          err?.response?.data?.message ?? "Failed to fetch request details",
+      });
+    }
+  },
+);
+
 /** POST /api/v1/requests/{id}/decide — approve or reject the current step */
 export const decideStaffRequest = createAsyncThunk(
   "staffRequest/decide",
