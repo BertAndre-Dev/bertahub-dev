@@ -14,6 +14,7 @@ import {
   UsersRound,
   Search,
   Edit,
+  Eye,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -467,6 +468,21 @@ export default function CompanyUsersPage() {
               exportable: false,
               render: (item: CompanyUserDetails) => (
                 <div className="flex items-center gap-1">
+                  {roleFilter === "resident" ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[#0150AC] hover:bg-blue-50 hover:text-[#01408A] cursor-pointer"
+                      onClick={() => {
+                        const id = userRowId(item);
+                        if (id) router.push(`/dashboard/company/users/${id}`);
+                      }}
+                      title="View user details"
+                      disabled={!userRowId(item)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  ) : null}
                   {/* Resident: edit / suspend / delete commented out */}
                   {roleFilter !== "resident" ? (
                     <>
