@@ -39,6 +39,24 @@ async function getAuthActions() {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/** Auth routes that return 401 for bad credentials / invalid input — not expired sessions. */
+const UNAUTHENTICATED_AUTH_ROUTES = [
+  "/auth-mgt/sign-in",
+  "/auth-mgt/sign-up",
+  "/auth-mgt/pin-login",
+  "/auth-mgt/verify-otp",
+  "/auth-mgt/resend-otp",
+  "/auth-mgt/forgot-password",
+  "/auth-mgt/reset-password",
+  "/auth-mgt/sign-out",
+  "/auth-mgt/csrf-token",
+];
+
+function isUnauthenticatedAuthRoute(url: string | undefined): boolean {
+  if (!url) return false;
+  return UNAUTHENTICATED_AUTH_ROUTES.some((route) => url.includes(route));
+}
+
 /** Reads the stored email — Redux state first, localStorage as fallback. */
 function getEmail(): string | null {
   // 1) Try Redux (works after first render / rehydration)
@@ -80,19 +98,12 @@ axiosInstance.interceptors.request.use(async (config) => {
 
   // Skip CSRF for auth endpoints (they don't require it)
   const url = (config.url ?? "").toString();
-  const skipCsrfRoutes = [
-    "/auth-mgt/sign-in",
-    "/auth-mgt/sign-up",
-    "/auth-mgt/pin-login",
-    "/auth-mgt/verify-otp",
-    "/auth-mgt/resend-otp",
-    "/auth-mgt/forgot-password",
-    "/auth-mgt/reset-password",
-    "/auth-mgt/refresh-token",
-    "/auth-mgt/sign-out",
-    "/auth-mgt/csrf-token",
-  ];
-  if (skipCsrfRoutes.some((route) => url.includes(route))) return config;
+  if (
+    isUnauthenticatedAuthRoute(url) ||
+    url.includes("/auth-mgt/refresh-token")
+  ) {
+    return config;
+  }
 
   // For state-changing requests, ensure CSRF token and attach it.
   const currentCsrf = getCsrfToken();
@@ -201,11 +212,15 @@ axiosInstance.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // Only intercept 401s; never retry the refresh endpoint itself
+    // Only intercept 401s from authenticated requests.
+    // Skip refresh/logout for login & other unauthenticated auth routes —
+    // their 401 means bad credentials, not an expired session.
+    const requestUrl = originalRequest.url as string | undefined;
     if (
       error.response?.status !== 401 ||
       originalRequest._retry ||
-      (originalRequest.url as string | undefined)?.includes("refresh-token")
+      requestUrl?.includes("refresh-token") ||
+      isUnauthenticatedAuthRoute(requestUrl)
     ) {
       return Promise.reject(error);
     }
