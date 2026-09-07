@@ -253,7 +253,7 @@ export default function WorkflowStepsEditor({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0150AC]/10 text-sm font-semibold text-[#0150AC] tabular-nums"
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0150AC]/10 text-sm font-semibold text-[#0150AC] tabular-nums hover:text-[#01408A]"
                     aria-hidden="true"
                   >
                     {index + 1}
@@ -379,7 +379,7 @@ export default function WorkflowStepsEditor({
                                       setActiveRole(null);
                                       setUserSearch("");
                                     }}
-                                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-[#0150AC] hover:bg-[#0150AC]/8 active:scale-[0.97] transition-[transform,background-color] duration-100 ease-out cursor-pointer"
+                                    className="text-[#0150AC] hover:text-[#01408A] inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium hover:bg-[#0150AC]/8 active:scale-[0.97] transition-[transform,background-color] duration-100 ease-out cursor-pointer"
                                   >
                                     <ChevronLeft className="h-4 w-4" />
                                     {formatWorkflowRoleLabel(activeRole)}

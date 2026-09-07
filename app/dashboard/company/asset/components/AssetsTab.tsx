@@ -186,7 +186,7 @@ export default function AssetsTab({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-destructive"
+              className="text-destructive hover:text-destructive h-8"
               disabled={deleteStatus === "isLoading"}
               onClick={(e) => {
                 e.stopPropagation();

@@ -244,7 +244,7 @@ export default function AddBusinessForm({
                   className="cursor-pointer flex flex-col items-center justify-center gap-2 p-4 w-full h-full min-h-[120px]"
                   onClick={() => fileInputRefs.current[i]?.click()}
                 >
-                  <Upload className="w-8 h-8 text-gray-400" />
+                  <Upload className="w-8 h-8 text-gray-400 hover:text-gray-500" />
                   <span className="text-sm font-medium text-[#0150AC]">Upload</span>
                 </label>
               )}

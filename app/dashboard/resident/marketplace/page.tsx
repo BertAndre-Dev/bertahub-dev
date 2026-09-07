@@ -225,7 +225,7 @@ export default function ResidentMarketplacePage() {
                       asChild
                       variant="outline"
                       size="sm"
-                      className="mt-4 w-full rounded-lg border-[#0150AC] text-[#0150AC] hover:bg-[#0150AC]/10"
+                      className="text-[#0150AC] hover:text-[#01408A] mt-4 w-full rounded-lg border-[#0150AC] hover:bg-[#0150AC]/10"
                     >
                       <a
                         href={item.link}

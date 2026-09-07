@@ -541,7 +541,7 @@ export default function CompanyMeterManagement() {
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   onSelect={() => handleDeleteMeter(item.id!)}
-                  className="cursor-pointer select-none rounded px-3 py-2 text-sm text-red-600 outline-none hover:bg-gray-100 focus:bg-gray-100"
+                  className="cursor-pointer select-none rounded px-3 py-2 text-sm text-red-600 outline-none hover:bg-gray-100 focus:bg-gray-100 hover:text-red-700"
                 >
                   Delete
                 </DropdownMenu.Item>

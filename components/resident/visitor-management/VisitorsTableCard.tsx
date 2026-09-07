@@ -157,7 +157,7 @@ export function VisitorsTableCard({
             <Button
               variant="outline"
               size="sm"
-              className="cursor-pointer text-blue-600 hover:bg-blue-200 disabled:opacity-50"
+              className="text-blue-600 hover:text-blue-700 cursor-pointer hover:bg-blue-200 disabled:opacity-50"
               disabled={!item.qrCodeDataUrl}
               onClick={(e) => {
                 e.stopPropagation();
@@ -183,7 +183,7 @@ export function VisitorsTableCard({
             <Button
               variant="outline"
               size="sm"
-              className="cursor-pointer text-destructive hover:bg-destructive/10"
+              className="text-destructive hover:text-destructive cursor-pointer hover:bg-destructive/10"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(item);

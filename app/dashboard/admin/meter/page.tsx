@@ -517,20 +517,20 @@ export default function AdminMeterManagement() {
             variant="ghost"
             size="sm"
             onClick={() => openUnassignConfirm(item)}
-            className="hover:bg-amber-100"
+            className="text-amber-600 hover:text-amber-700 hover:bg-amber-100"
             title="Unassign meter"
           >
-            <Unlink className="w-4 h-4 text-amber-600" />
+            <Unlink className="w-4 h-4" />
           </Button>
         ) : (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => handleOpenModal(item)}
-            className="hover:bg-blue-100"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-100"
             title="Assign meter"
           >
-            <Link className="w-4 h-4 text-blue-600" />
+            <Link className="w-4 h-4" />
           </Button>
         ),
     },
@@ -543,10 +543,10 @@ export default function AdminMeterManagement() {
           variant="ghost"
           size="sm"
           onClick={() => handleOpenUsageModal(item)}
-          className="cursor-pointer hover:bg-emerald-100"
+          className="text-emerald-600 hover:text-emerald-700 cursor-pointer hover:bg-emerald-100"
           title="View energy usage"
         >
-          <Eye className="w-4 h-4 text-emerald-600" />
+          <Eye className="w-4 h-4" />
         </Button>
       ),
     },
@@ -559,11 +559,11 @@ export default function AdminMeterManagement() {
           variant="ghost"
           size="sm"
           onClick={() => handleClearTamper(item)}
-          className="cursor-pointer hover:bg-orange-100"
+          className="text-orange-600 hover:text-orange-700 cursor-pointer hover:bg-orange-100"
           title="Generate clear-tamper token"
           disabled={clearTamperLoadingMeter === item.meterNumber}
         >
-          <KeyRound className="w-4 h-4 text-orange-600" />
+          <KeyRound className="w-4 h-4" />
         </Button>
       ),
     },

@@ -751,11 +751,11 @@ export default function TransactionPage() {
           type="button"
           variant="ghost"
           size="sm"
-          className="cursor-pointer"
+          className="text-[#0150AC] hover:text-[#01408A] cursor-pointer"
           title="View details"
           onClick={() => setViewingPaidBill(item)}
         >
-          <Eye className="h-4 w-4 text-[#0150AC]" />
+          <Eye className="h-4 w-4" />
         </Button>
       ),
     },

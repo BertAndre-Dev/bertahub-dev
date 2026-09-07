@@ -62,7 +62,7 @@ export function OccupantsTableCard({
             <Button
               variant="outline"
               size="sm"
-              className="cursor-pointer text-destructive hover:bg-destructive/10"
+              className="text-destructive hover:text-destructive cursor-pointer hover:bg-destructive/10"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(item);

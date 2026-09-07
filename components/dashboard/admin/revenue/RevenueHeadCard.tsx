@@ -59,25 +59,25 @@ export function RevenueHeadCard({
         </button>
         <button
           type="button"
-          className="h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
+          className="text-blue-600 hover:text-blue-700 h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
           aria-label="Edit revenue head"
           onClick={(e) => {
             e.stopPropagation();
             onEdit(item);
           }}
         >
-          <Pencil className="h-4 w-4 text-blue-600" />
+          <Pencil className="h-4 w-4" />
         </button>
         <button
           type="button"
-          className="h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
+          className="text-red-600 hover:text-red-700 h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
           aria-label="Delete revenue head"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(item);
           }}
         >
-          <Trash2 className="h-4 w-4 text-red-600" />
+          <Trash2 className="h-4 w-4" />
         </button>
       </div>
 

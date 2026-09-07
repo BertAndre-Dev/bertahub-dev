@@ -596,8 +596,9 @@ export function EstateUsersPage({
                       size="sm"
                       onClick={() => handleEditUser(item)}
                       title="Edit user details"
+                      className="text-blue-600 hover:text-blue-700"
                     >
-                      <Edit className="w-4 h-4 text-blue-600" />
+                      <Edit className="w-4 h-4" />
                     </Button>
 
                     {item.isActive ? (
@@ -606,8 +607,9 @@ export function EstateUsersPage({
                         size="sm"
                         onClick={() => openSuspendModal(item)}
                         title="Suspend user"
-                      >
-                        <PowerOff className="w-4 h-4 text-red-600" />
+                      className="text-red-600 hover:text-red-700"
+                    >
+                        <PowerOff className="w-4 h-4" />
                       </Button>
                     ) : (
                       <Button
@@ -615,8 +617,9 @@ export function EstateUsersPage({
                         size="sm"
                         onClick={() => handleActivateUser(item)}
                         title="Activate user"
-                      >
-                        <Power className="w-4 h-4 text-green-600" />
+                      className="text-green-600 hover:text-green-700"
+                    >
+                        <Power className="w-4 h-4" />
                       </Button>
                     )}
 
@@ -626,8 +629,9 @@ export function EstateUsersPage({
                       onClick={() =>
                         handleDeleteUser(item.id, item.firstName)
                       }
+                      className="text-red-600 hover:text-red-700"
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </>
                 ) : null}
@@ -636,8 +640,9 @@ export function EstateUsersPage({
                   size="sm"
                   onClick={() => handleEditUser(item)}
                   title="Edit user details"
-                >
-                  <Edit className="w-4 h-4 text-blue-600" />
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                  <Edit className="w-4 h-4" />
                 </Button>
 
                 {item.isActive ? (
@@ -646,8 +651,9 @@ export function EstateUsersPage({
                     size="sm"
                     onClick={() => openSuspendModal(item)}
                     title="Suspend user"
-                  >
-                    <PowerOff className="w-4 h-4 text-red-600" />
+                      className="text-red-600 hover:text-red-700"
+                    >
+                    <PowerOff className="w-4 h-4" />
                   </Button>
                 ) : (
                   <Button
@@ -655,8 +661,9 @@ export function EstateUsersPage({
                     size="sm"
                     onClick={() => handleActivateUser(item)}
                     title="Activate user"
-                  >
-                    <Power className="w-4 h-4 text-green-600" />
+                      className="text-green-600 hover:text-green-700"
+                    >
+                    <Power className="w-4 h-4" />
                   </Button>
                 )}
 
@@ -664,8 +671,9 @@ export function EstateUsersPage({
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDeleteUser(item.id, item.firstName)}
-                >
-                  <Trash2 className="w-4 h-4 text-red-600" />
+                      className="text-red-600 hover:text-red-700"
+                    >
+                  <Trash2 className="w-4 h-4" />
                 </Button> */}
               </div>
             ),

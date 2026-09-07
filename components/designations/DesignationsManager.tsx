@@ -473,16 +473,16 @@ export function DesignationsManager({
               <Button
                 variant="ghost"
                 size="sm"
-                className="cursor-pointer"
+                className="text-blue-600 hover:text-blue-700 cursor-pointer"
                 onClick={() => openEdit(item)}
                 title="Edit designation"
               >
-                <Pencil className="w-4 h-4 text-blue-600" />
+                <Pencil className="w-4 h-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className="cursor-pointer"
+                className="text-amber-600 hover:text-amber-700 cursor-pointer"
                 onClick={() => setItemToToggle(item)}
                 title={
                   item.isActive
@@ -491,7 +491,7 @@ export function DesignationsManager({
                 }
               >
                 {item.isActive ? (
-                  <PowerOff className="w-4 h-4 text-amber-600" />
+                  <PowerOff className="w-4 h-4" />
                 ) : (
                   <Power className="w-4 h-4 text-green-600" />
                 )}
@@ -499,11 +499,11 @@ export function DesignationsManager({
               <Button
                 variant="ghost"
                 size="sm"
-                className="cursor-pointer"
+                className="text-red-600 hover:text-red-700 cursor-pointer"
                 onClick={() => setItemToDelete(item)}
                 title="Delete designation"
               >
-                <Trash2 className="w-4 h-4 text-red-600" />
+                <Trash2 className="w-4 h-4" />
               </Button>
             </div>
           );

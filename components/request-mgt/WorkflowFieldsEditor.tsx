@@ -84,7 +84,7 @@ export default function WorkflowFieldsEditor({
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <span
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0150AC]/10 text-sm font-semibold text-[#0150AC] tabular-nums"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0150AC]/10 text-sm font-semibold text-[#0150AC] tabular-nums hover:text-[#01408A]"
                   aria-hidden="true"
                 >
                   {index + 1}

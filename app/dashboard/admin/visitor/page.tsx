@@ -462,7 +462,7 @@ export default function AdminVisitorManagement() {
               e.stopPropagation();
               setQrCodeVisitor(item as QrCodeVisitor);
             }}
-            className="flex items-center gap-1 text-blue-600 hover:bg-blue-50 cursor-pointer disabled:opacity-50"
+            className="text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:bg-blue-50 cursor-pointer disabled:opacity-50"
             title={
               item.qrCodeDataUrl ? "View QR code" : "QR code not available"
             }
@@ -474,7 +474,7 @@ export default function AdminVisitorManagement() {
             variant="ghost"
             size="sm"
             onClick={(e) => handleOpenDeleteModal(item, e)}
-            className="flex items-center gap-1 text-destructive hover:bg-destructive/10 cursor-pointer"
+            className="text-destructive hover:text-destructive flex items-center gap-1 hover:bg-destructive/10 cursor-pointer"
             title="Delete visitor"
           >
             <Trash2 className="w-4 h-4" />

@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
       <div className="space-y-8 text-center">
         <div className="flex justify-center">
           <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+            <CheckCircle className="w-8 h-8 text-green-600 hover:text-green-700" />
           </div>
         </div>
 

@@ -614,12 +614,12 @@ export default function AdminMeterManagement() {
           <Button
             variant="outline"
             size="sm"
-            className="cursor-pointer gap-1"
+            className="text-orange-600 hover:text-orange-700 cursor-pointer gap-1"
             onClick={() => handleClearTamper(item)}
             title="Generate clear-tamper token"
             disabled={clearTamperLoadingMeter === item.meterNumber}
           >
-            <KeyRound className="w-4 h-4 text-orange-600" />
+            <KeyRound className="w-4 h-4" />
           </Button>
           <Button
             variant="destructive"

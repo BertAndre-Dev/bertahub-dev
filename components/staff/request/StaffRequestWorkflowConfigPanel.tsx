@@ -394,7 +394,7 @@ export default function StaffRequestWorkflowConfigPanel({
                           className="rounded-2xl border border-black/5 bg-[#F7F8FA] px-4 py-3"
                         >
                           <div className="flex flex-wrap items-center gap-2 text-sm">
-                            <span className="flex size-7 items-center justify-center rounded-full bg-[#0150AC]/10 text-xs font-semibold text-[#0150AC] tabular-nums">
+                            <span className="flex size-7 items-center justify-center rounded-full bg-[#0150AC]/10 text-xs font-semibold text-[#0150AC] tabular-nums hover:text-[#01408A]">
                               {step.order}
                             </span>
                             <span className="font-medium">{step.name}</span>

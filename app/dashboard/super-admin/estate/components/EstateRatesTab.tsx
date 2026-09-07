@@ -205,7 +205,7 @@ function RateCard({
             type="button"
             variant="outline"
             size="sm"
-            className="cursor-pointer text-red-600"
+            className="cursor-pointer text-red-600 hover:text-red-700"
             disabled={deactivating}
             onClick={() => onDeactivate(rate.id!)}
           >

@@ -188,7 +188,7 @@ export function MaintenanceRequestCard({
               className="flex min-w-0 flex-1 cursor-pointer flex-col text-left outline-none transition-transform duration-100 ease-out active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ring motion-reduce:active:scale-100"
             >
               <div className="flex min-w-0 items-start gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0150AC]/10 text-sm font-semibold text-[#0150AC]">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0150AC]/10 text-sm font-semibold text-[#0150AC] hover:text-[#01408A]">
                   {authorInitials(requesterName) || "R"}
                 </div>
                 <div className="min-w-0">

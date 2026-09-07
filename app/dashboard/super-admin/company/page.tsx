@@ -311,19 +311,19 @@ export default function SuperAdminCompanyPage() {
                 if (id) router.push(`/dashboard/super-admin/company/${id}`);
               }}
               title="View company details"
-              className="cursor-pointer"
+              className="text-[#0150AC] hover:text-[#01408A] cursor-pointer"
               disabled={!companyId(item)}
             >
-              <Eye className="w-4 h-4 text-[#0150AC]" />
+              <Eye className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => openEdit(item)}
               title="Edit Company"
-              className="cursor-pointer"
+              className="text-blue-600 hover:text-blue-700 cursor-pointer"
             >
-              <Edit className="w-4 h-4 text-blue-600" />
+              <Edit className="w-4 h-4" />
             </Button>
 
             {item.isActive ? (
@@ -332,9 +332,9 @@ export default function SuperAdminCompanyPage() {
                 size="sm"
                 onClick={() => openSuspendModal(item)}
                 title="Suspend Company"
-                className="cursor-pointer"
+                className="text-red-600 hover:text-red-700 cursor-pointer"
               >
-                <PowerOff className="w-4 h-4 text-red-600" />
+                <PowerOff className="w-4 h-4" />
               </Button>
             ) : (
               <Button
@@ -342,9 +342,9 @@ export default function SuperAdminCompanyPage() {
                 size="sm"
                 onClick={() => openActivateModal(item)}
                 title="Activate Company"
-                className="cursor-pointer"
+                className="text-green-600 hover:text-green-700 cursor-pointer"
               >
-                <Power className="w-4 h-4 text-green-600" />
+                <Power className="w-4 h-4" />
               </Button>
             )}
 
@@ -353,9 +353,9 @@ export default function SuperAdminCompanyPage() {
               size="sm"
               onClick={() => handleDelete(item)}
               title="Delete Company"
-              className="cursor-pointer"
+              className="text-red-600 hover:text-red-700 cursor-pointer"
             >
-              <Trash2 className="w-4 h-4 text-red-600" />
+              <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         ),

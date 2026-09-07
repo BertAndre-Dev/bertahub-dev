@@ -153,7 +153,7 @@ export function ResidentComplaintCard({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-start gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0150AC]/10 text-sm font-semibold text-[#0150AC]">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0150AC]/10 text-sm font-semibold text-[#0150AC] hover:text-[#01408A]">
                   {authorInitials(requesterName) || "R"}
                 </div>
                 <div className="min-w-0">

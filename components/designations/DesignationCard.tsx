@@ -125,24 +125,34 @@ export function DesignationCard({
 
         {inherited ? null : (
           <div className="flex shrink-0 items-center gap-1.5">
-            <ActionButton label={`Edit ${item.name}`} onClick={() => onEdit(item)}>
-              <Pencil className="size-4 text-[#0150AC]" />
+            <ActionButton
+              label={`Edit ${item.name}`}
+              onClick={() => onEdit(item)}
+              className="text-[#0150AC] hover:text-[#01408A]"
+            >
+              <Pencil className="size-4" />
             </ActionButton>
             <ActionButton
               label={inactive ? `Activate ${item.name}` : `Deactivate ${item.name}`}
               onClick={() => onToggleActive(item)}
+              className={
+                inactive
+                  ? "text-emerald-600 hover:text-emerald-700"
+                  : "text-amber-600 hover:text-amber-700"
+              }
             >
               {inactive ? (
-                <Power className="size-4 text-emerald-600" />
+                <Power className="size-4" />
               ) : (
-                <PowerOff className="size-4 text-amber-600" />
+                <PowerOff className="size-4" />
               )}
             </ActionButton>
             <ActionButton
               label={`Delete ${item.name}`}
               onClick={() => onDelete(item)}
+              className="text-red-600 hover:text-red-700"
             >
-              <Trash2 className="size-4 text-red-600" />
+              <Trash2 className="size-4" />
             </ActionButton>
           </div>
         )}

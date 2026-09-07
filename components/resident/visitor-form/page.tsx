@@ -389,7 +389,7 @@ export default function VisitorForm({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 text-destructive"
+                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
                           onClick={() => removeDraft(row.id)}
                           disabled={submitting}
                           title="Remove visitor"

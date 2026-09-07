@@ -115,7 +115,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 transition-colors"
+              className="text-gray-500 hover:text-gray-600 absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
             >
               {showPassword ? (
                 <EyeOff className="w-4 h-4" />
@@ -127,7 +127,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-gray-800">
             <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#0150AC]" />
             Remember me
           </label>
@@ -176,7 +176,7 @@ export default function LoginPage() {
           <Button
             variant="outline"
             size="lg"
-            className="w-full rounded-lg border-2 border-[#0150AC] text-[#0150AC] hover:bg-[#0150AC] hover:text-white group"
+            className="text-[#0150AC] hover:text-[#01408A] w-full rounded-lg border-2 border-[#0150AC] hover:bg-[#0150AC] hover:text-white group"
           >
             Create Account
             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

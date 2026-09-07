@@ -215,7 +215,7 @@ export default function AssetCategoryDetailPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-[#0150AC]"
+              className="text-[#0150AC] hover:text-[#01408A] h-8"
               onClick={(e) => {
                 e.stopPropagation();
                 setEditingAsset(item);
@@ -226,7 +226,7 @@ export default function AssetCategoryDetailPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-destructive"
+              className="text-destructive hover:text-destructive h-8"
               disabled={isBusy(deleteAssetStatus)}
               onClick={(e) => {
                 e.stopPropagation();
@@ -383,7 +383,7 @@ export default function AssetCategoryDetailPage() {
               aria-label="Edit category"
               onClick={() => setEditCategoryOpen(true)}
               disabled={!category}
-              className="h-9 w-9 grid place-items-center rounded-full border border-border bg-white text-[#0150AC] hover:bg-muted disabled:opacity-50 cursor-pointer"
+              className="text-[#0150AC] hover:text-[#01408A] h-9 w-9 grid place-items-center rounded-full border border-border bg-white hover:bg-muted disabled:opacity-50 cursor-pointer"
             >
               <Pencil className="w-4 h-4" />
             </button>
@@ -392,7 +392,7 @@ export default function AssetCategoryDetailPage() {
               aria-label="Delete category"
               onClick={() => setDeleteCategoryOpen(true)}
               disabled={!category}
-              className="h-9 w-9 grid place-items-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 disabled:opacity-50 cursor-pointer"
+              className="text-rose-600 hover:text-rose-700 h-9 w-9 grid place-items-center rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
             </button>

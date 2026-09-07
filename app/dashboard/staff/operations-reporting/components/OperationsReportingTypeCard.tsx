@@ -121,7 +121,7 @@ export default function OperationsReportingTypeCard({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full text-[#0150AC]"
+                className="text-[#0150AC] hover:text-[#01408A] h-9 w-9 rounded-full"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit();
@@ -136,7 +136,7 @@ export default function OperationsReportingTypeCard({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full text-destructive"
+                className="text-destructive hover:text-destructive h-9 w-9 rounded-full"
                 disabled={deleteDisabled}
                 onClick={(e) => {
                   e.stopPropagation();

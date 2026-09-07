@@ -184,7 +184,7 @@ export default function ResidentUserPage() {
           type="button"
           onClick={() => handleOpenDeleteModal(t)}
           disabled={deleteUserState === "isLoading"}
-          className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+          className="text-destructive hover:text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
           title="Delete tenant"
           aria-label={`Delete ${t.firstName ?? t.email ?? "tenant"}`}
         >

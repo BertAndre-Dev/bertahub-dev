@@ -166,7 +166,7 @@ export default function MaintenanceScheduleCalendar({
           {showScheduleButton && onSchedule && (
             <Button
               type="button"
-              className="shrink-0 cursor-pointer rounded-lg border border-white/20 bg-white px-5 font-semibold text-[#0150AC] shadow-sm transition-colors hover:bg-white/95 disabled:cursor-not-allowed"
+              className="shrink-0 cursor-pointer rounded-lg border border-white/20 bg-white px-5 font-semibold text-[#0150AC] shadow-sm transition-colors hover:bg-white/95 disabled:cursor-not-allowed hover:text-[#01408A]"
               disabled={scheduleDisabled}
               onClick={onSchedule}
             >
@@ -180,7 +180,7 @@ export default function MaintenanceScheduleCalendar({
         <button
           type="button"
           aria-label="Previous month"
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-white text-muted-foreground shadow-sm transition-all hover:border-[#0150AC]/30 hover:text-[#0150AC] hover:shadow"
+          className="text-[#0150AC] hover:text-[#01408A] flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-white text-muted-foreground shadow-sm transition-all hover:border-[#0150AC]/30 hover: hover:shadow"
           onClick={goPrevMonth}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -194,7 +194,7 @@ export default function MaintenanceScheduleCalendar({
             <button
               type="button"
               onClick={goToday}
-              className="cursor-pointer rounded-full border border-[#0150AC]/25 bg-[#E7F5FF] px-3 py-0.5 text-xs font-medium text-[#0150AC] transition-colors hover:bg-[#d0ebff]"
+              className="cursor-pointer rounded-full border border-[#0150AC]/25 bg-[#E7F5FF] px-3 py-0.5 text-xs font-medium text-[#0150AC] transition-colors hover:bg-[#d0ebff] hover:text-[#01408A]"
             >
               Today
             </button>
@@ -204,7 +204,7 @@ export default function MaintenanceScheduleCalendar({
         <button
           type="button"
           aria-label="Next month"
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-white text-muted-foreground shadow-sm transition-all hover:border-[#0150AC]/30 hover:text-[#0150AC] hover:shadow"
+          className="text-[#0150AC] hover:text-[#01408A] flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-white text-muted-foreground shadow-sm transition-all hover:border-[#0150AC]/30 hover: hover:shadow"
           onClick={goNextMonth}
         >
           <ChevronRight className="h-4 w-4" />

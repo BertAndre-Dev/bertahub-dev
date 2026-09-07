@@ -95,11 +95,11 @@ export function ExpenseEntriesTable({
             </button>
             <button
               type="button"
-              className="p-2 rounded-md hover:bg-muted"
+              className="text-red-600 hover:text-red-700 p-2 rounded-md hover:bg-muted"
               aria-label="Delete"
               onClick={() => onDelete(item)}
             >
-              <Trash2 className="h-4 w-4 text-red-600" />
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ),

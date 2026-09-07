@@ -120,7 +120,7 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 transition-colors"
+              className="text-gray-500 hover:text-gray-600 absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -166,7 +166,7 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 transition-colors"
+              className="text-gray-500 hover:text-gray-600 absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
             >
               {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -174,7 +174,7 @@ export default function SignupPage() {
           {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
         </div>
 
-        <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
+        <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer hover:text-gray-800">
           <input type="checkbox" className="w-4 h-4 mt-0.5 rounded border-gray-300 text-[#0150AC]" required />
           <span>
             I have read and accept the{" "}
@@ -183,7 +183,7 @@ export default function SignupPage() {
             </Link>
           </span>
         </label>
-        <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
+        <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer hover:text-gray-800">
           <input type="checkbox" className="w-4 h-4 mt-0.5 rounded border-gray-300 text-[#0150AC]" required />
           <span>
             I have read and accept the{" "}
