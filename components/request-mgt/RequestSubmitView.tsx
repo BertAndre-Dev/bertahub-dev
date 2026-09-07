@@ -7,9 +7,7 @@ import { toast } from "react-toastify";
 import { Check, ClipboardList, Paperclip, Plus, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import Table from "@/components/tables/list/page";
 import Loader from "@/components/ui/Loader";
 import Modal from "@/components/modal/page";
@@ -59,6 +57,7 @@ import {
 } from "@/lib/download-attachment";
 import StaffRequestFormModal from "./StaffRequestFormModal";
 import RequestComments from "./RequestComments";
+import RequestRejectModal from "./RequestRejectModal";
 import { RequestRecordDetails } from "./RequestRecordDetails";
 import { RequestStepsCell } from "./RequestStepsCell";
 
@@ -129,8 +128,8 @@ export default function RequestSubmitView({
   const [createOpen, setCreateOpen] = useState(false);
   const [viewing, setViewing] = useState<StaffRequestItem | null>(null);
   const [searchInput, setSearchInput] = useState("");
-  const [comment, setComment] = useState("");
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
 
   const {
     list,
@@ -301,36 +300,43 @@ export default function RequestSubmitView({
   });
 
   useEffect(() => {
-    setComment("");
     setConfirmCancel(false);
+    setRejectOpen(false);
   }, [viewing?.id]);
 
   const closeViewing = () => {
     setViewing(null);
-    setComment("");
     setConfirmCancel(false);
+    setRejectOpen(false);
     clearRequestQuery();
   };
 
-  const handleDecide = async (decision: "approve" | "reject") => {
+  const handleDecide = async (
+    decision: "approve" | "reject",
+    reason?: string,
+  ) => {
     if (!viewingLive?.id) return;
-    const trimmed = comment.trim();
-    if (decision === "reject" && trimmed.length < 3) {
-      toast.error("A rejection reason of at least 3 characters is required.");
-      return;
+    if (decision === "reject") {
+      const trimmed = reason?.trim() ?? "";
+      if (trimmed.length < 3) {
+        toast.error("A rejection reason of at least 3 characters is required.");
+        return;
+      }
     }
     try {
       await dispatch(
         decideStaffRequest({
           id: viewingLive.id,
           decision,
-          comment: trimmed || undefined,
+          comment:
+            decision === "reject" ? reason?.trim() : undefined,
           estateId: estateId || viewingLive.estateId,
         }),
       ).unwrap();
       toast.success(
         decision === "approve" ? "Request approved." : "Request rejected.",
       );
+      setRejectOpen(false);
       closeViewing();
       await loadRequests();
     } catch (err: unknown) {
@@ -670,25 +676,6 @@ export default function RequestSubmitView({
 
             {canDecide || canCancel ? (
               <div className="space-y-3 border-t border-border pt-4">
-                {canDecide ? (
-                  <div>
-                    <Label htmlFor="staff-request-decision-comment">
-                      Decision note{" "}
-                      <span className="text-muted-foreground font-normal">
-                        (required to reject, optional to approve)
-                      </span>
-                    </Label>
-                    <Textarea
-                      id="staff-request-decision-comment"
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder="Add a note or rejection reason..."
-                      disabled={mutating}
-                      className="min-h-24"
-                    />
-                  </div>
-                ) : null}
-
                 {confirmCancel ? (
                   <div className="rounded-lg border border-[#FECACA] bg-[#FEF2F2] p-3 space-y-3">
                     <p className="text-sm text-[#991B1B]">
@@ -729,7 +716,7 @@ export default function RequestSubmitView({
                           variant="outline"
                           className={requestDestructiveOutlineButtonClass}
                           disabled={mutating}
-                          onClick={() => void handleDecide("reject")}
+                          onClick={() => setRejectOpen(true)}
                         >
                           <X className="w-4 h-4 mr-2" />
                           Reject
@@ -750,6 +737,13 @@ export default function RequestSubmitView({
           </div>
         </Modal>
       )}
+
+      <RequestRejectModal
+        open={rejectOpen}
+        loading={deciding}
+        onClose={() => setRejectOpen(false)}
+        onConfirm={(reason) => handleDecide("reject", reason)}
+      />
     </div>
   );
 }

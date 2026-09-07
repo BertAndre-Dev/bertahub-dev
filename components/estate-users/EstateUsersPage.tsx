@@ -589,17 +589,20 @@ export function EstateUsersPage({
                 )}
 
                 {/* Resident: edit / suspend / delete commented out */}
+                {/* Staff: edit icon commented out */}
                 {roleFilter !== "resident" ? (
                   <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditUser(item)}
-                      title="Edit user details"
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    {roleFilter !== "staff" ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditUser(item)}
+                        title="Edit user details"
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    ) : null}
 
                     {item.isActive ? (
                       <Button

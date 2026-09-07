@@ -6,8 +6,6 @@ import { toast } from "react-toastify";
 import { Check, Paperclip, X } from "lucide-react";
 import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import Loader from "@/components/ui/Loader";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { openAttachmentInNewTab } from "@/lib/download-attachment";
@@ -22,6 +20,7 @@ import {
 } from "./request-scope";
 import { requestDestructiveOutlineButtonClass } from "./request-action-styles";
 import RequestComments from "./RequestComments";
+import RequestRejectModal from "./RequestRejectModal";
 import { RequestRecordDetails } from "./RequestRecordDetails";
 import {
   formatRequestStatusLabel,
@@ -105,8 +104,8 @@ export default function RequestDetailModal({
 }: RequestDetailModalProps) {
   const dispatch = useDispatch<AppDispatch>();
   const api = useMemo(() => getRequestScopeApi(scope), [scope]);
-  const [comment, setComment] = useState("");
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
 
   const { selected, getByIdStatus, decideStatus, cancelStatus } =
     useSelector(api.selectState);
@@ -133,8 +132,8 @@ export default function RequestDetailModal({
 
   useEffect(() => {
     if (!requestId) return;
-    setComment("");
     setConfirmCancel(false);
+    setRejectOpen(false);
     dispatch(
       api.getById({
         id: requestId,
@@ -176,12 +175,10 @@ export default function RequestDetailModal({
         api.decide({
           id: item.id,
           decision: "approve",
-          comment: comment.trim() || undefined,
           estateId: resolvedEstateId,
         }),
       ).unwrap();
       toast.success("Request approved.");
-      setComment("");
       onChanged?.();
     } catch (err: unknown) {
       const message = getApiErrorMessage(err);
@@ -189,24 +186,19 @@ export default function RequestDetailModal({
     }
   };
 
-  const handleReject = async () => {
+  const handleReject = async (reason: string) => {
     if (!item?.id) return;
-    const trimmed = comment.trim();
-    if (trimmed.length < 3) {
-      toast.error("A rejection reason of at least 3 characters is required.");
-      return;
-    }
     try {
       await dispatch(
         api.decide({
           id: item.id,
           decision: "reject",
-          comment: trimmed,
+          comment: reason,
           estateId: resolvedEstateId,
         }),
       ).unwrap();
       toast.success("Request rejected.");
-      setComment("");
+      setRejectOpen(false);
       onChanged?.();
     } catch (err: unknown) {
       const message = getApiErrorMessage(err);
@@ -368,25 +360,6 @@ export default function RequestDetailModal({
 
             {canDecide || canCancel || item ? (
               <div className="space-y-3 border-t border-border pt-4">
-                {canDecide ? (
-                  <div>
-                    <Label htmlFor="request-decision-comment">
-                      Decision note{" "}
-                      <span className="text-muted-foreground font-normal">
-                        (required to reject, optional to approve)
-                      </span>
-                    </Label>
-                    <Textarea
-                      id="request-decision-comment"
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder="Add a note or rejection reason..."
-                      disabled={mutating}
-                      className="min-h-24"
-                    />
-                  </div>
-                ) : null}
-
                 {confirmCancel ? (
                   <div className="rounded-lg border border-[#FECACA] bg-[#FEF2F2] p-3 space-y-3">
                     <p className="text-sm text-[#991B1B]">
@@ -427,7 +400,7 @@ export default function RequestDetailModal({
                           variant="outline"
                           className={requestDestructiveOutlineButtonClass}
                           disabled={mutating}
-                          onClick={() => void handleReject()}
+                          onClick={() => setRejectOpen(true)}
                         >
                           <X className="w-4 h-4 mr-2" />
                           Reject
@@ -448,6 +421,13 @@ export default function RequestDetailModal({
           </>
         )}
       </div>
+
+      <RequestRejectModal
+        open={rejectOpen}
+        loading={deciding}
+        onClose={() => setRejectOpen(false)}
+        onConfirm={handleReject}
+      />
     </Modal>
   );
 }
