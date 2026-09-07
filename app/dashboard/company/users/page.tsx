@@ -388,6 +388,7 @@ export default function CompanyUsersPage() {
 
   const showResidentColumns = roleFilter === "resident";
   const showStaffColumns = roleFilter === "staff";
+  // Admin & security: Actions column removed.
   const hideActionsColumn =
     roleFilter === "admin" || roleFilter === "security";
 
