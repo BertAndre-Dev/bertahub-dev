@@ -18,7 +18,9 @@ import {
 import {
   selectCompanyUserState,
 } from "@/redux/slice/company/user-mgt/company-user-slice";
-import UserDetailView from "@/app/dashboard/admin/user/components/AdminUserDetailView";
+import UserDetailView, {
+  type UserMgtActions,
+} from "@/app/dashboard/admin/user/components/AdminUserDetailView";
 
 const COMPANY_USER_ACTIONS = {
   getUser: getCompanyUser,
@@ -26,7 +28,7 @@ const COMPANY_USER_ACTIONS = {
   suspendUser: suspendCompanyUser,
   deleteUser: deleteCompanyUser,
   updateUser: updateCompanyUser,
-};
+} as UserMgtActions;
 
 export default function CompanyUserDetailPage() {
   const dispatch = useDispatch<AppDispatch>();
