@@ -121,7 +121,7 @@ export default function OperationsReportingConfigureFieldsModal({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive active:scale-[0.97] transition-transform duration-100 ease-out"
+                    className="h-8 w-8 text-destructive hover:text-destructive active:scale-[0.97] transition-transform duration-100 ease-out"
                     onClick={() => removeRow(row.id)}
                     disabled={rows.length <= 1}
                     aria-label={`Remove field ${index + 1}`}

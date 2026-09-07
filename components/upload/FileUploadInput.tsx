@@ -162,7 +162,7 @@ export function FileUploadInput({
       ) : null}
 
       {error ? (
-        <p className="text-xs text-destructive">{error}</p>
+        <p className="text-xs text-destructive hover:text-destructive">{error}</p>
       ) : null}
     </div>
   );

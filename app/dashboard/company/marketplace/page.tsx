@@ -251,7 +251,7 @@ export default function CompanyMarketplacePage() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8"
+            className="group h-8"
             onClick={(e) => {
               e.stopPropagation();
               openEditModal(item);
@@ -263,7 +263,7 @@ export default function CompanyMarketplacePage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-green-600"
+              className="h-8 text-green-600 hover:text-green-700"
               onClick={(e) => {
                 e.stopPropagation();
                 handleActivate(item);
@@ -275,7 +275,7 @@ export default function CompanyMarketplacePage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-amber-600"
+              className="h-8 text-amber-600 hover:text-amber-700"
               onClick={(e) => {
                 e.stopPropagation();
                 openSuspendModal(item);
@@ -287,7 +287,7 @@ export default function CompanyMarketplacePage() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 text-destructive"
+            className="h-8 text-destructive hover:text-destructive"
             onClick={(e) => {
               e.stopPropagation();
               handleDelete(item);

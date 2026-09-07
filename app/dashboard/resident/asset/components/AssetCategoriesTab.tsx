@@ -100,7 +100,7 @@ export default function AssetCategoriesTab({ estateId }: Readonly<Props>) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8"
+              className="group h-8"
               onClick={(e) => {
                 e.stopPropagation();
                 setEditing(item);
@@ -112,7 +112,7 @@ export default function AssetCategoriesTab({ estateId }: Readonly<Props>) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-destructive"
+              className="h-8 text-destructive hover:text-destructive"
               disabled={deleteStatus === "isLoading"}
               onClick={(e) => {
                 e.stopPropagation();

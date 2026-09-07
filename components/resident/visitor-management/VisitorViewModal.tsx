@@ -95,7 +95,7 @@ export function VisitorViewModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-start space-x-2">
                 <svg
-                  className="w-4 h-4 text-gray-400 mt-0.5"
+                  className="w-4 h-4 text-gray-400 hover:text-gray-500 mt-0.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -122,7 +122,7 @@ export function VisitorViewModal({
               {visitor.updatedAt && (
                 <div className="flex items-start space-x-2">
                   <svg
-                    className="w-4 h-4 text-gray-400 mt-0.5"
+                    className="w-4 h-4 text-gray-400 hover:text-gray-500 mt-0.5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"

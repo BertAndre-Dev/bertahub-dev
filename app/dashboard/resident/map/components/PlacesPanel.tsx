@@ -161,7 +161,7 @@ export default function PlacesPanel({
                       href={directions}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="shrink-0 inline-flex items-center justify-center h-9 w-9 rounded-md border border-teal-400/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 hover:text-teal-200 hover:border-teal-400/50 transition-colors"
+                      className="shrink-0 inline-flex items-center justify-center h-9 w-9 rounded-md border border-teal-400/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 hover:text-teal-400 hover:border-teal-400/50 transition-colors"
                       aria-label="Get directions"
                       title="Get directions"
                       onClick={(e) => e.stopPropagation()}

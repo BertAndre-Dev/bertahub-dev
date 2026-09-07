@@ -53,7 +53,7 @@ export default function PaymentGatewaySelect({
   return (
     <div>
       <Label htmlFor={id}>
-        Payment Gateway {required && <span className="text-destructive">*</span>}
+        Payment Gateway {required && <span className="text-destructive hover:text-destructive">*</span>}
       </Label>
       <select
         id={id}

@@ -781,7 +781,7 @@ export function GroupInfoModal({
             <Button
               type="button"
               variant="outline"
-              className="h-11 w-full cursor-pointer rounded-lg border-red-600 text-red-600 hover:bg-red-300 disabled:cursor-not-allowed dark:hover:bg-red-950/30"
+              className="h-11 w-full cursor-pointer rounded-lg border-red-600 text-red-600 hover:text-red-700 hover:bg-red-300 disabled:cursor-not-allowed dark:hover:bg-red-950/30"
               disabled={showBusy}
               onClick={() => onDeleteGroup?.()}
             >

@@ -155,7 +155,7 @@ export function DesignationFormSheet({
       </div>
     );
   } else if (modulesError) {
-    modulesContent = <p className="text-sm text-destructive">{modulesError}</p>;
+    modulesContent = <p className="text-sm text-destructive hover:text-destructive">{modulesError}</p>;
   } else if (availableModules.length === 0) {
     modulesContent = (
       <p className="text-sm text-muted-foreground">

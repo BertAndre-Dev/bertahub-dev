@@ -65,7 +65,7 @@ export function VisitorQrCodeModal({
       <div className="space-y-5">
         <div className="border-b border-gray-200 pb-4">
           <div className="flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-blue-600" />
+            <QrCode className="w-5 h-5 text-blue-600 hover:text-blue-700" />
             <h2 className="text-xl font-semibold text-gray-900">
               Visitor QR Code
             </h2>
@@ -84,7 +84,7 @@ export function VisitorQrCodeModal({
               className="w-56 h-56 md:w-64 md:h-64 rounded-lg border border-gray-200 bg-white p-2"
             />
           ) : (
-            <div className="w-56 h-56 md:w-64 md:h-64 flex items-center justify-center rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 text-center px-4">
+            <div className="w-56 h-56 md:w-64 md:h-64 flex items-center justify-center rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 hover:text-gray-600 text-center px-4">
               No QR code is available for this visitor yet.
             </div>
           )}

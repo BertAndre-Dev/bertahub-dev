@@ -327,7 +327,7 @@ export default function StaffRequestFormModal({
               hint={`Up to ${MAX_ATTACHMENTS} files, 10MB each. Images, PDF, DOC, DOCX, XLS, XLSX.`}
             />
             {attachmentsUpload.error ? (
-              <p className="mt-1 text-xs text-destructive">
+              <p className="mt-1 text-xs text-destructive hover:text-destructive">
                 {attachmentsUpload.error}
               </p>
             ) : null}

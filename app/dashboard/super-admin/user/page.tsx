@@ -503,7 +503,7 @@ export default function SuperAdminUserPage() {
           //         {labels.map((label) => (
           //           <span
           //             key={label}
-          //             className="text-xs px-2 py-0.5 rounded-md bg-green-100 text-green-700 w-fit"
+          //             className="text-xs px-2 py-0.5 rounded-md bg-green-100 text-green-700 hover:text-green-800 w-fit"
           //           >
           //             {label}
           //           </span>
@@ -546,7 +546,7 @@ export default function SuperAdminUserPage() {
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            className="cursor-pointer"
+            className="group cursor-pointer"
             size="sm"
             onClick={() => {
               const id = item.id || (item as { _id?: string })._id;
@@ -555,45 +555,45 @@ export default function SuperAdminUserPage() {
             title="View user details"
             disabled={!item.id && !(item as { _id?: string })._id}
           >
-            <Eye className="w-4 h-4 text-[#0150AC]" />
+            <Eye className="w-4 h-4 text-[#0150AC] hover:text-[#01408A]" />
           </Button>
           <Button
             variant="ghost"
-            className="cursor-pointer"
+            className="text-blue-600 hover:text-blue-700 group cursor-pointer"
             size="sm"
             onClick={() => handleEditUser(item)}
             title="Edit user details"
           >
-            <Edit className="w-4 h-4 text-blue-600" />
+            <Edit className="w-4 h-4" />
           </Button>
           {item.isActive ? (
             <Button
               variant="ghost"
-              className="cursor-pointer"
+              className="text-red-600 hover:text-red-700 group cursor-pointer"
               size="sm"
               onClick={() => openSuspendModal(item)}
               title="Suspend user"
             >
-              <PowerOff className="w-4 h-4 text-red-600" />
+              <PowerOff className="w-4 h-4" />
             </Button>
           ) : (
             <Button
               variant="ghost"
-              className="cursor-pointer"
+              className="text-green-600 hover:text-green-700 group cursor-pointer"
               size="sm"
               onClick={() => openActivateModal(item)}
               title="Activate user"
             >
-              <Power className="w-4 h-4 text-green-600" />
+              <Power className="w-4 h-4" />
             </Button>
           )}
           <Button
             variant="ghost"
-            className="cursor-pointer"
+            className="text-red-600 hover:text-red-700 group cursor-pointer"
             size="sm"
             onClick={() => handleDeleteUser(item.id, item.firstName)}
           >
-            <Trash2 className="w-4 h-4 text-red-600" />
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       ),

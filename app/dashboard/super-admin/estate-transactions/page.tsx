@@ -337,7 +337,7 @@ export default function SuperAdminEstateTransactionsPage() {
         item.paymentStatus === "successful" ? (
           <span className="text-green-600 font-medium">Successful</span>
         ) : (
-          <span className="text-yellow-600 font-medium">
+          <span className="text-yellow-600 hover:text-yellow-700 font-medium">
             {item.paymentStatus || "Pending"}
           </span>
         ),

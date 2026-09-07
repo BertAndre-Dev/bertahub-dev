@@ -238,7 +238,7 @@ export function ResidentProfileCard() {
 
       {!loading && profileError && !profileUser ? (
         <div className="py-8 text-center space-y-3">
-          <p className="text-sm text-destructive">{profileError}</p>
+          <p className="text-sm text-destructive hover:text-destructive">{profileError}</p>
           <Button variant="outline" size="sm" onClick={fetchProfile}>
             <RotateCcw className="h-4 w-4 mr-2" />
             Retry

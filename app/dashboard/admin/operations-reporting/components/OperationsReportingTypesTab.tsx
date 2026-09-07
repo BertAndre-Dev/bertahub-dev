@@ -298,7 +298,7 @@ export default function OperationsReportingTypesTab({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-[#0150AC]"
+                            className="h-8 w-8 text-[#0150AC] hover:text-[#01408A]"
                             onClick={() => {
                               setConfigureTypeId(typeId);
                               setEditingField(field);
@@ -310,7 +310,7 @@ export default function OperationsReportingTypesTab({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
                             disabled={deleteFieldStatus === "isLoading"}
                             onClick={() => setFieldToDelete(field)}
                           >

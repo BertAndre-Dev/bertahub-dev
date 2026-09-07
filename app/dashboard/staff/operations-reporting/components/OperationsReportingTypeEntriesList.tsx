@@ -124,7 +124,7 @@ export default function OperationsReportingTypeEntriesList({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-[#0150AC]"
+                                className="h-8 w-8 text-[#0150AC] hover:text-[#01408A]"
                                 onClick={() => onEditEntry(fieldId, entry)}
                               >
                                 <Pencil className="h-4 w-4" />
@@ -134,7 +134,7 @@ export default function OperationsReportingTypeEntriesList({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-destructive"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
                                 disabled={deleteEntryLoading}
                                 onClick={() => onDeleteEntry(fieldId, entry)}
                               >

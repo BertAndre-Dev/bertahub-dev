@@ -193,7 +193,7 @@ export function EstateViewModal({
             {!loading && display ? (
               <div className="space-y-4">
                 {error ? (
-                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded px-3 py-2">
+                  <p className="text-xs text-amber-700 hover:text-amber-800 bg-amber-50 border border-amber-100 rounded px-3 py-2">
                     Could not refresh full details. Showing available estate
                     info.
                   </p>

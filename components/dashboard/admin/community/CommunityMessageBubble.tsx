@@ -191,7 +191,7 @@ export function CommunityMessageBubble({
                   <button
                     type="button"
                     disabled={messageActionsDisabled}
-                    className="cursor-pointer rounded p-0.5 hover:bg-background/80 text-destructive disabled:cursor-not-allowed disabled:opacity-40"
+                    className="cursor-pointer rounded p-0.5 hover:bg-background/80 text-destructive hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Delete message"
                     onClick={() => onDeleteMessage?.(message.id)}
                   >

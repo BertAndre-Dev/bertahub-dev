@@ -405,7 +405,7 @@ export default function ResidentRentPage() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="group h-8 w-8"
                     onClick={() => setEditRentId(item.id!)}
                     title="Edit"
                   >
@@ -416,7 +416,7 @@ export default function ResidentRentPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-green-600"
+                      className="h-8 w-8 text-green-600 hover:text-green-700"
                       onClick={() => handleActivateRent(item)}
                       title="Activate"
                     >
@@ -428,7 +428,7 @@ export default function ResidentRentPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-amber-600"
+                      className="h-8 w-8 text-amber-600 hover:text-amber-700"
                       onClick={() => handleSuspendRent(item)}
                       title="Suspend"
                     >
@@ -439,7 +439,7 @@ export default function ResidentRentPage() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => handleDeleteRent(item)}
                     title="Delete"
                   >

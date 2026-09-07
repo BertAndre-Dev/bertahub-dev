@@ -83,7 +83,7 @@ export default function SuspendRentModal({
                 autoFocus
               />
               {error && (
-                <p className="text-sm text-destructive mt-1">{error}</p>
+                <p className="text-sm text-destructive mt-1 hover:text-destructive">{error}</p>
               )}
             </div>
           )}

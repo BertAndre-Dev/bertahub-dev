@@ -55,7 +55,7 @@ export function CreateGroupChatModal({
           type="button"
           onClick={onClose}
           disabled={isSubmitting}
-          className="absolute right-4 top-4 flex size-9 cursor-pointer items-center justify-center rounded-full bg-[#d0dff2] text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className="absolute right-4 top-4 flex size-9 cursor-pointer items-center justify-center rounded-full bg-[#d0dff2] text-gray-700 hover:text-gray-800 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Close"
         >
           <X className="size-5" />

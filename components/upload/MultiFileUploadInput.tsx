@@ -67,7 +67,7 @@ export function MultiFileUploadInput({
                     </span>
                   ) : null}
                   {item.status === "failed" ? (
-                    <span className="shrink-0 text-xs text-destructive">
+                    <span className="shrink-0 text-xs text-destructive hover:text-destructive">
                       Failed
                     </span>
                   ) : null}
@@ -90,7 +90,7 @@ export function MultiFileUploadInput({
                 />
               ) : null}
               {item.error ? (
-                <p className="mt-1 text-xs text-destructive">{item.error}</p>
+                <p className="mt-1 text-xs text-destructive hover:text-destructive">{item.error}</p>
               ) : null}
             </li>
           ))}

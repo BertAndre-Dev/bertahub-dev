@@ -13,15 +13,13 @@ export default function BertaShowcaseSection() {
                 alt="Behance showcase"
                 width={200}
                 height={200}
-                className="
-                    h-full w-full object-cover
+                className="h-full w-full object-cover
                     transition-transform transition-shadow transition-filter
                     duration-700 ease-out
                     group-hover:scale-110
                     group-hover:-translate-y-3
                     group-hover:brightness-125
-                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]
-                  "
+                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
                 loading="lazy"
               />
               <Image
@@ -29,15 +27,13 @@ export default function BertaShowcaseSection() {
                 alt="Berta Hub multi-device preview"
                 width={200}
                 height={200}
-                className="
-                    h-full w-full object-cover
+                className="h-full w-full object-cover
                     transition-transform transition-shadow transition-filter
                     duration-700 ease-out
                     group-hover:scale-110
                     group-hover:-translate-y-3
                     group-hover:brightness-125
-                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]
-                  "
+                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
                 loading="lazy"
               />
               <Image
@@ -45,15 +41,13 @@ export default function BertaShowcaseSection() {
                 alt="Berta Hub multi-device preview"
                 width={200}
                 height={200}
-                className="
-                    h-full w-full object-cover
+                className="h-full w-full object-cover
                     transition-transform transition-shadow transition-filter
                     duration-700 ease-out
                     group-hover:scale-110
                     group-hover:-translate-y-3
                     group-hover:brightness-125
-                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]
-                  "
+                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
                 loading="lazy"
               />
             </div>
@@ -69,15 +63,13 @@ export default function BertaShowcaseSection() {
                   alt="Berta Hub multi-device preview"
                   width={300}
                   height={400}
-                  className="
-                    h-full w-full object-cover
+                  className="h-full w-full object-cover
                     transition-transform transition-shadow transition-filter
                     duration-700 ease-out
                     group-hover:scale-110
                     group-hover:-translate-y-3
                     group-hover:brightness-125
-                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]
-                  "
+                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
                 />
               </div>
 
@@ -88,15 +80,13 @@ export default function BertaShowcaseSection() {
                   alt="Berta Hub multi-device preview"
                   width={300}
                   height={400}
-                  className="
-                    h-full w-full object-cover
+                  className="h-full w-full object-cover
                     transition-transform transition-shadow transition-filter
                     duration-700 ease-out
                     group-hover:scale-110
                     group-hover:-translate-y-3
                     group-hover:brightness-125
-                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]
-                  "
+                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
                 />
               </div>
 
@@ -107,15 +97,13 @@ export default function BertaShowcaseSection() {
                   alt="Berta Hub multi-device preview"
                   width={300}
                   height={400}
-                  className="
-                    h-full w-full object-cover
+                  className="h-full w-full object-cover
                     transition-transform transition-shadow transition-filter
                     duration-700 ease-out
                     group-hover:scale-110
                     group-hover:-translate-y-3
                     group-hover:brightness-125
-                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]
-                  "
+                    group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
                 />
               </div>
             </div>

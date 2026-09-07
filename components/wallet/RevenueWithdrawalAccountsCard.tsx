@@ -268,7 +268,7 @@ function AutoSettlementPanel({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <Sparkles
-                className="size-3.5 shrink-0 text-emerald-700"
+                className="size-3.5 shrink-0 text-emerald-700 hover:text-emerald-800"
                 aria-hidden
               />
               <p className="text-sm font-medium text-foreground">
@@ -304,7 +304,7 @@ function AutoSettlementPanel({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Sparkles
-              className="size-3.5 shrink-0 text-emerald-700"
+              className="size-3.5 shrink-0 text-emerald-700 hover:text-emerald-800"
               aria-hidden
             />
             <p className="text-[15px] font-semibold tracking-tight text-foreground">

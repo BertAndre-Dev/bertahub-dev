@@ -202,7 +202,7 @@ export default function AnnouncementCard({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                  className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                   onClick={handleEditClick}
                   title="Edit (within 1 hour of creation)"
                 >
@@ -213,7 +213,7 @@ export default function AnnouncementCard({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={handleDeleteClick}
                 title="Delete"
               >

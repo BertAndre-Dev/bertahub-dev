@@ -43,13 +43,11 @@ function FeatureCard({
 
   return (
     <div
-      className="
-    relative flex flex-col overflow-hidden rounded-2xl
+      className="relative flex flex-col overflow-hidden rounded-2xl
     bg-[#1A1D23] border border-white/[0.06]
     transition-all duration-300 ease-out
     hover:border-white/[0.12] hover:shadow-[0_8px_40px_rgba(0,0,0,0.4)]
-    cursor-default group
-  "
+    cursor-default group"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

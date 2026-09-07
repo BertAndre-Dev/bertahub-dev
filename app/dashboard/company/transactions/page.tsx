@@ -415,7 +415,7 @@ export default function CompanyTransactionPage() {
           );
         }
         return (
-          <span className="text-yellow-600 font-medium capitalize">
+          <span className="text-yellow-600 hover:text-yellow-700 font-medium capitalize">
             {item.paymentStatus || "Pending"}
           </span>
         );

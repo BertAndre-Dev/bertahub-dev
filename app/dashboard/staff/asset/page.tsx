@@ -259,7 +259,7 @@ export default function StaffAssetPage() {
               </p>
             </div>
             <div className="p-3 rounded-full bg-[#D0DFF280]">
-              <Briefcase className="w-5 h-5 text-[#0150AC]" />
+              <Briefcase className="w-5 h-5 text-[#0150AC] hover:text-[#01408A]" />
             </div>
           </div>
         </Card>

@@ -30,7 +30,7 @@ export default function MaintenanceRecurringFields({
           onChange={(e) =>
             onChange({ ...value, recurring: e.target.checked })
           }
-          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 text-[#0150AC] focus:ring-[#0150AC]"
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 text-[#0150AC] hover:text-[#01408A] focus:ring-[#0150AC]"
         />
         <span>
           <span className="block text-sm font-medium">Recurring schedule</span>
@@ -88,7 +88,7 @@ export default function MaintenanceRecurringFields({
       {value.recurring &&
         value.recurringSpanMonths <= 0 &&
         value.recurringSpanYears <= 0 && (
-          <p className="text-xs text-destructive">
+          <p className="text-xs text-destructive hover:text-destructive">
             Enter at least one month or year for the recurring span.
           </p>
         )}

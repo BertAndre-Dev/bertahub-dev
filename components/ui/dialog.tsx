@@ -72,7 +72,7 @@ export function DialogContent({
       >
         <button
           onClick={() => setIsOpen(false)}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-500"
         >
           ✕
         </button>

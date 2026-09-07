@@ -619,41 +619,41 @@ export default function BillPage() {
       render: (item: BillData) => (
         <div className="flex items-center gap-2">
           <Button
-            className="cursor-pointer"
+            className="text-blue-600 hover:text-blue-700 group cursor-pointer"
             variant="ghost"
             size="sm"
             onClick={() => handleOpenModal(item)}
           >
-            <Edit2 className="w-4 h-4 text-blue-600" />
+            <Edit2 className="w-4 h-4" />
           </Button>
           {item.isActive ? (
             <Button
-              className="cursor-pointer"
+              className="text-red-600 hover:text-red-700 group cursor-pointer"
               variant="ghost"
               size="sm"
               onClick={() => openSuspendModal(item)}
               title="Suspend bill"
             >
-              <PowerOff className="w-4 h-4 text-red-600" />
+              <PowerOff className="w-4 h-4" />
             </Button>
           ) : (
             <Button
-              className="cursor-pointer"
+              className="text-green-600 hover:text-green-700 group cursor-pointer"
               variant="ghost"
               size="sm"
               onClick={() => handleActivateBill(item)}
               title="Activate bill"
             >
-              <Power className="w-4 h-4 text-green-600" />
+              <Power className="w-4 h-4" />
             </Button>
           )}
           <Button
-            className="cursor-pointer"
+            className="text-red-600 hover:text-red-700 group cursor-pointer"
             variant="ghost"
             size="sm"
             onClick={() => handleDeleteBill(item.id, item.name)}
           >
-            <Trash2 className="w-4 h-4 text-red-600" />
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       ),
@@ -749,23 +749,23 @@ export default function BillPage() {
         return (
           <div className="flex items-center gap-2">
             <Button
-              className="cursor-pointer"
+              className="text-blue-600 hover:text-blue-700 group cursor-pointer"
               variant="ghost"
               size="sm"
               onClick={() => openEditAssignedModal(item)}
               title="Edit bill"
               disabled={!actionId}
             >
-              <Edit2 className="w-4 h-4 text-blue-600" />
+              <Edit2 className="w-4 h-4" />
             </Button>
             <Button
-              className="cursor-pointer"
+              className="text-red-600 hover:text-red-700 group cursor-pointer"
               variant="ghost"
               size="sm"
               onClick={() => handleDeleteBill(actionId, name)}
               disabled={!actionId}
             >
-              <Trash2 className="w-4 h-4 text-red-600" />
+              <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         );
