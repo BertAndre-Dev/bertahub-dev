@@ -99,12 +99,14 @@ export const getResidentBills = createAsyncThunk(
       limit = 10,
       startDate,
       endDate,
+      estateId,
     }: {
       residentId: string;
       page?: number;
       limit?: number;
       startDate?: string;
       endDate?: string;
+      estateId?: string;
     },
     { rejectWithValue },
   ) => {
@@ -115,6 +117,7 @@ export const getResidentBills = createAsyncThunk(
       });
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
+      if (estateId?.trim()) params.append("estateId", estateId.trim());
 
       const res = await axiosInstance.get(
         `/api/v1/bills-mgt/resident/${residentId}?${params.toString()}`,

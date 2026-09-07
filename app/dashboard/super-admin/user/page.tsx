@@ -556,35 +556,37 @@ export default function SuperAdminUserPage() {
         item.isActive ? "Active" : "Suspended",
     },
     {
-      key: "suspensionReason",
-      header: "Suspension reason",
-      render: (item: SuperAdminUserData) =>
-        item.isActive === false
-          ? item.suspensionReason?.trim() || "—"
-          : "—",
-      exportValue: (item: SuperAdminUserData) =>
-        item.isActive === false ? item.suspensionReason?.trim() || "" : "",
-    },
-    {
-      key: "suspendedAt",
-      header: "Suspended at",
+      key: "suspension",
+      header: "Suspension",
       render: (item: SuperAdminUserData) => {
-        if (item.isActive !== false || !item.suspendedAt) return "—";
-        const d = new Date(item.suspendedAt);
-        return Number.isNaN(d.getTime())
-          ? "—"
-          : d.toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+        if (item.isActive !== false) return "—";
+        const reason = item.suspensionReason?.trim();
+        const when =
+          item.suspendedAt && !Number.isNaN(new Date(item.suspendedAt).getTime())
+            ? new Date(item.suspendedAt).toLocaleString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "";
+        if (reason && when) {
+          return (
+            <div className="min-w-[10rem]">
+              <p className="text-sm text-foreground">{reason}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{when}</p>
+            </div>
+          );
+        }
+        return reason || when || "—";
       },
-      exportValue: (item: SuperAdminUserData) =>
-        item.isActive === false && item.suspendedAt
-          ? String(item.suspendedAt)
-          : "",
+      exportValue: (item: SuperAdminUserData) => {
+        if (item.isActive !== false) return "";
+        return [item.suspensionReason?.trim(), item.suspendedAt]
+          .filter(Boolean)
+          .join(" | ");
+      },
     },
     {
       key: "actions",

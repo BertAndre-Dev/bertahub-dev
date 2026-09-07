@@ -37,6 +37,7 @@ export interface GetVisitorsByResidentParams {
   limit: number;
   startDate?: string;
   endDate?: string;
+  estateId?: string;
 }
 
 // Delete visitor
@@ -77,7 +78,7 @@ export const createVisitor = createAsyncThunk(
 export const getVisitorsByResident = createAsyncThunk(
   "residentVisitor/getVisitorsByResident",
   async (
-    { residentId, page = 1, limit = 10, startDate, endDate }: GetVisitorsByResidentParams,
+    { residentId, page = 1, limit = 10, startDate, endDate, estateId }: GetVisitorsByResidentParams,
     { rejectWithValue }
   ) => {
     try {
@@ -87,6 +88,7 @@ export const getVisitorsByResident = createAsyncThunk(
       if (limit != null) params.set("limit", String(limit));
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
+      if (estateId?.trim()) params.set("estateId", estateId.trim());
       const res = await axiosInstance.get(`/api/v1/visitor-mgt?${params.toString()}`);
       return res.data;
     } catch (error: any) {

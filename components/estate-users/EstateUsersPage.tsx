@@ -603,20 +603,12 @@ export function EstateUsersPage({
         item.isActive ? "Active" : "Suspended",
     },
     {
-      key: "suspensionReason",
-      header: "Suspension reason",
-      render: (item: AdminUserData) =>
-        item.isActive === false
-          ? item.suspensionReason?.trim() || "—"
-          : "—",
-      exportValue: (item: AdminUserData) =>
-        item.isActive === false ? item.suspensionReason?.trim() || "" : "",
-    },
-    {
-      key: "suspendedAt",
-      header: "Suspended at",
-      render: (item: AdminUserData) =>
-        item.isActive === false && item.suspendedAt
+      key: "suspension",
+      header: "Suspension",
+      render: (item: AdminUserData) => {
+        if (item.isActive !== false) return "—";
+        const reason = item.suspensionReason?.trim();
+        const when = item.suspendedAt
           ? new Date(item.suspendedAt).toLocaleString("en-GB", {
               day: "2-digit",
               month: "short",
@@ -624,11 +616,23 @@ export function EstateUsersPage({
               hour: "2-digit",
               minute: "2-digit",
             })
-          : "—",
-      exportValue: (item: AdminUserData) =>
-        item.isActive === false && item.suspendedAt
-          ? String(item.suspendedAt)
-          : "",
+          : "";
+        if (reason && when && !Number.isNaN(new Date(item.suspendedAt!).getTime())) {
+          return (
+            <div className="min-w-[10rem]">
+              <p className="text-sm text-foreground">{reason}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{when}</p>
+            </div>
+          );
+        }
+        return reason || when || "—";
+      },
+      exportValue: (item: AdminUserData) => {
+        if (item.isActive !== false) return "";
+        const reason = item.suspensionReason?.trim() || "";
+        const when = item.suspendedAt || "";
+        return [reason, when].filter(Boolean).join(" | ");
+      },
     },
     // Admin & security: hide Actions column
     ...(!hideActionsColumn

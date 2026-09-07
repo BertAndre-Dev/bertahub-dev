@@ -463,35 +463,37 @@ export default function CompanyUsersPage() {
           item.isActive ? "Active" : "Suspended",
       },
       {
-        key: "suspensionReason" as const,
-        header: "Suspension reason",
-        render: (item: CompanyUserDetails) =>
-          item.isActive === false
-            ? item.suspensionReason?.trim() || "—"
-            : "—",
-        exportValue: (item: CompanyUserDetails) =>
-          item.isActive === false ? item.suspensionReason?.trim() || "" : "",
-      },
-      {
-        key: "suspendedAt" as const,
-        header: "Suspended at",
+        key: "suspension" as const,
+        header: "Suspension",
         render: (item: CompanyUserDetails) => {
-          if (item.isActive !== false || !item.suspendedAt) return "—";
-          const d = new Date(item.suspendedAt);
-          return Number.isNaN(d.getTime())
-            ? "—"
-            : d.toLocaleString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              });
+          if (item.isActive !== false) return "—";
+          const reason = item.suspensionReason?.trim();
+          const when =
+            item.suspendedAt && !Number.isNaN(new Date(item.suspendedAt).getTime())
+              ? new Date(item.suspendedAt).toLocaleString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "";
+          if (reason && when) {
+            return (
+              <div className="min-w-[10rem]">
+                <p className="text-sm text-foreground">{reason}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{when}</p>
+              </div>
+            );
+          }
+          return reason || when || "—";
         },
-        exportValue: (item: CompanyUserDetails) =>
-          item.isActive === false && item.suspendedAt
-            ? String(item.suspendedAt)
-            : "",
+        exportValue: (item: CompanyUserDetails) => {
+          if (item.isActive !== false) return "";
+          return [item.suspensionReason?.trim(), item.suspendedAt]
+            .filter(Boolean)
+            .join(" | ");
+        },
       },
       // Admin & security: hide Actions column
       ...(!hideActionsColumn

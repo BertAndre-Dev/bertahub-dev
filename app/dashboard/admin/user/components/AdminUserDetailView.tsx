@@ -130,7 +130,7 @@ function formatDate(value?: string) {
       });
 }
 
-function formatDateTime(value?: string) {
+function formatDateTime(value?: string | null) {
   if (!value) return "—";
   const d = new Date(value);
   return Number.isNaN(d.getTime())
@@ -336,16 +336,19 @@ function UserProfileDetails({
             value={formatLabel(user.invitationStatus) || "—"}
           />
           {user.isActive === false ? (
-            <>
-              <DetailField
-                label="Suspension reason"
-                value={user.suspensionReason?.trim() || "—"}
-              />
-              <DetailField
-                label="Suspended at"
-                value={formatDateTime(user.suspendedAt)}
-              />
-            </>
+            <DetailField
+              label="Suspension"
+              value={
+                [
+                  user.suspensionReason?.trim(),
+                  formatDateTime(user.suspendedAt) !== "—"
+                    ? formatDateTime(user.suspendedAt)
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || "—"
+              }
+            />
           ) : null}
           {user.serviceCharge != null ? (
             <DetailField
@@ -521,14 +524,35 @@ export default function UserDetailView({
       estateId ||
       resolveEstateId(
         (user as DashboardUserDetails & { estateId?: unknown }).estateId,
+      ) ||
+      resolveEstateId(
+        (
+          user as DashboardUserDetails & {
+            memberships?: Array<{ estateId?: unknown; isCurrent?: boolean }>;
+          }
+        ).memberships?.find((m) => m.isCurrent)?.estateId,
+      ) ||
+      resolveEstateId(
+        (
+          user as DashboardUserDetails & {
+            memberships?: Array<{ estateId?: unknown }>;
+          }
+        ).memberships?.[0]?.estateId,
       );
 
     setRelatedLoading(true);
     try {
       const billPromise = uid
         ? dispatch(
-            getResidentBills({ residentId: uid, page: 1, limit: 100 }),
-          ).unwrap()
+            getResidentBills({
+              residentId: uid,
+              page: 1,
+              limit: 100,
+              estateId: resolvedEstateId || undefined,
+            }),
+          )
+            .unwrap()
+            .catch(() => ({ data: [] }))
         : Promise.resolve({ data: [] });
 
       const assignedBillPromises =
@@ -599,6 +623,7 @@ export default function UserDetailView({
               residentId: uid,
               page: 1,
               limit: 100,
+              estateId: resolvedEstateId || undefined,
             }),
           )
             .unwrap()

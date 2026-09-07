@@ -24,6 +24,7 @@ export interface DashboardUserDetails {
   addressIds?: DashboardUserAddressRef[];
   residentType?: string;
   serviceCharge?: boolean;
+  estateId?: string | null;
   suspendedAt?: string | null;
   suspendedBy?: string | null;
   suspensionReason?: string | null;
