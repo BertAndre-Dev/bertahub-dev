@@ -472,7 +472,7 @@ export default function CompanyUsersPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-[#0150AC] hover:bg-blue-50 hover:text-[#01408A] cursor-pointer"
+                      className="text-[#0150AC] hover:bg-blue-50 hover:text-[#60A5FA] cursor-pointer"
                       onClick={() => {
                         const id = userRowId(item);
                         if (id) router.push(`/dashboard/company/users/${id}`);
@@ -489,86 +489,86 @@ export default function CompanyUsersPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                        className="cursor-pointer"
                         onClick={() => handleEditUser(item)}
                         title="Edit user details"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-4 h-4 text-blue-600" />
                       </Button>
                       {item.isActive ? (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-600 hover:text-red-700 cursor-pointer"
+                          className="cursor-pointer"
                           onClick={() => openSuspendModal(item)}
                           title="Suspend user"
                         >
-                          <PowerOff className="w-4 h-4" />
+                          <PowerOff className="w-4 h-4 text-red-600" />
                         </Button>
                       ) : (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-green-600 hover:text-green-700 cursor-pointer"
+                          className="cursor-pointer"
                           onClick={() => openActivateModal(item)}
                           title="Activate user"
                         >
-                          <Power className="w-4 h-4" />
+                          <Power className="w-4 h-4 text-green-600" />
                         </Button>
                       )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:text-red-700 cursor-pointer"
+                        className="cursor-pointer"
                         onClick={() =>
                           handleDeleteUser(userRowId(item), item.firstName)
                         }
                         title="Delete user"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </>
                   ) : null}
                   {/* <Button
                     variant="ghost"
                     size="sm"
-                    className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                    className="cursor-pointer"
                     onClick={() => handleEditUser(item)}
                     title="Edit user details"
                   >
-                    <Edit className="w-4 h-4" />
+                    <Edit className="w-4 h-4 text-blue-600" />
                   </Button>
                   {item.isActive ? (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => openSuspendModal(item)}
                       title="Suspend user"
                     >
-                      <PowerOff className="w-4 h-4" />
+                      <PowerOff className="w-4 h-4 text-red-600" />
                     </Button>
                   ) : (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-green-600 hover:text-green-700 cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => openActivateModal(item)}
                       title="Activate user"
                     >
-                      <Power className="w-4 h-4" />
+                      <Power className="w-4 h-4 text-green-600" />
                     </Button>
                   )}
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-red-600 hover:text-red-700 cursor-pointer"
+                    className="cursor-pointer"
                     onClick={() =>
                       handleDeleteUser(userRowId(item), item.firstName)
                     }
                     title="Delete user"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 text-red-600" />
                   </Button> */}
                 </div>
               ),

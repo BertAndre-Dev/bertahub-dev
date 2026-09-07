@@ -45,7 +45,7 @@ export function MarketplaceListingCard({
           <Button
             variant="ghost"
             size="sm"
-            className="group h-8"
+            className="h-8"
             onClick={() => onEdit(item)}
           >
             <Pencil className="w-4 h-4" />
@@ -55,7 +55,7 @@ export function MarketplaceListingCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-green-600 hover:text-green-700"
+              className="h-8 text-green-600"
               onClick={() => onActivate(item)}
             >
               <PlayCircle className="w-4 h-4" />
@@ -64,7 +64,7 @@ export function MarketplaceListingCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-amber-600 hover:text-amber-700"
+              className="h-8 text-amber-600"
               onClick={() => onSuspend(item)}
             >
               <PauseCircle className="w-4 h-4" />
@@ -74,7 +74,7 @@ export function MarketplaceListingCard({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 text-destructive hover:text-destructive"
+            className="h-8 text-destructive"
             onClick={() => onDelete(item)}
           >
             <Trash2 className="w-4 h-4" />

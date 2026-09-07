@@ -501,7 +501,7 @@ export default function TransactionPage() {
                 ? "text-green-600 font-medium capitalize"
                 : isFailed
                   ? "text-red-600 font-medium capitalize"
-                  : "text-yellow-600 hover:text-yellow-700 font-medium capitalize"
+                  : "text-yellow-600 font-medium capitalize"
             }
           >
             {item.paymentStatus || "Pending"}

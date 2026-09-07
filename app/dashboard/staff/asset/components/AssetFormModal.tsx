@@ -269,7 +269,7 @@ export default function AssetFormModal({
                 className="h-11"
                 aria-label={`Asset ${idx + 1} name`}
               />
-              <div className="hidden sm:flex h-11 w-9 items-center justify-center rounded-md bg-[#D0DFF280] text-[#0150AC] hover:text-[#01408A] text-sm font-semibold">
+              <div className="hidden sm:flex h-11 w-9 items-center justify-center rounded-md bg-[#D0DFF280] text-[#0150AC] text-sm font-semibold">
                 #
               </div>
               <Input

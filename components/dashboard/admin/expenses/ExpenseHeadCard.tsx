@@ -48,7 +48,7 @@ export function ExpenseHeadCard({
       <div className="absolute right-4 top-0 flex items-center gap-2">
         <button
           type="button"
-          className="group h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
+          className="h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
           aria-label="View expense head"
           onClick={(e) => {
             e.stopPropagation();
@@ -59,25 +59,25 @@ export function ExpenseHeadCard({
         </button>
         <button
           type="button"
-          className="text-blue-600 hover:text-blue-700 group h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
+          className="h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
           aria-label="Edit expense head"
           onClick={(e) => {
             e.stopPropagation();
             onEdit(item);
           }}
         >
-          <Pencil className="h-4 w-4" />
+          <Pencil className="h-4 w-4 text-blue-600" />
         </button>
         <button
           type="button"
-          className="text-red-600 hover:text-red-700 group h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
+          className="h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
           aria-label="Delete expense head"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(item);
           }}
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-4 w-4 text-red-600" />
         </button>
       </div>
 

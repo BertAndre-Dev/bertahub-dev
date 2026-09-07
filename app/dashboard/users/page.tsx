@@ -304,7 +304,7 @@ export default function UsersPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-destructive/70 hover:text-destructive cursor-pointer"
+                          className="text-muted-foreground hover:text-destructive cursor-pointer"
                           onClick={() => handleDeleteUser(user.name)}
                         >
                           <Trash2 className="w-4 h-4" />

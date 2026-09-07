@@ -315,7 +315,7 @@ export default function EnergyProviderEstatePage() {
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onSelect={() => handleDeleteEstate(rowId(item), item.name)}
-                className="cursor-pointer select-none rounded px-3 py-2 text-sm text-red-600 hover:text-red-700 outline-none hover:bg-gray-100 focus:bg-gray-100"
+                className="cursor-pointer select-none rounded px-3 py-2 text-sm text-red-600 outline-none hover:bg-gray-100 focus:bg-gray-100"
               >
                 Delete Estate
               </DropdownMenu.Item>

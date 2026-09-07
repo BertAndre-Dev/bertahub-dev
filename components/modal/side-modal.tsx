@@ -58,11 +58,11 @@ export default function SideModal({
             <button
               type="button"
               onClick={onClose}
-              className="group absolute top-3 right-3 bg-white/90 hover:bg-white border border-black/10 p-1.5 rounded-full transition-colors"
+              className="absolute top-3 right-3 bg-white/90 hover:bg-white border border-black/10 p-1.5 rounded-full transition-colors"
               aria-label="Close modal"
               title="Close"
             >
-              <X className="w-5 h-5 text-gray-700 hover:text-gray-800" />
+              <X className="w-5 h-5 text-gray-700" />
             </button>
 
             <div className="w-full min-w-0 wrap-break-word overflow-auto">

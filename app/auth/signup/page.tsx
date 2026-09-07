@@ -120,7 +120,7 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 transition-colors"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -136,13 +136,13 @@ export default function SignupPage() {
                   { label: "Lowercase letter", check: passwordStrength.hasLowerCase },
                   { label: "Number", check: passwordStrength.hasNumber },
                 ].map((req, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs text-gray-600 hover:text-gray-700">
+                  <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
                     <div
                       className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${
                         req.check ? "bg-green-500/20" : "bg-gray-200"
                       }`}
                     >
-                      {req.check && <Check className="w-3 h-3 text-green-600 hover:text-green-700" />}
+                      {req.check && <Check className="w-3 h-3 text-green-600" />}
                     </div>
                     <span className={req.check ? "text-gray-900" : ""}>{req.label}</span>
                   </div>
@@ -166,7 +166,7 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 transition-colors"
             >
               {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>

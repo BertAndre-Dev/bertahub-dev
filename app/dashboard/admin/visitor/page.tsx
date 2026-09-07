@@ -430,7 +430,7 @@ export default function AdminVisitorManagement() {
           {/* Admins cannot verify visitors — security-only action.
           {verificationFlags.canVerify ? (
             item.isVerified ? (
-              <div className="flex items-center gap-1 text-green-600 hover:text-green-700">
+              <div className="flex items-center gap-1 text-green-600">
                 <CheckCircle className="w-5 h-5" />
                 <span className="text-xs">Verified</span>
               </div>
@@ -439,7 +439,7 @@ export default function AdminVisitorManagement() {
                 variant="ghost"
                 size="sm"
                 onClick={() => openVerifyModal(item)}
-                className="flex items-center gap-1 text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
                 title="Verify visitor"
               >
                 <ShieldCheck className="w-5 h-5" />
@@ -449,7 +449,7 @@ export default function AdminVisitorManagement() {
           ) : null}
           */}
           {verificationFlags.showVerifiedBy && item.isVerified ? (
-            <div className="flex items-center gap-1 text-green-600 hover:text-green-700">
+            <div className="flex items-center gap-1 text-green-600">
               <CheckCircle className="w-5 h-5" />
               <span className="text-xs">Verified</span>
             </div>
@@ -462,7 +462,7 @@ export default function AdminVisitorManagement() {
               e.stopPropagation();
               setQrCodeVisitor(item as QrCodeVisitor);
             }}
-            className="flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1 text-blue-600 hover:bg-blue-50 cursor-pointer disabled:opacity-50"
             title={
               item.qrCodeDataUrl ? "View QR code" : "QR code not available"
             }

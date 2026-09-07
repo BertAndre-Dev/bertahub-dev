@@ -317,7 +317,7 @@ export default function RequestComments({
           </div>
         ) : null}
         {imageUpload.error ? (
-          <p className="text-xs text-destructive hover:text-destructive">{imageUpload.error}</p>
+          <p className="text-xs text-destructive">{imageUpload.error}</p>
         ) : null}
         {imageUpload.isUploading ? (
           <p className="text-xs text-muted-foreground">Uploading image…</p>

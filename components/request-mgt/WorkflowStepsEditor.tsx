@@ -458,7 +458,7 @@ export default function WorkflowStepsEditor({
                                       </span>
                                       <span className="inline-flex items-center gap-2 text-muted-foreground">
                                         {selectedInRole > 0 ? (
-                                          <span className="text-xs text-[#0150AC] hover:text-[#01408A]">
+                                          <span className="text-xs text-[#0150AC]">
                                             {selectedInRole} selected
                                           </span>
                                         ) : (

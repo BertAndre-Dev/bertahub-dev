@@ -108,7 +108,7 @@ export default function OperationsReportingTypeCard({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="group h-9 w-9 rounded-full"
+                className="h-9 w-9 rounded-full"
                 onClick={onToggle}
                 aria-expanded="false"
                 aria-label="Expand"
@@ -121,7 +121,7 @@ export default function OperationsReportingTypeCard({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full text-[#0150AC] hover:text-[#01408A]"
+                className="h-9 w-9 rounded-full text-[#0150AC]"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit();
@@ -136,7 +136,7 @@ export default function OperationsReportingTypeCard({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full text-destructive hover:text-destructive"
+                className="h-9 w-9 rounded-full text-destructive"
                 disabled={deleteDisabled}
                 onClick={(e) => {
                   e.stopPropagation();

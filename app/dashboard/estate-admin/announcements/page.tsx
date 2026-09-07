@@ -67,7 +67,7 @@ function EstateAdminAnnouncementCard({
     >
       <div className="flex items-start gap-3">
         <div className="p-2 rounded-lg bg-[#D0DFF280] shrink-0">
-          <Bell className="w-5 h-5 text-[#0150AC] hover:text-[#01408A]" />
+          <Bell className="w-5 h-5 text-[#0150AC]" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-1">
@@ -78,7 +78,7 @@ function EstateAdminAnnouncementCard({
             <span className="capitalize">Priority: {priority}</span>
             {(item.fileUrl || item.file) && (
               <span
-                className="bg-blue-50 text-blue-700 hover:text-blue-800 px-1.5 py-0.5 rounded inline-flex items-center gap-1"
+                className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded inline-flex items-center gap-1"
                 title="Has attachment"
               >
                 <Paperclip className="h-3 w-3" />

@@ -90,7 +90,7 @@ export default function PayRentModal({
           {/* Remaining balance: ₦{remaining.toLocaleString()}. */}
         </p>
         {!walletId ? (
-          <p className="text-sm text-destructive hover:text-destructive">
+          <p className="text-sm text-destructive">
             No wallet found. Please create or link a wallet first.
           </p>
         ) : (
@@ -114,7 +114,7 @@ export default function PayRentModal({
                 disabled={loading}
               />
               {error && (
-                <p className="text-sm text-destructive mt-1 hover:text-destructive">{error}</p>
+                <p className="text-sm text-destructive mt-1">{error}</p>
               )}
             </div>
             <div className="flex justify-end gap-2 pt-2">

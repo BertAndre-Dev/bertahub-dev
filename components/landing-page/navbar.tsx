@@ -117,7 +117,7 @@ export default function Navbar({ embedded = false }: NavbarProps) {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#0150AC] hover:text-[#01408A] cursor-pointer active:scale-[0.97]"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#0150AC] cursor-pointer active:scale-[0.97]"
             aria-label="Open menu"
           >
             <svg
@@ -166,7 +166,7 @@ export default function Navbar({ embedded = false }: NavbarProps) {
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="inline-flex h-10 w-10 items-center justify-center text-[#0150AC] hover:text-[#01408A] cursor-pointer"
+                className="inline-flex h-10 w-10 items-center justify-center text-[#0150AC] cursor-pointer"
                 aria-label="Close menu"
               >
                 <svg

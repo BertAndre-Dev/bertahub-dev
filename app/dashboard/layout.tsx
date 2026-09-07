@@ -478,7 +478,7 @@ export default function DashboardLayout({
           </nav>
 
           {/* User Info */}
-          <div className="bg-[#f2f2f2] border-t border-sidebar-border px-2 py-4">
+          <div className="bg-[#f2f2f2] border-t border-sidebar-border px-2 py-4  ">
             <button
               type="button"
               className="flex items-center gap-0 md:gap-3 w-full hover:bg-sidebar-accent transition-colors overflow-x-scroll cursor-pointer"

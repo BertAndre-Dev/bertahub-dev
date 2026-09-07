@@ -62,7 +62,7 @@ export function GroupMemberRow({
               type="button"
               variant="ghost"
               size="icon"
-              className="size-8 cursor-pointer text-primary/70 hover:text-primary disabled:cursor-not-allowed"
+              className="size-8 cursor-pointer text-muted-foreground hover:text-primary disabled:cursor-not-allowed"
               disabled={actionsDisabled}
               aria-label={`Make ${member.name} a group admin`}
               title="Make group admin"
@@ -77,7 +77,7 @@ export function GroupMemberRow({
               type="button"
               variant="ghost"
               size="icon"
-              className="size-8 cursor-pointer text-destructive/70 hover:text-destructive disabled:cursor-not-allowed"
+              className="size-8 cursor-pointer text-muted-foreground hover:text-destructive disabled:cursor-not-allowed"
               disabled={actionsDisabled}
               aria-label={`Remove ${member.name} from group`}
               title="Remove from group"

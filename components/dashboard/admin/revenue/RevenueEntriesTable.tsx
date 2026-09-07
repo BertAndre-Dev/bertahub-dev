@@ -64,7 +64,7 @@ export function RevenueEntriesTable({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="group p-2 rounded-md hover:bg-muted"
+              className="p-2 rounded-md hover:bg-muted"
               aria-label="View"
               onClick={() => onView(item)}
             >
@@ -72,7 +72,7 @@ export function RevenueEntriesTable({
             </button>
             <button
               type="button"
-              className="group p-2 rounded-md hover:bg-muted"
+              className="p-2 rounded-md hover:bg-muted"
               aria-label="Edit"
               onClick={() => onEdit(item)}
             >
@@ -80,11 +80,11 @@ export function RevenueEntriesTable({
             </button>
             <button
               type="button"
-              className="text-red-600 hover:text-red-700 group p-2 rounded-md hover:bg-muted"
+              className="p-2 rounded-md hover:bg-muted"
               aria-label="Delete"
               onClick={() => onDelete(item)}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4 text-red-600" />
             </button>
           </div>
         ),

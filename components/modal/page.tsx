@@ -57,7 +57,8 @@ const Modal: React.FC<ModalProps> = ({
           >
             <button
               onClick={onClose}
-              className="absolute
+              className="
+                absolute
                 cursor-pointer
                 hover:cursor-pointer
                 top-2
@@ -72,7 +73,8 @@ const Modal: React.FC<ModalProps> = ({
                 transition-colors
                 focus:outline-none
                 focus:ring-2
-                focus:ring-gray-300"
+                focus:ring-gray-300
+              "
               aria-label="Close modal"
             >
               <svg

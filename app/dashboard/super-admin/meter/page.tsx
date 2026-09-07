@@ -596,12 +596,12 @@ export default function AdminMeterManagement() {
               <Button
                 variant="outline"
                 size="sm"
-                className="group cursor-pointer gap-1"
+                className="cursor-pointer gap-1"
                 onClick={() => handleOpenReassignMeter(item)}
                 title="Reassign to estate"
                 aria-label="Reassign to estate"
               >
-                <ArrowRightLeft className="w-4 h-4 text-indigo-600 hover:text-indigo-700" />
+                <ArrowRightLeft className="w-4 h-4 text-indigo-600" />
               </Button>
               <span
                 role="tooltip"
@@ -614,12 +614,12 @@ export default function AdminMeterManagement() {
           <Button
             variant="outline"
             size="sm"
-            className="text-orange-600 hover:text-orange-700 group cursor-pointer gap-1"
+            className="cursor-pointer gap-1"
             onClick={() => handleClearTamper(item)}
             title="Generate clear-tamper token"
             disabled={clearTamperLoadingMeter === item.meterNumber}
           >
-            <KeyRound className="w-4 h-4" />
+            <KeyRound className="w-4 h-4 text-orange-600" />
           </Button>
           <Button
             variant="destructive"

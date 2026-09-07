@@ -301,7 +301,7 @@ export function SetEstateRateModal({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="text-destructive hover:text-destructive cursor-pointer"
+                          className="text-destructive cursor-pointer"
                           onClick={() => removeSplit(split.id)}
                         >
                           <Trash2 className="h-4 w-4" />

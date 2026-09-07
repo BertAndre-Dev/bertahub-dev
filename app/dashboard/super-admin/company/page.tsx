@@ -314,16 +314,16 @@ export default function SuperAdminCompanyPage() {
               className="cursor-pointer"
               disabled={!companyId(item)}
             >
-              <Eye className="w-4 h-4 text-[#0150AC] hover:text-[#01408A]" />
+              <Eye className="w-4 h-4 text-[#0150AC]" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => openEdit(item)}
               title="Edit Company"
-              className="text-blue-600 hover:text-blue-700 cursor-pointer"
+              className="cursor-pointer"
             >
-              <Edit className="w-4 h-4" />
+              <Edit className="w-4 h-4 text-blue-600" />
             </Button>
 
             {item.isActive ? (
@@ -332,9 +332,9 @@ export default function SuperAdminCompanyPage() {
                 size="sm"
                 onClick={() => openSuspendModal(item)}
                 title="Suspend Company"
-                className="text-red-600 hover:text-red-700 cursor-pointer"
+                className="cursor-pointer"
               >
-                <PowerOff className="w-4 h-4" />
+                <PowerOff className="w-4 h-4 text-red-600" />
               </Button>
             ) : (
               <Button
@@ -342,9 +342,9 @@ export default function SuperAdminCompanyPage() {
                 size="sm"
                 onClick={() => openActivateModal(item)}
                 title="Activate Company"
-                className="text-green-600 hover:text-green-700 cursor-pointer"
+                className="cursor-pointer"
               >
-                <Power className="w-4 h-4" />
+                <Power className="w-4 h-4 text-green-600" />
               </Button>
             )}
 
@@ -353,9 +353,9 @@ export default function SuperAdminCompanyPage() {
               size="sm"
               onClick={() => handleDelete(item)}
               title="Delete Company"
-              className="text-red-600 hover:text-red-700 cursor-pointer"
+              className="cursor-pointer"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4 text-red-600" />
             </Button>
           </div>
         ),

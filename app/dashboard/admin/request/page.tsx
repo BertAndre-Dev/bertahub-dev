@@ -85,7 +85,7 @@ export default function AdminRequestPage() {
       <div>
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-2xl bg-[#D0DFF280]">
-            <ClipboardList className="w-5 h-5 text-[#0150AC] hover:text-[#01408A]" />
+            <ClipboardList className="w-5 h-5 text-[#0150AC]" />
           </div>
           <h1 className="font-heading text-3xl font-bold tracking-[-0.02em]">
             Request Management

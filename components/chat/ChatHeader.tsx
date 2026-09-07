@@ -96,7 +96,7 @@ export default function ChatHeader({ chat }: Readonly<Props>) {
             onClick={handleClose}
             disabled={isBusy}
             aria-label="End chat"
-            className="flex items-center gap-1 text-sm text-destructive/70 hover:text-destructive transition-colors cursor-pointer"
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
           >
             <XCircle className="h-4 w-4" />
             End Chat

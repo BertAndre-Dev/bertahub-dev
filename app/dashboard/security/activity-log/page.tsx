@@ -299,11 +299,11 @@ export default function ActivityLogPage() {
             type="button"
             variant="ghost"
             size="sm"
-            className="group cursor-pointer"
+            className="cursor-pointer"
             title="View more"
             onClick={() => setViewingVisitor(row)}
           >
-            <Eye className="h-4 w-4 text-[#0150AC] hover:text-[#01408A]" />
+            <Eye className="h-4 w-4 text-[#0150AC]" />
           </Button>
         ),
       },

@@ -245,7 +245,7 @@ export default function MaintenanceRecordsTable({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 cursor-pointer text-destructive hover:text-destructive"
+                className="h-8 cursor-pointer text-destructive"
                 disabled={deleteStatus === "isLoading"}
                 onClick={(e) => {
                   e.stopPropagation();

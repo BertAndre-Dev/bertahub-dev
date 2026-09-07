@@ -181,7 +181,7 @@ function PayableBillCard({
           className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-700/45 dark:bg-amber-950/35"
         >
           <AlertTriangle
-            className="mt-0.5 size-4 shrink-0 text-amber-600 hover:text-amber-700 dark:text-amber-500"
+            className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-500"
             aria-hidden
           />
           <p className="text-[13px] leading-snug text-muted-foreground">

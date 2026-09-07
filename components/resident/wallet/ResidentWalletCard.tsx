@@ -74,7 +74,7 @@ export function ResidentWalletCard({
             type="button"
             variant="ghost"
             size="icon"
-            className="shrink-0 text-muted-foreground hover:text-foreground"
+            className="shrink-0 text-muted-foreground hover:text-blue-200"
             onClick={() => setShowBalance((v) => !v)}
             aria-label={
               showBalance ? "Hide wallet balance" : "Show wallet balance"

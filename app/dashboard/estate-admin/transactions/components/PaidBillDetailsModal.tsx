@@ -64,7 +64,7 @@ export function PaidBillDetailsModal({
   onOpenChange,
 }: Props) {
   const status = (item?.status ?? "").toString().toLowerCase();
-  let statusClass = "text-yellow-600 hover:text-yellow-700 font-medium capitalize";
+  let statusClass = "text-yellow-600 font-medium capitalize";
   if (status === "paid") statusClass = "text-green-600 font-medium capitalize";
   else if (status === "active")
     statusClass = "text-blue-600 font-medium capitalize";

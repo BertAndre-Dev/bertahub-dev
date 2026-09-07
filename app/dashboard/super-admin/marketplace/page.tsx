@@ -268,7 +268,7 @@ export default function SuperAdminMarketplacePage() {
           <Button
             variant="ghost"
             size="sm"
-            className="group h-8"
+            className="h-8"
             onClick={(e) => {
               e.stopPropagation();
               openEditModal(item);
@@ -280,7 +280,7 @@ export default function SuperAdminMarketplacePage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-green-600 hover:text-green-700"
+              className="h-8 text-green-600"
               onClick={(e) => {
                 e.stopPropagation();
                 handleActivate(item);
@@ -292,7 +292,7 @@ export default function SuperAdminMarketplacePage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-amber-600 hover:text-amber-700"
+              className="h-8 text-amber-600"
               onClick={(e) => {
                 e.stopPropagation();
                 openSuspendModal(item);
@@ -304,7 +304,7 @@ export default function SuperAdminMarketplacePage() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 text-destructive hover:text-destructive"
+            className="h-8 text-destructive"
             onClick={(e) => {
               e.stopPropagation();
               handleDelete(item);

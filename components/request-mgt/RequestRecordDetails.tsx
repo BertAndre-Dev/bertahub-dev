@@ -86,7 +86,7 @@ export function RequestRecordDetails({
                       {step.order != null ? `${step.order}. ` : ""}
                       {step.name || `Step ${index + 1}`}
                       {isCurrent ? (
-                        <span className="ml-2 text-[11px] font-semibold uppercase tracking-wide text-[#0150AC] hover:text-[#01408A]">
+                        <span className="ml-2 text-[11px] font-semibold uppercase tracking-wide text-[#0150AC]">
                           Current
                         </span>
                       ) : null}

@@ -38,7 +38,7 @@ export function BillPaymentResultModal({
           <div
             className={
               success
-                ? "flex size-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                ? "flex size-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                 : "flex size-14 items-center justify-center rounded-full bg-destructive/15 text-destructive"
             }
           >

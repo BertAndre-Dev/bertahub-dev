@@ -97,7 +97,7 @@ export default function BookDemoModal({ isOpen, onClose }: BookDemoModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-600 text-xl leading-none cursor-pointer transition-colors"
+            className="h-8 w-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900 text-xl leading-none cursor-pointer transition-colors"
             aria-label="Close dialog"
           >
             ×

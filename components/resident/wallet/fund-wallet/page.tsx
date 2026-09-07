@@ -162,7 +162,7 @@ export default function FundWalletForm({
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="fund-wallet-amount">
-              Amount <span className="text-destructive hover:text-destructive">*</span>
+              Amount <span className="text-destructive">*</span>
             </Label>
             <Input
               id="fund-wallet-amount"
@@ -188,7 +188,7 @@ export default function FundWalletForm({
 
           <div>
             <Label htmlFor="fund-wallet-description">
-              Payment Description <span className="text-destructive hover:text-destructive">*</span>
+              Payment Description <span className="text-destructive">*</span>
             </Label>
             <Input
               id="fund-wallet-description"
@@ -202,7 +202,7 @@ export default function FundWalletForm({
 
           <div>
             <Label htmlFor="fund-wallet-country">
-              Currency / Country <span className="text-destructive hover:text-destructive">*</span>
+              Currency / Country <span className="text-destructive">*</span>
             </Label>
             <select
               id="fund-wallet-country"
@@ -222,7 +222,7 @@ export default function FundWalletForm({
 
           {/* <div>
             <Label htmlFor="fund-wallet-gateway">
-              Payment Gateway <span className="text-destructive hover:text-destructive">*</span>
+              Payment Gateway <span className="text-destructive">*</span>
             </Label>
             <select
               id="fund-wallet-gateway"

@@ -126,7 +126,7 @@ export default function AddBusinessForm({
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 hover:text-gray-950">Company Information</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Company Information</h2>
         <div className="grid gap-4 sm:grid-cols-1">
           <div>
             <Label htmlFor="form-companyName">Name of Company</Label>
@@ -152,7 +152,7 @@ export default function AddBusinessForm({
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 hover:text-gray-950">Product Information</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Product Information</h2>
         <div className="space-y-4">
           <div>
             <Label htmlFor="form-productName">Product Name</Label>
@@ -244,8 +244,8 @@ export default function AddBusinessForm({
                   className="cursor-pointer flex flex-col items-center justify-center gap-2 p-4 w-full h-full min-h-[120px]"
                   onClick={() => fileInputRefs.current[i]?.click()}
                 >
-                  <Upload className="w-8 h-8 text-gray-400 hover:text-gray-500" />
-                  <span className="text-sm font-medium text-[#0150AC] hover:text-[#01408A]">Upload</span>
+                  <Upload className="w-8 h-8 text-gray-400" />
+                  <span className="text-sm font-medium text-[#0150AC]">Upload</span>
                 </label>
               )}
             </div>

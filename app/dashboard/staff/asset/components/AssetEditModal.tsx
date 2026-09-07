@@ -82,7 +82,7 @@ export default function AssetEditModal({
   return (
     <Modal visible={visible} onClose={onClose}>
       <div className="pr-8 space-y-5">
-        <h2 className="text-xl font-semibold text-gray-900 hover:text-gray-950">Edit Asset</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Edit Asset</h2>
 
         <div className="space-y-2">
           <label htmlFor="edit-asset-category" className="text-sm font-medium">

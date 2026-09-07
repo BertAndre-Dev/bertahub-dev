@@ -215,7 +215,7 @@ export default function AdminVisitorForm({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                    className="h-8 w-8 p-0 text-destructive"
                     onClick={() => removeDraft(row.id)}
                     disabled={submitting}
                     title="Remove visitor"

@@ -117,7 +117,7 @@ export function VisitorsTableCard({
       //       className={`px-2 py-1 rounded text-xs font-semibold ${
       //         item.isVerified
       //           ? "bg-green-100 text-green-800"
-      //           : "bg-yellow-100 text-yellow-800 hover:text-yellow-900"
+      //           : "bg-yellow-100 text-yellow-800"
       //       }`}
       //     >
       //       {item.isVerified ? "Verified" : "Pending"}
@@ -157,7 +157,7 @@ export function VisitorsTableCard({
             <Button
               variant="outline"
               size="sm"
-              className="cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+              className="cursor-pointer text-blue-600 hover:bg-blue-200 disabled:opacity-50"
               disabled={!item.qrCodeDataUrl}
               onClick={(e) => {
                 e.stopPropagation();

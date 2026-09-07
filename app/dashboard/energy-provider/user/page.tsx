@@ -376,31 +376,31 @@ export default function EnergyProviderUserPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-red-600 hover:text-red-700 group cursor-pointer"
+                className="cursor-pointer"
                 onClick={() => openSuspendModal(item)}
                 title="Suspend user"
               >
-                <PowerOff className="w-4 h-4" />
+                <PowerOff className="w-4 h-4 text-red-600" />
               </Button>
             ) : (
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-green-600 hover:text-green-700 group cursor-pointer"
+                className="cursor-pointer"
                 onClick={() => openActivateModal(item)}
                 title="Activate user"
               >
-                <Power className="w-4 h-4" />
+                <Power className="w-4 h-4 text-green-600" />
               </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
-              className="text-red-600 hover:text-red-700 group cursor-pointer"
+              className="cursor-pointer"
               onClick={() => handleDeleteUser(userRowId(item), item.firstName)}
               title="Delete user"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4 text-red-600" />
             </Button>
           </div>
         ),
