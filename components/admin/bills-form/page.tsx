@@ -20,7 +20,11 @@ import {
   formatAmountInput,
   parseFormattedNumber,
 } from "@/lib/format-number";
-import { AccrueInterestFields, toInterestStartDate } from "@/components/admin/bills-form/accrue-interest-fields";
+import {
+  AccrueInterestFields,
+  shouldHideInterestStartsAt,
+  toInterestStartDate,
+} from "@/components/admin/bills-form/accrue-interest-fields";
 import { cn } from "@/lib/utils";
 
 /** Form state: yearlyAmount can be string (empty input) or number */
@@ -142,6 +146,8 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const hideInterestStartsAt = shouldHideInterestStartsAt(formData.frequency);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const interestRate = formData.accrueInterest
@@ -154,7 +160,11 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
       toast.error("Please enter a valid interest rate.");
       return;
     }
-    if (formData.accrueInterest && !formData.interestStartsAt) {
+    if (
+      formData.accrueInterest &&
+      !hideInterestStartsAt &&
+      !formData.interestStartsAt
+    ) {
       toast.error("Please select when interest should start.");
       return;
     }
@@ -167,9 +177,10 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
       compulsory: formData.compulsory,
       accrueInterest: formData.accrueInterest,
       interestRatePercent: interestRate,
-      interestStartsAt: formData.accrueInterest
-        ? formData.interestStartsAt
-        : undefined,
+      interestStartsAt:
+        formData.accrueInterest && !hideInterestStartsAt
+          ? formData.interestStartsAt
+          : undefined,
     };
     onSubmit(payload);
   };
@@ -187,22 +198,6 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
           <p className="text-gray-500 italic">Loading...</p>
         ) : (
           <div className="space-y-4">
-            <AccrueInterestFields
-              idPrefix="estate-bill"
-              accrueInterest={formData.accrueInterest}
-              interestRatePercent={formData.interestRatePercent}
-              interestStartsAt={formData.interestStartsAt}
-              onAccrueInterestChange={(value) =>
-                handleChange("accrueInterest", value)
-              }
-              onInterestRateChange={(value) =>
-                handleChange("interestRatePercent", value)
-              }
-              onInterestStartsAtChange={(value) =>
-                handleChange("interestStartsAt", value)
-              }
-            />
-
             <div>
               <Label>Name</Label>
               <Input
@@ -249,6 +244,23 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
                 required
               />
             </div>
+
+            <AccrueInterestFields
+              idPrefix="estate-bill"
+              accrueInterest={formData.accrueInterest}
+              interestRatePercent={formData.interestRatePercent}
+              interestStartsAt={formData.interestStartsAt}
+              hideInterestStartsAt={hideInterestStartsAt}
+              onAccrueInterestChange={(value) =>
+                handleChange("accrueInterest", value)
+              }
+              onInterestRateChange={(value) =>
+                handleChange("interestRatePercent", value)
+              }
+              onInterestStartsAtChange={(value) =>
+                handleChange("interestStartsAt", value)
+              }
+            />
 
             <div className="flex items-center justify-between gap-3">
               <Label htmlFor="estate-bill-compulsory" className="font-medium">

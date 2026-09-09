@@ -12,6 +12,14 @@ export function toInterestStartDate(value?: string | null): string {
   return "";
 }
 
+const RECURRING_FREQUENCIES = new Set(["monthly", "quarterly", "yearly"]);
+
+/** Hide start date for recurring bills (monthly, quarterly, yearly). */
+export function shouldHideInterestStartsAt(frequency?: string): boolean {
+  const normalized = (frequency ?? "").toLowerCase().replace(/[_-]/g, "");
+  return RECURRING_FREQUENCIES.has(normalized);
+}
+
 type AccrueInterestFieldsProps = {
   accrueInterest: boolean;
   interestRatePercent: string;
@@ -21,6 +29,8 @@ type AccrueInterestFieldsProps = {
   onInterestStartsAtChange: (value: string) => void;
   disabled?: boolean;
   idPrefix: string;
+  /** Hide the interest starts date (recurring frequencies). */
+  hideInterestStartsAt?: boolean;
 };
 
 export function AccrueInterestFields({
@@ -32,6 +42,7 @@ export function AccrueInterestFields({
   onInterestStartsAtChange,
   disabled = false,
   idPrefix,
+  hideInterestStartsAt = false,
 }: AccrueInterestFieldsProps) {
   const toggleId = `${idPrefix}-accrue-interest`;
   const rateId = `${idPrefix}-interest-rate`;
@@ -87,19 +98,21 @@ export function AccrueInterestFields({
               className="mt-1"
             />
           </div>
-          <div>
-            <Label htmlFor={startsAtId}>Interest starts at</Label>
-            <div className="mt-1">
-              <IsoDatePicker
-                id={startsAtId}
-                value={interestStartsAt}
-                onChange={onInterestStartsAtChange}
-                placeholder="Select start date"
-                disabled={disabled}
-                ariaLabel="Interest starts at"
-              />
+          {!hideInterestStartsAt ? (
+            <div>
+              <Label htmlFor={startsAtId}>Interest starts at</Label>
+              <div className="mt-1">
+                <IsoDatePicker
+                  id={startsAtId}
+                  value={interestStartsAt}
+                  onChange={onInterestStartsAtChange}
+                  placeholder="Select start date"
+                  disabled={disabled}
+                  ariaLabel="Interest starts at"
+                />
+              </div>
             </div>
-          </div>
+          ) : null}
         </>
       ) : null}
     </div>
