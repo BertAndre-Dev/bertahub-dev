@@ -31,6 +31,10 @@ export interface CompanyUserDetails {
   _id?: string;
   residentType?: string;
   designationId?: string;
+  addressIds?: Array<{
+    id: string;
+    data?: Record<string, string>;
+  }>;
   memberships?: Array<{
     designationId?: string | null;
     isCurrent?: boolean;

@@ -23,6 +23,7 @@ import Modal from "@/components/modal/page";
 import Loader from "@/components/ui/Loader";
 import { isPending } from "@/lib/async-status";
 import { getApiErrorMessage } from "@/lib/api-error";
+import { formatUserAddresses } from "@/lib/address";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { getCompanyEstates } from "@/redux/slice/company/estate-mgt/company-estate";
@@ -411,6 +412,14 @@ export default function CompanyUsersPage() {
         header: "Phone",
         render: (item: CompanyUserDetails) => item.phoneNumber?.trim() || "—",
         exportValue: (item: CompanyUserDetails) => item.phoneNumber?.trim() || "",
+      },
+      {
+        key: "address" as const,
+        header: "Address",
+        render: (item: CompanyUserDetails) =>
+          formatUserAddresses(item.addressIds) || "—",
+        exportValue: (item: CompanyUserDetails) =>
+          formatUserAddresses(item.addressIds),
       },
       { key: "role" as const, header: "Role" },
       ...(showResidentColumns

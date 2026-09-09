@@ -54,6 +54,27 @@ export function formatAddressEntryLabel(
     .join(", ");
 }
 
+type AddressEntryLike = {
+  id?: string;
+  data?: Record<string, unknown> | Record<string, string> | null;
+};
+
+/** Combine all address entries into one display string (e.g. "Flat V, Unit 1"). */
+export function formatUserAddresses(
+  addressIds?: AddressEntryLike[] | null,
+): string {
+  if (!addressIds?.length) return "";
+  const labels = addressIds
+    .map((address) => {
+      const fromData = formatAddressEntryLabel(
+        address?.data as Record<string, unknown> | undefined,
+      );
+      return fromData || address?.id || "";
+    })
+    .filter((label) => label.length > 0);
+  return Array.from(new Set(labels)).join("; ");
+}
+
 /** Capitalize the first character of a string (leaves the rest unchanged). */
 export function capitalizeFirstLetter(value: string): string {
   if (!value) return value;

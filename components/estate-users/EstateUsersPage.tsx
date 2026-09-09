@@ -44,6 +44,7 @@ import {
   getAdminInviteLabel,
   isAdminInviteRole,
 } from "@/lib/invite-user-roles";
+import { formatUserAddresses } from "@/lib/address";
 import { getDateRangePlaceholders } from "@/lib/date-range-placeholders";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { isPending } from "@/lib/async-status";
@@ -472,50 +473,6 @@ export function EstateUsersPage({
     }
   };
 
-  const getAllAddressKeys = (data: AdminUserData[]) => {
-    const keys = new Set<string>();
-
-    data.forEach((item) => {
-      item.addressIds?.forEach((address) => {
-        if (address?.data) {
-          Object.keys(address.data).forEach((key) => keys.add(key));
-        }
-      });
-    });
-
-    return Array.from(keys);
-  };
-
-  const formatAddressFieldValue = (
-    item: AdminUserData,
-    key: string,
-  ): string => {
-    if (!item.addressIds?.length) return "";
-
-    const values = item.addressIds
-      .map((address) => address?.data?.[key])
-      .filter((value): value is string => Boolean(value));
-
-    if (!values.length) return "";
-
-    return Array.from(new Set(values)).join(", ");
-  };
-
-  const getAddressColumns = (data: AdminUserData[]) => {
-    if (!data.length) return [];
-
-    const addressKeys = getAllAddressKeys(data);
-
-    return addressKeys.map((key) => ({
-      key: `address_${key}`,
-      header: key
-        .replace(/([A-Z])/g, " $1")
-        .replace(/^./, (c) => c.toUpperCase()),
-      render: (item: AdminUserData) => formatAddressFieldValue(item, key) || "-",
-      exportValue: (item: AdminUserData) => formatAddressFieldValue(item, key),
-    }));
-  };
-
   const showResidentColumns = roleFilter === "resident";
   const showStaffColumns = roleFilter === "staff";
   const hideActionsColumn =
@@ -542,7 +499,13 @@ export function EstateUsersPage({
       header: "Phone",
       render: (item: AdminUserData) => item.phoneNumber?.trim() || "—",
     },
-    ...getAddressColumns(allAdminUsers),
+    {
+      key: "address",
+      header: "Address",
+      render: (item: AdminUserData) =>
+        formatUserAddresses(item.addressIds) || "—",
+      exportValue: (item: AdminUserData) => formatUserAddresses(item.addressIds),
+    },
     // { key: "role", header: "Role" },
     ...(showResidentColumns
       ? [
@@ -658,56 +621,50 @@ export function EstateUsersPage({
                   </Button>
                 )}
 
-                {/* Resident: edit / suspend / delete commented out */}
                 {/* Staff: edit icon commented out */}
-                {roleFilter !== "resident" ? (
-                  <>
-                    {roleFilter !== "staff" ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditUser(item)}
-                        title="Edit user details"
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                    ) : null}
-
-                    {item.isActive ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openSuspendModal(item)}
-                        title="Suspend user"
-                      className="text-red-600 hover:text-red-700"
-                    >
-                        <PowerOff className="w-4 h-4" />
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openActivateModal(item)}
-                        title="Activate user"
-                      className="text-green-600 hover:text-green-700"
-                    >
-                        <Power className="w-4 h-4" />
-                      </Button>
-                    )}
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        handleDeleteUser(item.id, item.firstName)
-                      }
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </>
+                {roleFilter !== "resident" && roleFilter !== "staff" ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditUser(item)}
+                    title="Edit user details"
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
                 ) : null}
+
+                {item.isActive ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openSuspendModal(item)}
+                    title="Suspend user"
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <PowerOff className="w-4 h-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openActivateModal(item)}
+                    title="Activate user"
+                    className="text-green-600 hover:text-green-700"
+                  >
+                    <Power className="w-4 h-4" />
+                  </Button>
+                )}
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeleteUser(item.id, item.firstName)}
+                  title="Delete user"
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
                 {/* <Button
                   variant="ghost"
                   size="sm"

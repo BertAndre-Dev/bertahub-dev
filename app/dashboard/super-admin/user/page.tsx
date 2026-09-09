@@ -39,6 +39,7 @@ import EditUserForm from "@/app/dashboard/super-admin/user/components/EditUserFo
 import Loader from "@/components/ui/Loader";
 import { isPending } from "@/lib/async-status";
 import { getApiErrorMessage } from "@/lib/api-error";
+import { formatUserAddresses } from "@/lib/address";
 import { UserStatusModal } from "./components/UserStatusModal";
 import {
   DEFAULT_ESTATE_USER_ROLE,
@@ -483,6 +484,14 @@ export default function SuperAdminUserPage() {
       header: "Phone",
       render: (item: SuperAdminUserData) => item.phoneNumber?.trim() || "—",
       exportValue: (item: SuperAdminUserData) => item.phoneNumber?.trim() || "",
+    },
+    {
+      key: "address",
+      header: "Address",
+      render: (item: SuperAdminUserData) =>
+        formatUserAddresses(item.addressIds) || "—",
+      exportValue: (item: SuperAdminUserData) =>
+        formatUserAddresses(item.addressIds),
     },
     ...(showResidentColumns
       ? [
