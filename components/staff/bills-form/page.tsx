@@ -93,7 +93,8 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
       seededAmount != null ? formatAmountInput(String(seededAmount)) : "",
     frequency: coerceFrequencyForServiceCharge(
       normalizeBillFrequency(initialData?.frequency, "yearly"),
-      Boolean(initialData?.isServiceCharge),
+      Boolean(initialData?.isServiceCharge) ||
+        initialData?.name?.trim().toLowerCase() === "service charge",
     ),
     isServiceCharge: Boolean(initialData?.isServiceCharge),
     compulsory: Boolean(initialData?.compulsory),
@@ -131,7 +132,9 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
                 : "",
             frequency: coerceFrequencyForServiceCharge(
               normalizeBillFrequency(fetchData.frequency, "yearly"),
-              Boolean(fetchData.isServiceCharge),
+              Boolean(fetchData.isServiceCharge) ||
+                String(fetchData.name ?? "").trim().toLowerCase() ===
+                  "service charge",
             ),
             isServiceCharge: Boolean(fetchData.isServiceCharge),
             compulsory: Boolean(fetchData.compulsory),
@@ -159,14 +162,17 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
     value: string | number | boolean,
   ) => {
     setFormData((prev) => {
-      if (field === "isServiceCharge") {
-        const isServiceCharge = Boolean(value);
+      if (field === "isServiceCharge" || field === "name") {
+        const nextName = field === "name" ? String(value) : prev.name;
+        const nextFlag =
+          field === "isServiceCharge" ? Boolean(value) : prev.isServiceCharge;
         return {
           ...prev,
-          isServiceCharge,
+          name: nextName,
+          isServiceCharge: nextFlag,
           frequency: coerceFrequencyForServiceCharge(
             prev.frequency,
-            isServiceCharge,
+            nextFlag || nextName.trim().toLowerCase() === "service charge",
           ),
         };
       }
@@ -207,7 +213,7 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
       yearlyAmount: parseFormattedNumber(formData.yearlyAmount),
       frequency: coerceFrequencyForServiceCharge(
         formData.frequency,
-        formData.isServiceCharge,
+        isServiceChargeBill,
       ),
       isServiceCharge: formData.isServiceCharge,
       compulsory: isServiceChargeBill ? false : formData.compulsory,
@@ -328,7 +334,7 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
                 aria-label="Select frequency"
                 value={formData.frequency}
                 onChange={(e) => handleChange("frequency", e.target.value)}
-                options={billFrequencyOptions(formData.isServiceCharge)}
+                options={billFrequencyOptions(isServiceChargeBill)}
                 required
               />
             </div>
