@@ -30,6 +30,7 @@ interface Transaction {
   tx_ref?: string
   type?: string
   amount?: number
+  serviceCharge?: number
   paymentStatus?: string
   description?: string
   createdAt?: string
@@ -131,6 +132,11 @@ export function TransactionDetailsDialog({
               <DetailItem
                 label="Amount"
                 value={formatCurrency(transaction.amount)}
+              />
+
+              <DetailItem
+                label="Service Charge"
+                value={formatCurrency(transaction.serviceCharge)}
               />
 
               <DetailItem

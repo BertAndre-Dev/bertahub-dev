@@ -475,8 +475,7 @@ export function EstateUsersPage({
 
   const showResidentColumns = roleFilter === "resident";
   const showStaffColumns = roleFilter === "staff";
-  const hideActionsColumn =
-    roleFilter === "admin" || roleFilter === "security";
+  const hideActionsColumn = roleFilter === "admin";
 
   const columns = [
     {
@@ -597,7 +596,7 @@ export function EstateUsersPage({
         return [reason, when].filter(Boolean).join(" | ");
       },
     },
-    // Admin & security: hide Actions column
+    // Admin: hide Actions column
     ...(!hideActionsColumn
       ? [
           {
@@ -621,8 +620,10 @@ export function EstateUsersPage({
                   </Button>
                 )}
 
-                {/* Staff: edit icon commented out */}
-                {roleFilter !== "resident" && roleFilter !== "staff" ? (
+                {/* Staff & security: edit icon commented out */}
+                {roleFilter !== "resident" &&
+                roleFilter !== "staff" &&
+                roleFilter !== "security" ? (
                   <Button
                     variant="ghost"
                     size="sm"

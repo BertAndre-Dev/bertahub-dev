@@ -21,6 +21,7 @@ export interface TransactionData {
   amount: number;
   paymentStatus: "paid" | "pending" | "failed";
   tx_ref: string;
+  serviceCharge?: number;
   description: string;
   createdAt: string;
   userId?: TransactionUser;
