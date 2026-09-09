@@ -21,6 +21,8 @@ type AccrueInterestFieldsProps = {
   onInterestStartsAtChange: (value: string) => void;
   disabled?: boolean;
   idPrefix: string;
+  /** Hide the interest starts date (e.g. service charge bills). */
+  hideInterestStartsAt?: boolean;
 };
 
 export function AccrueInterestFields({
@@ -32,6 +34,7 @@ export function AccrueInterestFields({
   onInterestStartsAtChange,
   disabled = false,
   idPrefix,
+  hideInterestStartsAt = false,
 }: AccrueInterestFieldsProps) {
   const toggleId = `${idPrefix}-accrue-interest`;
   const rateId = `${idPrefix}-interest-rate`;
@@ -87,19 +90,21 @@ export function AccrueInterestFields({
               className="mt-1"
             />
           </div>
-          <div>
-            <Label htmlFor={startsAtId}>Interest starts at</Label>
-            <div className="mt-1">
-              <IsoDatePicker
-                id={startsAtId}
-                value={interestStartsAt}
-                onChange={onInterestStartsAtChange}
-                placeholder="Select start date"
-                disabled={disabled}
-                ariaLabel="Interest starts at"
-              />
+          {!hideInterestStartsAt ? (
+            <div>
+              <Label htmlFor={startsAtId}>Interest starts date</Label>
+              <div className="mt-1">
+                <IsoDatePicker
+                  id={startsAtId}
+                  value={interestStartsAt}
+                  onChange={onInterestStartsAtChange}
+                  placeholder="Select start date"
+                  disabled={disabled}
+                  ariaLabel="Interest starts date"
+                />
+              </div>
             </div>
-          </div>
+          ) : null}
         </>
       ) : null}
     </div>

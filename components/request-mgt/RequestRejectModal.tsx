@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+const MIN_REASON_LENGTH = 3;
+
 type Props = {
   open: boolean;
   loading?: boolean;
@@ -28,14 +30,18 @@ export default function RequestRejectModal({
     setLocalError("");
   }, [open]);
 
+  const trimmedReason = reason.trim();
+  const isReasonValid = trimmedReason.length >= MIN_REASON_LENGTH;
+
   const handleConfirm = async () => {
-    const trimmed = reason.trim();
-    if (trimmed.length < 3) {
-      setLocalError("Enter at least 3 characters explaining the rejection.");
+    if (!isReasonValid) {
+      setLocalError(
+        `Rejection reason is required (at least ${MIN_REASON_LENGTH} characters).`,
+      );
       return;
     }
     setLocalError("");
-    await onConfirm(trimmed);
+    await onConfirm(trimmedReason);
   };
 
   return (
@@ -54,7 +60,9 @@ export default function RequestRejectModal({
         </div>
 
         <div>
-          <Label htmlFor="request-reject-reason">Rejection reason</Label>
+          <Label htmlFor="request-reject-reason">
+            Rejection reason <span className="text-destructive">*</span>
+          </Label>
           <Textarea
             id="request-reject-reason"
             value={reason}
@@ -64,6 +72,8 @@ export default function RequestRejectModal({
             }}
             placeholder="e.g. Missing supporting documents…"
             disabled={loading}
+            required
+            aria-required="true"
             className="mt-1.5 min-h-28"
             autoFocus
           />
@@ -71,7 +81,7 @@ export default function RequestRejectModal({
             <p className="mt-1.5 text-sm text-destructive">{localError}</p>
           ) : (
             <p className="mt-1.5 text-xs text-muted-foreground">
-              Minimum 10 characters.
+              Required. Minimum {MIN_REASON_LENGTH} characters.
             </p>
           )}
         </div>
@@ -88,7 +98,7 @@ export default function RequestRejectModal({
           <Button
             type="button"
             className="bg-[#DC2626] hover:bg-[#B91C1C]"
-            disabled={loading}
+            disabled={loading || !isReasonValid}
             onClick={() => void handleConfirm()}
           >
             Confirm reject

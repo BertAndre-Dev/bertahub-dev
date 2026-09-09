@@ -174,6 +174,10 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
     });
   };
 
+  const isServiceChargeBill =
+    formData.isServiceCharge ||
+    formData.name.trim().toLowerCase() === "service charge";
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const interestRate = formData.accrueInterest
@@ -187,7 +191,12 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
       toast.error("Please enter a valid interest rate.");
       return;
     }
-    if (canAccrueInterest && formData.accrueInterest && !formData.interestStartsAt) {
+    if (
+      canAccrueInterest &&
+      formData.accrueInterest &&
+      !isServiceChargeBill &&
+      !formData.interestStartsAt
+    ) {
       toast.error("Please select when interest should start.");
       return;
     }
@@ -201,14 +210,15 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
         formData.isServiceCharge,
       ),
       isServiceCharge: formData.isServiceCharge,
-      compulsory: formData.compulsory,
+      compulsory: isServiceChargeBill ? false : formData.compulsory,
       ...(canAccrueInterest
         ? {
             accrueInterest: formData.accrueInterest,
             interestRatePercent: interestRate,
-            interestStartsAt: formData.accrueInterest
-              ? formData.interestStartsAt
-              : undefined,
+            interestStartsAt:
+              formData.accrueInterest && !isServiceChargeBill
+                ? formData.interestStartsAt
+                : undefined,
           }
         : {}),
     };
@@ -228,24 +238,6 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
           <p className="text-gray-500 italic">Loading...</p>
         ) : (
           <div className="space-y-4">
-            {canAccrueInterest ? (
-            <AccrueInterestFields
-              idPrefix="estate-bill"
-              accrueInterest={formData.accrueInterest}
-              interestRatePercent={formData.interestRatePercent}
-              interestStartsAt={formData.interestStartsAt}
-              onAccrueInterestChange={(value) =>
-                handleChange("accrueInterest", value)
-              }
-              onInterestRateChange={(value) =>
-                handleChange("interestRatePercent", value)
-              }
-              onInterestStartsAtChange={(value) =>
-                handleChange("interestStartsAt", value)
-              }
-            />
-            ) : null}
-
             <div>
               <Label>Name</Label>
               <Input
@@ -265,6 +257,25 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
                 required
               />
             </div>
+
+            {canAccrueInterest ? (
+              <AccrueInterestFields
+                idPrefix="estate-bill"
+                accrueInterest={formData.accrueInterest}
+                interestRatePercent={formData.interestRatePercent}
+                interestStartsAt={formData.interestStartsAt}
+                hideInterestStartsAt={isServiceChargeBill}
+                onAccrueInterestChange={(value) =>
+                  handleChange("accrueInterest", value)
+                }
+                onInterestRateChange={(value) =>
+                  handleChange("interestRatePercent", value)
+                }
+                onInterestStartsAtChange={(value) =>
+                  handleChange("interestStartsAt", value)
+                }
+              />
+            ) : null}
 
             <div>
               <Label htmlFor="estate-bill-amount">Amount (₦)</Label>
@@ -322,32 +333,36 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
               />
             </div>
 
-            <div className="flex items-center justify-between gap-3">
-              <Label htmlFor="estate-bill-compulsory" className="font-medium">
-                Compulsory bill
-              </Label>
-              <button
-                id="estate-bill-compulsory"
-                type="button"
-                role="switch"
-                aria-checked={formData.compulsory}
-                aria-label="Compulsory bill"
-                onClick={() => handleChange("compulsory", !formData.compulsory)}
-                className={cn(
-                  "relative inline-flex h-7 w-[44px] shrink-0 cursor-pointer items-center rounded-full p-0.5",
-                  "transition-colors duration-150 ease-out active:scale-[0.97]",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0150AC]/40",
-                  formData.compulsory ? "bg-[#0150AC]" : "bg-black/15",
-                )}
-              >
-                <span
+            {!isServiceChargeBill ? (
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="estate-bill-compulsory" className="font-medium">
+                  Compulsory bill
+                </Label>
+                <button
+                  id="estate-bill-compulsory"
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.compulsory}
+                  aria-label="Compulsory bill"
+                  onClick={() =>
+                    handleChange("compulsory", !formData.compulsory)
+                  }
                   className={cn(
-                    "block size-6 rounded-full bg-white shadow-sm transition-transform duration-150",
-                    formData.compulsory ? "translate-x-4" : "translate-x-0",
+                    "relative inline-flex h-7 w-[44px] shrink-0 cursor-pointer items-center rounded-full p-0.5",
+                    "transition-colors duration-150 ease-out active:scale-[0.97]",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0150AC]/40",
+                    formData.compulsory ? "bg-[#0150AC]" : "bg-black/15",
                   )}
-                />
-              </button>
-            </div>
+                >
+                  <span
+                    className={cn(
+                      "block size-6 rounded-full bg-white shadow-sm transition-transform duration-150",
+                      formData.compulsory ? "translate-x-4" : "translate-x-0",
+                    )}
+                  />
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
 
