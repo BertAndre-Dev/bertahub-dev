@@ -12,6 +12,18 @@ export function toInterestStartDate(value?: string | null): string {
   return "";
 }
 
+const RECURRING_FREQUENCIES = new Set(["monthly", "quarterly", "yearly"]);
+
+/** Hide start date for recurring bills (monthly, quarterly, yearly) and service charges. */
+export function shouldHideInterestStartsAt(
+  frequency?: string,
+  isServiceCharge = false,
+): boolean {
+  if (isServiceCharge) return true;
+  const normalized = (frequency ?? "").toLowerCase().replace(/[_-]/g, "");
+  return RECURRING_FREQUENCIES.has(normalized);
+}
+
 type AccrueInterestFieldsProps = {
   accrueInterest: boolean;
   interestRatePercent: string;
@@ -21,7 +33,7 @@ type AccrueInterestFieldsProps = {
   onInterestStartsAtChange: (value: string) => void;
   disabled?: boolean;
   idPrefix: string;
-  /** Hide the interest starts date (e.g. service charge bills). */
+  /** Hide the interest starts date (recurring frequencies and service charges). */
   hideInterestStartsAt?: boolean;
 };
 

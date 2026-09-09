@@ -23,6 +23,7 @@ import {
 } from "@/lib/format-number";
 import {
   AccrueInterestFields,
+  shouldHideInterestStartsAt,
   toInterestStartDate,
 } from "@/components/admin/bills-form/accrue-interest-fields";
 import { cn } from "@/lib/utils";
@@ -183,6 +184,10 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
   const isServiceChargeBill =
     formData.isServiceCharge ||
     formData.name.trim().toLowerCase() === "service charge";
+  const hideInterestStartsAt = shouldHideInterestStartsAt(
+    formData.frequency,
+    isServiceChargeBill,
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,7 +205,7 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
     if (
       canAccrueInterest &&
       formData.accrueInterest &&
-      !isServiceChargeBill &&
+      !hideInterestStartsAt &&
       !formData.interestStartsAt
     ) {
       toast.error("Please select when interest should start.");
@@ -222,7 +227,7 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
             accrueInterest: formData.accrueInterest,
             interestRatePercent: interestRate,
             interestStartsAt:
-              formData.accrueInterest && !isServiceChargeBill
+              formData.accrueInterest && !hideInterestStartsAt
                 ? formData.interestStartsAt
                 : undefined,
           }
@@ -263,25 +268,6 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
                 required
               />
             </div>
-
-            {canAccrueInterest ? (
-              <AccrueInterestFields
-                idPrefix="estate-bill"
-                accrueInterest={formData.accrueInterest}
-                interestRatePercent={formData.interestRatePercent}
-                interestStartsAt={formData.interestStartsAt}
-                hideInterestStartsAt={isServiceChargeBill}
-                onAccrueInterestChange={(value) =>
-                  handleChange("accrueInterest", value)
-                }
-                onInterestRateChange={(value) =>
-                  handleChange("interestRatePercent", value)
-                }
-                onInterestStartsAtChange={(value) =>
-                  handleChange("interestStartsAt", value)
-                }
-              />
-            ) : null}
 
             <div>
               <Label htmlFor="estate-bill-amount">Amount (₦)</Label>
@@ -338,6 +324,25 @@ export default function BillsForm({ estateId, initialData, onSubmit }: BillsForm
                 required
               />
             </div>
+
+            {canAccrueInterest ? (
+              <AccrueInterestFields
+                idPrefix="estate-bill"
+                accrueInterest={formData.accrueInterest}
+                interestRatePercent={formData.interestRatePercent}
+                interestStartsAt={formData.interestStartsAt}
+                hideInterestStartsAt={hideInterestStartsAt}
+                onAccrueInterestChange={(value) =>
+                  handleChange("accrueInterest", value)
+                }
+                onInterestRateChange={(value) =>
+                  handleChange("interestRatePercent", value)
+                }
+                onInterestStartsAtChange={(value) =>
+                  handleChange("interestStartsAt", value)
+                }
+              />
+            ) : null}
 
             {!isServiceChargeBill ? (
               <div className="flex items-center justify-between gap-3">
