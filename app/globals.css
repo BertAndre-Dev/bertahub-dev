@@ -419,6 +419,18 @@ input[type="number"] {
   margin-top: 0;
 }
 
+.iso-datepicker-wrapper {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.iso-datepicker-wrapper .react-datepicker__input-container,
+.iso-datepicker-wrapper .react-datepicker__input-container input {
+  width: 100%;
+  max-width: 100%;
+}
+
 .react-datepicker__input-container {
   display: flex;
   align-items: center;

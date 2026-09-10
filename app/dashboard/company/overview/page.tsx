@@ -5,8 +5,14 @@ import { useDispatch, useSelector } from "react-redux";
 import Select from "react-select";
 import { toast } from "react-toastify";
 
+import { BillsSummaryChart } from "@/components/charts/BillsSummaryChart";
+import { ComplaintsDashboardCard } from "@/components/charts/ComplaintsDashboardCard";
+import { ComplaintsSummaryStatCard } from "@/components/charts/ComplaintsSummaryStatCard";
 import { EnergyConsumptionOverTimeCard } from "@/components/charts/energy-consumption-over-time-card";
+import { MeterSummaryCard } from "@/components/charts/MeterSummaryCard";
+import { RoleBreakdownChart } from "@/components/charts/RoleBreakdownChart";
 import { TransactionSummaryCard } from "@/components/charts/transaction-summary-card";
+import { UserSummaryCard } from "@/components/charts/UserSummaryCard";
 import { parseCompanyFromUser } from "@/app/dashboard/company/lib/company";
 import type { EnergyConsumptionPeriod } from "@/lib/energy-consumption-chart";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -16,6 +22,35 @@ import {
   getCompanyEnergyConsumptionChart,
 } from "@/redux/slice/company/energy-consumption/company-energy-consumption";
 import { getCompanyEstates } from "@/redux/slice/company/estate-mgt/company-estate";
+import {
+  getCompanyBillsSummary,
+  getCompanyComplaintsDashboard,
+  getCompanyComplaintsSummary,
+  getCompanyMeterSummary,
+  getCompanyUserRoleBreakdown,
+  getCompanyUserSummary,
+} from "@/redux/slice/company/overview-analytics/company-overview-analytics";
+import {
+  clearCompanyOverviewAnalytics,
+  selectCompanyBillsSummaryData,
+  selectCompanyBillsSummaryError,
+  selectCompanyBillsSummaryLoading,
+  selectCompanyComplaintsDashboardData,
+  selectCompanyComplaintsDashboardError,
+  selectCompanyComplaintsDashboardLoading,
+  selectCompanyComplaintsSummaryData,
+  selectCompanyComplaintsSummaryError,
+  selectCompanyComplaintsSummaryLoading,
+  selectCompanyMeterSummaryData,
+  selectCompanyMeterSummaryError,
+  selectCompanyMeterSummaryLoading,
+  selectCompanyRoleBreakdownData,
+  selectCompanyRoleBreakdownError,
+  selectCompanyRoleBreakdownLoading,
+  selectCompanyUserSummaryData,
+  selectCompanyUserSummaryError,
+  selectCompanyUserSummaryLoading,
+} from "@/redux/slice/company/overview-analytics/company-overview-analytics-slice";
 import { getCompanyTransactionSummary } from "@/redux/slice/company/transaction-summary/company-transaction-summary";
 import type { AppDispatch, RootState } from "@/redux/store";
 
@@ -57,6 +92,38 @@ export default function CompanyOverviewPage() {
     energyAddressOptionsLoading:
       state.companyEnergyConsumption.addressOptionsStatus === "isLoading",
   }));
+
+  const userSummary = useSelector(selectCompanyUserSummaryData);
+  const userSummaryLoading = useSelector(selectCompanyUserSummaryLoading);
+  const userSummaryError = useSelector(selectCompanyUserSummaryError);
+
+  const roleBreakdown = useSelector(selectCompanyRoleBreakdownData);
+  const roleBreakdownLoading = useSelector(selectCompanyRoleBreakdownLoading);
+  const roleBreakdownError = useSelector(selectCompanyRoleBreakdownError);
+
+  const meterSummary = useSelector(selectCompanyMeterSummaryData);
+  const meterSummaryLoading = useSelector(selectCompanyMeterSummaryLoading);
+  const meterSummaryError = useSelector(selectCompanyMeterSummaryError);
+
+  const billsSummary = useSelector(selectCompanyBillsSummaryData);
+  const billsSummaryLoading = useSelector(selectCompanyBillsSummaryLoading);
+  const billsSummaryError = useSelector(selectCompanyBillsSummaryError);
+
+  const complaintsSummary = useSelector(selectCompanyComplaintsSummaryData);
+  const complaintsSummaryLoading = useSelector(
+    selectCompanyComplaintsSummaryLoading,
+  );
+  const complaintsSummaryError = useSelector(selectCompanyComplaintsSummaryError);
+
+  const complaintsDashboard = useSelector(selectCompanyComplaintsDashboardData);
+  const complaintsDashboardLoading = useSelector(
+    selectCompanyComplaintsDashboardLoading,
+  );
+  const complaintsDashboardError = useSelector(
+    selectCompanyComplaintsDashboardError,
+  );
+
+  const selectedEstateName = selectedEstate?.label ?? "Estate";
 
   useEffect(() => {
     (async () => {
@@ -114,6 +181,50 @@ export default function CompanyOverviewPage() {
     if (!estateOptions.length) return;
     setSelectedEstate(estateOptions[0]);
   }, [estateOptions, selectedEstate?.value]);
+
+  useEffect(() => {
+    if (!selectedEstateId) {
+      dispatch(clearCompanyOverviewAnalytics());
+      return;
+    }
+    dispatch(clearCompanyOverviewAnalytics());
+    void dispatch(getCompanyUserSummary({ estateId: selectedEstateId }));
+    void dispatch(getCompanyUserRoleBreakdown({ estateId: selectedEstateId }));
+    void dispatch(getCompanyMeterSummary({ estateId: selectedEstateId }));
+    void dispatch(getCompanyBillsSummary({ estateId: selectedEstateId }));
+    void dispatch(getCompanyComplaintsSummary({ estateId: selectedEstateId }));
+    void dispatch(getCompanyComplaintsDashboard({ estateId: selectedEstateId }));
+  }, [dispatch, selectedEstateId]);
+
+  const handleUserSummaryRetry = () => {
+    if (!selectedEstateId) return;
+    void dispatch(getCompanyUserSummary({ estateId: selectedEstateId }));
+  };
+
+  const handleRoleBreakdownRetry = () => {
+    if (!selectedEstateId) return;
+    void dispatch(getCompanyUserRoleBreakdown({ estateId: selectedEstateId }));
+  };
+
+  const handleMeterSummaryRetry = () => {
+    if (!selectedEstateId) return;
+    void dispatch(getCompanyMeterSummary({ estateId: selectedEstateId }));
+  };
+
+  const handleBillsSummaryRetry = () => {
+    if (!selectedEstateId) return;
+    void dispatch(getCompanyBillsSummary({ estateId: selectedEstateId }));
+  };
+
+  const handleComplaintsSummaryRetry = () => {
+    if (!selectedEstateId) return;
+    void dispatch(getCompanyComplaintsSummary({ estateId: selectedEstateId }));
+  };
+
+  const handleComplaintsDashboardRetry = () => {
+    if (!selectedEstateId) return;
+    void dispatch(getCompanyComplaintsDashboard({ estateId: selectedEstateId }));
+  };
 
   useEffect(() => {
     if (!selectedEstateId) return;
@@ -194,6 +305,53 @@ export default function CompanyOverviewPage() {
             }}
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ComplaintsSummaryStatCard
+          data={complaintsSummary}
+          loading={complaintsSummaryLoading || estatesLoading}
+          error={complaintsSummaryError}
+          onRetry={handleComplaintsSummaryRetry}
+        />
+      </div>
+
+      <UserSummaryCard
+        data={userSummary}
+        loading={userSummaryLoading || estatesLoading}
+        error={userSummaryError}
+        onRetry={handleUserSummaryRetry}
+      />
+
+      <MeterSummaryCard
+        data={meterSummary}
+        loading={meterSummaryLoading || estatesLoading}
+        error={meterSummaryError}
+        onRetry={handleMeterSummaryRetry}
+        estateName={selectedEstateName}
+      />
+
+      <ComplaintsDashboardCard
+        data={complaintsDashboard}
+        loading={complaintsDashboardLoading || estatesLoading}
+        error={complaintsDashboardError}
+        onRetry={handleComplaintsDashboardRetry}
+        estateName={selectedEstateName}
+      />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+        <RoleBreakdownChart
+          data={roleBreakdown}
+          loading={roleBreakdownLoading || estatesLoading}
+          error={roleBreakdownError}
+          onRetry={handleRoleBreakdownRetry}
+        />
+        <BillsSummaryChart
+          data={billsSummary}
+          loading={billsSummaryLoading || estatesLoading}
+          error={billsSummaryError}
+          onRetry={handleBillsSummaryRetry}
+        />
       </div>
 
       <TransactionSummaryCard

@@ -216,95 +216,100 @@ export default function Table<T extends { id?: string }>({
   return (
     <div className="overflow-hidden border rounded-lg">
       {(enableSearch || enableExport || enableDateRangeFilter) && (
-        <div className="p-4 border-b bg-muted/30 flex flex-wrap items-center gap-3">
-          {enableDateRangeFilter && (
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="table-start-date-input"
-                  className="text-sm text-muted-foreground"
-                >
-                  From
-                </label>
-                <IsoLinkedRangeStart
-                  id="table-start-date-input"
-                  startDate={effectiveStartDate}
-                  endDate={effectiveEndDate}
-                  onStartChange={(value) => {
-                    if (!isStartControlled) setInternalStartDate(value);
-                    onDateRangeChange?.({
-                      startDate: value,
-                      endDate: effectiveEndDate,
-                    });
+        <div className="border-b border-white/50 bg-white/70 p-3 backdrop-blur-[20px] backdrop-saturate-150 supports-[backdrop-filter]:bg-white/55 dark:border-white/10 dark:bg-background/70 sm:p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+              {enableDateRangeFilter && (
+                <div className="grid w-full min-w-0 grid-cols-1 gap-3 min-[420px]:grid-cols-2 md:flex md:w-auto md:flex-wrap md:items-end">
+                  <div className="min-w-0">
+                    <label
+                      htmlFor="table-start-date-input"
+                      className="mb-1.5 block text-[13px] font-medium leading-none tracking-tight text-foreground"
+                    >
+                      From
+                    </label>
+                    <IsoLinkedRangeStart
+                      id="table-start-date-input"
+                      startDate={effectiveStartDate}
+                      endDate={effectiveEndDate}
+                      onStartChange={(value) => {
+                        if (!isStartControlled) setInternalStartDate(value);
+                        onDateRangeChange?.({
+                          startDate: value,
+                          endDate: effectiveEndDate,
+                        });
+                      }}
+                      ariaLabel="Start date"
+                      placeholder={effectiveStartPlaceholder}
+                      className="h-11 min-h-11 touch-manipulation"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <label
+                      htmlFor="table-end-date-input"
+                      className="mb-1.5 block text-[13px] font-medium leading-none tracking-tight text-foreground"
+                    >
+                      To
+                    </label>
+                    <IsoLinkedRangeEnd
+                      id="table-end-date-input"
+                      startDate={effectiveStartDate}
+                      endDate={effectiveEndDate}
+                      onEndChange={(value) => {
+                        if (!isEndControlled) setInternalEndDate(value);
+                        onDateRangeChange?.({
+                          startDate: effectiveStartDate,
+                          endDate: value,
+                        });
+                      }}
+                      ariaLabel="End date"
+                      placeholder={effectiveEndPlaceholder}
+                      className="h-11 min-h-11 touch-manipulation"
+                    />
+                  </div>
+                  {showDateReset ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 min-h-11 w-full touch-manipulation active:scale-[0.97] motion-reduce:active:scale-100 min-[420px]:col-span-2 md:col-auto md:w-auto md:self-end"
+                      onClick={() => {
+                        if (!isStartControlled) setInternalStartDate("");
+                        if (!isEndControlled) setInternalEndDate("");
+                        onDateRangeChange?.({ startDate: "", endDate: "" });
+                      }}
+                    >
+                      Reset
+                    </Button>
+                  ) : null}
+                </div>
+              )}
+              {enableSearch && (
+                <input
+                  type="search"
+                  placeholder="Search..."
+                  value={searchValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSearchValue(value);
+                    onSearch?.(value);
                   }}
-                  ariaLabel="Start date"
-                  placeholder={effectiveStartPlaceholder}
+                  className="h-11 min-h-11 w-full touch-manipulation rounded-md border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary sm:max-w-64 sm:flex-1"
                 />
-              </div>
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="table-end-date-input"
-                  className="text-sm text-muted-foreground"
-                >
-                  To
-                </label>
-                <IsoLinkedRangeEnd
-                  id="table-end-date-input"
-                  startDate={effectiveStartDate}
-                  endDate={effectiveEndDate}
-                  onEndChange={(value) => {
-                    if (!isEndControlled) setInternalEndDate(value);
-                    onDateRangeChange?.({
-                      startDate: effectiveStartDate,
-                      endDate: value,
-                    });
-                  }}
-                  ariaLabel="End date"
-                  placeholder={effectiveEndPlaceholder}
-                />
-              </div>
-              {showDateReset && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (!isStartControlled) setInternalStartDate("");
-                    if (!isEndControlled) setInternalEndDate("");
-                    onDateRangeChange?.({ startDate: "", endDate: "" });
-                  }}
-                >
-                  Reset
-                </Button>
               )}
             </div>
-          )}
-          {enableSearch && (
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchValue}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSearchValue(value);
-                onSearch?.(value);
-              }}
-              className="h-9 w-64 rounded-md border border-border px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          )}
-          {enableExport && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="cursor-pointer gap-2 flex-end"
-              onClick={handleExport}
-              disabled={(data.length === 0 && !onExportRequest) || exporting}
-            >
-              <Download className="h-4 w-4" />
-              {exporting ? "Exporting…" : "Export CSV"}
-            </Button>
-          )}
+            {enableExport && (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 min-h-11 w-full shrink-0 touch-manipulation gap-2 active:scale-[0.97] motion-reduce:active:scale-100 md:ml-auto md:w-auto"
+                onClick={handleExport}
+                disabled={(data.length === 0 && !onExportRequest) || exporting}
+              >
+                <Download className="h-4 w-4" />
+                {exporting ? "Exporting…" : "Export CSV"}
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
