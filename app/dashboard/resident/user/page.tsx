@@ -327,22 +327,67 @@ export default function ResidentUserPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-3xl font-bold">Tenant Management</h1>
-        <p className="text-muted-foreground mt-1">
-          As an owner, you can manage your tenants.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-3xl font-bold">Tenant Management</h1>
+          <p className="text-muted-foreground mt-1">
+            As an owner, you can manage your tenants.
+          </p>
+        </div>
 
         <Button
-              onClick={handleOpenModal}
-              className="flex items-center gap-2 shrink-0"
-              disabled={inviteStatus === "isLoading"}
-            >
-              <Plus className="w-4 h-4" />
-              Invite Tenant
-            </Button>
+          onClick={handleOpenModal}
+          className="flex items-center gap-2 shrink-0"
+          disabled={inviteStatus === "isLoading"}
+        >
+          <Plus className="w-4 h-4" />
+          Invite Tenant
+        </Button>
       </div>
-    
+
+      <Card className="p-4">
+        <h2 className="font-heading text-lg font-semibold mb-4">Your tenants</h2>
+        <Table<InvitedTenantItem>
+          columns={columns}
+          data={tenants}
+          emptyMessage={
+            tenantsStatus === "isLoading" ? (
+              <Loader label="Loading tenants..." />
+            ) : (
+              "You have not invited any tenants yet."
+            )
+          }
+          enableDateRangeFilter
+          defaultDateRangeDays={0}
+          startDate={startDate}
+          endDate={endDate}
+          onDateRangeChange={({ startDate, endDate }) => {
+            setStartDate(startDate);
+            setEndDate(endDate);
+          }}
+          showPagination
+          paginationInfo={{
+            total: pagination?.total ?? 0,
+            current: pagination?.page ?? currentPage,
+            pageSize: pagination?.limit ?? PAGE_SIZE,
+          }}
+          onPageChange={handlePageChange}
+          enableExport
+          exportFileName="tenants"
+          onExportRequest={async () => {
+            const shouldApplyDate = Boolean(startDate && endDate);
+            const res = await dispatch(
+              getInvitedTenants({
+                page: 1,
+                limit: 50000,
+                startDate: shouldApplyDate ? startDate : undefined,
+                endDate: shouldApplyDate ? endDate : undefined,
+              }),
+            ).unwrap();
+            return (res?.data ?? []) as InvitedTenantItem[];
+          }}
+        />
+      </Card>
 
       {open && (
         <Modal visible={open} onClose={handleCloseModal}>
