@@ -196,7 +196,7 @@ export function GeneralSettingsCard() {
 
   return (
     <div className="space-y-6">
-      <Card className="pt-6 md:pt-8 px-8 md:px-16 pb-12 md:pb-18 w-full md:w-3/4 lg:w-2/3 mx-auto">
+      <Card className="pt-6 md:pt-8 px-8 xl:px-16 pb-12 md:pb-18 w-full md:w-3/4 lg:w-2/3 mx-auto">
         <h2 className="font-heading text-xl font-bold text-center tracking-tight">
           Update Profile
         </h2>
