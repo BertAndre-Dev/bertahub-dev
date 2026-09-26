@@ -3,16 +3,14 @@
 import { useId, useState } from "react";
 import { Camera } from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { acceptAttrFor } from "@/lib/uploads/constants";
-import { fileToDataUri } from "@/lib/uploads/fileToDataUri";
-import { validateFile } from "@/lib/uploads/validate";
+import { useFileUpload } from "@/hooks/useFileUpload";
 import { cn } from "@/lib/utils";
 
 type ProfilePhotoFieldProps = {
   src?: string | null;
   alt: string;
-  /** Called with a `data:image/...;base64,...` value for PUT /user-mgt. */
-  onChange: (base64: string) => void;
+  /** Called with the hosted public URL from /uploads/user-avatar. */
+  onChange: (url: string) => void;
   disabled?: boolean;
 };
 
@@ -23,9 +21,12 @@ export function ProfilePhotoField({
   disabled,
 }: Readonly<ProfilePhotoFieldProps>) {
   const inputId = useId();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const blocked = disabled || busy;
+  const { upload, isUploading, error, progress, acceptAttr } = useFileUpload({
+    kind: "avatar",
+    accept: "image",
+  });
+  const [preview, setPreview] = useState<string | null>(null);
+  const blocked = disabled || isUploading;
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -39,7 +40,7 @@ export function ProfilePhotoField({
         )}
       >
         <UserAvatar
-          src={src}
+          src={preview || src}
           alt={alt}
           size={88}
           className="shadow-[0_8px_24px_rgba(0,0,0,0.12)] ring-2 ring-white dark:ring-zinc-900"
@@ -53,7 +54,7 @@ export function ProfilePhotoField({
         <input
           id={inputId}
           type="file"
-          accept={acceptAttrFor("image")}
+          accept={acceptAttr}
           className="sr-only"
           disabled={blocked}
           aria-label="Change profile photo"
@@ -62,28 +63,19 @@ export function ProfilePhotoField({
             event.target.value = "";
             if (!file) return;
 
-            const validation = validateFile(file, { kind: "avatar" });
-            if (!validation.ok) {
-              setError(validation.error);
-              return;
-            }
-
-            setBusy(true);
-            setError(null);
-            try {
-              onChange(await fileToDataUri(file));
-            } catch (err: unknown) {
-              setError(
-                err instanceof Error ? err.message : "Failed to read image.",
-              );
-            } finally {
-              setBusy(false);
-            }
+            const localPreview = URL.createObjectURL(file);
+            setPreview(localPreview);
+            const url = await upload(file);
+            URL.revokeObjectURL(localPreview);
+            setPreview(null);
+            if (url) onChange(url);
           }}
         />
       </label>
       <p className="text-xs tracking-wide text-muted-foreground">
-        {busy ? "Preparing photo…" : "Tap to change photo"}
+        {isUploading
+          ? `Uploading photo…${progress ? ` ${progress}%` : ""}`
+          : "Tap to change photo"}
       </p>
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
