@@ -50,7 +50,7 @@ export function PlatformFeeSourceGrid({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6",
+        "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6",
         className,
       )}
     >

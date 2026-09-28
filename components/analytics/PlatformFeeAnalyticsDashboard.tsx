@@ -2,15 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, Download, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { isPending } from "@/lib/async-status";
 import { getApiErrorMessage } from "@/lib/api-error";
+import { exportPlatformFeeAnalyticsToCsv } from "@/lib/platform-fee-export";
 import { getAllEstates } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt";
 import { getCompanies } from "@/redux/slice/super-admin/company-mgt/company";
-import { getPlatformFeeAnalytics } from "@/redux/slice/super-admin/platform-fees/platform-fees";
+import {
+  fetchAllPlatformFeeList,
+  getPlatformFeeAnalytics,
+} from "@/redux/slice/super-admin/platform-fees/platform-fees";
 import {
   selectPlatformFeeAnalytics,
   selectPlatformFeeError,
@@ -76,6 +80,7 @@ export function PlatformFeeAnalyticsDashboard({
   });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_LIMIT);
+  const [exporting, setExporting] = useState(false);
 
   const data = useSelector(selectPlatformFeeAnalytics);
   const pagination = useSelector(selectPlatformFeePagination);
@@ -192,6 +197,38 @@ export function PlatformFeeAnalyticsDashboard({
     void dispatch(getPlatformFeeAnalytics(queryParams));
   };
 
+  const exportQuery = useMemo(
+    () => ({
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      estateId: filters.estateId ?? undefined,
+      companyId: filters.companyId ?? undefined,
+    }),
+    [filters],
+  );
+
+  const loadAllSettledFees = useCallback(async () => {
+    const pages = pagination?.pages ?? 1;
+    if (pages <= 1) return data?.list ?? [];
+    return fetchAllPlatformFeeList(exportQuery);
+  }, [data?.list, exportQuery, pagination?.pages]);
+
+  const handleExport = useCallback(async () => {
+    if (!data) return;
+    setExporting(true);
+    try {
+      const list = await loadAllSettledFees();
+      exportPlatformFeeAnalyticsToCsv(data, list, {
+        fileName: "platform_fees",
+      });
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err);
+      if (message) toast.error(message);
+    } finally {
+      setExporting(false);
+    }
+  }, [data, loadAllSettledFees]);
+
   const loading = isPending(status);
   const showError = Boolean(error) && !loading && !data;
   const showSkeleton = loading || (!data && !showError);
@@ -201,13 +238,27 @@ export function PlatformFeeAnalyticsDashboard({
 
   return (
     <section className={cn("space-y-4 bg-amber-50 p-4 rounded-xl border border-amber-200", className)}>
-      <div>
-        <h2 className="font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">
-          Platform fees
-        </h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          Platform fee analytics
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">
+            Platform fees
+          </h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Platform fee analytics
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-9 shrink-0 gap-2 self-start"
+          onClick={() => void handleExport()}
+          disabled={!data || exporting || loading}
+          aria-label="Export platform fees CSV"
+        >
+          <Download className="h-4 w-4" aria-hidden />
+          {exporting ? "Exporting…" : "Export CSV"}
+        </Button>
       </div>
 
       <PlatformFeeFilters
@@ -267,6 +318,15 @@ export function PlatformFeeAnalyticsDashboard({
             onPageSizeChange={(size) => {
               setPageSize(size);
               setPage(1);
+            }}
+            onExportRequest={async () => {
+              try {
+                return await loadAllSettledFees();
+              } catch (err: unknown) {
+                const message = getApiErrorMessage(err);
+                if (message) toast.error(message);
+                return [];
+              }
             }}
           />
         </>
