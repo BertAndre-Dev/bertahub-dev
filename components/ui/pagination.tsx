@@ -2,6 +2,10 @@
 
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  tablePageSizeOptions,
+  DEFAULT_TABLE_PAGE_SIZE,
+} from "@/lib/table-pagination";
 
 export interface PaginationInfo {
   total: number;
@@ -12,10 +16,14 @@ export interface PaginationInfo {
 export interface PaginationProps {
   paginationInfo: PaginationInfo;
   onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   disabled?: boolean;
-  /** Label for the counted records, e.g. "announcements" or "records". */
+  /** Label for the counted records, e.g. "announcements" or "entries". */
   itemLabel?: string;
   className?: string;
+  pageSizeOptions?: readonly number[];
+  /** Hide the rows-per-page control. Default false. */
+  hidePageSize?: boolean;
 }
 
 const MAX_VISIBLE_PAGES = 4;
@@ -41,41 +49,87 @@ function getVisiblePages(current: number, totalPages: number): number[] {
 export default function Pagination({
   paginationInfo,
   onPageChange,
+  onPageSizeChange,
   disabled = false,
-  itemLabel = "records",
+  itemLabel = "entries",
   className = "",
+  pageSizeOptions,
+  hidePageSize = false,
 }: PaginationProps) {
-  const totalPages = Math.max(
-    1,
-    Math.ceil(paginationInfo.total / paginationInfo.pageSize),
-  );
+  const pageSize =
+    paginationInfo.pageSize > 0
+      ? paginationInfo.pageSize
+      : DEFAULT_TABLE_PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(paginationInfo.total / pageSize));
 
   const visiblePages = useMemo(
     () => getVisiblePages(paginationInfo.current, totalPages),
     [paginationInfo.current, totalPages],
   );
 
-  if (paginationInfo.total === 0) return null;
+  const sizeOptions = useMemo(
+    () =>
+      pageSizeOptions
+        ? Array.from(
+            new Set([...pageSizeOptions, pageSize].filter((n) => n > 0)),
+          ).sort((a, b) => a - b)
+        : tablePageSizeOptions(pageSize),
+    [pageSize, pageSizeOptions],
+  );
 
   const rangeStart =
-    (paginationInfo.current - 1) * paginationInfo.pageSize + 1;
+    paginationInfo.total === 0
+      ? 0
+      : (paginationInfo.current - 1) * pageSize + 1;
   const rangeEnd = Math.min(
-    paginationInfo.current * paginationInfo.pageSize,
+    paginationInfo.current * pageSize,
     paginationInfo.total,
   );
+
+  const showPageSize = !hidePageSize;
+  const showPager = paginationInfo.total > 0 && totalPages > 1;
+
+  if (paginationInfo.total === 0 && !showPageSize) return null;
 
   return (
     <div
       className={[
-        "flex flex-col md:flex-row items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 gap-3",
+        "flex flex-col md:flex-row md:items-center md:justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 gap-3",
         className,
       ].join(" ")}
     >
-      <p className="text-sm text-muted-foreground">
-        Showing {rangeStart}–{rangeEnd} of {paginationInfo.total} {itemLabel}
-      </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <p className="text-sm text-muted-foreground">
+          {paginationInfo.total === 0
+            ? `Showing 0 of 0 ${itemLabel}`
+            : `Showing ${rangeStart} to ${rangeEnd} of ${paginationInfo.total} ${itemLabel}`}
+        </p>
 
-      {totalPages > 1 && (
+        {showPageSize ? (
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="whitespace-nowrap">Rows per page</span>
+            <select
+              className="h-8 min-w-14 cursor-pointer rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+              value={pageSize}
+              aria-label="Rows per page"
+              disabled={disabled || !onPageSizeChange}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (!Number.isFinite(next) || next <= 0) return;
+                onPageSizeChange?.(next);
+              }}
+            >
+              {sizeOptions.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+      </div>
+
+      {showPager ? (
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
@@ -111,7 +165,7 @@ export default function Pagination({
             Next
           </Button>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

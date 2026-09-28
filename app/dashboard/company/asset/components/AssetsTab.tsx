@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import DeleteModal from "@/components/resident/delete-modal/page";
 import Table from "@/components/tables/list/page";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Pencil, Trash2 } from "lucide-react";
 import { getApiErrorMessage } from "@/lib/api-error";
 import type { RootState, AppDispatch } from "@/redux/store";
@@ -60,6 +61,7 @@ export default function AssetsTab({
 }: Readonly<AssetsTabProps>) {
   const dispatch = useDispatch<AppDispatch>();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Asset | null>(null);
@@ -108,14 +110,14 @@ export default function AssetsTab({
   useEffect(() => {
     if (!selectedEstateId) return;
     dispatch(
-      getAssets({ estateId: selectedEstateId, page, limit: PAGE_SIZE, search }),
+      getAssets({ estateId: selectedEstateId, page, limit: pageSize, search }),
     )
       .unwrap()
       .catch((err: unknown) => {
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
       });
-  }, [dispatch, selectedEstateId, page, search]);
+  }, [dispatch, selectedEstateId, page, pageSize, search]);
 
   const columns = useMemo(
     () => [
@@ -171,32 +173,38 @@ export default function AssetsTab({
         exportable: false,
         render: (item: Asset) => (
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditing(item);
-                setModalOpen(true);
-              }}
-            >
-              <Pencil className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:text-destructive h-8"
-              disabled={deleteStatus === "isLoading"}
-              onClick={(e) => {
-                e.stopPropagation();
-                const id = getId(item);
-                if (!id) return;
-                setItemToDelete(item);
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <IconTooltip label="Edit">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditing(item);
+                  setModalOpen(true);
+                }}
+                aria-label="Edit"
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
+            <IconTooltip label="Delete">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive h-8"
+                disabled={deleteStatus === "isLoading"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const id = getId(item);
+                  if (!id) return;
+                  setItemToDelete(item);
+                }}
+                aria-label="Delete"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
           </div>
         ),
       },
@@ -265,9 +273,6 @@ export default function AssetsTab({
   const current =
     Number(pagination?.page ?? (pagination as any)?.currentPage ?? page) ||
     page;
-  const pageSize =
-    Number(pagination?.limit ?? (pagination as any)?.pageSize ?? PAGE_SIZE) ||
-    PAGE_SIZE;
 
   return (
     <div className="space-y-4">
@@ -303,6 +308,10 @@ export default function AssetsTab({
         showPagination
         paginationInfo={{ total, current, pageSize }}
         onPageChange={(p) => setPage(p)}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
         enableExport
         exportFileName="assets"
         onExportRequest={() => Promise.resolve(assets)}

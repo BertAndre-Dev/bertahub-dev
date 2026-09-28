@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,15 +52,17 @@ export function CreateGroupChatModal({
         aria-labelledby="create-group-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isSubmitting}
-          className="absolute right-4 top-4 flex size-9 cursor-pointer items-center justify-center rounded-full bg-[#d0dff2] text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 hover:text-gray-800"
-          aria-label="Close"
-        >
-          <X className="size-5" />
-        </button>
+        <IconTooltip label="Close">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="absolute right-4 top-4 flex size-9 cursor-pointer items-center justify-center rounded-full bg-[#d0dff2] text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 hover:text-gray-800"
+            aria-label="Close"
+          >
+            <X className="size-5" />
+          </button>
+        </IconTooltip>
 
         <h2 id="create-group-title" className="pr-10 text-lg font-bold">
           Create a Group Chat

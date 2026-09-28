@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -93,17 +94,19 @@ export default function WorkflowFieldsEditor({
                   {fieldTitle}
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`Remove ${fieldTitle}`}
-                onClick={() => removeField(index)}
-                disabled={disabled}
-                className="shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <IconTooltip label={`Remove ${fieldTitle}`}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Remove ${fieldTitle}`}
+                  onClick={() => removeField(index)}
+                  disabled={disabled}
+                  className="shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </IconTooltip>
             </div>
 
             {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5"> */}

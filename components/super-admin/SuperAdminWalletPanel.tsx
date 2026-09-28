@@ -38,6 +38,8 @@ type SuperAdminWalletPanelProps = Readonly<{
     pages?: number;
   } | null;
   onCreditsPageChange?: (page: number) => void;
+  onCreditsPageSizeChange?: (pageSize: number) => void;
+  creditsPageSize?: number;
   walletLoading?: boolean;
   walletError?: string | null;
 }>;
@@ -52,6 +54,8 @@ export function SuperAdminWalletPanel({
   creditsLoading = false,
   creditsPagination,
   onCreditsPageChange,
+  onCreditsPageSizeChange,
+  creditsPageSize,
   walletLoading = false,
   walletError = null,
 }: SuperAdminWalletPanelProps) {
@@ -183,11 +187,13 @@ export function SuperAdminWalletPanel({
                   ? {
                       total: creditsPagination.total,
                       current: creditsPagination.page,
-                      pageSize: creditsPagination.limit,
+                      pageSize:
+                        creditsPageSize ?? creditsPagination.limit,
                     }
                   : undefined
               }
               onPageChange={onCreditsPageChange}
+              onPageSizeChange={onCreditsPageSizeChange}
             />
           )}
         </div>

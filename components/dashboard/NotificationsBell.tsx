@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Bell } from "lucide-react";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { toast } from "react-toastify";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { selectUserRole } from "@/redux/slice/auth-mgt/auth-mgt-slice";
@@ -161,25 +162,26 @@ export function NotificationsBell() {
 
   return (
     <DropdownMenu.Root open={open} onOpenChange={setOpen}>
-      <DropdownMenu.Trigger asChild>
-        <button
-          type="button"
-          title="Notifications"
-          className="relative rounded-lg p-2 transition-colors hover:bg-muted cursor-pointer text-muted-foreground hover:text-foreground"
-          aria-label={
-            unreadCount > 0
-              ? `Notifications, ${unreadCount} unread`
-              : "Notifications"
-          }
-        >
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 ? (
-            <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-foreground">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
-          ) : null}
-        </button>
-      </DropdownMenu.Trigger>
+      <IconTooltip label="Notifications">
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            className="relative rounded-lg p-2 transition-colors hover:bg-muted cursor-pointer text-muted-foreground hover:text-foreground"
+            aria-label={
+              unreadCount > 0
+                ? `Notifications, ${unreadCount} unread`
+                : "Notifications"
+            }
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 ? (
+              <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-foreground">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            ) : null}
+          </button>
+        </DropdownMenu.Trigger>
+      </IconTooltip>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           align="end"

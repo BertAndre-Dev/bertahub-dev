@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Select as NativeSelect } from "@/components/ui/select";
 import Table from "@/components/tables/list/page";
 import Loader from "@/components/ui/Loader";
+import { IconTooltip } from "@/components/ui/tooltip";
 import DeleteModal from "@/components/resident/delete-modal/page";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { isBusy } from "@/lib/async-status";
@@ -306,15 +307,18 @@ export default function RequestManagementView({
             >
               View
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className={requestDeleteIconButtonClass}
-              disabled={deleting}
-              onClick={() => setRequestToDelete(item)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <IconTooltip label="Delete">
+              <Button
+                size="sm"
+                variant="outline"
+                className={requestDeleteIconButtonClass}
+                disabled={deleting}
+                onClick={() => setRequestToDelete(item)}
+                aria-label="Delete"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
           </div>
         ),
         exportable: false,
@@ -440,6 +444,7 @@ export default function RequestManagementView({
                 pageSize,
               }}
               onPageChange={(nextPage) => dispatch(api.setPage(nextPage))}
+              onPageSizeChange={(size) => dispatch(api.setPageSize(size))}
             />
           ) : null}
         </Card>

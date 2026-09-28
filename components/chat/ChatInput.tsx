@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { IconTooltip } from "@/components/ui/tooltip";
 import ChatFilePreview from "@/components/chat/ChatFilePreview";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { sendMessage } from "@/redux/slice/chat/chat-thunks";
@@ -147,29 +148,31 @@ export default function ChatInput({ chatId }: Readonly<Props>) {
 
         <div className="flex items-center gap-2 pb-4">
           {fileData ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={resetAttachment}
-              disabled={disabled}
-              aria-label="Remove attachment"
-              title="Remove attachment"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <IconTooltip label="Remove attachment">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={resetAttachment}
+                disabled={disabled}
+                aria-label="Remove attachment"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </IconTooltip>
           ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={handlePickFile}
-              disabled={disabled}
-              aria-label="Attach file"
-              title="Attach file"
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
+            <IconTooltip label="Attach file">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handlePickFile}
+                disabled={disabled}
+                aria-label="Attach file"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+            </IconTooltip>
           )}
 
           <Button

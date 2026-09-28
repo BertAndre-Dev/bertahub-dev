@@ -5,6 +5,7 @@ import { Eye, Paperclip, Pencil, Trash2 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import Table from "@/components/tables/list/page";
+import { IconTooltip } from "@/components/ui/tooltip";
 import type { ExpenseEntry } from "@/redux/slice/admin/expense-entry/expense-entry";
 
 export interface ExpenseEntriesTableProps {
@@ -15,6 +16,7 @@ export interface ExpenseEntriesTableProps {
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   onView: (item: ExpenseEntry) => void;
   onEdit: (item: ExpenseEntry) => void;
   onDelete: (item: ExpenseEntry) => void;
@@ -28,6 +30,7 @@ export function ExpenseEntriesTable({
   currentPage,
   pageSize,
   onPageChange,
+  onPageSizeChange,
   onView,
   onEdit,
   onDelete,
@@ -77,30 +80,36 @@ export function ExpenseEntriesTable({
         exportable: false,
         render: (item: ExpenseEntry) => (
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="p-2 rounded-md hover:bg-muted"
-              aria-label="View"
-              onClick={() => onView(item)}
-            >
-              <Eye className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className="p-2 rounded-md hover:bg-muted"
-              aria-label="Edit"
-              onClick={() => onEdit(item)}
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className="text-red-600 hover:text-red-700 p-2 rounded-md hover:bg-muted"
-              aria-label="Delete"
-              onClick={() => onDelete(item)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <IconTooltip label="View">
+              <button
+                type="button"
+                className="p-2 rounded-md hover:bg-muted"
+                aria-label="View"
+                onClick={() => onView(item)}
+              >
+                <Eye className="h-4 w-4" />
+              </button>
+            </IconTooltip>
+            <IconTooltip label="Edit">
+              <button
+                type="button"
+                className="p-2 rounded-md hover:bg-muted"
+                aria-label="Edit"
+                onClick={() => onEdit(item)}
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </IconTooltip>
+            <IconTooltip label="Delete">
+              <button
+                type="button"
+                className="text-red-600 hover:text-red-700 p-2 rounded-md hover:bg-muted"
+                aria-label="Delete"
+                onClick={() => onDelete(item)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </IconTooltip>
           </div>
         ),
       },
@@ -120,6 +129,7 @@ export function ExpenseEntriesTable({
           pageSize,
         }}
         onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
       />
     </Card>
   );

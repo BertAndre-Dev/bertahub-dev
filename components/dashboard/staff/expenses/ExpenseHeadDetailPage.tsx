@@ -103,7 +103,7 @@ export default function ExpenseHeadDetailPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
-  const limit = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const [addOpen, setAddOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -170,7 +170,7 @@ export default function ExpenseHeadDetailPage() {
       fetchExpenseEntries({
         headId,
         page,
-        limit,
+        limit: pageSize,
         startDate: toIsoIfPresent(startDate),
         endDate: toIsoIfPresent(endDate),
       }),
@@ -180,7 +180,7 @@ export default function ExpenseHeadDetailPage() {
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
       });
-  }, [dispatch, headId, page, startDate, endDate]);
+  }, [dispatch, headId, page, pageSize, startDate, endDate]);
 
   const filteredEntries = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -284,7 +284,7 @@ export default function ExpenseHeadDetailPage() {
         fetchExpenseEntries({
           headId,
           page: 1,
-          limit,
+          limit: pageSize,
           startDate: toIsoIfPresent(startDate),
           endDate: toIsoIfPresent(endDate),
         }),
@@ -419,8 +419,12 @@ export default function ExpenseHeadDetailPage() {
           loading={pageLoading ? false : entriesLoading}
           total={pagination?.total ?? filteredEntries.length ?? 0}
           currentPage={pagination?.currentPage ?? page}
-          pageSize={pagination?.pageSize ?? limit}
+          pageSize={pageSize}
           onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}

@@ -60,6 +60,7 @@ export default function EstateAdminWalletPage() {
   const [estateId, setEstateId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Estate");
   const [creditsPage, setCreditsPage] = useState(1);
+  const [pageSize, setPageSize] = useState(LIMIT);
   const [bootstrapping, setBootstrapping] = useState(true);
 
   const [fromDate, setFromDate] = useState<string | null>(null);
@@ -143,7 +144,7 @@ export default function EstateAdminWalletPage() {
             getEstateCredits({
               estateId: estateIdFromUser,
               page: 1,
-              limit: LIMIT,
+              limit: pageSize,
             }),
           ),
         ]);
@@ -156,8 +157,8 @@ export default function EstateAdminWalletPage() {
   }, [dispatch]);
   useEffect(() => {
     if (!estateId || creditsPage === 1) return;
-    dispatch(getEstateCredits({ estateId, page: creditsPage, limit: LIMIT }));
-  }, [estateId, creditsPage, dispatch]);
+    dispatch(getEstateCredits({ estateId, page: creditsPage, limit: pageSize }));
+  }, [estateId, creditsPage, pageSize, dispatch]);
 
   useEffect(() => {
     dispatch(getBanks({ country: "NG", gatewayType: "flutterwave" }));
@@ -273,7 +274,7 @@ export default function EstateAdminWalletPage() {
           getEstateCredits({
             estateId: currentEstateId,
             page: creditsPage,
-            limit: LIMIT,
+            limit: pageSize,
           }),
         );
 
@@ -338,8 +339,6 @@ export default function EstateAdminWalletPage() {
     typeof pag?.total === "number" ? pag.total : Number(pag?.total) || 0;
   const pageNum =
     typeof pag?.page === "number" ? pag.page : Number(pag?.page) || creditsPage;
-  const pageSize =
-    typeof pag?.limit === "number" ? pag.limit : Number(pag?.limit) || LIMIT;
 
   const handleCreditsFiltersChange = (filters: {
     fromDate: string | null;
@@ -456,6 +455,13 @@ export default function EstateAdminWalletPage() {
             pageSize,
           }}
           onPageChange={setCreditsPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCreditsPage(1);
+            if (estateId) {
+              dispatch(getEstateCredits({ estateId, page: 1, limit: size }));
+            }
+          }}
           enableExport
           exportFileName="estate-credits"
           onExportRequest={

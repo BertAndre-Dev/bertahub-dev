@@ -31,6 +31,7 @@ import {
   clearAdminRequestWorkflow,
 } from "@/redux/slice/admin/request/admin-request-slice";
 import WorkflowConfigModal from "./WorkflowConfigModal";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 type EstateSelectOption = { label: string; value: string };
 
@@ -353,28 +354,32 @@ export default function RequestWorkflowConfigPanel({
                       ) : null}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Edit ${workflow.name}`}
-                        onClick={() => openEditModal(workflow)}
-                        disabled={deleting}
-                        className={requestEditIconButtonClass}
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Delete ${workflow.name}`}
-                        onClick={() => setWorkflowToDelete(workflow)}
-                        disabled={deleting}
-                        className={requestDeleteIconGhostClass}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <IconTooltip label="Edit">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Edit ${workflow.name}`}
+                          onClick={() => openEditModal(workflow)}
+                          disabled={deleting}
+                          className={requestEditIconButtonClass}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      </IconTooltip>
+                      <IconTooltip label="Delete">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Delete ${workflow.name}`}
+                          onClick={() => setWorkflowToDelete(workflow)}
+                          disabled={deleting}
+                          className={requestDeleteIconGhostClass}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </IconTooltip>
                     </div>
                   </div>
                   <div className="space-y-3">

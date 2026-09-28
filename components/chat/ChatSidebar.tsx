@@ -12,6 +12,7 @@ import ChatStatusBadge from "@/components/chat/ChatStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Loader from "@/components/ui/Loader";
+import { IconTooltip } from "@/components/ui/tooltip";
 import {
   getAgentChats,
   getChatById,
@@ -96,17 +97,18 @@ export default function ChatSidebar() {
           </p>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={loadList}
-          disabled={loading === "isLoading"}
-          aria-label="Refresh chats"
-          title="Refresh"
-        >
-          <RefreshCcw className="h-4 w-4" />
-        </Button>
+        <IconTooltip label="Refresh">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={loadList}
+            disabled={loading === "isLoading"}
+            aria-label="Refresh chats"
+          >
+            <RefreshCcw className="h-4 w-4" />
+          </Button>
+        </IconTooltip>
       </div>
 
       {canViewAgentChats && (

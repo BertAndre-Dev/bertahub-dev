@@ -12,6 +12,7 @@ export type TransactionsTableCardProps<T> = {
   current: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
 };
 
 export function TransactionsTableCard<T extends { id?: string }>({
@@ -21,6 +22,7 @@ export function TransactionsTableCard<T extends { id?: string }>({
   current,
   pageSize,
   onPageChange,
+  onPageSizeChange,
 }: Readonly<TransactionsTableCardProps<T>>) {
   return (
     <Card className="p-4">
@@ -35,6 +37,7 @@ export function TransactionsTableCard<T extends { id?: string }>({
           pageSize,
         }}
         onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
       />
     </Card>
   );

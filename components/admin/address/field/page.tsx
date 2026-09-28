@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import {
@@ -41,14 +42,15 @@ export default function AddressField() {
   const [selectedField, setSelectedField] = useState<FieldData | null>(null);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; name?: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // ✅ Get Redux state
-  const { allField, pagination, listStatus, mutationBusy } = useSelector(
+  const { allField, listStatus, mutationBusy } = useSelector(
     (state: RootState) => {
       const fieldState = state.adminField as any;
       return {
         allField: fieldState.allField,
-        pagination: fieldState.allField?.pagination || {},
         listStatus: fieldState.getFieldByEstateState as string | undefined,
         mutationBusy:
           isBusy(fieldState.createFieldState) ||
@@ -167,6 +169,10 @@ export default function AddressField() {
       createdAt: f.createdAt,
       updatedAt: f.updatedAt,
     })) || [];
+  const pagedFields = mappedFields.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   const columns = [
     {
@@ -195,22 +201,28 @@ export default function AddressField() {
       header: "Actions",
       render: (item: any) => (
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleOpenModal(item)}
-           className="text-blue-600 hover:text-blue-700"
-           >
-            <Edit2 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDeleteField(item.id, item.label)}
-           className="text-red-600 hover:text-red-700"
-           >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          <IconTooltip label="Edit">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleOpenModal(item)}
+             className="text-blue-600 hover:text-blue-700"
+             aria-label="Edit"
+             >
+              <Edit2 className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
+          <IconTooltip label="Delete">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDeleteField(item.id, item.label)}
+             className="text-red-600 hover:text-red-700"
+             aria-label="Delete"
+             >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
         </div>
       ),
     },
@@ -238,22 +250,18 @@ export default function AddressField() {
       <Card className="p-4">
         <Table
           columns={columns}
-          data={mappedFields}
+          data={pagedFields}
           emptyMessage={loading ? "Loading fields..." : "No fields found."}
           showPagination
           paginationInfo={{
-            total: pagination?.total || 0,
-            current: Number(pagination?.currentPage) || 1,
-            pageSize: Number(pagination?.pageSize) || 10,
+            total: mappedFields.length,
+            current: currentPage,
+            pageSize,
           }}
-          onPageChange={(page) => {
-            if (!estateId) return;
-            dispatch(getFieldByEstate(estateId))
-              .unwrap()
-              .catch((err: unknown) => {
-                const message = getApiErrorMessage(err);
-                if (message) toast.error(message);
-              });
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
           }}
           enableExport
           exportFileName="address-fields"

@@ -6,6 +6,7 @@ import { RefreshCw } from "lucide-react";
 import { PowerUsageCard } from "@/components/charts/power-usage-card";
 import { EnergyUsagePeriodControl } from "@/components/charts/energy-usage-period-control";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   formatEstateUsageDateRange,
@@ -56,18 +57,21 @@ export function EstatePowerUsageSection({
         disabled={loading}
       />
       {onRefresh ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={loading || refreshing}
-          onClick={onRefresh}
-          className="shrink-0"
-        >
-          <RefreshCw
-            className={cn("size-4", refreshing && "animate-spin")}
-          />
-        </Button>
+        <IconTooltip label="Refresh">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={loading || refreshing}
+            onClick={onRefresh}
+            className="shrink-0"
+            aria-label="Refresh"
+          >
+            <RefreshCw
+              className={cn("size-4", refreshing && "animate-spin")}
+            />
+          </Button>
+        </IconTooltip>
       ) : null}
     </>
   );

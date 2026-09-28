@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CiSearch } from "react-icons/ci";
+import PaginationBar from "@/components/ui/pagination";
 
 interface StatItem {
   label: string;
@@ -36,6 +37,7 @@ interface DataListProps {
 
   pagination?: Pagination; // ✅ Added
   onPageChange?: (page: number) => void; // ✅ Added
+  onPageSizeChange?: (pageSize: number) => void;
 
   filters?: {
     label: string;
@@ -56,6 +58,7 @@ export default function DataList({
   columns,
   pagination,
   onPageChange,
+  onPageSizeChange,
   searchableKeys = [],
   filters = [],
   onCreate,
@@ -81,7 +84,6 @@ export default function DataList({
   });
 
   const currentPage = pagination?.currentPage ?? 1;
-  const totalPages = pagination?.totalPages ?? 1;
 
   return (
     <div className="space-y-6">
@@ -203,29 +205,16 @@ export default function DataList({
 
         {/* PAGINATION */}
         {pagination && (
-          <div className="flex justify-between items-center px-6 py-4 border-t">
-            <p className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </p>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                disabled={currentPage <= 1}
-                onClick={() => onPageChange?.(currentPage - 1)}
-              >
-                Previous
-              </Button>
-
-              <Button
-                variant="outline"
-                disabled={currentPage >= totalPages}
-                onClick={() => onPageChange?.(currentPage + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <PaginationBar
+            paginationInfo={{
+              total: pagination.total ?? filteredData.length,
+              current: currentPage,
+              pageSize: pagination.pageSize ?? (filteredData.length || 10),
+            }}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+            className="rounded-none border-0 border-t px-6 py-4"
+          />
         )}
       </Card>
     </div>

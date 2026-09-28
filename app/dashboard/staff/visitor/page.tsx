@@ -56,6 +56,7 @@ export default function AdminVisitorManagement() {
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [pageSize, setPageSize] = useState(PAGE_LIMIT);
   // const [verifyModalVisitor, setVerifyModalVisitor] = useState<{
   //   visitorCode: string;
   //   firstName?: string;
@@ -105,20 +106,20 @@ export default function AdminVisitorManagement() {
   });
 
   const fetchVisitors = useCallback(
-    async (page = 1) => {
+    async (page = 1, limit = pageSize) => {
       if (!estateId) return;
       const shouldApplyDate = Boolean(startDate && endDate);
       await dispatch(
         getVisitorsByEstate({
           estateId,
           page,
-          limit: PAGE_LIMIT,
+          limit,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
         }),
       ).unwrap();
     },
-    [dispatch, estateId, startDate, endDate],
+    [dispatch, estateId, pageSize, startDate, endDate],
   );
 
   // Bootstrap signed-in user and estate only (no visitor fetch here).
@@ -678,9 +679,16 @@ export default function AdminVisitorManagement() {
             paginationInfo={{
               total: pagination.total,
               current: pagination.page,
-              pageSize: pagination.limit,
+              pageSize,
             }}
             onPageChange={handlePageChange}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              fetchVisitors(1, size).catch((err: unknown) => {
+                const message = getApiErrorMessage(err);
+                if (message) toast.error(message);
+              });
+            }}
             enableExport
             exportFileName="visitors"
             onExportRequest={

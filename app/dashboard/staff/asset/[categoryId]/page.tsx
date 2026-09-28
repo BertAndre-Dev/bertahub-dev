@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import Loader from "@/components/ui/Loader";
 import Table from "@/components/tables/list/page";
@@ -55,6 +56,7 @@ export default function AssetCategoryDetailPage() {
   const [bootstrapping, setBootstrapping] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
 
   const [editCategoryOpen, setEditCategoryOpen] = useState(false);
   const [deleteCategoryOpen, setDeleteCategoryOpen] = useState(false);
@@ -134,7 +136,7 @@ export default function AssetCategoryDetailPage() {
       getAssets({
         estateId,
         page,
-        limit: PAGE_SIZE,
+        limit: pageSize,
         search,
         assetCategoryId: categoryId,
       }),
@@ -144,7 +146,7 @@ export default function AssetCategoryDetailPage() {
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
       });
-  }, [dispatch, estateId, categoryId, page, search]);
+  }, [dispatch, estateId, categoryId, page, pageSize, search]);
 
   const visibleAssets = useMemo(() => {
     if (!categoryId) return assets;
@@ -212,31 +214,37 @@ export default function AssetCategoryDetailPage() {
         exportable: false,
         render: (item: Asset) => (
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-[#0150AC] hover:text-[#01408A] h-8"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditingAsset(item);
-              }}
-            >
-              <Pencil className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:text-destructive h-8"
-              disabled={isBusy(deleteAssetStatus)}
-              onClick={(e) => {
-                e.stopPropagation();
-                const id = getId(item);
-                if (!id) return;
-                setAssetToDelete(item);
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <IconTooltip label="Edit">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[#0150AC] hover:text-[#01408A] h-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingAsset(item);
+                }}
+                aria-label="Edit"
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
+            <IconTooltip label="Delete">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive h-8"
+                disabled={isBusy(deleteAssetStatus)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const id = getId(item);
+                  if (!id) return;
+                  setAssetToDelete(item);
+                }}
+                aria-label="Delete"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
           </div>
         ),
       },
@@ -306,7 +314,7 @@ export default function AssetCategoryDetailPage() {
           getAssets({
             estateId,
             page,
-            limit: PAGE_SIZE,
+            limit: pageSize,
             search,
             assetCategoryId: categoryId,
           }),
@@ -378,24 +386,28 @@ export default function AssetCategoryDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Edit category"
-              onClick={() => setEditCategoryOpen(true)}
-              disabled={!category}
-              className="text-[#0150AC] hover:text-[#01408A] h-9 w-9 grid place-items-center rounded-full border border-border bg-white hover:bg-muted disabled:opacity-50 cursor-pointer"
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="Delete category"
-              onClick={() => setDeleteCategoryOpen(true)}
-              disabled={!category}
-              className="text-rose-600 hover:text-rose-700 h-9 w-9 grid place-items-center rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 cursor-pointer"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <IconTooltip label="Edit category">
+              <button
+                type="button"
+                aria-label="Edit category"
+                onClick={() => setEditCategoryOpen(true)}
+                disabled={!category}
+                className="text-[#0150AC] hover:text-[#01408A] h-9 w-9 grid place-items-center rounded-full border border-border bg-white hover:bg-muted disabled:opacity-50 cursor-pointer"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            </IconTooltip>
+            <IconTooltip label="Delete category">
+              <button
+                type="button"
+                aria-label="Delete category"
+                onClick={() => setDeleteCategoryOpen(true)}
+                disabled={!category}
+                className="text-rose-600 hover:text-rose-700 h-9 w-9 grid place-items-center rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </IconTooltip>
             <Button
               onClick={() => setAddAssetOpen(true)}
               disabled={!category}
@@ -469,14 +481,14 @@ export default function AssetCategoryDetailPage() {
                         assetsPagination?.currentPage ??
                         page,
                     ) || page,
-                  pageSize:
-                    Number(
-                      assetsPagination?.limit ??
-                        assetsPagination?.pageSize ??
-                        PAGE_SIZE,
-                    ) || PAGE_SIZE,
+                  pageSize,
                 }}
                 onPageChange={(p) => setPage(p)}
+
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
               />
             </Card>
           </>

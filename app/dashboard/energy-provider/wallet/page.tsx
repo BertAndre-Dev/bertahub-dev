@@ -69,6 +69,7 @@ export default function EnergyProviderWalletPage() {
   const [estateId, setEstateId] = useState<string | null>(null);
   const [estateName, setEstateName] = useState("Estate");
   const [creditsPage, setCreditsPage] = useState(1);
+  const [pageSize, setPageSize] = useState(LIMIT);
   const [sortBy, setSortBy] = useState<SortBy>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
@@ -106,20 +107,20 @@ export default function EnergyProviderWalletPage() {
     verifyBankAccountState === "succeeded" && !!verifiedAccountName;
 
   const fetchCredits = useCallback(
-    (page: number) => {
+    (page: number, limit = pageSize) => {
       if (!userId) return Promise.resolve();
       return dispatch(
         getEnergyProviderCredits({
           userId,
           estateId: estateId ?? undefined,
           page,
-          limit: LIMIT,
+          limit,
           sortBy,
           sortOrder,
         }),
       ).unwrap();
     },
-    [dispatch, userId, estateId, sortBy, sortOrder],
+    [dispatch, userId, estateId, pageSize, sortBy, sortOrder],
   );
 
   useEffect(() => {
@@ -276,8 +277,6 @@ export default function EnergyProviderWalletPage() {
     typeof pag?.total === "number" ? pag.total : Number(pag?.total) || 0;
   const pageNum =
     typeof pag?.page === "number" ? pag.page : Number(pag?.page) || creditsPage;
-  const pageSize =
-    typeof pag?.limit === "number" ? pag.limit : Number(pag?.limit) || LIMIT;
 
   const walletBankName =
     wallet?.bankCode
@@ -393,6 +392,10 @@ export default function EnergyProviderWalletPage() {
             pageSize,
           }}
           onPageChange={setCreditsPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCreditsPage(1);
+          }}
           enableExport
           exportFileName="energy-provider-wallet-history"
           onExportRequest={

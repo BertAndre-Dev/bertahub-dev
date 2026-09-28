@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import Modal from "@/components/modal/page";
 import Table from "@/components/tables/list/page";
 import { toast } from "react-toastify";
@@ -267,14 +268,14 @@ export default function AdminMeterManagement() {
   const selectedEstate =
     estateOptions.find((o) => o.value === selectedEstateId) ?? null;
 
-  const pageSize = Number(pagination?.pageSize) || 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchMeters = useCallback(
-    async (page = 1, search = searchQuery) => {
+    async (page = 1, search = searchQuery, limit = pageSize) => {
       await dispatch(
         getAllMeters({
           page,
-          limit: pageSize,
+          limit,
           search: search || undefined,
         }),
       ).unwrap();
@@ -580,55 +581,55 @@ export default function AdminMeterManagement() {
       header: "Action",
       render: (item: AdminMeterData) => (
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="cursor-pointer gap-1"
-            onClick={() => handleViewDetails(item)}
-            title="View details"
-            disabled={!toAddressIdString(item.addressId)}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
+          <IconTooltip label="View details">
+            <Button
+              variant="outline"
+              size="sm"
+              className="cursor-pointer gap-1"
+              onClick={() => handleViewDetails(item)}
+              aria-label="View details"
+              disabled={!toAddressIdString(item.addressId)}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
           {(extractEstateId(item.estateId) ||
             normalizeUserId(item.companyId)) && (
-            <div className="relative group/reassign">
+            <IconTooltip label="Reassign to estate">
               <Button
                 variant="outline"
                 size="sm"
                 className="cursor-pointer gap-1"
                 onClick={() => handleOpenReassignMeter(item)}
-                title="Reassign to estate"
                 aria-label="Reassign to estate"
               >
                 <ArrowRightLeft className="w-4 h-4 text-indigo-600" />
               </Button>
-              <span
-                role="tooltip"
-                className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 -translate-x-1/2 whitespace-nowrap rounded bg-foreground px-2 py-1 text-xs text-background opacity-0 shadow transition-opacity group-hover/reassign:opacity-100"
-              >
-                Reassign to estate
-              </span>
-            </div>
+            </IconTooltip>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-orange-600 hover:text-orange-700 cursor-pointer gap-1"
-            onClick={() => handleClearTamper(item)}
-            title="Generate clear-tamper token"
-            disabled={clearTamperLoadingMeter === item.meterNumber}
-          >
-            <KeyRound className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="destructive"
-            className="cursor-pointer"
-            size="sm"
-            onClick={() => handleDeleteMeter(item.id!)}
-          >
-            <Trash className="w-4 h-4" />
-          </Button>
+          <IconTooltip label="Generate clear-tamper token">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-orange-600 hover:text-orange-700 cursor-pointer gap-1"
+              onClick={() => handleClearTamper(item)}
+              aria-label="Generate clear-tamper token"
+              disabled={clearTamperLoadingMeter === item.meterNumber}
+            >
+              <KeyRound className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
+          <IconTooltip label="Delete">
+            <Button
+              variant="destructive"
+              className="cursor-pointer"
+              size="sm"
+              onClick={() => handleDeleteMeter(item.id!)}
+              aria-label="Delete"
+            >
+              <Trash className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
         </div>
       ),
     },
@@ -849,10 +850,19 @@ export default function AdminMeterManagement() {
                         paginationInfo={{
                           total: pagination?.total || 0,
                           current: Number(pagination?.currentPage) || 1,
-                          pageSize: Number(pagination?.pageSize) || 10,
+                          pageSize,
                         }}
                         onPageChange={(page) => {
                           fetchMeters(page, searchQuery).catch(
+                            (err: unknown) => {
+                              const message = getApiErrorMessage(err);
+                              if (message) toast.error(message);
+                            },
+                          );
+                        }}
+                        onPageSizeChange={(size) => {
+                          setPageSize(size);
+                          fetchMeters(1, searchQuery, size).catch(
                             (err: unknown) => {
                               const message = getApiErrorMessage(err);
                               if (message) toast.error(message);

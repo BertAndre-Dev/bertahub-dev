@@ -17,6 +17,8 @@ type PlatformFeeListProps = Readonly<{
   items: PlatformFeeListItem[];
   pagination: PlatformFeePagination | null;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  pageSize?: number;
   className?: string;
 }>;
 
@@ -24,6 +26,8 @@ export function PlatformFeeList({
   items,
   pagination,
   onPageChange,
+  onPageSizeChange,
+  pageSize,
   className,
 }: PlatformFeeListProps) {
   const columns = useMemo(
@@ -62,7 +66,7 @@ export function PlatformFeeList({
   );
 
   const page = pagination?.page ?? 1;
-  const limit = pagination?.limit ?? items.length;
+  const limit = pageSize ?? pagination?.limit ?? items.length;
   const total = pagination?.total ?? items.length;
 
   return (
@@ -96,6 +100,7 @@ export function PlatformFeeList({
               : undefined
           }
           onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
         />
       </div>
     </Card>

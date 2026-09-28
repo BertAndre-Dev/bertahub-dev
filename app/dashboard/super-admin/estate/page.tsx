@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import {
   Building2,
   Users,
@@ -75,6 +76,7 @@ export default function EstatePage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -84,7 +86,7 @@ export default function EstatePage() {
       return dispatch(
         getAllEstates({
           page,
-          limit: PAGE_SIZE,
+          limit: pageSize,
           search: search.trim() || undefined,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
@@ -96,7 +98,7 @@ export default function EstatePage() {
           return result;
         });
     },
-    [dispatch, startDate, endDate, searchQuery],
+    [dispatch, pageSize, startDate, endDate, searchQuery],
   );
 
   useEffect(() => {
@@ -293,16 +295,18 @@ export default function EstatePage() {
       render: (item: EstateTableRow) => (
         <div className="flex items-center gap-1">
           <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              title="Actions"
-              className="cursor-pointer"
-            >
-              <MoreVertical className="w-4 h-4" />
-            </Button>
-          </DropdownMenu.Trigger>
+          <IconTooltip label="Actions">
+            <DropdownMenu.Trigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Actions"
+                className="cursor-pointer"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenu.Trigger>
+          </IconTooltip>
           <DropdownMenu.Portal>
             <DropdownMenu.Content
               align="end"
@@ -474,13 +478,17 @@ export default function EstatePage() {
           paginationInfo={{
             total: pagination?.total || 0,
             current: currentPage,
-            pageSize: PAGE_SIZE,
+            pageSize,
           }}
           onPageChange={(page) => {
             fetchEstates(page).catch((err: unknown) => {
               const message = getApiErrorMessage(err);
               if (message) toast.error(message);
             });
+          }}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
           }}
           enableExport
           exportFileName="estates"

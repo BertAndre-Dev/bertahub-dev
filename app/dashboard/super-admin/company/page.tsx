@@ -8,6 +8,7 @@ import { Plus, Edit, Trash2, Power, PowerOff, Search, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Table from "@/components/tables/list/page";
@@ -66,6 +67,7 @@ export default function SuperAdminCompanyPage() {
   const [deleting, setDeleting] = useState(false);
 
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -81,15 +83,13 @@ export default function SuperAdminCompanyPage() {
     plan: DEFAULT_PLAN,
   });
 
-  const effectivePageSize = Number(pagination?.pageSize) || PAGE_SIZE;
-
   const fetchList = useCallback(
-    (targetPage: number) => {
+    (targetPage: number, limit = pageSize) => {
       const shouldApplyDate = Boolean(startDate && endDate);
       return dispatch(
         getCompanies({
           page: targetPage,
-          limit: effectivePageSize,
+          limit,
           search: searchQuery.trim() || undefined,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
@@ -101,7 +101,7 @@ export default function SuperAdminCompanyPage() {
           if (message) toast.error(message);
         });
     },
-    [dispatch, effectivePageSize, searchQuery, startDate, endDate],
+    [dispatch, pageSize, searchQuery, startDate, endDate],
   );
 
   useEffect(() => {
@@ -303,60 +303,70 @@ export default function SuperAdminCompanyPage() {
         exportable: false,
         render: (item: CompanyItem) => (
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const id = companyId(item);
-                if (id) router.push(`/dashboard/super-admin/company/${id}`);
-              }}
-              title="View company details"
-              className="text-[#0150AC] hover:text-[#01408A] cursor-pointer"
-              disabled={!companyId(item)}
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => openEdit(item)}
-              title="Edit Company"
-              className="text-blue-600 hover:text-blue-700 cursor-pointer"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+            <IconTooltip label="View company details">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const id = companyId(item);
+                  if (id) router.push(`/dashboard/super-admin/company/${id}`);
+                }}
+                aria-label="View company details"
+                className="text-[#0150AC] hover:text-[#01408A] cursor-pointer"
+                disabled={!companyId(item)}
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
+            <IconTooltip label="Edit Company">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => openEdit(item)}
+                aria-label="Edit Company"
+                className="text-blue-600 hover:text-blue-700 cursor-pointer"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
 
             {item.isActive ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => openSuspendModal(item)}
-                title="Suspend Company"
-                className="text-red-600 hover:text-red-700 cursor-pointer"
-              >
-                <PowerOff className="w-4 h-4" />
-              </Button>
+              <IconTooltip label="Suspend Company">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openSuspendModal(item)}
+                  aria-label="Suspend Company"
+                  className="text-red-600 hover:text-red-700 cursor-pointer"
+                >
+                  <PowerOff className="w-4 h-4" />
+                </Button>
+              </IconTooltip>
             ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => openActivateModal(item)}
-                title="Activate Company"
-                className="text-green-600 hover:text-green-700 cursor-pointer"
-              >
-                <Power className="w-4 h-4" />
-              </Button>
+              <IconTooltip label="Activate Company">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openActivateModal(item)}
+                  aria-label="Activate Company"
+                  className="text-green-600 hover:text-green-700 cursor-pointer"
+                >
+                  <Power className="w-4 h-4" />
+                </Button>
+              </IconTooltip>
             )}
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDelete(item)}
-              title="Delete Company"
-              className="text-red-600 hover:text-red-700 cursor-pointer"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <IconTooltip label="Delete Company">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(item)}
+                aria-label="Delete Company"
+                className="text-red-600 hover:text-red-700 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
           </div>
         ),
       },
@@ -443,11 +453,16 @@ export default function SuperAdminCompanyPage() {
             paginationInfo={{
               total: pagination?.total ?? 0,
               current: pagination?.currentPage ?? page,
-              pageSize: pagination?.pageSize ?? effectivePageSize,
+              pageSize,
             }}
             onPageChange={(p) => {
               setPage(p);
               fetchList(p);
+            }}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+              fetchList(1, size);
             }}
             enableExport
             exportFileName="companies"

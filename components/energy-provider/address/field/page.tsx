@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import {
@@ -21,7 +22,6 @@ import Modal from "@/components/modal/page";
 import EnergyProviderFieldForm from "../forms/field-form/page";
 import { formatAddressRecordCreatedAt } from "@/lib/address";
 import { isBusy, isPending } from "@/lib/async-status";
-import type { Pagination } from "@/redux/slice/energy-provider/address-mgt/fields/energy-provider-fields-slice";
 
 interface FieldData {
   estateId: string;
@@ -33,13 +33,6 @@ interface FieldData {
   id?: string;
 }
 
-const DEFAULT_PAGINATION: Pagination = {
-  total: 0,
-  currentPage: 1,
-  totalPages: 1,
-  pageSize: 10,
-};
-
 export default function EnergyProviderAddressField() {
   const dispatch = useDispatch<AppDispatch>();
   const [estateId, setEstateId] = useState<string | null>(null);
@@ -48,13 +41,14 @@ export default function EnergyProviderAddressField() {
   const [selectedField, setSelectedField] = useState<FieldData | null>(null);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; name?: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { allField, pagination, listStatus, mutationBusy } = useSelector(
+  const { allField, listStatus, mutationBusy } = useSelector(
     (state: RootState) => {
       const fieldState = state.energyProviderField;
       return {
         allField: fieldState.allField,
-        pagination: fieldState.allField?.pagination ?? DEFAULT_PAGINATION,
         listStatus: fieldState.getFieldByEstateState as string | undefined,
         mutationBusy:
           isBusy(fieldState.createFieldState) ||
@@ -161,6 +155,10 @@ export default function EnergyProviderAddressField() {
       createdAt: f.createdAt,
       updatedAt: f.updatedAt,
     })) || [];
+  const pagedFields = mappedFields.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   const columns = [
     {
@@ -189,22 +187,28 @@ export default function EnergyProviderAddressField() {
       header: "Actions",
       render: (item: FieldData) => (
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleOpenModal(item)}
-           className="text-blue-600 hover:text-blue-700"
-           >
-            <Edit2 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDeleteField(item.id, item.label)}
-           className="text-red-600 hover:text-red-700"
-           >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          <IconTooltip label="Edit">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleOpenModal(item)}
+             className="text-blue-600 hover:text-blue-700"
+             aria-label="Edit"
+             >
+              <Edit2 className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
+          <IconTooltip label="Delete">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDeleteField(item.id, item.label)}
+             className="text-red-600 hover:text-red-700"
+             aria-label="Delete"
+             >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
         </div>
       ),
     },
@@ -231,19 +235,18 @@ export default function EnergyProviderAddressField() {
       <Card className="p-4">
         <Table
           columns={columns}
-          data={mappedFields}
+          data={pagedFields}
           emptyMessage={loading ? "Loading fields..." : "No fields found."}
           showPagination
           paginationInfo={{
-            total: pagination?.total || 0,
-            current: Number(pagination?.currentPage) || 1,
-            pageSize: Number(pagination?.pageSize) || 10,
+            total: mappedFields.length,
+            current: currentPage,
+            pageSize,
           }}
-          onPageChange={() => {
-            if (!estateId) return;
-            dispatch(getEnergyProviderFieldByEstate(estateId))
-              .unwrap()
-              .catch(() => toast.error("Failed to change page"));
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
           }}
           enableExport
           exportFileName="energy-provider-address-fields"

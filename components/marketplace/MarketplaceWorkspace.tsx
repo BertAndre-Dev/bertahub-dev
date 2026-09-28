@@ -132,6 +132,7 @@ export function MarketplaceWorkspace() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<MarketplaceAd | null>(null);
   const [detail, setDetail] = useState<MarketplaceAd | null>(null);
@@ -158,22 +159,22 @@ export function MarketplaceWorkspace() {
       dispatch(
         getMarketplaceFeed({
           page,
-          limit: PAGE_SIZE,
+          limit: pageSize,
           category: category === "All" ? undefined : category,
         }),
       ).catch(notifyError);
       return;
     }
     if (tab === "mine") {
-      dispatch(getMyMarketplaceAds({ page, limit: PAGE_SIZE })).catch(
+      dispatch(getMyMarketplaceAds({ page, limit: pageSize })).catch(
         notifyError,
       );
       return;
     }
-    dispatch(getPendingMarketplaceAds({ page, limit: PAGE_SIZE })).catch(
+    dispatch(getPendingMarketplaceAds({ page, limit: pageSize })).catch(
       notifyError,
     );
-  }, [category, dispatch, page, tab]);
+  }, [category, dispatch, page, pageSize, tab]);
 
   const { source, pagination, status: listStatus } = pickTabState(tab, {
     feed,
@@ -421,9 +422,13 @@ export function MarketplaceWorkspace() {
           paginationInfo={{
             total: pagination?.total ?? listings.length,
             current: pagination?.page ?? page,
-            pageSize: pagination?.limit ?? PAGE_SIZE,
+            pageSize,
           }}
           onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
           disabled={pageLoading}
           itemLabel="listings"
         />

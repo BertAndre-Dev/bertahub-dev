@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import DeleteModal from "@/components/resident/delete-modal/page";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { labelToReportingFieldKey } from "@/lib/operations-reporting-field-key";
@@ -46,6 +47,9 @@ export default function OperationsReportingTypesTab({
 }: Readonly<Props>) {
   const dispatch = useDispatch<AppDispatch>();
   const [typesPage, setTypesPage] = useState(1);
+  const [typesPageSize, setTypesPageSize] = useState(
+    OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+  );
   const [expandedTypeId, setExpandedTypeId] = useState("");
   const [fieldsByType, setFieldsByType] = useState<
     Record<string, OperationsReportingField[]>
@@ -81,11 +85,11 @@ export default function OperationsReportingTypesTab({
         getOperationsReportingTypes({
           estateId,
           page,
-          limit: OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+          limit: typesPageSize,
         }),
       ).unwrap();
     },
-    [dispatch, estateId, typesPage],
+    [dispatch, estateId, typesPage, typesPageSize],
   );
 
   useEffect(() => {
@@ -196,7 +200,7 @@ export default function OperationsReportingTypesTab({
 
   const typesPaginationInfo = toPaginationInfo(typesPagination, {
     page: typesPage,
-    pageSize: OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+    pageSize: typesPageSize,
     total: types.length,
   });
 
@@ -259,27 +263,33 @@ export default function OperationsReportingTypesTab({
                           ) : null}
                         </div>
                         <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-[#0150AC] hover:text-[#01408A] h-8 w-8"
-                            onClick={() => {
-                              setConfigureTypeId(typeId);
-                              setEditingField(field);
-                              setFieldModalOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive h-8 w-8"
-                            disabled={deleteFieldStatus === "isLoading"}
-                            onClick={() => setFieldToDelete(field)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <IconTooltip label="Edit">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-[#0150AC] hover:text-[#01408A] h-8 w-8"
+                              onClick={() => {
+                                setConfigureTypeId(typeId);
+                                setEditingField(field);
+                                setFieldModalOpen(true);
+                              }}
+                              aria-label="Edit"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </IconTooltip>
+                          <IconTooltip label="Delete">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive h-8 w-8"
+                              disabled={deleteFieldStatus === "isLoading"}
+                              onClick={() => setFieldToDelete(field)}
+                              aria-label="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </IconTooltip>
                         </div>
                       </div>
                     ))}
@@ -295,6 +305,10 @@ export default function OperationsReportingTypesTab({
         <Pagination
           paginationInfo={typesPaginationInfo}
           onPageChange={handleTypesPageChange}
+          onPageSizeChange={(size) => {
+            setTypesPageSize(size);
+            setTypesPage(1);
+          }}
           disabled={typesLoading}
           itemLabel="report types"
         />

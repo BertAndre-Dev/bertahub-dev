@@ -104,6 +104,7 @@ export function SuperAdminCompanyDetailView({
   const [credits, setCredits] = useState<SuperAdminWalletCreditRow[]>([]);
   const [creditsLoading, setCreditsLoading] = useState(false);
   const [creditsPage, setCreditsPage] = useState(1);
+  const [creditsPageSize, setCreditsPageSize] = useState(10);
   const [creditsPagination, setCreditsPagination] = useState<{
     total: number;
     page: number;
@@ -114,6 +115,7 @@ export function SuperAdminCompanyDetailView({
   const [users, setUsers] = useState<CompanyUserRow[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersPage, setUsersPage] = useState(1);
+  const [usersPageSize, setUsersPageSize] = useState(10);
   const [usersRoleFilter, setUsersRoleFilter] =
     useState<EstateUserRoleFilter>(DEFAULT_ESTATE_USER_ROLE);
   const [usersPagination, setUsersPagination] = useState<{
@@ -141,7 +143,7 @@ export function SuperAdminCompanyDetailView({
   }, [dispatch, companyId]);
 
   const fetchWalletData = useCallback(
-    async (page = 1) => {
+    async (page = 1, limit = creditsPageSize) => {
       if (!companyId) return;
       setWalletLoading(page === 1);
       setCreditsLoading(true);
@@ -150,7 +152,7 @@ export function SuperAdminCompanyDetailView({
         const [walletRes, creditsRes] = await Promise.all([
           dispatch(getCompanyWallet(companyId)).unwrap(),
           dispatch(
-            getCompanyCredits({ companyId, page, limit: 10 }),
+            getCompanyCredits({ companyId, page, limit }),
           ).unwrap(),
         ]);
 
@@ -199,11 +201,15 @@ export function SuperAdminCompanyDetailView({
         setCreditsLoading(false);
       }
     },
-    [dispatch, companyId],
+    [dispatch, companyId, creditsPageSize],
   );
 
   const fetchUsers = useCallback(
-    async (page = 1, role: EstateUserRoleFilter = usersRoleFilter) => {
+    async (
+      page = 1,
+      role: EstateUserRoleFilter = usersRoleFilter,
+      limit = usersPageSize,
+    ) => {
       if (!companyId) return;
       setUsersLoading(true);
       try {
@@ -211,7 +217,7 @@ export function SuperAdminCompanyDetailView({
           getAllUsersByCompany({
             companyId,
             page,
-            limit: 10,
+            limit,
             role,
           }),
         ).unwrap();
@@ -238,7 +244,7 @@ export function SuperAdminCompanyDetailView({
         setUsersLoading(false);
       }
     },
-    [dispatch, companyId, usersRoleFilter],
+    [dispatch, companyId, usersRoleFilter, usersPageSize],
   );
 
   useEffect(() => {
@@ -428,8 +434,12 @@ export function SuperAdminCompanyDetailView({
               walletError={walletError}
               creditsLoading={creditsLoading}
               creditsPagination={creditsPagination}
+              creditsPageSize={creditsPageSize}
               onCreditsPageChange={(page) => {
                 fetchWalletData(page).catch(() => {});
+              }}
+              onCreditsPageSizeChange={(size) => {
+                setCreditsPageSize(size);
               }}
             />
           </Card>
@@ -492,12 +502,15 @@ export function SuperAdminCompanyDetailView({
                       ? {
                           total: usersPagination.total,
                           current: usersPage,
-                          pageSize: usersPagination.limit,
+                          pageSize: usersPageSize,
                         }
                       : undefined
                   }
                   onPageChange={(page) => {
                     fetchUsers(page, usersRoleFilter).catch(() => {});
+                  }}
+                  onPageSizeChange={(size) => {
+                    setUsersPageSize(size);
                   }}
                 />
               )}

@@ -60,6 +60,7 @@ export default function AdminAnnouncementsPage() {
   const [viewingItem, setViewingItem] = useState<AnnouncementItem | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
 
   const { list, pagination, stats, getStatus, getStatsStatus, createStatus, updateStatus, deleteStatus } =
     useSelector((state: RootState) => {
@@ -119,7 +120,7 @@ export default function AdminAnnouncementsPage() {
   const fetchAnnouncements = (targetPage = page) => {
     if (!estateId) return;
     dispatch(
-      getAnnouncements({ estateId, page: targetPage, limit: PAGE_SIZE }),
+      getAnnouncements({ estateId, page: targetPage, limit: pageSize }),
     )
       .unwrap()
       .catch((err: unknown) => {
@@ -131,7 +132,7 @@ export default function AdminAnnouncementsPage() {
   useEffect(() => {
     if (!estateId || bootstrapping) return;
     fetchAnnouncements(page);
-  }, [estateId, page, bootstrapping]);
+  }, [estateId, page, pageSize, bootstrapping]);
 
   const announcements = list ?? [];
   const listLoading = Boolean(estateId) && isPending(getStatus);
@@ -146,7 +147,7 @@ export default function AdminAnnouncementsPage() {
   const paginationInfo = {
     total: pagination?.total ?? announcements.length,
     current: pagination?.page ?? page,
-    pageSize: pagination?.limit ?? PAGE_SIZE,
+    pageSize,
   };
 
   const handlePageChange = (nextPage: number) => {
@@ -263,6 +264,10 @@ export default function AdminAnnouncementsPage() {
         <Pagination
           paginationInfo={paginationInfo}
           onPageChange={handlePageChange}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
           disabled={listLoading}
           itemLabel="announcements"
         />

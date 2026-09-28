@@ -18,6 +18,7 @@ import { validateFile } from "@/lib/uploads/validate";
 import { selectAuthToken } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 import type { RootState } from "@/redux/store";
 import { cn } from "@/lib/utils";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 const PRESS = MARKETPLACE_PRESS;
 
@@ -113,17 +114,19 @@ function MediaTile({
           {item.kind === "video" ? "Video" : "Photo"}
         </span>
       )}
-      <Button
-        type="button"
-        size="icon"
-        variant="secondary"
-        className={cn("absolute top-2 right-2 size-8 rounded-full", PRESS)}
-        onClick={onRemove}
-        disabled={disabled || uploading}
-        aria-label={`Remove ${item.name}`}
-      >
-        <Trash2 className="size-3.5" />
-      </Button>
+      <IconTooltip label={`Remove ${item.name}`}>
+        <Button
+          type="button"
+          size="icon"
+          variant="secondary"
+          className={cn("absolute top-2 right-2 size-8 rounded-full", PRESS)}
+          onClick={onRemove}
+          disabled={disabled || uploading}
+          aria-label={`Remove ${item.name}`}
+        >
+          <Trash2 className="size-3.5" />
+        </Button>
+      </IconTooltip>
     </div>
   );
 }

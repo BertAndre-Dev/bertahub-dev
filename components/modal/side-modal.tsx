@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 type Props = {
   visible: boolean;
@@ -55,15 +56,16 @@ export default function SideModal({
             exit={{ x: 40, y: 20, opacity: 0 }}
             transition={{ type: "spring", stiffness: 140, damping: 18 }}
           >
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-3 right-3 bg-white/90 hover:bg-white border border-black/10 p-1.5 rounded-full transition-colors"
-              aria-label="Close modal"
-              title="Close"
-            >
-              <X className="w-5 h-5 text-gray-700" />
-            </button>
+            <IconTooltip label="Close">
+              <button
+                type="button"
+                onClick={onClose}
+                className="absolute top-3 right-3 bg-white/90 hover:bg-white border border-black/10 p-1.5 rounded-full transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-gray-700" />
+              </button>
+            </IconTooltip>
 
             <div className="w-full min-w-0 wrap-break-word overflow-auto">
               {children}

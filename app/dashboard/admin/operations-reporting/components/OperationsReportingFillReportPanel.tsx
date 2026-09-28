@@ -74,6 +74,12 @@ export default function OperationsReportingFillReportPanel({
     Record<string, boolean>
   >({});
   const [typesPage, setTypesPage] = useState(1);
+  const [typesPageSize, setTypesPageSize] = useState(
+    OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+  );
+  const [entriesPageSize, setEntriesPageSize] = useState(
+    OPERATIONS_REPORT_ENTRIES_PAGE_SIZE,
+  );
   const [entriesByField, setEntriesByField] = useState<Record<string, ReportEntry[]>>(
     {},
   );
@@ -121,16 +127,16 @@ export default function OperationsReportingFillReportPanel({
           ? getOperationsReportingTypes({
               estateId,
               page,
-              limit: OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+              limit: typesPageSize,
             })
           : fetchCompanyOperationsReportingTypes({
               estateId,
               page,
-              limit: OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+              limit: typesPageSize,
             });
       await dispatch(action).unwrap();
     },
-    [dispatch, estateId, variant, typesPage],
+    [dispatch, estateId, variant, typesPage, typesPageSize],
   );
 
   useEffect(() => {
@@ -158,7 +164,7 @@ export default function OperationsReportingFillReportPanel({
   }, [companyError, dispatch, variant]);
 
   const loadEntriesForField = useCallback(
-    async (fieldId: string, page = 1) => {
+    async (fieldId: string, page = 1, limit = entriesPageSize) => {
       if (!fieldId) return;
       setEntriesLoadingByField((prev) => ({ ...prev, [fieldId]: true }));
       try {
@@ -167,12 +173,12 @@ export default function OperationsReportingFillReportPanel({
             ? getOperationsReportingEntries({
                 fieldId,
                 page,
-                limit: OPERATIONS_REPORT_ENTRIES_PAGE_SIZE,
+                limit,
               })
             : fetchCompanyOperationsReportingEntries({
                 fieldId,
                 page,
-                limit: OPERATIONS_REPORT_ENTRIES_PAGE_SIZE,
+                limit,
               });
         const res = await dispatch(action).unwrap();
         setEntriesByField((prev) => ({ ...prev, [fieldId]: res?.data ?? [] }));
@@ -189,7 +195,7 @@ export default function OperationsReportingFillReportPanel({
         setEntriesLoadingByField((prev) => ({ ...prev, [fieldId]: false }));
       }
     },
-    [dispatch, variant],
+    [dispatch, entriesPageSize, variant],
   );
 
   const loadFieldsAndEntriesForType = useCallback(
@@ -296,7 +302,7 @@ export default function OperationsReportingFillReportPanel({
 
   const typesPaginationInfo = toPaginationInfo(typesPagination, {
     page: typesPage,
-    pageSize: OPERATIONS_REPORT_TYPES_PAGE_SIZE,
+    pageSize: typesPageSize,
     total: types.length,
   });
 
@@ -398,6 +404,11 @@ export default function OperationsReportingFillReportPanel({
                   entriesLoadingByField={entriesLoadingByField}
                   entriesPaginationByField={entriesPaginationByField}
                   onEntriesPageChange={handleEntriesPageChange}
+                  entriesPageSize={entriesPageSize}
+                  onEntriesPageSizeChange={(fieldId, size) => {
+                    setEntriesPageSize(size);
+                    void loadEntriesForField(fieldId, 1, size);
+                  }}
                   deleteEntryLoading={deleteEntryStatus === "isLoading"}
                   onEditEntry={
                     readOnly
@@ -431,6 +442,10 @@ export default function OperationsReportingFillReportPanel({
         <Pagination
           paginationInfo={typesPaginationInfo}
           onPageChange={handleTypesPageChange}
+          onPageSizeChange={(size) => {
+            setTypesPageSize(size);
+            setTypesPage(1);
+          }}
           disabled={typesLoading}
           itemLabel="report types"
         />

@@ -18,6 +18,7 @@ import {
   clearStaffMaintenanceSelectedComplaint,
   setStaffMaintenanceCategoryFilter,
   setStaffMaintenancePage,
+  setStaffMaintenancePageSize,
   setStaffMaintenanceSearch,
   setStaffMaintenanceSelectedComplaintId,
   setStaffMaintenanceStatusFilter,
@@ -298,6 +299,9 @@ export default function StaffMaintenancePage() {
             }}
             onPageChange={(nextPage) =>
               dispatch(setStaffMaintenancePage(nextPage))
+            }
+            onPageSizeChange={(size) =>
+              dispatch(setStaffMaintenancePageSize(size))
             }
           />
         </Card>

@@ -7,6 +7,7 @@ import Table from "@/components/tables/list/page";
 import { Trash2 } from "lucide-react";
 import type { ResidentOccupantData } from "./types";
 import { CopyButton } from "@/components/ui/copy-button";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 export function OccupantsTableCard({
   occupants,
@@ -59,18 +60,20 @@ export function OccupantsTableCard({
         exportable: false,
         render: (item: ResidentOccupantData) => (
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive hover:text-destructive cursor-pointer hover:bg-destructive/10"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(item);
-              }}
-              title="Delete occupant"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <IconTooltip label="Delete occupant">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:text-destructive cursor-pointer hover:bg-destructive/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(item);
+                }}
+                aria-label="Delete occupant"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
           </div>
         ),
       },

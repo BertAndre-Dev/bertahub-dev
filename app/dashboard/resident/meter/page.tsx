@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Eye } from "lucide-react";
 import { MeterRealtimeBalanceCard } from "@/components/charts/meter-realtime-balance-card";
 import { EnergyConsumptionOverTimeCard } from "@/components/charts/energy-consumption-over-time-card";
@@ -74,6 +75,7 @@ export default function ResidentMeter() {
   const [payerEmail, setPayerEmail] = useState("");
   const [viewVend, setViewVend] = useState<EnergyListItem | null>(null);
   const [usageRange, setUsageRange] = useState<MeterUsageRange>("weekly");
+  const [pageSize, setPageSize] = useState(10);
   const [energyPeriod, setEnergyPeriod] =
     useState<EnergyConsumptionPeriod>("weekly");
   const [realtimeBalanceRefreshing, setRealtimeBalanceRefreshing] =
@@ -204,11 +206,11 @@ export default function ResidentMeter() {
         getMeterVendHistory({
           meterNumber: meter.meterNumber,
           page: 1,
-          limit: 10,
+          limit: pageSize,
         }),
       );
     }
-  }, [meter?.meterNumber, dispatch]);
+  }, [meter?.meterNumber, dispatch, pageSize]);
 
   useEffect(() => {
     const meterNumber = meter?.meterNumber;
@@ -291,7 +293,7 @@ export default function ResidentMeter() {
             getMeterVendHistory({
               meterNumber: meter.meterNumber,
               page: 1,
-              limit: Number(pagination?.limit) || 10,
+              limit: pageSize,
             }),
           ).unwrap(),
           dispatch(
@@ -353,7 +355,7 @@ export default function ResidentMeter() {
       getMeterVendHistory({
         meterNumber: meter.meterNumber,
         page: newPage,
-        limit: Number(pagination?.limit) || 10,
+        limit: pageSize,
       }),
     );
   };
@@ -419,17 +421,18 @@ export default function ResidentMeter() {
       header: "Actions",
       exportable: false as const,
       render: (row: EnergyListItem) => (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => setViewVend(row)}
-          title="View receipt"
-          aria-label="View receipt"
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
+        <IconTooltip label="View receipt">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setViewVend(row)}
+            aria-label="View receipt"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </IconTooltip>
       ),
     },
   ];
@@ -577,9 +580,20 @@ export default function ResidentMeter() {
                     paginationInfo={{
                       total: pagination?.total ?? meterVendHistory.length ?? 0,
                       current: Number(pagination?.page) || 1,
-                      pageSize: Number(pagination?.limit) || 10,
+                      pageSize,
                     }}
                     onPageChange={handleVendPageChange}
+                    onPageSizeChange={(size) => {
+                      setPageSize(size);
+                      if (!meter?.meterNumber) return;
+                      dispatch(
+                        getMeterVendHistory({
+                          meterNumber: meter.meterNumber,
+                          page: 1,
+                          limit: size,
+                        }),
+                      );
+                    }}
                     enableExport
                     exportFileName="meter-vend-history"
                     onExportRequest={

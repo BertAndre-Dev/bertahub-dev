@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/iso-date-picker";
 import { Download } from "lucide-react";
 import { getDateRangePlaceholders } from "@/lib/date-range-placeholders";
+import Pagination from "@/components/ui/pagination";
 
 interface Column<T> {
   key: keyof T | string;
@@ -34,6 +35,7 @@ interface TableProps<T> {
   showPagination?: boolean;
   paginationInfo?: PaginationInfo;
   onPageChange?: (newPage: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   enableSearch?: boolean;
   onSearch?: (value: string) => void;
   /** Show built-in date range filter inputs (YYYY-MM-DD). */
@@ -77,6 +79,7 @@ export default function Table<T extends { id?: string }>({
   showPagination = false,
   paginationInfo,
   onPageChange,
+  onPageSizeChange,
   enableSearch = false,
   onSearch,
   enableDateRangeFilter = false,
@@ -134,28 +137,6 @@ export default function Table<T extends { id?: string }>({
     }
   }, [data, onExportRequest, exportableColumns, exportFileName]);
 
-  const totalPages = paginationInfo
-    ? Math.ceil(paginationInfo.total / paginationInfo.pageSize)
-    : 1;
-  const MAX_VISIBLE_PAGES = 4;
-  const visiblePages = React.useMemo(() => {
-    if (!paginationInfo) return [];
-    if (totalPages <= 1) return [1];
-    if (totalPages <= MAX_VISIBLE_PAGES) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-
-    const halfWindow = Math.floor(MAX_VISIBLE_PAGES / 2); // 2 when MAX_VISIBLE_PAGES=4
-    let start = Math.max(1, paginationInfo.current - halfWindow);
-    let end = start + MAX_VISIBLE_PAGES - 1;
-
-    if (end > totalPages) {
-      end = totalPages;
-      start = Math.max(1, end - MAX_VISIBLE_PAGES + 1);
-    }
-
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }, [paginationInfo, totalPages]);
   const [searchValue, setSearchValue] = React.useState("");
   const isStartControlled = startDate !== undefined;
   const isEndControlled = endDate !== undefined;
@@ -365,57 +346,13 @@ export default function Table<T extends { id?: string }>({
       </div>
 
       {showPagination && paginationInfo && (
-        <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-t border-border bg-muted/30 gap-2 md:gap-0">
-          <p className="text-sm text-muted-foreground">
-            Showing {(paginationInfo.current - 1) * paginationInfo.pageSize + 1}{" "}
-            -{" "}
-            {Math.min(
-              paginationInfo.current * paginationInfo.pageSize,
-              paginationInfo.total,
-            )}{" "}
-            of {paginationInfo.total} records
-          </p>
-
-          <div className="flex gap-2">
-            {/* Previous Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                onPageChange &&
-                onPageChange(Math.max(1, paginationInfo.current - 1))
-              }
-              disabled={paginationInfo.current <= 1}
-            >
-              Previous
-            </Button>
-
-            {/* Page Numbers */}
-            {visiblePages.map((pageNum) => (
-              <Button
-                key={pageNum}
-                variant={pageNum === paginationInfo.current ? "default" : "outline"}
-                size="sm"
-                onClick={() => onPageChange && onPageChange(pageNum)}
-              >
-                {pageNum}
-              </Button>
-            ))}
-
-            {/* Next Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                onPageChange &&
-                onPageChange(Math.min(totalPages, paginationInfo.current + 1))
-              }
-              disabled={paginationInfo.current >= totalPages}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+        <Pagination
+          paginationInfo={paginationInfo}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          itemLabel="entries"
+          className="rounded-none border-0 border-t px-6 py-4"
+        />
       )}
     </div>
   );

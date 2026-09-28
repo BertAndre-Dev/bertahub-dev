@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import Modal from "@/components/modal/page";
 import Table from "@/components/tables/list/page";
 import { toast } from "react-toastify";
@@ -87,6 +88,7 @@ export default function StaffMeterManagement() {
   );
   const [searchInput, setSearchInput] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
+  const [pageSize, setPageSize] = useState(PAGE_LIMIT);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [usageRange, setUsageRange] = useState<EstateEnergyUsageRange>("weekly");
   const [usageRefreshing, setUsageRefreshing] = useState(false);
@@ -172,18 +174,18 @@ export default function StaffMeterManagement() {
   }));
 
   const fetchMeters = useCallback(
-    async (page = 1, searchTerm = appliedSearch) => {
+    async (page = 1, searchTerm = appliedSearch, limit = pageSize) => {
       if (!estateId) return;
       await dispatch(
         getAllEstateMeter({
           estateId,
           page,
-          limit: PAGE_LIMIT,
+          limit,
           search: searchTerm || undefined,
         }),
       ).unwrap();
     },
-    [dispatch, estateId, appliedSearch],
+    [dispatch, estateId, appliedSearch, pageSize],
   );
 
   const handleSearchSubmit = () => {
@@ -203,7 +205,7 @@ export default function StaffMeterManagement() {
       getAllEstateMeter({
         estateId,
         page: 1,
-        limit: PAGE_LIMIT,
+        limit: pageSize,
       }),
     )
       .unwrap()
@@ -261,7 +263,7 @@ export default function StaffMeterManagement() {
       getAllEstateMeter({
         estateId,
         page: 1,
-        limit: PAGE_LIMIT,
+        limit: pageSize,
       }),
     )
       .unwrap()
@@ -513,25 +515,29 @@ export default function StaffMeterManagement() {
       exportable: false,
       render: (item: AdminMeterData) =>
         item.isAssigned ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => openUnassignConfirm(item)}
-            className="text-amber-600 hover:text-amber-700 hover:bg-amber-100"
-            title="Unassign meter"
-          >
-            <Unlink className="w-4 h-4" />
-          </Button>
+          <IconTooltip label="Unassign meter">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openUnassignConfirm(item)}
+              className="text-amber-600 hover:text-amber-700 hover:bg-amber-100"
+              aria-label="Unassign meter"
+            >
+              <Unlink className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
         ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleOpenModal(item)}
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-100"
-            title="Assign meter"
-          >
-            <Link className="w-4 h-4" />
-          </Button>
+          <IconTooltip label="Assign meter">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleOpenModal(item)}
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+              aria-label="Assign meter"
+            >
+              <Link className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
         ),
     },
     {
@@ -539,15 +545,17 @@ export default function StaffMeterManagement() {
       header: "Energy Usage",
       exportable: false,
       render: (item: AdminMeterData) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleOpenUsageModal(item)}
-          className="text-emerald-600 hover:text-emerald-700 cursor-pointer hover:bg-emerald-100"
-          title="View energy usage"
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
+        <IconTooltip label="View energy usage">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleOpenUsageModal(item)}
+            className="text-emerald-600 hover:text-emerald-700 cursor-pointer hover:bg-emerald-100"
+            aria-label="View energy usage"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        </IconTooltip>
       ),
     },
     {
@@ -555,16 +563,18 @@ export default function StaffMeterManagement() {
       header: "Clear Tamper",
       exportable: false,
       render: (item: AdminMeterData) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleClearTamper(item)}
-          className="text-orange-600 hover:text-orange-700 cursor-pointer hover:bg-orange-100"
-          title="Generate clear-tamper token"
-          disabled={clearTamperLoadingMeter === item.meterNumber}
-        >
-          <KeyRound className="w-4 h-4" />
-        </Button>
+        <IconTooltip label="Generate clear-tamper token">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleClearTamper(item)}
+            className="text-orange-600 hover:text-orange-700 cursor-pointer hover:bg-orange-100"
+            aria-label="Generate clear-tamper token"
+            disabled={clearTamperLoadingMeter === item.meterNumber}
+          >
+            <KeyRound className="w-4 h-4" />
+          </Button>
+        </IconTooltip>
       ),
     },
   ];
@@ -739,13 +749,22 @@ export default function StaffMeterManagement() {
                       paginationInfo={{
                         total: pagination?.total || 0,
                         current: Number(pagination?.currentPage) || 1,
-                        pageSize: Number(pagination?.pageSize) || 10,
+                        pageSize,
                       }}
                       onPageChange={(page) => {
                         fetchMeters(page).catch((err: unknown) => {
                           const message = getApiErrorMessage(err);
                           if (message) toast.error(message);
                         });
+                      }}
+                      onPageSizeChange={(size) => {
+                        setPageSize(size);
+                        fetchMeters(1, appliedSearch, size).catch(
+                          (err: unknown) => {
+                            const message = getApiErrorMessage(err);
+                            if (message) toast.error(message);
+                          },
+                        );
                       }}
                       enableExport
                       exportFileName="meters"

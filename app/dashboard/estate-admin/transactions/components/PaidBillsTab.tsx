@@ -21,6 +21,7 @@ type Props = {
   onDateRangeChange: (next: { startDate: string; endDate: string }) => void;
   paginationInfo: { total: number; current: number; pageSize: number };
   onPageChange: (p: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   currentPage: number;
   totalPages: number;
   onPrev: () => void;
@@ -45,6 +46,7 @@ export function PaidBillsTab({
   onDateRangeChange,
   paginationInfo,
   onPageChange,
+  onPageSizeChange,
   currentPage,
   totalPages,
   onPrev,
@@ -77,6 +79,7 @@ export function PaidBillsTab({
           showPagination
           paginationInfo={paginationInfo}
           onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
           enableExport
           exportFileName="paid-bills"
           onExportRequest={onExportRequest}

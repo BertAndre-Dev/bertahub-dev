@@ -179,6 +179,7 @@ export function SuperAdminEstateDetailView({
   const [credits, setCredits] = useState<SuperAdminWalletCreditRow[]>([]);
   const [creditsLoading, setCreditsLoading] = useState(false);
   const [creditsPage, setCreditsPage] = useState(1);
+  const [creditsPageSize, setCreditsPageSize] = useState(10);
   const [creditsPagination, setCreditsPagination] = useState<{
     total: number;
     page: number;
@@ -189,6 +190,7 @@ export function SuperAdminEstateDetailView({
   const [users, setUsers] = useState<EstateUserRow[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersPage, setUsersPage] = useState(1);
+  const [usersPageSize, setUsersPageSize] = useState(10);
   const [usersRoleFilter, setUsersRoleFilter] =
     useState<EstateUserRoleFilter>(DEFAULT_ESTATE_USER_ROLE);
   const [usersPagination, setUsersPagination] = useState<{
@@ -225,7 +227,7 @@ export function SuperAdminEstateDetailView({
   }, [dispatch, estateId]);
 
   const fetchWalletData = useCallback(
-    async (page = 1) => {
+    async (page = 1, limit = creditsPageSize) => {
       if (!estateId) return;
       setWalletLoading(page === 1);
       setCreditsLoading(true);
@@ -234,7 +236,7 @@ export function SuperAdminEstateDetailView({
         const [walletRes, creditsRes] = await Promise.all([
           dispatch(getWallet(estateId)).unwrap(),
           dispatch(
-            getEstateCredits({ estateId, page, limit: 10 }),
+            getEstateCredits({ estateId, page, limit }),
           ).unwrap(),
         ]);
 
@@ -284,11 +286,15 @@ export function SuperAdminEstateDetailView({
         setCreditsLoading(false);
       }
     },
-    [dispatch, estateId],
+    [dispatch, estateId, creditsPageSize],
   );
 
   const fetchUsers = useCallback(
-    async (page = 1, role: EstateUserRoleFilter = usersRoleFilter) => {
+    async (
+      page = 1,
+      role: EstateUserRoleFilter = usersRoleFilter,
+      limit = usersPageSize,
+    ) => {
       if (!estateId) return;
       setUsersLoading(true);
       try {
@@ -296,7 +302,7 @@ export function SuperAdminEstateDetailView({
           getAllUsersByEstate({
             estateId,
             page,
-            limit: 10,
+            limit,
             role,
           }),
         ).unwrap();
@@ -323,7 +329,7 @@ export function SuperAdminEstateDetailView({
         setUsersLoading(false);
       }
     },
-    [dispatch, estateId, usersRoleFilter],
+    [dispatch, estateId, usersRoleFilter, usersPageSize],
   );
 
   useEffect(() => {
@@ -545,8 +551,12 @@ export function SuperAdminEstateDetailView({
               walletError={walletError}
               creditsLoading={creditsLoading}
               creditsPagination={creditsPagination}
+              creditsPageSize={creditsPageSize}
               onCreditsPageChange={(page) => {
                 fetchWalletData(page).catch(() => {});
+              }}
+              onCreditsPageSizeChange={(size) => {
+                setCreditsPageSize(size);
               }}
             />
           </Card>
@@ -609,12 +619,15 @@ export function SuperAdminEstateDetailView({
                       ? {
                           total: usersPagination.total,
                           current: usersPage,
-                          pageSize: usersPagination.limit,
+                          pageSize: usersPageSize,
                         }
                       : undefined
                   }
                   onPageChange={(page) => {
                     fetchUsers(page, usersRoleFilter).catch(() => {});
+                  }}
+                  onPageSizeChange={(size) => {
+                    setUsersPageSize(size);
                   }}
                 />
               )}

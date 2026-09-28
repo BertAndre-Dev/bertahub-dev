@@ -156,6 +156,7 @@ export type BillPaymentHistoryCardProps = Readonly<{
   historyPage: number;
   historyLimit: number;
   onHistoryPageChange: (page: number) => void;
+  onHistoryPageSizeChange?: (pageSize: number) => void;
 }>;
 
 export function BillPaymentHistoryCard({
@@ -163,6 +164,7 @@ export function BillPaymentHistoryCard({
   historyPage,
   historyLimit,
   onHistoryPageChange,
+  onHistoryPageSizeChange,
 }: BillPaymentHistoryCardProps) {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -220,6 +222,7 @@ export function BillPaymentHistoryCard({
           onPageChange={(page) => {
             onHistoryPageChange(page);
           }}
+          onPageSizeChange={onHistoryPageSizeChange}
           enableExport
           exportFileName="bill-payment-history"
           onExportRequest={async () => {

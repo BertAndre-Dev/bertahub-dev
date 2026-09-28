@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import DeleteModal from "@/components/resident/delete-modal/page";
@@ -219,9 +220,11 @@ export default function UsersPage() {
                 <Filter className="w-4 h-4 mr-2" />
                 More Filters
               </Button>
-              <Button variant="outline" size="sm">
-                <Download className="w-4 h-4" />
-              </Button>
+              <IconTooltip label="Download">
+                <Button variant="outline" size="sm" aria-label="Download">
+                  <Download className="w-4 h-4" />
+                </Button>
+              </IconTooltip>
             </div>
           </div>
         </div>
@@ -293,29 +296,38 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingUser(user.id)}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground hover:text-destructive cursor-pointer"
-                          onClick={() => handleDeleteUser(user.name)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
+                        <IconTooltip label="Edit">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingUser(user.id)}
+                            className="text-muted-foreground hover:text-foreground"
+                            aria-label="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                        </IconTooltip>
+                        <IconTooltip label="Delete">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground hover:text-destructive cursor-pointer"
+                            onClick={() => handleDeleteUser(user.name)}
+                            aria-label="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </IconTooltip>
+                        <IconTooltip label="Actions">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground"
+                            aria-label="Actions"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </IconTooltip>
                       </div>
                     </td>
                   </tr>

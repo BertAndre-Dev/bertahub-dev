@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, PlayCircle, PauseCircle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MarketplaceItem } from "@/redux/slice/super-admin/marketplace/marketplace";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 type Props = {
   readonly item: MarketplaceItem;
@@ -42,43 +43,55 @@ export function MarketplaceListingCard({
         </p>
 
         <div className="flex flex-wrap gap-2 mt-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8"
-            onClick={() => onEdit(item)}
-          >
-            <Pencil className="w-4 h-4" />
-          </Button>
+          <IconTooltip label="Edit">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8"
+              onClick={() => onEdit(item)}
+              aria-label="Edit"
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
 
           {item.status === "suspended" ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-green-600 hover:text-green-700 h-8"
-              onClick={() => onActivate(item)}
-            >
-              <PlayCircle className="w-4 h-4" />
-            </Button>
+            <IconTooltip label="Activate">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-green-600 hover:text-green-700 h-8"
+                onClick={() => onActivate(item)}
+                aria-label="Activate"
+              >
+                <PlayCircle className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
           ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-amber-600 hover:text-amber-700 h-8"
-              onClick={() => onSuspend(item)}
-            >
-              <PauseCircle className="w-4 h-4" />
-            </Button>
+            <IconTooltip label="Suspend">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-amber-600 hover:text-amber-700 h-8"
+                onClick={() => onSuspend(item)}
+                aria-label="Suspend"
+              >
+                <PauseCircle className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
           )}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive hover:text-destructive h-8"
-            onClick={() => onDelete(item)}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          <IconTooltip label="Delete">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive h-8"
+              onClick={() => onDelete(item)}
+              aria-label="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </IconTooltip>
         </div>
       </div>
     </div>

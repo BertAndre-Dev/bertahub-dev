@@ -11,6 +11,7 @@ import {
 import { coverMedia } from "@/lib/marketplace-media";
 import type { MarketplaceAd } from "@/redux/slice/marketplace/marketplace";
 import { cn } from "@/lib/utils";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 type Props = Readonly<{
   item: MarketplaceAd;
@@ -123,36 +124,47 @@ export function MarketplaceAdCard({
             </Button>
           ) : null}
           {onEdit ? (
-            <Button size="sm" variant="ghost" className={MARKETPLACE_PRESS} onClick={() => onEdit(item)}>
-              <Pencil className="size-4" />
-            </Button>
+            <IconTooltip label="Edit">
+              <Button size="sm" variant="ghost" className={MARKETPLACE_PRESS} onClick={() => onEdit(item)} aria-label="Edit">
+                <Pencil className="size-4" />
+              </Button>
+            </IconTooltip>
           ) : null}
           {status === "SUSPENDED" && onActivate ? (
-            <Button size="sm" variant="ghost" className={MARKETPLACE_PRESS} onClick={() => onActivate(item)}>
-              <PlayCircle className="size-4" />
-            </Button>
+            <IconTooltip label="Activate">
+              <Button size="sm" variant="ghost" className={MARKETPLACE_PRESS} onClick={() => onActivate(item)} aria-label="Activate">
+                <PlayCircle className="size-4" />
+              </Button>
+            </IconTooltip>
           ) : null}
           {status === "ACTIVE" && onSuspend ? (
-            <Button size="sm" variant="ghost" className={MARKETPLACE_PRESS} onClick={() => onSuspend(item)}>
-              <PauseCircle className="size-4" />
-            </Button>
+            <IconTooltip label="Suspend">
+              <Button size="sm" variant="ghost" className={MARKETPLACE_PRESS} onClick={() => onSuspend(item)} aria-label="Suspend">
+                <PauseCircle className="size-4" />
+              </Button>
+            </IconTooltip>
           ) : null}
           {onDelete ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              className={cn("text-destructive", MARKETPLACE_PRESS)}
-              onClick={() => onDelete(item)}
-            >
-              <Trash2 className="size-4" />
-            </Button>
+            <IconTooltip label="Delete">
+              <Button
+                size="sm"
+                variant="ghost"
+                className={cn("text-destructive", MARKETPLACE_PRESS)}
+                onClick={() => onDelete(item)}
+                aria-label="Delete"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </IconTooltip>
           ) : null}
           {item.link ? (
-            <Button size="sm" variant="ghost" className={cn("ml-auto", MARKETPLACE_PRESS)} asChild>
-              <a href={item.link} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-4" />
-              </a>
-            </Button>
+            <IconTooltip label="Open link">
+              <Button size="sm" variant="ghost" className={cn("ml-auto", MARKETPLACE_PRESS)} asChild>
+                <a href={item.link} target="_blank" rel="noopener noreferrer" aria-label="Open link">
+                  <ExternalLink className="size-4" />
+                </a>
+              </Button>
+            </IconTooltip>
           ) : null}
         </div>
       ) : item.link ? (

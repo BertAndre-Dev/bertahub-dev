@@ -54,6 +54,7 @@ export default function ResidentRentPage() {
   const [editRentId, setEditRentId] = useState<string | null>(null);
   const [residentType, setResidentType] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [viewRentId, setViewRentId] = useState<string | null>(null);
@@ -120,10 +121,10 @@ export default function ResidentRentPage() {
           userRes?.data?.walletId ?? userRes?.data?.wallet?.id ?? null,
         );
         if (rType === "owner") {
-          await dispatch(getOwnerRents({ page: 1, limit: PAGE_SIZE })).unwrap();
+          await dispatch(getOwnerRents({ page: 1, limit: pageSize })).unwrap();
         } else {
           await dispatch(
-            getTenantRents({ page: 1, limit: PAGE_SIZE }),
+            getTenantRents({ page: 1, limit: pageSize }),
           ).unwrap();
         }
       } catch (err: unknown) {
@@ -141,7 +142,7 @@ export default function ResidentRentPage() {
       dispatch(
         getOwnerRents({
           page: 1,
-          limit: PAGE_SIZE,
+          limit: pageSize,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
         }),
@@ -155,7 +156,7 @@ export default function ResidentRentPage() {
       dispatch(
         getTenantRents({
           page: 1,
-          limit: PAGE_SIZE,
+          limit: pageSize,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
         }),
@@ -166,7 +167,7 @@ export default function ResidentRentPage() {
           if (message) toast.error(message);
         });
     }
-  }, [dispatch, residentType, startDate, endDate]);
+  }, [dispatch, residentType, startDate, endDate, pageSize]);
 
   useEffect(() => {
     if (createModalOpen && isOwner) {
@@ -188,7 +189,7 @@ export default function ResidentRentPage() {
     dispatch(
       fetcher({
         page: newPage,
-        limit: PAGE_SIZE,
+        limit: pageSize,
         startDate: shouldApplyDate ? startDate : undefined,
         endDate: shouldApplyDate ? endDate : undefined,
       } as any),
@@ -216,7 +217,7 @@ export default function ResidentRentPage() {
     dispatch(
       fetcher({
         page: currentPage,
-        limit: PAGE_SIZE,
+        limit: pageSize,
         startDate: shouldApplyDate ? startDate : undefined,
         endDate: shouldApplyDate ? endDate : undefined,
       } as any),
@@ -537,11 +538,14 @@ export default function ResidentRentPage() {
               current:
                 (isOwner ? pagination : tenantPagination)?.currentPage ??
                 currentPage,
-              pageSize:
-                (isOwner ? pagination : tenantPagination)?.pageSize ??
-                PAGE_SIZE,
+              pageSize,
             }}
             onPageChange={handlePageChange}
+
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
             enableExport
             exportFileName="rents"
             onExportRequest={
@@ -586,7 +590,7 @@ export default function ResidentRentPage() {
             onClose={() => setCreateModalOpen(false)}
             onSuccess={() => {
               setCreateModalOpen(false);
-              dispatch(getOwnerRents({ page: currentPage, limit: PAGE_SIZE }));
+              dispatch(getOwnerRents({ page: currentPage, limit: pageSize }));
             }}
           />
         </Modal>

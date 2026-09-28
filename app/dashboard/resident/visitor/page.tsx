@@ -71,6 +71,7 @@ export default function VisitorPage() {
   );
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [pageSize, setPageSize] = useState(10);
 
   // Fetch user and visitors
   useEffect(() => {
@@ -119,7 +120,7 @@ export default function VisitorPage() {
 
         // Get visitors for this resident
         const visitorsRes = await dispatch(
-          getVisitorsByResident({ residentId: uId, page: 1, limit: 10 }),
+          getVisitorsByResident({ residentId: uId, page: 1, limit: pageSize }),
         ).unwrap();
         setVisitors(visitorsRes?.data || []);
         setPagination(visitorsRes?.pagination || {});
@@ -154,7 +155,7 @@ export default function VisitorPage() {
         getVisitorsByResident({
           residentId: userId,
           page: pagination?.page || 1,
-          limit: pagination?.limit || 10,
+          limit: pageSize,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
         }),
@@ -190,7 +191,7 @@ export default function VisitorPage() {
       getVisitorsByResident({
         residentId: userId,
         page: 1,
-        limit: pagination?.limit || 10,
+        limit: pageSize,
         startDate: shouldApplyDate ? startDate : undefined,
         endDate: shouldApplyDate ? endDate : undefined,
       }),
@@ -272,7 +273,7 @@ export default function VisitorPage() {
     }
   };
 
-  const handlePageChange = async (newPage: number) => {
+  const handlePageChange = async (newPage: number, limit = pageSize) => {
     if (!userId) return;
     try {
       const shouldApplyDate = Boolean(startDate && endDate);
@@ -280,7 +281,7 @@ export default function VisitorPage() {
         getVisitorsByResident({
           residentId: userId,
           page: newPage,
-          limit: pagination?.limit || 10,
+          limit,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
         }),
@@ -441,9 +442,13 @@ export default function VisitorPage() {
                   ? displayedVisitors.length
                   : pagination?.total || visitors.length || 0,
               current: Number(pagination?.page) || 1,
-              pageSize: Number(pagination?.limit) || 10,
+              pageSize,
             }}
             onPageChange={handlePageChange}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              void handlePageChange(1, size);
+            }}
             onExportRequest={
               userId
                 ? async () => {

@@ -10,6 +10,7 @@ type Props = {
   onDateRangeChange: (next: { startDate: string; endDate: string }) => void;
   paginationInfo: { total: number; current: number; pageSize: number };
   onPageChange: (p: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   onExportRequest?: () => Promise<any[]>;
   defaultDateRangeDays?: number;
 };
@@ -23,6 +24,7 @@ export function VendsTab({
   onDateRangeChange,
   paginationInfo,
   onPageChange,
+  onPageSizeChange,
   onExportRequest,
   defaultDateRangeDays,
 }: Readonly<Props>) {
@@ -39,6 +41,7 @@ export function VendsTab({
       showPagination
       paginationInfo={paginationInfo}
       onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
       enableExport
       exportFileName="vends"
       onExportRequest={onExportRequest}

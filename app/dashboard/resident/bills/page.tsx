@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { AlertTriangle, Eye, Info } from "lucide-react";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
@@ -220,6 +221,7 @@ export default function BillPage() {
   const [activeTab, setActiveTab] = useState<BillsTab>("estate");
   const [paidStartDate, setPaidStartDate] = useState("");
   const [paidEndDate, setPaidEndDate] = useState("");
+  const [paidPageSize, setPaidPageSize] = useState(10);
   const [userId, setUserId] = useState("");
   const [walletId, setWalletId] = useState("");
   const [estateId, setEstateId] = useState("");
@@ -321,7 +323,7 @@ export default function BillPage() {
       getResidentBills({
         residentId: userId,
         page: 1,
-        limit: 10,
+        limit: paidPageSize,
         startDate: shouldApplyDate ? paidStartDate : undefined,
         endDate: shouldApplyDate ? paidEndDate : undefined,
       }),
@@ -331,7 +333,7 @@ export default function BillPage() {
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
       });
-  }, [dispatch, userId, paidStartDate, paidEndDate]);
+  }, [dispatch, userId, paidStartDate, paidEndDate, paidPageSize]);
 
   // Assigned bills for selected address
   useEffect(() => {
@@ -378,7 +380,7 @@ export default function BillPage() {
       getResidentBills({
         residentId: userId,
         page: Number(paidPagination?.page) || 1,
-        limit: Number(paidPagination?.limit) || 10,
+        limit: paidPageSize,
         startDate: shouldApplyDate ? paidStartDate : undefined,
         endDate: shouldApplyDate ? paidEndDate : undefined,
       }),
@@ -493,17 +495,18 @@ export default function BillPage() {
       header: "Actions",
       exportable: false as const,
       render: (item: PaidBillData) => (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => setViewBill(item)}
-          title="View receipt"
-          aria-label="View receipt"
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
+        <IconTooltip label="View receipt">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setViewBill(item)}
+            aria-label="View receipt"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </IconTooltip>
       ),
     },
   ];
@@ -676,10 +679,7 @@ export default function BillPage() {
                 Number(paidPagination?.page) ||
                 Number(paidPagination?.currentPage) ||
                 1,
-              pageSize:
-                Number(paidPagination?.limit) ||
-                Number(paidPagination?.pageSize) ||
-                10,
+              pageSize: paidPageSize,
             }}
             onPageChange={(page) => {
               if (!userId) return;
@@ -688,7 +688,7 @@ export default function BillPage() {
                 getResidentBills({
                   residentId: userId,
                   page,
-                  limit: Number(paidPagination?.limit) || 10,
+                  limit: paidPageSize,
                   startDate: shouldApplyDate ? paidStartDate : undefined,
                   endDate: shouldApplyDate ? paidEndDate : undefined,
                 }),
@@ -698,6 +698,9 @@ export default function BillPage() {
                   const message = getApiErrorMessage(err);
                   if (message) toast.error(message);
                 });
+            }}
+            onPageSizeChange={(size) => {
+              setPaidPageSize(size);
             }}
             enableExport
             exportFileName="paid-bills"

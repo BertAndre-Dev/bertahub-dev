@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import Modal from "@/components/modal/page";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import type { OperationsReportingField } from "@/redux/slice/staff/operations-reporting/staff-operations-reporting";
 import { labelToReportingFieldKey } from "@/lib/operations-reporting-field-key";
@@ -117,17 +118,19 @@ export default function OperationsReportingConfigureFieldsModal({
                   <span className="text-xs font-medium text-muted-foreground">
                     Field label
                   </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive h-8 w-8 active:scale-[0.97] transition-transform duration-100 ease-out"
-                    onClick={() => removeRow(row.id)}
-                    disabled={rows.length <= 1}
-                    aria-label={`Remove field ${index + 1}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <IconTooltip label={`Remove field ${index + 1}`}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive h-8 w-8 active:scale-[0.97] transition-transform duration-100 ease-out"
+                      onClick={() => removeRow(row.id)}
+                      disabled={rows.length <= 1}
+                      aria-label={`Remove field ${index + 1}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </IconTooltip>
                 </div>
                 <Input
                   value={row.label}

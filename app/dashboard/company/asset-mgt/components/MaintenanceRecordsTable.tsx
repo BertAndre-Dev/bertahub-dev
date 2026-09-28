@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import Table from "@/components/tables/list/page";
 import { Pencil, Power, PowerOff, Trash2 } from "lucide-react";
 import DeleteModal from "@/components/resident/delete-modal/page";
@@ -63,6 +64,7 @@ export default function MaintenanceRecordsTable({
 }: Readonly<Props>) {
   const dispatch = useDispatch<AppDispatch>();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [itemToDelete, setItemToDelete] =
     useState<AssetMaintenanceRecord | null>(null);
@@ -83,12 +85,12 @@ export default function MaintenanceRecordsTable({
         getAssetMaintenanceList({
           estateId: estate,
           page: pageNum,
-          limit: PAGE_SIZE,
+          limit: pageSize,
           isActive: isActiveFilter || undefined,
         }),
       ).unwrap();
     },
-    [dispatch, isActiveFilter],
+    [dispatch, isActiveFilter, pageSize],
   );
 
   useEffect(() => {
@@ -198,63 +200,71 @@ export default function MaintenanceRecordsTable({
           const active = item.isActive !== false;
           return (
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(item);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 cursor-pointer"
-                title={active ? "Suspend" : "Activate"}
-                disabled={
-                  suspendStatus === "isLoading" || activateStatus === "isLoading"
-                }
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (!id) return;
-                  try {
-                    if (active) {
-                      await dispatch(suspendAssetMaintenance(id)).unwrap();
-                      toast.success("Record suspended.");
-                    } else {
-                      await dispatch(activateAssetMaintenance(id)).unwrap();
-                      toast.success("Record activated.");
-                    }
-                    await fetchList(estateId, page);
-                    onRecordsChange?.();
-                  } catch (err: unknown) {
-                    const message = getApiErrorMessage(err);
-                    if (message) toast.error(message);
+              <IconTooltip label="Edit">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(item);
+                  }}
+                  aria-label="Edit"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </IconTooltip>
+              <IconTooltip label={active ? "Suspend" : "Activate"}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 cursor-pointer"
+                  disabled={
+                    suspendStatus === "isLoading" || activateStatus === "isLoading"
                   }
-                }}
-              >
-                {active ? (
-                  <PowerOff className="h-4 w-4" />
-                ) : (
-                  <Power className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive h-8 cursor-pointer"
-                disabled={deleteStatus === "isLoading"}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!id) return;
-                  setItemToDelete(item);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (!id) return;
+                    try {
+                      if (active) {
+                        await dispatch(suspendAssetMaintenance(id)).unwrap();
+                        toast.success("Record suspended.");
+                      } else {
+                        await dispatch(activateAssetMaintenance(id)).unwrap();
+                        toast.success("Record activated.");
+                      }
+                      await fetchList(estateId, page);
+                      onRecordsChange?.();
+                    } catch (err: unknown) {
+                      const message = getApiErrorMessage(err);
+                      if (message) toast.error(message);
+                    }
+                  }}
+                  aria-label={active ? "Suspend" : "Activate"}
+                >
+                  {active ? (
+                    <PowerOff className="h-4 w-4" />
+                  ) : (
+                    <Power className="h-4 w-4" />
+                  )}
+                </Button>
+              </IconTooltip>
+              <IconTooltip label="Delete">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive h-8 cursor-pointer"
+                  disabled={deleteStatus === "isLoading"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!id) return;
+                    setItemToDelete(item);
+                  }}
+                  aria-label="Delete"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </IconTooltip>
             </div>
           );
         },
@@ -278,8 +288,6 @@ export default function MaintenanceRecordsTable({
   const total = Number(pagination?.total ?? records.length);
   const current =
     Number(pagination?.currentPage ?? pagination?.page ?? page) || page;
-  const pageSize =
-    Number(pagination?.pageSize ?? pagination?.limit ?? PAGE_SIZE) || PAGE_SIZE;
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
@@ -318,6 +326,10 @@ export default function MaintenanceRecordsTable({
           showPagination
           paginationInfo={{ total, current, pageSize }}
           onPageChange={(p) => setPage(p)}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
           enableExport
           exportFileName="asset-maintenance"
           onExportRequest={() => Promise.resolve(records)}

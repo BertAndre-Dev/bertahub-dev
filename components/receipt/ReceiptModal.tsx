@@ -6,6 +6,7 @@ import { Download, Share2 } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { ReceiptCard } from "@/components/receipt/ReceiptCard";
 import { mapBillReceipt, mapVendReceipt } from "@/components/receipt/map-receipt";
 import { downloadReceiptPng, shareReceiptPdf } from "@/components/receipt/share-receipt";
@@ -138,32 +139,34 @@ export function ReceiptModal({
             </h2>
             <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center">
               <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/50 bg-white/75 px-1.5 py-1 shadow-lg backdrop-blur-[20px] backdrop-saturate-150 motion-reduce:backdrop-blur-none [@media(prefers-reduced-transparency:reduce)]:bg-white [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="rounded-full active:scale-[0.97] motion-reduce:active:scale-100"
-                  onClick={handleShare}
-                  disabled={exporting}
-                  aria-label="Share receipt as PDF"
-                  title="Share PDF"
-                >
-                  <Share2 className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="rounded-full active:scale-[0.97] motion-reduce:active:scale-100"
-                  onClick={handleDownload}
-                  disabled={exporting}
-                  aria-label={
-                    exporting ? "Preparing download" : "Download receipt"
-                  }
-                  title="Download"
-                >
-                  <Download className="size-4" />
-                </Button>
+                <IconTooltip label="Share PDF">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full active:scale-[0.97] motion-reduce:active:scale-100"
+                    onClick={handleShare}
+                    disabled={exporting}
+                    aria-label="Share receipt as PDF"
+                  >
+                    <Share2 className="size-4" />
+                  </Button>
+                </IconTooltip>
+                <IconTooltip label="Download">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full active:scale-[0.97] motion-reduce:active:scale-100"
+                    onClick={handleDownload}
+                    disabled={exporting}
+                    aria-label={
+                      exporting ? "Preparing download" : "Download receipt"
+                    }
+                  >
+                    <Download className="size-4" />
+                  </Button>
+                </IconTooltip>
               </div>
             </div>
             <div ref={cardRef}>

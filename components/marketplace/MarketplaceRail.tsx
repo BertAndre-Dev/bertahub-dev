@@ -33,6 +33,7 @@ import {
 } from "@/redux/slice/marketplace/marketplace";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { cn } from "@/lib/utils";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 const STORAGE_KEY = "berta-marketplace-rail-collapsed";
 const FEED_LIMIT = 20;
@@ -348,25 +349,31 @@ export function MarketplaceRail() {
             >
               See all
             </Link>
-            <button
-              type="button"
-              onClick={toggleCollapsed}
-              className={cn(
-                "inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted",
-                MARKETPLACE_PRESS,
-              )}
-              aria-expanded={!collapsed}
-              aria-label={
+            <IconTooltip
+              label={
                 collapsed ? "Show marketplace offers" : "Hide marketplace offers"
               }
             >
-              <ChevronDown
+              <button
+                type="button"
+                onClick={toggleCollapsed}
                 className={cn(
-                  "size-4 transition-transform duration-200",
-                  collapsed ? "-rotate-90" : "rotate-0",
+                  "inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted",
+                  MARKETPLACE_PRESS,
                 )}
-              />
-            </button>
+                aria-expanded={!collapsed}
+                aria-label={
+                  collapsed ? "Show marketplace offers" : "Hide marketplace offers"
+                }
+              >
+                <ChevronDown
+                  className={cn(
+                    "size-4 transition-transform duration-200",
+                    collapsed ? "-rotate-90" : "rotate-0",
+                  )}
+                />
+              </button>
+            </IconTooltip>
           </div>
         </div>
 

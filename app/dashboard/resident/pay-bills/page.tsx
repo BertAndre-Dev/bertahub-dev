@@ -85,7 +85,7 @@ export default function PayBillsPage() {
   const [amount, setAmount] = useState<string>("");
   const [pin, setPin] = useState("");
   const [historyPage, setHistoryPage] = useState(1);
-  const historyLimit = 10;
+  const [historyLimit, setHistoryLimit] = useState(10);
 
   const [payResultModal, setPayResultModal] = useState<{
     open: boolean;
@@ -175,7 +175,7 @@ export default function PayBillsPage() {
     dispatch(
       getBillPaymentHistory({ page: historyPage, limit: historyLimit }),
     ).catch(() => {});
-  }, [dispatch, historyPage]);
+  }, [dispatch, historyPage, historyLimit]);
 
   // ── 4. Fetch billers when category changes ────────────────────────────────
   useEffect(() => {
@@ -443,6 +443,10 @@ export default function PayBillsPage() {
           historyPage={historyPage}
           historyLimit={historyLimit}
           onHistoryPageChange={setHistoryPage}
+          onHistoryPageSizeChange={(size) => {
+            setHistoryLimit(size);
+            setHistoryPage(1);
+          }}
         />
 
         <FundWalletModal

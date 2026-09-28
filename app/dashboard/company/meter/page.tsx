@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import Modal from "@/components/modal/page";
 import Table from "@/components/tables/list/page";
 import { toast } from "react-toastify";
@@ -233,14 +234,14 @@ export default function CompanyMeterManagement() {
     estateOptions.find((o) => o.value === selectedEstateId) ??
     ALL_ESTATES_OPTION;
 
-  const pageSize = Number(pagination?.pageSize) || 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchMeters = useCallback(
-    async (page = 1, search = searchQuery) => {
+    async (page = 1, search = searchQuery, limit = pageSize) => {
       await dispatch(
         getCompanyMeters({
           page,
-          limit: pageSize,
+          limit,
           search: search || undefined,
           estateId: selectedEstateId || ALL_METERS_ESTATE_ID,
         }),
@@ -507,16 +508,18 @@ export default function CompanyMeterManagement() {
 
         return (
           <DropdownMenu.Root>
+          <IconTooltip label="Actions">
             <DropdownMenu.Trigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                title="Actions"
+                aria-label="Actions"
                 className="cursor-pointer"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenu.Trigger>
+          </IconTooltip>
             <DropdownMenu.Portal>
               <DropdownMenu.Content
                 align="end"
@@ -751,13 +754,22 @@ export default function CompanyMeterManagement() {
                         paginationInfo={{
                           total: pagination?.total || 0,
                           current: Number(pagination?.currentPage) || 1,
-                          pageSize: Number(pagination?.pageSize) || 10,
+                          pageSize,
                         }}
                         onPageChange={(page) => {
                           fetchMeters(page, searchQuery).catch((err: unknown) => {
                             const message = getApiErrorMessage(err);
                             if (message) toast.error(message);
                           });
+                        }}
+                        onPageSizeChange={(size) => {
+                          setPageSize(size);
+                          fetchMeters(1, searchQuery, size).catch(
+                            (err: unknown) => {
+                              const message = getApiErrorMessage(err);
+                              if (message) toast.error(message);
+                            },
+                          );
                         }}
                         enableExport
                         exportFileName={

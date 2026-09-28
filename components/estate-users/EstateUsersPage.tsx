@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import {
   Power,
   PowerOff,
@@ -148,6 +149,7 @@ export function EstateUsersPage({
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_LIMIT);
   const [suspendUserItem, setSuspendUserItem] = useState<AdminUserData | null>(
     null,
   );
@@ -262,7 +264,7 @@ export function EstateUsersPage({
       listPending);
 
   const fetchAdminUsers = useCallback(
-    async (page = 1) => {
+    async (page = 1, limit = pageSize) => {
       const estateId = selectedEstate?.value;
       if (!estateId) return;
 
@@ -271,7 +273,7 @@ export function EstateUsersPage({
         getAllUsersByEstate({
           estateId,
           page,
-          limit: PAGE_LIMIT,
+          limit,
           role: roleFilter,
           search: searchQuery || undefined,
           startDate: shouldApplyDate ? startDate : undefined,
@@ -280,7 +282,7 @@ export function EstateUsersPage({
       ).unwrap();
       setCurrentPage(page);
     },
-    [dispatch, selectedEstate?.value, searchQuery, startDate, endDate, roleFilter],
+    [dispatch, selectedEstate?.value, searchQuery, startDate, endDate, roleFilter, pageSize],
   );
 
   // Bootstrap signed-in user and estate only (no user list fetch here).
@@ -630,63 +632,73 @@ export function EstateUsersPage({
             render: (item: AdminUserData) => (
               <div className="flex items-center gap-1">
                 {item.role?.toLowerCase() === "resident" && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (item.id) router.push(`${basePath}/${item.id}`);
-                    }}
-                    title="View user details"
-                    disabled={!item.id}
-                    className="text-[#0150AC] hover:bg-blue-50 hover:text-[#01408A]"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
+                  <IconTooltip label="View user details">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (item.id) router.push(`${basePath}/${item.id}`);
+                      }}
+                      aria-label="View user details"
+                      disabled={!item.id}
+                      className="text-[#0150AC] hover:bg-blue-50 hover:text-[#01408A]"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </IconTooltip>
                 )}
 
                 {roleFilter !== "staff" ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEditUser(item)}
-                    title="Edit user details"
-                    className="text-blue-600 hover:text-blue-700"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
+                  <IconTooltip label="Edit user details">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditUser(item)}
+                      aria-label="Edit user details"
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  </IconTooltip>
                 ) : null}
 
                 {item.isActive ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openSuspendModal(item)}
-                    title="Suspend user"
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <PowerOff className="w-4 h-4" />
-                  </Button>
+                  <IconTooltip label="Suspend user">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openSuspendModal(item)}
+                      aria-label="Suspend user"
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <PowerOff className="w-4 h-4" />
+                    </Button>
+                  </IconTooltip>
                 ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openActivateModal(item)}
-                    title="Activate user"
-                    className="text-green-600 hover:text-green-700"
-                  >
-                    <Power className="w-4 h-4" />
-                  </Button>
+                  <IconTooltip label="Activate user">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openActivateModal(item)}
+                      aria-label="Activate user"
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      <Power className="w-4 h-4" />
+                    </Button>
+                  </IconTooltip>
                 )}
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteUser(item.id, item.firstName)}
-                  title="Delete user"
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <IconTooltip label="Delete user">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteUser(item.id, item.firstName)}
+                    aria-label="Delete user"
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </IconTooltip>
                 {/* <Button
                   variant="ghost"
                   size="sm"
@@ -905,10 +917,17 @@ export function EstateUsersPage({
             paginationInfo={{
               total: pagination?.total || 0,
               current: currentPage,
-              pageSize: Number(pagination?.pageSize) || 10,
+              pageSize,
             }}
             onPageChange={(page) => {
               fetchAdminUsers(page).catch((err: unknown) => {
+                const message = getApiErrorMessage(err);
+                if (message) toast.error(message);
+              });
+            }}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              fetchAdminUsers(1, size).catch((err: unknown) => {
                 const message = getApiErrorMessage(err);
                 if (message) toast.error(message);
               });

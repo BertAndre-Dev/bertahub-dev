@@ -5,6 +5,7 @@ import type { GroupMessageAttachment } from "@/types/community-group";
 import type { CommunityMessage } from "@/types/community-chat-ui";
 import { isSameUserId } from "@/lib/user-id";
 import { cn } from "@/lib/utils";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 function attachmentLooksLikeImage(a: GroupMessageAttachment): boolean {
   if (a.type === "image") return true;
@@ -166,37 +167,43 @@ export function CommunityMessageBubble({
             {showReply || showEdit || showDelete ? (
               <span className="inline-flex gap-0.5">
                 {showReply ? (
-                  <button
-                    type="button"
-                    disabled={messageActionsDisabled}
-                    className="cursor-pointer rounded p-0.5 hover:bg-background/80 disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Reply to message"
-                    onClick={() => onReplyMessage?.(message.id)}
-                  >
-                    <CornerDownLeft className="size-3.5" />
-                  </button>
+                  <IconTooltip label="Reply">
+                    <button
+                      type="button"
+                      disabled={messageActionsDisabled}
+                      className="cursor-pointer rounded p-0.5 hover:bg-background/80 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Reply to message"
+                      onClick={() => onReplyMessage?.(message.id)}
+                    >
+                      <CornerDownLeft className="size-3.5" />
+                    </button>
+                  </IconTooltip>
                 ) : null}
                 {showEdit ? (
-                  <button
-                    type="button"
-                    disabled={messageActionsDisabled}
-                    className="cursor-pointer rounded p-0.5 hover:bg-background/80 disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Edit message"
-                    onClick={() => onEditMessage?.(message.id)}
-                  >
-                    <Pencil className="size-3.5" />
-                  </button>
+                  <IconTooltip label="Edit">
+                    <button
+                      type="button"
+                      disabled={messageActionsDisabled}
+                      className="cursor-pointer rounded p-0.5 hover:bg-background/80 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Edit message"
+                      onClick={() => onEditMessage?.(message.id)}
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                  </IconTooltip>
                 ) : null}
                 {showDelete ? (
-                  <button
-                    type="button"
-                    disabled={messageActionsDisabled}
-                    className="text-destructive hover:text-destructive cursor-pointer rounded p-0.5 hover:bg-background/80 disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Delete message"
-                    onClick={() => onDeleteMessage?.(message.id)}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
+                  <IconTooltip label="Delete">
+                    <button
+                      type="button"
+                      disabled={messageActionsDisabled}
+                      className="text-destructive hover:text-destructive cursor-pointer rounded p-0.5 hover:bg-background/80 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Delete message"
+                      onClick={() => onDeleteMessage?.(message.id)}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </IconTooltip>
                 ) : null}
               </span>
             ) : null}

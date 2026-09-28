@@ -12,6 +12,7 @@ import {
   type ResidentVisitorData,
 } from "./types";
 import { CopyButton } from "@/components/ui/copy-button";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 export function VisitorsTableCard({
   visitors,
@@ -21,6 +22,7 @@ export function VisitorsTableCard({
   onDateRangeChange,
   paginationInfo,
   onPageChange,
+  onPageSizeChange,
   onExportRequest,
   onView,
   onEdit,
@@ -34,6 +36,7 @@ export function VisitorsTableCard({
   onDateRangeChange: (range: { startDate: string; endDate: string }) => void;
   paginationInfo: { total: number; current: number; pageSize: number };
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   onExportRequest?: () => Promise<any[]>;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
@@ -153,55 +156,69 @@ export function VisitorsTableCard({
         header: "Actions",
         render: (item: ResidentVisitorData) => (
           <div className="flex flex-row items-center gap-2">
-            <Button
-              className="cursor-pointer"
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onView(item.id);
-              }}
-            >
-              <Eye className="w-4 h-4 mr-1" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-blue-600 hover:text-blue-700 cursor-pointer hover:bg-blue-200 disabled:opacity-50"
-              disabled={!item.qrCodeDataUrl}
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewQrCode(item);
-              }}
-              title={
+            <IconTooltip label="View">
+              <Button
+                className="cursor-pointer"
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onView(item.id);
+                }}
+                aria-label="View"
+              >
+                <Eye className="w-4 h-4 mr-1" />
+              </Button>
+            </IconTooltip>
+            <IconTooltip
+              label={
                 item.qrCodeDataUrl ? "View QR code" : "QR code not available"
               }
             >
-              <QrCode className="w-4 h-4 mr-1" />
-            </Button>
-            <Button
-              variant="outline"
-              className="cursor-pointer"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(item.id);
-              }}
-            >
-              <Edit className="w-4 h-4 mr-1 cursor-pointer" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive hover:text-destructive cursor-pointer hover:bg-destructive/10"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(item);
-              }}
-              title="Delete visitor"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-blue-600 hover:text-blue-700 cursor-pointer hover:bg-blue-200 disabled:opacity-50"
+                disabled={!item.qrCodeDataUrl}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewQrCode(item);
+                }}
+                aria-label={
+                  item.qrCodeDataUrl ? "View QR code" : "QR code not available"
+                }
+              >
+                <QrCode className="w-4 h-4 mr-1" />
+              </Button>
+            </IconTooltip>
+            <IconTooltip label="Edit">
+              <Button
+                variant="outline"
+                className="cursor-pointer"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(item.id);
+                }}
+                aria-label="Edit"
+              >
+                <Edit className="w-4 h-4 mr-1 cursor-pointer" />
+              </Button>
+            </IconTooltip>
+            <IconTooltip label="Delete visitor">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:text-destructive cursor-pointer hover:bg-destructive/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(item);
+                }}
+                aria-label="Delete visitor"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
           </div>
         ),
       },
@@ -228,6 +245,7 @@ export function VisitorsTableCard({
         showPagination
         paginationInfo={paginationInfo}
         onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
         enableExport
         exportFileName="visitors"
         onExportRequest={onExportRequest}

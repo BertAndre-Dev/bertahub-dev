@@ -126,6 +126,7 @@ export default function CompanyAnnouncementsPage() {
   const [viewingItem, setViewingItem] =
     useState<CompanyAnnouncementItem | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
 
   const { list, pagination, getListStatus } = useSelector(
     (state: RootState) => {
@@ -187,13 +188,13 @@ export default function CompanyAnnouncementsPage() {
 
   useEffect(() => {
     if (!estateId || estatesLoading) return;
-    dispatch(getCompanyAnnouncements({ estateId, page, limit: PAGE_SIZE }))
+    dispatch(getCompanyAnnouncements({ estateId, page, limit: pageSize }))
       .unwrap()
       .catch((err: unknown) => {
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
       });
-  }, [dispatch, estateId, page, estatesLoading]);
+  }, [dispatch, estateId, page, pageSize, estatesLoading]);
 
   const handleEstateChange = (option: EstateSelectOption | null) => {
     setViewingItem(null);
@@ -210,7 +211,7 @@ export default function CompanyAnnouncementsPage() {
   const paginationInfo = {
     total: pagination?.total ?? announcements.length,
     current: pagination?.page ?? page,
-    pageSize: pagination?.limit ?? PAGE_SIZE,
+    pageSize,
   };
 
   const handlePageChange = (nextPage: number) => {
@@ -306,6 +307,10 @@ export default function CompanyAnnouncementsPage() {
             <Pagination
               paginationInfo={paginationInfo}
               onPageChange={handlePageChange}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
               disabled={listLoading}
               itemLabel="announcements"
             />

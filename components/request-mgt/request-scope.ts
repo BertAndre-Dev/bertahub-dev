@@ -15,6 +15,7 @@ import {
   setCompanyRequestPage,
   setCompanyRequestSearch,
   setCompanyRequestStatusFilter,
+  setCompanyRequestPageSize,
 } from "@/redux/slice/company/request/company-request-slice";
 import {
   cancelEstateAdminRequest,
@@ -32,6 +33,7 @@ import {
   setEstateAdminRequestPage,
   setEstateAdminRequestSearch,
   setEstateAdminRequestStatusFilter,
+  setEstateAdminRequestPageSize,
 } from "@/redux/slice/estate-admin/request/estate-admin-request-slice";
 
 export type RequestScope = "company" | "estateAdmin";
@@ -77,6 +79,7 @@ export interface RequestScopeApi {
     payload: ScopedRequestStatus | "";
   };
   setPage: (value: number) => { type: string; payload: number };
+  setPageSize: (value: number) => { type: string; payload: number };
   clearSelected: () => { type: string };
   resetUi: () => { type: string };
 }
@@ -92,6 +95,7 @@ const companyScope: RequestScopeApi = {
   setSearch: setCompanyRequestSearch,
   setStatusFilter: setCompanyRequestStatusFilter as RequestScopeApi["setStatusFilter"],
   setPage: setCompanyRequestPage,
+  setPageSize: setCompanyRequestPageSize,
   clearSelected: clearCompanyRequestSelected,
   resetUi: resetCompanyRequestUi,
 };
@@ -108,6 +112,7 @@ const estateAdminScope: RequestScopeApi = {
   setStatusFilter:
     setEstateAdminRequestStatusFilter as RequestScopeApi["setStatusFilter"],
   setPage: setEstateAdminRequestPage,
+  setPageSize: setEstateAdminRequestPageSize,
   clearSelected: clearEstateAdminRequestSelected,
   resetUi: resetEstateAdminRequestUi,
 };

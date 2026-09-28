@@ -4,6 +4,7 @@ import { MoreVertical, Search } from "lucide-react";
 import type { CommunityChatGroup } from "@/types/community-chat-ui";
 import { formatGroupStatus } from "@/lib/community-chat-ui";
 import { CommunityGroupAvatar } from "@/components/dashboard/admin/community/CommunityGroupAvatar";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 type Props = {
   group: CommunityChatGroup;
@@ -31,21 +32,25 @@ export function CommunityChatHeader({ group, onOpenGroupInfo }: Props) {
           ) : null}
         </p>
       </div>
-      <button
-        type="button"
-        className="cursor-pointer rounded-lg p-2 hover:bg-primary-foreground/10 disabled:cursor-not-allowed"
-        aria-label="Search in conversation"
-      >
-        <Search className="size-5" />
-      </button>
-      <button
-        type="button"
-        className="cursor-pointer rounded-lg p-2 hover:bg-primary-foreground/10 disabled:cursor-not-allowed"
-        aria-label="Open group menu"
-        onClick={onOpenGroupInfo}
-      >
-        <MoreVertical className="size-5" />
-      </button>
+      <IconTooltip label="Search in conversation">
+        <button
+          type="button"
+          className="cursor-pointer rounded-lg p-2 hover:bg-primary-foreground/10 disabled:cursor-not-allowed"
+          aria-label="Search in conversation"
+        >
+          <Search className="size-5" />
+        </button>
+      </IconTooltip>
+      <IconTooltip label="Open group menu">
+        <button
+          type="button"
+          className="cursor-pointer rounded-lg p-2 hover:bg-primary-foreground/10 disabled:cursor-not-allowed"
+          aria-label="Open group menu"
+          onClick={onOpenGroupInfo}
+        >
+          <MoreVertical className="size-5" />
+        </button>
+      </IconTooltip>
     </div>
   );
 }

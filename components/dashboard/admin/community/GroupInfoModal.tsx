@@ -6,6 +6,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import type {
@@ -391,14 +392,16 @@ export function GroupInfoModal({
           aria-labelledby="group-info-title"
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-4 top-4 flex size-9 cursor-pointer items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/80"
-            aria-label="Close"
-          >
-            <X className="size-5" />
-          </button>
+          <IconTooltip label="Close">
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-4 top-4 flex size-9 cursor-pointer items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/80"
+              aria-label="Close"
+            >
+              <X className="size-5" />
+            </button>
+          </IconTooltip>
 
           <h2 id="group-info-title" className="text-lg font-bold">
             Group Info
@@ -445,15 +448,17 @@ export function GroupInfoModal({
         aria-labelledby="group-info-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={showBusy}
-          className="absolute right-4 top-4 z-10 flex size-9 cursor-pointer items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/80 disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Close"
-        >
-          <X className="size-5" />
-        </button>
+        <IconTooltip label="Close">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={showBusy}
+            className="absolute right-4 top-4 z-10 flex size-9 cursor-pointer items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/80 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Close"
+          >
+            <X className="size-5" />
+          </button>
+        </IconTooltip>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
         <h2 id="group-info-title" className="text-lg font-bold">
@@ -521,23 +526,25 @@ export function GroupInfoModal({
             </p>
           )}
           {canUpdateGroupProfile ? (
-            <button
-              type="button"
-              className="shrink-0 cursor-pointer rounded-lg p-1.5 text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label={editing ? "Cancel edit" : "Edit description"}
-              disabled={showBusy}
-              onClick={() => {
-                if (editing) {
-                  setEditName(group.name);
-                  setEditAbout(group.about);
-                  setEditing(false);
-                } else {
-                  setEditing(true);
-                }
-              }}
-            >
-              <Pencil className="size-4" />
-            </button>
+            <IconTooltip label={editing ? "Cancel edit" : "Edit description"}>
+              <button
+                type="button"
+                className="shrink-0 cursor-pointer rounded-lg p-1.5 text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label={editing ? "Cancel edit" : "Edit description"}
+                disabled={showBusy}
+                onClick={() => {
+                  if (editing) {
+                    setEditName(group.name);
+                    setEditAbout(group.about);
+                    setEditing(false);
+                  } else {
+                    setEditing(true);
+                  }
+                }}
+              >
+                <Pencil className="size-4" />
+              </button>
+            </IconTooltip>
           ) : null}
         </div>
 

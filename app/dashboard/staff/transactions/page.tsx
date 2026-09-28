@@ -32,6 +32,7 @@ import {
 } from "@/app/dashboard/estate-admin/transactions/components/PaidBillDetailsModal";
 import { formatDateTime } from "@/lib/format-date";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Eye } from "lucide-react";
 import Loader from "@/components/ui/Loader";
 import { isPending } from "@/lib/async-status";
@@ -57,7 +58,7 @@ export default function StaffTransactionPage() {
   const [email, setEmail] = useState<string>("");
   const [bootstrapping, setBootstrapping] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [activeTab, setActiveTab] = useState<TransactionsActiveTab>("vends");
   const [vendsData, setVendsData] = useState<any[]>([]);
   const [vendsPagination, setVendsPagination] = useState<{
@@ -157,7 +158,7 @@ export default function StaffTransactionPage() {
           getEstateTransactionHistory({
             estateId: estateIdFromUser,
             page: 1,
-            limit,
+            limit: pageSize,
             search: search || undefined,
             type: filterType || undefined,
             paymentStatus: filterStatus || undefined,
@@ -191,7 +192,7 @@ export default function StaffTransactionPage() {
         setBootstrapping(false);
       }
     })();
-  }, [dispatch, limit]);
+  }, [dispatch, pageSize]);
 
   // 🔹 Refetch transaction history when search or filters change (debounced for search).
   useEffect(() => {
@@ -202,7 +203,7 @@ export default function StaffTransactionPage() {
         getEstateTransactionHistory({
           estateId,
           page: 1,
-          limit,
+          limit: pageSize,
           search: search.trim() || undefined,
           type: filterType || undefined,
           paymentStatus: filterStatus || undefined,
@@ -210,7 +211,7 @@ export default function StaffTransactionPage() {
       );
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, filterType, filterStatus, estateId, dispatch, limit]);
+  }, [search, filterType, filterStatus, estateId, dispatch, pageSize]);
 
   // 🔹 Fetch vends when tab is vends
   useEffect(() => {
@@ -223,7 +224,7 @@ export default function StaffTransactionPage() {
           getEstateVends({
             estateId,
             page: vendsPage,
-            limit,
+            limit: pageSize,
             startDate: shouldApplyDateFilter ? vendsStartDate : undefined,
             endDate: shouldApplyDateFilter ? vendsEndDate : undefined,
           }),
@@ -242,7 +243,7 @@ export default function StaffTransactionPage() {
     estateId,
     vendsPage,
     dispatch,
-    limit,
+    pageSize,
     vendsStartDate,
     vendsEndDate,
   ]);
@@ -256,7 +257,7 @@ export default function StaffTransactionPage() {
           getEstatePaidBills({
             estateId,
             page: paidBillsPage,
-            limit,
+            limit: pageSize,
             startDate: paidBillsStartDate || undefined,
             endDate: paidBillsEndDate || undefined,
           }),
@@ -267,14 +268,14 @@ export default function StaffTransactionPage() {
           apiPagination.total ??
           res?.totals?.totalRecords ??
           (Array.isArray(res?.data) ? res.data.length : 0);
-        const pageSize = apiPagination.limit ?? limit;
+        const resolvedPageSize = apiPagination.limit ?? pageSize;
         const pages =
           apiPagination.pages ??
-          Math.max(1, Math.ceil((Number(total) || 0) / (pageSize || 1)));
+          Math.max(1, Math.ceil((Number(total) || 0) / (resolvedPageSize || 1)));
         setPaidBillsPagination({
           total: Number(total) || 0,
           page: apiPagination.page ?? paidBillsPage,
-          limit: pageSize,
+          limit: resolvedPageSize,
           pages,
         });
       } catch {
@@ -289,7 +290,7 @@ export default function StaffTransactionPage() {
     estateId,
     paidBillsPage,
     dispatch,
-    limit,
+    pageSize,
     paidBillsStartDate,
     paidBillsEndDate,
   ]);
@@ -302,7 +303,7 @@ export default function StaffTransactionPage() {
       getEstateTransactionHistory({
         estateId,
         page: newPage,
-        limit,
+        limit: pageSize,
         search: search.trim() || undefined,
         type: filterType || undefined,
         paymentStatus: filterStatus || undefined,
@@ -329,7 +330,7 @@ export default function StaffTransactionPage() {
     });
   }, [paidBillsData, filterFrequency, filterBill, filterBillStatus]);
 
-  const paidBillsPageSize = paidBillsPagination?.limit ?? limit;
+  const paidBillsPageSize = paidBillsPagination?.limit ?? pageSize;
   const paidBillsTotalPages = Math.max(
     1,
     paidBillsPagination?.pages ??
@@ -426,7 +427,7 @@ export default function StaffTransactionPage() {
           getEstateTransactionHistory({
             estateId: currentEstateId,
             page: currentPage,
-            limit,
+            limit: pageSize,
           }),
         );
 
@@ -446,7 +447,7 @@ export default function StaffTransactionPage() {
     // Small delay helps ensure wallet/user state is loaded
     const timer = setTimeout(verifyTransactionAsync, 800);
     return () => clearTimeout(timer);
-  }, [dispatch, userId, email, estateId, currentPage, limit]);
+  }, [dispatch, userId, email, estateId, currentPage, pageSize]);
 
   // Table columns for transaction history
   const columns = [
@@ -756,16 +757,18 @@ export default function StaffTransactionPage() {
       header: "Actions",
       exportable: false as const,
       render: (item: any) => (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-[#0150AC] hover:text-[#01408A] cursor-pointer"
-          title="View details"
-          onClick={() => setViewingPaidBill(item)}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
+        <IconTooltip label="View details">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-[#0150AC] hover:text-[#01408A] cursor-pointer"
+            aria-label="View details"
+            onClick={() => setViewingPaidBill(item)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </IconTooltip>
       ),
     },
   ];
@@ -798,9 +801,13 @@ export default function StaffTransactionPage() {
             paginationInfo={{
               total: pagination?.total || transactions.length || 0,
               current: pagination?.currentPage || currentPage,
-              pageSize: pagination?.pageSize || limit,
+              pageSize,
             }}
             onPageChange={handlePageChange}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
             currentPage={currentPage}
             totalPages={pagination?.totalPages || 1}
             onExportRequest={
@@ -841,9 +848,13 @@ export default function StaffTransactionPage() {
             paginationInfo={{
               total: vendsPagination?.total ?? 0,
               current: vendsPagination?.page ?? vendsPage,
-              pageSize: vendsPagination?.limit ?? limit,
+              pageSize,
             }}
             onPageChange={(p: number) => setVendsPage(p)}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setVendsPage(1);
+            }}
             onExportRequest={
               estateId
                 ? async () => {
@@ -896,9 +907,13 @@ export default function StaffTransactionPage() {
             paginationInfo={{
               total: paidBillsPagination?.total ?? filteredPaidBills.length,
               current: paidBillsPage,
-              pageSize: paidBillsPageSize,
+              pageSize,
             }}
             onPageChange={(p: number) => setPaidBillsPage(p)}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPaidBillsPage(1);
+            }}
             currentPage={paidBillsPage}
             totalPages={paidBillsTotalPages}
             onPrev={() => setPaidBillsPage((p) => Math.max(1, p - 1))}

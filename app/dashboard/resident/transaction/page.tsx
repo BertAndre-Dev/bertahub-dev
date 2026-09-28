@@ -70,7 +70,7 @@ export default function TransactionPage() {
   const [residentType, setResidentType] = useState<string | null>(null);
   const [ownerEstateId, setOwnerEstateId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [continuingPaymentTxRef, setContinuingPaymentTxRef] = useState<string | null>(null);
   const transactions = useSelector(
     (state: RootState) => state.residentTransaction.allTransactions?.data || [],
@@ -128,7 +128,7 @@ export default function TransactionPage() {
 
         const [walletRes] = await Promise.all([
           dispatch(getWallet(id)).unwrap(),
-          dispatch(getTransactionHistory({ userId: id, page: 1, limit })),
+          dispatch(getTransactionHistory({ userId: id, page: 1, limit: pageSize })),
           dispatch(getResidentBanks({ country: "NG", gatewayType: "flutterwave" })),
         ]);
 
@@ -139,10 +139,10 @@ export default function TransactionPage() {
         if (message) toast.error(message);
       }
     })();
-  }, [dispatch, limit]);
+  }, [dispatch, pageSize]);
 
   // 🔹 Pagination Handler
-  const handlePageChange = async (newPage: number) => {
+  const handlePageChange = async (newPage: number, limit = pageSize) => {
     if (!userId) return;
     setCurrentPage(newPage);
     await dispatch(getTransactionHistory({ userId, page: newPage, limit }));
@@ -585,9 +585,14 @@ export default function TransactionPage() {
               paginationInfo={{
                 total: pagination?.total || transactions.length || 0,
                 current: pagination?.currentPage || currentPage,
-                pageSize: pagination?.pageSize || limit,
+                pageSize: pagination?.pageSize || pageSize,
               }}
               onPageChange={handlePageChange}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+                handlePageChange(1, size);
+              }}
               enableExport
               exportFileName="transactions"
               onExportRequest={
@@ -615,7 +620,7 @@ export default function TransactionPage() {
               </Button>
               <Button
                 disabled={
-                  currentPage >= Math.ceil((pagination?.total || 0) / limit)
+                  currentPage >= Math.ceil((pagination?.total || 0) / pageSize)
                 }
                 onClick={() => handlePageChange(currentPage + 1)}
               >

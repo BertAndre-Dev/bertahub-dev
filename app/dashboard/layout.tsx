@@ -34,6 +34,7 @@ import { WalletRequiredAlert } from "@/components/wallet/WalletRequiredAlert";
 import { MarketplaceRail } from "@/components/marketplace/MarketplaceRail";
 import { MembershipSwitcher } from "@/components/dashboard/MembershipSwitcher";
 import { NotificationsBell } from "@/components/dashboard/NotificationsBell";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { filterNavItemsByEstateModules } from "@/lib/nav-module-filter";
 import Image from "next/image";
 import Loader from "@/components/ui/Loader";
@@ -541,44 +542,52 @@ export default function DashboardLayout({
                   priority
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="hidden sm:inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-muted"
-              >
-                {sidebarOpen ? (
-                  <X className="h-5 w-5 cursor-pointer" />
-                ) : (
-                  <Menu className="h-5 w-5 cursor-pointer" />
-                )}
-              </button>
+              <IconTooltip label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}>
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="hidden sm:inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-muted"
+                  aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+                >
+                  {sidebarOpen ? (
+                    <X className="h-5 w-5 cursor-pointer" />
+                  ) : (
+                    <Menu className="h-5 w-5 cursor-pointer" />
+                  )}
+                </button>
+              </IconTooltip>
             </div>
 
             <div className="flex shrink-0 items-center gap-2 sm:gap-4">
               <MembershipSwitcher className="hidden sm:block cursor-pointer" />
               <NotificationsBell />
               <MembershipSwitcher collapsed className="sm:hidden" />
-              <button
-                type="button"
-                title="Open menu"
-                onClick={toggleMobileSidebar}
-                className="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:hidden"
-              >
-                {mobileSidebarOpen ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Menu className="h-5 w-5" />
-                )}
-              </button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={signingOut}
-                onClick={handleSignOut}
-                className="hidden text-muted-foreground hover:text-foreground sm:inline-flex"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
+              <IconTooltip label={mobileSidebarOpen ? "Close menu" : "Open menu"}>
+                <button
+                  type="button"
+                  onClick={toggleMobileSidebar}
+                  className="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:hidden"
+                  aria-label={mobileSidebarOpen ? "Close menu" : "Open menu"}
+                >
+                  {mobileSidebarOpen ? (
+                    <X className="h-5 w-5" />
+                  ) : (
+                    <Menu className="h-5 w-5" />
+                  )}
+                </button>
+              </IconTooltip>
+              <IconTooltip label="Log out">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={signingOut}
+                  onClick={handleSignOut}
+                  className="hidden text-muted-foreground hover:text-foreground sm:inline-flex"
+                  aria-label="Log out"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </IconTooltip>
             </div>
           </div>
         </header>

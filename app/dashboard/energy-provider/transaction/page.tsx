@@ -23,6 +23,7 @@ export default function EnergyProviderTransactionPage() {
   const [estateName, setEstateName] = useState("Estate");
   const [loadingUser, setLoadingUser] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -63,13 +64,13 @@ export default function EnergyProviderTransactionPage() {
         getEnergyProviderTransactionVends({
           estateId,
           page: nextPage,
-          limit: PAGE_SIZE,
+          limit: pageSize,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
         }),
       ).unwrap();
     },
-    [dispatch, estateId, startDate, endDate],
+    [dispatch, estateId, pageSize, startDate, endDate],
   );
 
   useEffect(() => {
@@ -111,9 +112,14 @@ export default function EnergyProviderTransactionPage() {
             paginationInfo={{
               total: pagination?.total ?? 0,
               current: pagination?.currentPage ?? 1,
-              pageSize: pagination?.pageSize ?? PAGE_SIZE,
+              pageSize,
             }}
             onPageChange={setPage}
+
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
             onExportRequest={async () => {
               if (!estateId) return [];
               const shouldApplyDate = Boolean(startDate && endDate);

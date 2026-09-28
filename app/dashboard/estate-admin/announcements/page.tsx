@@ -112,6 +112,7 @@ export default function EstateAdminAnnouncementsPage() {
     useState<EstateAdminAnnouncementItem | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
 
   const { list, pagination, getListStatus } = useSelector((state: RootState) => {
     const s = state.estateAdminAnnouncements;
@@ -155,12 +156,12 @@ export default function EstateAdminAnnouncementsPage() {
   useEffect(() => {
     if (!estateId || bootstrapping) return;
     dispatch(
-      getEstateAdminAnnouncements({ estateId, page, limit: PAGE_SIZE }),
+      getEstateAdminAnnouncements({ estateId, page, limit: pageSize }),
     ).catch((err: unknown) => {
       const e = err as { message?: string };
       toast.error(e?.message ?? "Failed to load announcements.");
     });
-  }, [dispatch, estateId, page, bootstrapping]);
+  }, [dispatch, estateId, page, pageSize, bootstrapping]);
 
   const listLoading = isPending(getListStatus);
   const fullPageLoading = bootstrapping || listLoading;
@@ -170,7 +171,7 @@ export default function EstateAdminAnnouncementsPage() {
   const paginationInfo = {
     total: pagination?.total ?? announcements.length,
     current: pagination?.page ?? page,
-    pageSize: pagination?.limit ?? PAGE_SIZE,
+    pageSize,
   };
 
   const handlePageChange = (nextPage: number) => {
@@ -228,6 +229,10 @@ export default function EstateAdminAnnouncementsPage() {
         <Pagination
           paginationInfo={paginationInfo}
           onPageChange={handlePageChange}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
           disabled={listLoading}
           itemLabel="announcements"
         />

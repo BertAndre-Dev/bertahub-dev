@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { resetPassword } from "@/redux/slice/auth-mgt/auth-mgt";
 import type { AppDispatch } from "@/redux/store";
 
@@ -156,18 +157,20 @@ export default function ResetPasswordPage() {
               onChange={handleChange}
               className="h-11 pr-12"
             />
-            <button
-              type="button"
-              onClick={() => setShowNewPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label={showNewPassword ? "Hide password" : "Show password"}
-            >
-              {showNewPassword ? (
-                <EyeOff className="h-4 w-4 cursor-pointer" />
-              ) : (
-                <Eye className="h-4 w-4 cursor-pointer" />
-              )}
-            </button>
+            <IconTooltip label={showNewPassword ? "Hide password" : "Show password"}>
+              <button
+                type="button"
+                onClick={() => setShowNewPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showNewPassword ? "Hide password" : "Show password"}
+              >
+                {showNewPassword ? (
+                  <EyeOff className="h-4 w-4 cursor-pointer" />
+                ) : (
+                  <Eye className="h-4 w-4 cursor-pointer" />
+                )}
+              </button>
+            </IconTooltip>
           </div>
         </div>
 
@@ -185,20 +188,22 @@ export default function ResetPasswordPage() {
               onChange={handleChange}
               className="h-11 pr-12"
             />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label={
-                showConfirmPassword ? "Hide password" : "Show password"
-              }
-            >
-              {showConfirmPassword ? (
-                <EyeOff className="h-4 w-4 cursor-pointer" />
-              ) : (
-                <Eye className="h-4 w-4 cursor-pointer" />
-              )}
-            </button>
+            <IconTooltip label={showConfirmPassword ? "Hide password" : "Show password"}>
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={
+                  showConfirmPassword ? "Hide password" : "Show password"
+                }
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4 cursor-pointer" />
+                ) : (
+                  <Eye className="h-4 w-4 cursor-pointer" />
+                )}
+              </button>
+            </IconTooltip>
           </div>
         </div>
 

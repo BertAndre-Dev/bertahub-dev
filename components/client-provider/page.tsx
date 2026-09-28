@@ -9,6 +9,7 @@ import { store, persistor } from "@/redux/store";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { BookDemoProvider } from "@/components/landing-page/book-demo-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function ClientProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -39,12 +40,14 @@ export default function ClientProvider({ children }: { children: ReactNode }) {
     <Provider store={store}>
       <PersistGate persistor={persistor}>
         <BookDemoProvider>
+          <TooltipProvider delayDuration={0}>
           <ToastContainer position="top-center" autoClose={3000} />
           {isExcluded ? (
             children
           ) : (
             <DashboardLayout>{children}</DashboardLayout>
           )}
+          </TooltipProvider>
         </BookDemoProvider>
       </PersistGate>
     </Provider>

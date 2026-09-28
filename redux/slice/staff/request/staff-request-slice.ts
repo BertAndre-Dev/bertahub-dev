@@ -81,6 +81,10 @@ const staffRequestSlice = createSlice({
     setStaffRequestPage: (state, action: PayloadAction<number>) => {
       state.ui.page = action.payload;
     },
+    setStaffRequestPageSize: (state, action: PayloadAction<number>) => {
+      state.ui.pageSize = action.payload;
+      state.ui.page = 1;
+    },
     clearStaffRequestError: (state) => {
       state.error = null;
     },
@@ -186,6 +190,7 @@ export const {
   setStaffRequestSearch,
   setStaffRequestStatusFilter,
   setStaffRequestPage,
+  setStaffRequestPageSize,
   clearStaffRequestError,
   resetStaffRequestCreateStatus,
 } = staffRequestSlice.actions;

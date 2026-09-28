@@ -9,6 +9,7 @@ type Props = {
   showPagination: boolean;
   paginationInfo: { total: number; current: number; pageSize: number };
   onPageChange: (newPage: number) => void | Promise<void>;
+  onPageSizeChange?: (pageSize: number) => void;
   currentPage: number;
   totalPages: number;
   onExportRequest?: () => Promise<any[]>;
@@ -21,6 +22,7 @@ export function HistoryTransactionsTab({
   showPagination,
   paginationInfo,
   onPageChange,
+  onPageSizeChange,
   currentPage,
   totalPages,
   onExportRequest,
@@ -34,6 +36,7 @@ export function HistoryTransactionsTab({
         showPagination={showPagination}
         paginationInfo={paginationInfo}
         onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
         enableExport
         exportFileName="transactions"
         onExportRequest={onExportRequest}

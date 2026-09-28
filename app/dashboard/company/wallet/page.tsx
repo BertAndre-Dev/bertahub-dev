@@ -70,6 +70,7 @@ export default function CompanyWalletPage() {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState("Company");
   const [creditsPage, setCreditsPage] = useState(1);
+  const [pageSize, setPageSize] = useState(LIMIT);
 
   const wallet = useSelector(selectCompanyWallet);
   const creditsData = useSelector(selectCompanyCredits);
@@ -96,13 +97,13 @@ export default function CompanyWalletPage() {
   const accountVerified =
     verifyBankAccountState === "succeeded" && !!verifiedAccountName;
 
-  const fetchCredits = (page = creditsPage) => {
+  const fetchCredits = (page = creditsPage, limit = pageSize) => {
     if (!companyId) return Promise.resolve();
     return dispatch(
       getCompanyCredits({
         companyId,
         page,
-        limit: LIMIT,
+        limit,
       }),
     ).unwrap();
   };
@@ -130,7 +131,7 @@ export default function CompanyWalletPage() {
             getCompanyCredits({
               companyId: company.id,
               page: 1,
-              limit: LIMIT,
+              limit: pageSize,
             }),
           ),
         ]);
@@ -320,8 +321,6 @@ export default function CompanyWalletPage() {
     typeof pag?.total === "number" ? pag.total : Number(pag?.total) || 0;
   const pageNum =
     typeof pag?.page === "number" ? pag.page : Number(pag?.page) || creditsPage;
-  const pageSize =
-    typeof pag?.limit === "number" ? pag.limit : Number(pag?.limit) || LIMIT;
 
   return (
     <div className="relative">
@@ -377,6 +376,11 @@ export default function CompanyWalletPage() {
             pageSize,
           }}
           onPageChange={setCreditsPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCreditsPage(1);
+            fetchCredits(1, size).catch(() => {});
+          }}
           enableExport
           exportFileName="company-credits"
           onExportRequest={

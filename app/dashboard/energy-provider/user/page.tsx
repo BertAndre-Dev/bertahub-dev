@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
 import Loader from "@/components/ui/Loader";
@@ -153,19 +154,17 @@ export default function EnergyProviderUserPage() {
   const pageLoading =
     estatesLoading ||
     (Boolean(selectedEstate?.value) && isPending(usersStatus));
-  const pageSize =
-    Number(pagination?.pageSize ?? (pagination as { limit?: number })?.limit) ||
-    10;
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchUsers = useCallback(
-    (page = 1) => {
+    (page = 1, limit = pageSize) => {
       if (!selectedEstate?.value) return Promise.resolve();
       const shouldApplyDate = Boolean(startDate && endDate);
       return dispatch(
         getEnergyProviderUsersByEstate({
           estateId: selectedEstate.value,
           page,
-          limit: pageSize,
+          limit,
           role: roleFilter,
           search: search.trim() || undefined,
           startDate: shouldApplyDate ? startDate : undefined,
@@ -386,35 +385,41 @@ export default function EnergyProviderUserPage() {
         render: (item: EnergyProviderUserDetails) => (
           <div className="flex items-center gap-1">
             {item.isActive ? (
+              <IconTooltip label="Suspend user">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 cursor-pointer"
+                  onClick={() => openSuspendModal(item)}
+                  aria-label="Suspend user"
+                >
+                  <PowerOff className="w-4 h-4" />
+                </Button>
+              </IconTooltip>
+            ) : (
+              <IconTooltip label="Activate user">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-green-600 hover:text-green-700 cursor-pointer"
+                  onClick={() => openActivateModal(item)}
+                  aria-label="Activate user"
+                >
+                  <Power className="w-4 h-4" />
+                </Button>
+              </IconTooltip>
+            )}
+            <IconTooltip label="Delete user">
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-red-600 hover:text-red-700 cursor-pointer"
-                onClick={() => openSuspendModal(item)}
-                title="Suspend user"
+                onClick={() => handleDeleteUser(userRowId(item), item.firstName)}
+                aria-label="Delete user"
               >
-                <PowerOff className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" />
               </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-green-600 hover:text-green-700 cursor-pointer"
-                onClick={() => openActivateModal(item)}
-                title="Activate user"
-              >
-                <Power className="w-4 h-4" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-600 hover:text-red-700 cursor-pointer"
-              onClick={() => handleDeleteUser(userRowId(item), item.firstName)}
-              title="Delete user"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            </IconTooltip>
           </div>
         ),
       },
@@ -569,6 +574,12 @@ export default function EnergyProviderUserPage() {
             }}
             onPageChange={(page) => {
               fetchUsers(page).catch(() =>
+                toast.error("Failed to change page"),
+              );
+            }}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              fetchUsers(1, size).catch(() =>
                 toast.error("Failed to change page"),
               );
             }}

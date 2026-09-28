@@ -39,6 +39,7 @@ function getResidentName(userId?: {
 export default function SuperAdminTransactionsPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [typeFilter, setTypeFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,7 +55,7 @@ export default function SuperAdminTransactionsPage() {
     return {
       allTransactionHistory: s?.allTransactionHistory || {
         data: [],
-        pagination: { total: 0, page: 1, limit: PAGE_SIZE, pages: 1 },
+        pagination: { total: 0, page: 1, limit: pageSize, pages: 1 },
       },
       loading: isPending(s?.getAllTransactionHistoryState),
     };
@@ -108,7 +109,7 @@ export default function SuperAdminTransactionsPage() {
         await dispatch(
           getAllTransactionHistory({
             page: currentPage,
-            limit: PAGE_SIZE,
+            limit: pageSize,
             type: typeFilter,
             search: searchQuery,
             startDate: fromDate || "",
@@ -120,7 +121,7 @@ export default function SuperAdminTransactionsPage() {
       }
     };
     fetch();
-  }, [dispatch, currentPage, typeFilter, searchQuery, fromDate, toDate]); // ✅ all deps
+  }, [dispatch, currentPage, pageSize, typeFilter, searchQuery, fromDate, toDate]); // ✅ all deps
 
   const handlePageChange = (page: number) => setCurrentPage(page);
 
@@ -313,7 +314,7 @@ export default function SuperAdminTransactionsPage() {
       await dispatch(
         getAllTransactionHistory({
           page: currentPage,
-          limit: PAGE_SIZE,
+          limit: pageSize,
           type: typeFilter,
           search: searchQuery,
           startDate: fromDate || "",
@@ -404,8 +405,13 @@ export default function SuperAdminTransactionsPage() {
         data={allTransactionHistory?.data || []}
         total={allTransactionHistory?.pagination?.total || 0}
         current={Number(allTransactionHistory?.pagination?.page) || 1}
-        pageSize={Number(allTransactionHistory?.pagination?.limit) || PAGE_SIZE}
+        pageSize={pageSize}
         onPageChange={(page) => handlePageChange(page)}
+
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setCurrentPage(1);
+        }}
       />
 
       <TransactionDetailsDialog

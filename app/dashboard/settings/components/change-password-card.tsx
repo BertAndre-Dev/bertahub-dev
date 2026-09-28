@@ -9,6 +9,7 @@ import { Lock, Eye, EyeOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { forgotPassword, resetPassword } from "@/redux/slice/auth-mgt/auth-mgt";
 import { getApiErrorMessage } from "@/lib/api-error";
 import type { AppDispatch, RootState } from "@/redux/store";
@@ -213,20 +214,22 @@ export function ChangePasswordCard() {
                       onChange={handleChange}
                       className="h-10 pr-10"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      aria-label={
-                        showNewPassword ? "Hide password" : "Show password"
-                      }
-                    >
-                      {showNewPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
+                    <IconTooltip label={showNewPassword ? "Hide password" : "Show password"}>
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        aria-label={
+                          showNewPassword ? "Hide password" : "Show password"
+                        }
+                      >
+                        {showNewPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </IconTooltip>
                   </div>
                 </div>
                 <div>
@@ -246,20 +249,22 @@ export function ChangePasswordCard() {
                       onChange={handleChange}
                       className="h-10 pr-10"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      aria-label={
-                        showConfirmPassword ? "Hide password" : "Show password"
-                      }
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
+                    <IconTooltip label={showConfirmPassword ? "Hide password" : "Show password"}>
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        aria-label={
+                          showConfirmPassword ? "Hide password" : "Show password"
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </IconTooltip>
                   </div>
                 </div>
                 <Button

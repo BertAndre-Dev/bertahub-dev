@@ -16,6 +16,7 @@ import {
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   computeBalanceGaugeFill,
@@ -125,18 +126,21 @@ export function MeterRealtimeBalanceCard({
         </div>
 
         {onRefresh ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={loading || refreshing}
-            onClick={onRefresh}
-            className="shrink-0 self-start"
-          >
-            <RefreshCw
-              className={cn("mr-2 size-4", refreshing && "animate-spin")}
-            />
-          </Button>
+          <IconTooltip label="Refresh">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={loading || refreshing}
+              onClick={onRefresh}
+              className="shrink-0 self-start"
+              aria-label="Refresh"
+            >
+              <RefreshCw
+                className={cn("mr-2 size-4", refreshing && "animate-spin")}
+              />
+            </Button>
+          </IconTooltip>
         ) : null}
       </div>
 

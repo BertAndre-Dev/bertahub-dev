@@ -135,6 +135,10 @@ const staffMaintenanceSlice = createSlice({
     setStaffMaintenancePage: (state, action: PayloadAction<number>) => {
       state.ui.page = action.payload;
     },
+    setStaffMaintenancePageSize: (state, action: PayloadAction<number>) => {
+      state.ui.pageSize = action.payload;
+      state.ui.page = 1;
+    },
     setStaffMaintenanceSelectedComplaintId: (
       state,
       action: PayloadAction<string | null>,
@@ -325,6 +329,7 @@ export const {
   setStaffMaintenanceStatusFilter,
   setStaffMaintenanceCategoryFilter,
   setStaffMaintenancePage,
+  setStaffMaintenancePageSize,
   setStaffMaintenanceSelectedComplaintId,
   clearStaffMaintenanceSelectedComplaint,
 } = staffMaintenanceSlice.actions;

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
 import Loader from "@/components/ui/Loader";
@@ -191,20 +192,18 @@ export default function CompanyUsersPage() {
     (!showDesignations &&
       Boolean(selectedEstate?.value) &&
       isPending(usersStatus));
-  const pageSize =
-    Number(pagination?.pageSize ?? (pagination as { limit?: number })?.limit) ||
-    10;
+  const [pageSize, setPageSize] = useState(10);
   const inviteRole = companyInviteRole(roleFilter);
 
   const fetchUsers = useCallback(
-    (page = 1) => {
+    (page = 1, limit = pageSize) => {
       if (!selectedEstate?.value) return Promise.resolve();
       const shouldApplyDate = Boolean(startDate && endDate);
       return dispatch(
         getCompanyUsersByEstate({
           estateId: selectedEstate.value,
           page,
-          limit: pageSize,
+          limit,
           role: roleFilter,
           search: search.trim() || undefined,
           startDate: shouldApplyDate ? startDate : undefined,
@@ -522,64 +521,74 @@ export default function CompanyUsersPage() {
               render: (item: CompanyUserDetails) => (
                 <div className="flex items-center gap-1">
                   {roleFilter === "resident" ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-[#0150AC] hover:bg-blue-50 hover:text-[#01408A] cursor-pointer"
-                      onClick={() => {
-                        const id = userRowId(item);
-                        if (id) router.push(`/dashboard/company/users/${id}`);
-                      }}
-                      title="View user details"
-                      disabled={!userRowId(item)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
+                    <IconTooltip label="View user details">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[#0150AC] hover:bg-blue-50 hover:text-[#01408A] cursor-pointer"
+                        onClick={() => {
+                          const id = userRowId(item);
+                          if (id) router.push(`/dashboard/company/users/${id}`);
+                        }}
+                        aria-label="View user details"
+                        disabled={!userRowId(item)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </IconTooltip>
                   ) : null}
                   {/* Resident: edit / suspend / delete commented out */}
                   {roleFilter !== "resident" ? (
                     <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-700 cursor-pointer"
-                        onClick={() => handleEditUser(item)}
-                        title="Edit user details"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                      <IconTooltip label="Edit user details">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                          onClick={() => handleEditUser(item)}
+                          aria-label="Edit user details"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </IconTooltip>
                       {item.isActive ? (
+                        <IconTooltip label="Suspend user">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 cursor-pointer"
+                            onClick={() => openSuspendModal(item)}
+                            aria-label="Suspend user"
+                          >
+                            <PowerOff className="w-4 h-4" />
+                          </Button>
+                        </IconTooltip>
+                      ) : (
+                        <IconTooltip label="Activate user">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-green-600 hover:text-green-700 cursor-pointer"
+                            onClick={() => openActivateModal(item)}
+                            aria-label="Activate user"
+                          >
+                            <Power className="w-4 h-4" />
+                          </Button>
+                        </IconTooltip>
+                      )}
+                      <IconTooltip label="Delete user">
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-700 cursor-pointer"
-                          onClick={() => openSuspendModal(item)}
-                          title="Suspend user"
+                          onClick={() =>
+                            handleDeleteUser(userRowId(item), item.firstName)
+                          }
+                          aria-label="Delete user"
                         >
-                          <PowerOff className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-green-600 hover:text-green-700 cursor-pointer"
-                          onClick={() => openActivateModal(item)}
-                          title="Activate user"
-                        >
-                          <Power className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 cursor-pointer"
-                        onClick={() =>
-                          handleDeleteUser(userRowId(item), item.firstName)
-                        }
-                        title="Delete user"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </IconTooltip>
                     </>
                   ) : null}
                   {/* <Button
@@ -806,6 +815,13 @@ export default function CompanyUsersPage() {
             }}
             onPageChange={(page) => {
               fetchUsers(page).catch((err: unknown) => {
+                const message = getApiErrorMessage(err);
+                if (message) toast.error(message);
+              });
+            }}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              fetchUsers(1, size).catch((err: unknown) => {
                 const message = getApiErrorMessage(err);
                 if (message) toast.error(message);
               });

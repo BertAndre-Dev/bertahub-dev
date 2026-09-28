@@ -80,6 +80,10 @@ const estateAdminRequestSlice = createSlice({
     setEstateAdminRequestPage: (state, action: PayloadAction<number>) => {
       state.ui.page = action.payload;
     },
+    setEstateAdminRequestPageSize: (state, action: PayloadAction<number>) => {
+      state.ui.pageSize = action.payload;
+      state.ui.page = 1;
+    },
     clearEstateAdminRequestSelected: (state) => {
       state.selected = null;
       state.getByIdStatus = "idle";
@@ -212,6 +216,7 @@ export const {
   setEstateAdminRequestSearch,
   setEstateAdminRequestStatusFilter,
   setEstateAdminRequestPage,
+  setEstateAdminRequestPageSize,
   clearEstateAdminRequestSelected,
   clearEstateAdminRequestError,
   resetEstateAdminRequestUi,

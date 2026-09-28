@@ -3,6 +3,7 @@
 import { /* ShieldPlus, */ Trash2 } from "lucide-react";
 import type { CommunityMember } from "@/types/community-chat-ui";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type Props = Readonly<{
@@ -73,18 +74,19 @@ export function GroupMemberRow({
           ) : null}
           */}
           {onRemoveMember ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-8 cursor-pointer text-muted-foreground hover:text-destructive disabled:cursor-not-allowed"
-              disabled={actionsDisabled}
-              aria-label={`Remove ${member.name} from group`}
-              title="Remove from group"
-              onClick={() => onRemoveMember(member.id)}
-            >
-              <Trash2 className="size-4" />
-            </Button>
+            <IconTooltip label="Remove from group">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8 cursor-pointer text-muted-foreground hover:text-destructive disabled:cursor-not-allowed"
+                disabled={actionsDisabled}
+                aria-label={`Remove ${member.name} from group`}
+                onClick={() => onRemoveMember(member.id)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </IconTooltip>
           ) : null}
         </div>
       ) : null}

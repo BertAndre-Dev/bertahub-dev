@@ -80,6 +80,10 @@ const companyRequestSlice = createSlice({
     setCompanyRequestPage: (state, action: PayloadAction<number>) => {
       state.ui.page = action.payload;
     },
+    setCompanyRequestPageSize: (state, action: PayloadAction<number>) => {
+      state.ui.pageSize = action.payload;
+      state.ui.page = 1;
+    },
     clearCompanyRequestSelected: (state) => {
       state.selected = null;
       state.getByIdStatus = "idle";
@@ -212,6 +216,7 @@ export const {
   setCompanyRequestSearch,
   setCompanyRequestStatusFilter,
   setCompanyRequestPage,
+  setCompanyRequestPageSize,
   clearCompanyRequestSelected,
   clearCompanyRequestError,
   resetCompanyRequestUi,

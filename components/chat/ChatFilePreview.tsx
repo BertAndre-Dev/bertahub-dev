@@ -1,6 +1,7 @@
 "use client";
 
 import { FileText, X } from "lucide-react";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 type Props = {
   fileName?: string;
@@ -28,15 +29,16 @@ export default function ChatFilePreview({
           )}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onRemove}
-        className="cursor-pointer p-1 rounded-md hover:bg-muted transition-colors disabled:cursor-not-allowed"
-        aria-label="Remove attachment"
-        title="Remove"
-      >
-        <X className="h-4 w-4" />
-      </button>
+      <IconTooltip label="Remove">
+        <button
+          type="button"
+          onClick={onRemove}
+          className="cursor-pointer p-1 rounded-md hover:bg-muted transition-colors disabled:cursor-not-allowed"
+          aria-label="Remove attachment"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </IconTooltip>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
+import { IconTooltip } from "@/components/ui/tooltip";
 import type { RevenueHead } from "@/redux/slice/admin/revenue-head/revenue-head";
 import { slugify } from "@/lib/slug";
 
@@ -46,39 +47,45 @@ export function RevenueHeadCard({
       }}
     >
       <div className="absolute right-4 top-0 flex items-center gap-2">
-        <button
-          type="button"
-          className="h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
-          aria-label="View revenue head"
-          onClick={(e) => {
-            e.stopPropagation();
-            onView(item);
-          }}
-        >
-          <Eye className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          className="text-blue-600 hover:text-blue-700 h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
-          aria-label="Edit revenue head"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(item);
-          }}
-        >
-          <Pencil className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          className="text-red-600 hover:text-red-700 h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
-          aria-label="Delete revenue head"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(item);
-          }}
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <IconTooltip label="View">
+          <button
+            type="button"
+            className="h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
+            aria-label="View revenue head"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView(item);
+            }}
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+        </IconTooltip>
+        <IconTooltip label="Edit">
+          <button
+            type="button"
+            className="text-blue-600 hover:text-blue-700 h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
+            aria-label="Edit revenue head"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(item);
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+        </IconTooltip>
+        <IconTooltip label="Delete">
+          <button
+            type="button"
+            className="text-red-600 hover:text-red-700 h-10 w-10 rounded-full bg-white/90 shadow-sm grid place-items-center hover:bg-muted cursor-pointer"
+            aria-label="Delete revenue head"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(item);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </IconTooltip>
       </div>
 
       <div className="flex items-start gap-4 pr-16">

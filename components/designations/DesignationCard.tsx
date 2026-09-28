@@ -8,6 +8,7 @@ import {
   type Designation,
 } from "@/lib/designations";
 import { cn } from "@/lib/utils";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 type Props = {
   item: Designation;
@@ -29,22 +30,24 @@ function ActionButton({
   children: ReactNode;
 }>) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={(event) => {
-        event.stopPropagation();
-        onClick();
-      }}
-      className={cn(
-        "grid size-9 place-items-center rounded-full bg-white/80 shadow-sm",
-        "transition-transform duration-100 ease-out active:scale-[0.94]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0150AC]/35",
-        className,
-      )}
-    >
-      {children}
-    </button>
+    <IconTooltip label={label}>
+      <button
+        type="button"
+        aria-label={label}
+        onClick={(event) => {
+          event.stopPropagation();
+          onClick();
+        }}
+        className={cn(
+          "grid size-9 place-items-center rounded-full bg-white/80 shadow-sm",
+          "transition-transform duration-100 ease-out active:scale-[0.94]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0150AC]/35",
+          className,
+        )}
+      >
+        {children}
+      </button>
+    </IconTooltip>
   );
 }
 

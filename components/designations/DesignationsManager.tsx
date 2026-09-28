@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Table from "@/components/tables/list/page";
+import { IconTooltip } from "@/components/ui/tooltip";
 import {
   DesignationFormSheet,
   type DesignationFormValues,
@@ -180,6 +181,7 @@ export function DesignationsManager({
   const [search, setSearch] = useState("");
   const [includeInactive, setIncludeInactive] = useState(false);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DESIGNATIONS_PAGE_SIZE);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Designation | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Designation | null>(null);
@@ -289,11 +291,11 @@ export function DesignationsManager({
           search: search || undefined,
           includeInactive,
           page: nextPage,
-          limit: DESIGNATIONS_PAGE_SIZE,
+          limit: pageSize,
         }),
       ).unwrap();
     },
-    [apiCompanyId, apiEstateId, dispatch, includeInactive, page, search],
+    [apiCompanyId, apiEstateId, dispatch, includeInactive, page, pageSize, search],
   );
 
   useEffect(() => {
@@ -409,7 +411,7 @@ export function DesignationsManager({
   const paginationInfo = {
     total: pagination?.total ?? items.length,
     current: pagination?.page ?? page,
-    pageSize: pagination?.limit ?? DESIGNATIONS_PAGE_SIZE,
+    pageSize,
   };
 
   const columns = useMemo(
@@ -470,41 +472,53 @@ export function DesignationsManager({
           }
           return (
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-blue-600 hover:text-blue-700 cursor-pointer"
-                onClick={() => openEdit(item)}
-                title="Edit designation"
-              >
-                <Pencil className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-amber-600 hover:text-amber-700 cursor-pointer"
-                onClick={() => setItemToToggle(item)}
-                title={
+              <IconTooltip label="Edit designation">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                  onClick={() => openEdit(item)}
+                  aria-label="Edit designation"
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+              </IconTooltip>
+              <IconTooltip
+                label={
                   item.isActive
                     ? "Deactivate designation"
                     : "Activate designation"
                 }
               >
-                {item.isActive ? (
-                  <PowerOff className="w-4 h-4" />
-                ) : (
-                  <Power className="w-4 h-4 text-green-600" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-600 hover:text-red-700 cursor-pointer"
-                onClick={() => setItemToDelete(item)}
-                title="Delete designation"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-amber-600 hover:text-amber-700 cursor-pointer"
+                  onClick={() => setItemToToggle(item)}
+                  aria-label={
+                    item.isActive
+                      ? "Deactivate designation"
+                      : "Activate designation"
+                  }
+                >
+                  {item.isActive ? (
+                    <PowerOff className="w-4 h-4" />
+                  ) : (
+                    <Power className="w-4 h-4 text-green-600" />
+                  )}
+                </Button>
+              </IconTooltip>
+              <IconTooltip label="Delete designation">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 cursor-pointer"
+                  onClick={() => setItemToDelete(item)}
+                  aria-label="Delete designation"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </IconTooltip>
             </div>
           );
         },
@@ -612,6 +626,10 @@ export function DesignationsManager({
               top: 0,
               behavior: reduceMotion ? "auto" : "smooth",
             });
+          }}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
           }}
         />
       </Card>

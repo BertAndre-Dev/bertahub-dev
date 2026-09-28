@@ -3,6 +3,7 @@
 import React from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import Pagination from "@/components/pagination/page";
 import {
   buildEntryDisplayRows,
@@ -42,6 +43,8 @@ type Props = {
   entriesLoadingByField: Record<string, boolean>;
   entriesPaginationByField?: Record<string, OperationsReportingApiPagination | null>;
   onEntriesPageChange?: (fieldId: string, page: number) => void;
+  entriesPageSize?: number;
+  onEntriesPageSizeChange?: (fieldId: string, pageSize: number) => void;
   onEditEntry?: (fieldId: string, entry: Entry) => void;
   onDeleteEntry?: (fieldId: string, entry: Entry) => void;
   deleteEntryLoading?: boolean;
@@ -54,6 +57,8 @@ export default function OperationsReportingTypeEntriesList({
   entriesLoadingByField,
   entriesPaginationByField = {},
   onEntriesPageChange,
+  entriesPageSize,
+  onEntriesPageSizeChange,
   onEditEntry,
   onDeleteEntry,
   deleteEntryLoading = false,
@@ -78,7 +83,7 @@ export default function OperationsReportingTypeEntriesList({
         const currentPage = pagination?.page ?? 1;
         const paginationInfo = toPaginationInfo(pagination, {
           page: currentPage,
-          pageSize: OPERATIONS_REPORT_ENTRIES_PAGE_SIZE,
+          pageSize: entriesPageSize ?? OPERATIONS_REPORT_ENTRIES_PAGE_SIZE,
           total: pagination?.total ?? entries.length,
         });
 
@@ -121,25 +126,31 @@ export default function OperationsReportingTypeEntriesList({
                         {onEditEntry || onDeleteEntry ? (
                           <div className="flex shrink-0 items-center gap-1">
                             {onEditEntry ? (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-[#0150AC] hover:text-[#01408A] h-8 w-8"
-                                onClick={() => onEditEntry(fieldId, entry)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
+                              <IconTooltip label="Edit">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-[#0150AC] hover:text-[#01408A] h-8 w-8"
+                                  onClick={() => onEditEntry(fieldId, entry)}
+                                  aria-label="Edit"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </IconTooltip>
                             ) : null}
                             {onDeleteEntry ? (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive h-8 w-8"
-                                disabled={deleteEntryLoading}
-                                onClick={() => onDeleteEntry(fieldId, entry)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <IconTooltip label="Delete">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive hover:text-destructive h-8 w-8"
+                                  disabled={deleteEntryLoading}
+                                  onClick={() => onDeleteEntry(fieldId, entry)}
+                                  aria-label="Delete"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </IconTooltip>
                             ) : null}
                           </div>
                         ) : null}
@@ -167,6 +178,11 @@ export default function OperationsReportingTypeEntriesList({
                   <Pagination
                     paginationInfo={paginationInfo}
                     onPageChange={(page) => onEntriesPageChange(fieldId, page)}
+                    onPageSizeChange={
+                      onEntriesPageSizeChange
+                        ? (size) => onEntriesPageSizeChange(fieldId, size)
+                        : undefined
+                    }
                     disabled={entriesLoading}
                     itemLabel="entries"
                   />

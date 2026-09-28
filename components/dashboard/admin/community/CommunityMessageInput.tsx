@@ -5,6 +5,7 @@ import { Paperclip, SendHorizontal, X } from "lucide-react";
 import { toast } from "react-toastify";
 import ChatFilePreview from "@/components/chat/ChatFilePreview";
 import { Input } from "@/components/ui/input";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { fileToDataUri } from "@/lib/uploads/fileToDataUri";
 import { MAX_FILE_SIZE_BYTES } from "@/lib/uploads/constants";
 import type { GroupMessageType } from "@/types/community-group";
@@ -105,14 +106,16 @@ export function CommunityMessageInput({
             </p>
           </div>
           {onCancelReply ? (
-            <button
-              type="button"
-              onClick={onCancelReply}
-              className="shrink-0 cursor-pointer rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Cancel reply"
-            >
-              <X className="size-4" />
-            </button>
+            <IconTooltip label="Cancel reply">
+              <button
+                type="button"
+                onClick={onCancelReply}
+                className="shrink-0 cursor-pointer rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Cancel reply"
+              >
+                <X className="size-4" />
+              </button>
+            </IconTooltip>
           ) : null}
         </div>
       ) : null}
@@ -148,24 +151,28 @@ export function CommunityMessageInput({
           aria-label="Message text"
         />
         <div className="absolute right-2 flex items-center gap-0.5">
-          <button
-            type="button"
-            onClick={handlePickFile}
-            disabled={blocked}
-            className="cursor-pointer rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Attach file"
-          >
-            <Paperclip className="size-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => void runSend()}
-            disabled={blocked || !canSend}
-            className="cursor-pointer rounded-lg p-2 text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Send message"
-          >
-            <SendHorizontal className="size-5" />
-          </button>
+          <IconTooltip label="Attach file">
+            <button
+              type="button"
+              onClick={handlePickFile}
+              disabled={blocked}
+              className="cursor-pointer rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Attach file"
+            >
+              <Paperclip className="size-5" />
+            </button>
+          </IconTooltip>
+          <IconTooltip label="Send message">
+            <button
+              type="button"
+              onClick={() => void runSend()}
+              disabled={blocked || !canSend}
+              className="cursor-pointer rounded-lg p-2 text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Send message"
+            >
+              <SendHorizontal className="size-5" />
+            </button>
+          </IconTooltip>
         </div>
       </div>
     </div>

@@ -81,6 +81,7 @@ export default function CompanyRevenueHeadsPage() {
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CompanyRevenueHead | null>(null);
@@ -155,7 +156,7 @@ export default function CompanyRevenueHeadsPage() {
       fetchCompanyRevenueHeads({
         estateId,
         page,
-        limit: PAGE_SIZE,
+        limit: pageSize,
         startDate: toIsoIfPresent(startDate),
         endDate: toIsoIfPresent(endDate),
       }),
@@ -165,7 +166,7 @@ export default function CompanyRevenueHeadsPage() {
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
       });
-  }, [dispatch, estateId, startDate, endDate, page]);
+  }, [dispatch, estateId, startDate, endDate, page, pageSize]);
 
   useEffect(() => {
     if (error) toast.error(error);
@@ -278,7 +279,7 @@ export default function CompanyRevenueHeadsPage() {
   const paginationInfo = {
     total: pagination?.total ?? items.length ?? 0,
     current: pagination?.currentPage ?? page,
-    pageSize: pagination?.pageSize ?? PAGE_SIZE,
+    pageSize,
   };
 
   const handlePageChange = (nextPage: number) => {
@@ -399,6 +400,10 @@ export default function CompanyRevenueHeadsPage() {
             <Pagination
               paginationInfo={paginationInfo}
               onPageChange={handlePageChange}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
               disabled={listBusy}
               itemLabel="revenue heads"
             />

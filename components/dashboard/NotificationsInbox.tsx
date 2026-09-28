@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { CheckCheck, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { CheckCheck, Trash2 } from "lucide-react";
 import type { AppDispatch, RootState } from "@/redux/store";
 import {
   clearAllNotifications,
@@ -25,6 +25,7 @@ import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import Loader from "@/components/ui/Loader";
 import DeleteModal from "@/components/resident/delete-modal/page";
+import Pagination from "@/components/pagination/page";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -57,6 +58,7 @@ export function NotificationsInbox() {
   } = useSelector((state: RootState) => state.notifications);
 
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
   const [type, setType] = useState("");
@@ -70,7 +72,7 @@ export function NotificationsInbox() {
     dispatch(
       getNotifications({
         page,
-        limit: PAGE_SIZE,
+        limit: pageSize,
         status: status || undefined,
         priority: priority || undefined,
         type: type.trim() || undefined,
@@ -83,16 +85,11 @@ export function NotificationsInbox() {
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
       });
-  }, [dispatch, page, status, priority, type]);
+  }, [dispatch, page, pageSize, status, priority, type]);
 
   const loading = isPending(getStatus);
   const clearingAll = isBusy(clearAllStatus);
   const total = pagination?.total ?? 0;
-  const totalPages = Math.max(1, pagination?.pages ?? 1);
-  const canPrev = page > 1;
-  const canNext = page < totalPages;
-  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const rangeEnd = Math.min(page * PAGE_SIZE, total);
   const hasNotifications = total > 0 || list.length > 0;
 
   const unreadOnPage = useMemo(
@@ -304,36 +301,20 @@ export function NotificationsInbox() {
       )}
 
       {total > 0 ? (
-        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-          <p className="text-sm text-muted-foreground">
-            Showing {rangeStart}–{rangeEnd} of {total}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!canPrev || loading}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!canNext || loading}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <Pagination
+          paginationInfo={{
+            total,
+            current: page,
+            pageSize,
+          }}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          disabled={loading}
+          itemLabel="notifications"
+        />
       ) : null}
 
       <DeleteModal

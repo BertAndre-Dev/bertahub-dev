@@ -18,6 +18,7 @@ type Props = {
   onDateRangeChange: (range: { startDate: string; endDate: string }) => void;
   paginationInfo: { total: number; current: number; pageSize: number };
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   onExportRequest?: () => Promise<EnergyProviderVendRow[]>;
 };
 
@@ -97,6 +98,7 @@ export default function EnergyProviderVendsTab({
   onDateRangeChange,
   paginationInfo,
   onPageChange,
+  onPageSizeChange,
   onExportRequest,
 }: Readonly<Props>) {
   return (
@@ -114,6 +116,7 @@ export default function EnergyProviderVendsTab({
       showPagination
       paginationInfo={paginationInfo}
       onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
       enableExport
       exportFileName="energy-provider-vend-history"
       onExportRequest={onExportRequest}

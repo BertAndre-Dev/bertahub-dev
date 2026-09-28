@@ -28,6 +28,7 @@ import {
 } from "@/redux/slice/staff/request/staff-request";
 import {
   setStaffRequestPage,
+  setStaffRequestPageSize,
   setStaffRequestSearch,
   setStaffRequestStatusFilter,
 } from "@/redux/slice/staff/request/staff-request-slice";
@@ -563,6 +564,9 @@ export default function RequestSubmitView({
               }}
               onPageChange={(nextPage) =>
                 dispatch(setStaffRequestPage(nextPage))
+              }
+              onPageSizeChange={(size) =>
+                dispatch(setStaffRequestPageSize(size))
               }
             />
           )}

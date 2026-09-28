@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bell, Pencil, Trash2, Paperclip, Pin, Clock, FileText, FileSpreadsheet, FileType, File } from "lucide-react";
 import type { AnnouncementItem } from "@/redux/slice/admin/announcements/announcements";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 export interface AnnouncementCardProps {
   readonly announcement: AnnouncementItem;
@@ -198,27 +199,31 @@ export default function AnnouncementCard({
 
             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
               {canEdit && (
+                <IconTooltip label="Edit (within 1 hour of creation)">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-blue-600 hover:text-blue-700 h-8 w-8 hover:bg-blue-50"
+                    onClick={handleEditClick}
+                    aria-label="Edit (within 1 hour of creation)"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </IconTooltip>
+              )}
+              <IconTooltip label="Delete">
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="text-blue-600 hover:text-blue-700 h-8 w-8 hover:bg-blue-50"
-                  onClick={handleEditClick}
-                  title="Edit (within 1 hour of creation)"
+                  className="text-destructive hover:text-destructive h-8 w-8 hover:bg-destructive/10"
+                  onClick={handleDeleteClick}
+                  aria-label="Delete"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-destructive hover:text-destructive h-8 w-8 hover:bg-destructive/10"
-                onClick={handleDeleteClick}
-                title="Delete"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              </IconTooltip>
             </div>
           </div>
         </div>

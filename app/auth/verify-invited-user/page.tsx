@@ -9,6 +9,7 @@ import { jwtDecode } from "jwt-decode"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Eye, EyeOff, ArrowRight } from "lucide-react"
+import { IconTooltip } from "@/components/ui/tooltip"
 import { verifyInivitedUser } from "@/redux/slice/auth-mgt/auth-mgt"
 import type { AppDispatch, RootState } from "@/redux/store"
 
@@ -160,17 +161,20 @@ export default function VerifyInvitedUserPage() {
               onChange={handleChange}
               className="h-11 pr-10"
             />
-            <button
-              type="button"
-              onClick={() => setShowTempPassword(!showTempPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {showTempPassword ? (
-                <EyeOff className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
-              )}
-            </button>
+            <IconTooltip label={showTempPassword ? "Hide password" : "Show password"}>
+              <button
+                type="button"
+                onClick={() => setShowTempPassword(!showTempPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showTempPassword ? "Hide password" : "Show password"}
+              >
+                {showTempPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </IconTooltip>
           </div>
         </div>
 
@@ -186,13 +190,16 @@ export default function VerifyInvitedUserPage() {
               onChange={handleChange}
               className="h-11 pr-10"
             />
-            <button
-              type="button"
-              onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
+            <IconTooltip label={showNewPassword ? "Hide password" : "Show password"}>
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showNewPassword ? "Hide password" : "Show password"}
+              >
+                {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </IconTooltip>
           </div>
 
           {/* Password checker */}

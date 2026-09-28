@@ -9,6 +9,7 @@ import type { ChatMessage as ChatMessageType, ChatUser } from "@/types/chat";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { deleteMessage } from "@/redux/slice/chat/chat-thunks";
 import { useChatPermissions } from "@/hooks/useChatPermissions";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 type Props = {
   message: ChatMessageType;
@@ -186,21 +187,22 @@ export default function ChatMessage({ message, currentUserId }: Readonly<Props>)
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">{content}</div>
             {canDeleteMessage && !message.isDeleted && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                className={[
-                  "cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity",
-                  "p-1 rounded-md",
-                  isMine
-                    ? "hover:bg-white/10 text-primary-foreground/90"
-                    : "hover:bg-muted text-muted-foreground",
-                ].join(" ")}
-                aria-label="Delete message"
-                title="Delete"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <IconTooltip label="Delete">
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className={[
+                    "cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity",
+                    "p-1 rounded-md",
+                    isMine
+                      ? "hover:bg-white/10 text-primary-foreground/90"
+                      : "hover:bg-muted text-muted-foreground",
+                  ].join(" ")}
+                  aria-label="Delete message"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </IconTooltip>
             )}
           </div>
           {attachment}

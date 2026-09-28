@@ -46,7 +46,7 @@ export default function CompanyTransactionPage() {
   const [companyName, setCompanyName] = useState("Company");
   const [email, setEmail] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [activeTab, setActiveTab] = useState<TransactionsActiveTab>("history");
   const [paidBillsData, setPaidBillsData] = useState<any[]>([]);
   const [paidBillsPagination, setPaidBillsPagination] = useState<{
@@ -78,10 +78,10 @@ export default function CompanyTransactionPage() {
       estateId: selectedEstateId!,
       companyId: companyId ?? undefined,
       page,
-      limit,
+      limit: pageSize,
       search: search.trim() || undefined,
     }),
-    [companyId, selectedEstateId, limit, search],
+    [companyId, selectedEstateId, pageSize, search],
   );
 
   useEffect(() => {
@@ -177,7 +177,7 @@ export default function CompanyTransactionPage() {
           getCompanyPaidBills({
             estateId: selectedEstateId,
             page: paidBillsPage,
-            limit,
+            limit: pageSize,
             startDate: paidBillsStartDate || undefined,
             endDate: paidBillsEndDate || undefined,
           }),
@@ -188,14 +188,14 @@ export default function CompanyTransactionPage() {
           apiPagination.total ??
           res?.totals?.totalRecords ??
           (Array.isArray(res?.data) ? res.data.length : 0);
-        const pageSize = apiPagination.limit ?? limit;
+        const resolvedPageSize = apiPagination.limit ?? pageSize;
         const pages =
           apiPagination.pages ??
-          Math.max(1, Math.ceil((Number(total) || 0) / (pageSize || 1)));
+          Math.max(1, Math.ceil((Number(total) || 0) / (resolvedPageSize || 1)));
         setPaidBillsPagination({
           total: Number(total) || 0,
           page: apiPagination.page ?? paidBillsPage,
-          limit: pageSize,
+          limit: resolvedPageSize,
           pages,
         });
       } catch {
@@ -210,7 +210,7 @@ export default function CompanyTransactionPage() {
     selectedEstateId,
     paidBillsPage,
     dispatch,
-    limit,
+    pageSize,
     paidBillsStartDate,
     paidBillsEndDate,
   ]);
@@ -239,7 +239,7 @@ export default function CompanyTransactionPage() {
     });
   }, [paidBillsData, filterFrequency, filterBill, filterBillStatus]);
 
-  const paidBillsPageSize = paidBillsPagination?.limit ?? limit;
+  const paidBillsPageSize = paidBillsPagination?.limit ?? pageSize;
   const paidBillsTotalPages = Math.max(
     1,
     paidBillsPagination?.pages ??
@@ -578,9 +578,13 @@ export default function CompanyTransactionPage() {
             paginationInfo={{
               total: pagination?.total || transactions.length || 0,
               current: pagination?.currentPage || currentPage,
-              pageSize: pagination?.pageSize || limit,
+              pageSize,
             }}
             onPageChange={handlePageChange}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
             currentPage={currentPage}
             totalPages={pagination?.totalPages || 1}
             onExportRequest={
@@ -625,9 +629,13 @@ export default function CompanyTransactionPage() {
             paginationInfo={{
               total: paidBillsPagination?.total ?? filteredPaidBills.length,
               current: paidBillsPage,
-              pageSize: paidBillsPageSize,
+              pageSize,
             }}
             onPageChange={(p: number) => setPaidBillsPage(p)}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPaidBillsPage(1);
+            }}
             currentPage={paidBillsPage}
             totalPages={paidBillsTotalPages}
             onPrev={() => setPaidBillsPage((p) => Math.max(1, p - 1))}

@@ -7,6 +7,7 @@ import { Edit2, Settings2, Trash2 } from "lucide-react";
 import Select from "react-select";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import DeleteModal from "@/components/resident/delete-modal/page";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { isBusy, isPending } from "@/lib/async-status";
@@ -359,28 +360,32 @@ export default function StaffRequestWorkflowConfigPanel({
                       ) : null}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Edit ${workflow.name}`}
-                        onClick={() => openEditModal(workflow)}
-                        disabled={deleting}
-                        className={requestEditIconButtonClass}
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Delete ${workflow.name}`}
-                        onClick={() => setWorkflowToDelete(workflow)}
-                        disabled={deleting}
-                        className={requestDeleteIconGhostClass}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <IconTooltip label="Edit">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Edit ${workflow.name}`}
+                          onClick={() => openEditModal(workflow)}
+                          disabled={deleting}
+                          className={requestEditIconButtonClass}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      </IconTooltip>
+                      <IconTooltip label="Delete">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Delete ${workflow.name}`}
+                          onClick={() => setWorkflowToDelete(workflow)}
+                          disabled={deleting}
+                          className={requestDeleteIconGhostClass}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </IconTooltip>
                     </div>
                   </div>
                   <div className="space-y-3">

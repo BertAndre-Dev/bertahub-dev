@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { IconTooltip } from "@/components/ui/tooltip";
 
 interface ModalProps {
   visible: boolean;
@@ -55,9 +56,10 @@ const Modal: React.FC<ModalProps> = ({
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
           >
-            <button
-              onClick={onClose}
-              className="
+            <IconTooltip label="Close">
+              <button
+                onClick={onClose}
+                className="
                 absolute
                 cursor-pointer
                 hover:cursor-pointer
@@ -75,23 +77,24 @@ const Modal: React.FC<ModalProps> = ({
                 focus:ring-2
                 focus:ring-gray-300
               "
-              aria-label="Close modal"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                aria-label="Close"
               >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </IconTooltip>
             <div className="relative w-full min-w-0">
               {/* subtle center watermark */}
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

@@ -114,6 +114,7 @@ export default function StaffAnnouncementsPage() {
   );
   const [bootstrapping, setBootstrapping] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
 
   const { list, pagination, getListStatus } = useSelector((state: RootState) => {
     const s = state.staffAnnouncements;
@@ -156,13 +157,13 @@ export default function StaffAnnouncementsPage() {
 
   useEffect(() => {
     if (!estateId || bootstrapping) return;
-    dispatch(getStaffAnnouncements({ estateId, page, limit: PAGE_SIZE }))
+    dispatch(getStaffAnnouncements({ estateId, page, limit: pageSize }))
       .unwrap()
       .catch((err: unknown) => {
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
       });
-  }, [dispatch, estateId, page, bootstrapping]);
+  }, [dispatch, estateId, page, pageSize, bootstrapping]);
 
   const listLoading = isPending(getListStatus);
   const fullPageLoading = bootstrapping || listLoading;
@@ -172,7 +173,7 @@ export default function StaffAnnouncementsPage() {
   const paginationInfo = {
     total: pagination?.total ?? announcements.length,
     current: pagination?.page ?? page,
-    pageSize: pagination?.limit ?? PAGE_SIZE,
+    pageSize,
   };
 
   const handlePageChange = (nextPage: number) => {
@@ -230,6 +231,10 @@ export default function StaffAnnouncementsPage() {
         <Pagination
           paginationInfo={paginationInfo}
           onPageChange={handlePageChange}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
           disabled={listLoading}
           itemLabel="announcements"
         />

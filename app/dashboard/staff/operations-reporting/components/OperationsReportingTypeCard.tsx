@@ -4,6 +4,7 @@ import React from "react";
 import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { formatOperationsReportingDate } from "@/lib/operations-reporting-date";
 import { cn } from "@/lib/utils";
 
@@ -92,60 +93,68 @@ export default function OperationsReportingTypeCard({
           ) : null}
           <div className="flex items-center gap-1">
             {expanded ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full"
-                onClick={onToggle}
-                aria-expanded="true"
-                aria-label="Collapse"
-              >
-                <ChevronUp className="h-5 w-5 text-muted-foreground" />
-              </Button>
+              <IconTooltip label="Collapse">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={onToggle}
+                  aria-expanded="true"
+                  aria-label="Collapse"
+                >
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                </Button>
+              </IconTooltip>
             ) : (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full"
-                onClick={onToggle}
-                aria-expanded="false"
-                aria-label="Expand"
-              >
-                <ChevronDown className="h-5 w-5 text-muted-foreground" />
-              </Button>
+              <IconTooltip label="Expand">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={onToggle}
+                  aria-expanded="false"
+                  aria-label="Expand"
+                >
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                </Button>
+              </IconTooltip>
             )}
             {!readOnly && onEdit ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-[#0150AC] hover:text-[#01408A] h-9 w-9 rounded-full"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit();
-                }}
-                aria-label="Edit"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
+              <IconTooltip label="Edit">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-[#0150AC] hover:text-[#01408A] h-9 w-9 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit();
+                  }}
+                  aria-label="Edit"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </IconTooltip>
             ) : null}
             {!readOnly && onDelete ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-destructive hover:text-destructive h-9 w-9 rounded-full"
-                disabled={deleteDisabled}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                aria-label="Delete"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <IconTooltip label="Delete">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive h-9 w-9 rounded-full"
+                  disabled={deleteDisabled}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  aria-label="Delete"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </IconTooltip>
             ) : null}
           </div>
         </div>

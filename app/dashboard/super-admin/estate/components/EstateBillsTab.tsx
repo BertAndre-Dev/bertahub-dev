@@ -98,6 +98,7 @@ export function EstateBillsTab({ estateId }: Props) {
   const [bills, setBills] = useState<BillRow[]>([]);
   const [billsLoading, setBillsLoading] = useState(false);
   const [billsPage, setBillsPage] = useState(1);
+  const [billsPageSize, setBillsPageSize] = useState(10);
   const [billsPagination, setBillsPagination] = useState<{
     total: number;
     page: number;
@@ -114,6 +115,7 @@ export function EstateBillsTab({ estateId }: Props) {
   const [assignedBills, setAssignedBills] = useState<AssignedBillData[]>([]);
   const [assignedLoading, setAssignedLoading] = useState(false);
   const [assignedPage, setAssignedPage] = useState(1);
+  const [assignedPageSize, setAssignedPageSize] = useState(10);
   const [assignedPagination, setAssignedPagination] = useState<{
     total: number;
     page: number;
@@ -125,7 +127,7 @@ export function EstateBillsTab({ estateId }: Props) {
   const [assignedEndDate, setAssignedEndDate] = useState("");
 
   const fetchBills = useCallback(
-    async (page = 1) => {
+    async (page = 1, limit = billsPageSize) => {
       if (!estateId) return;
       setBillsLoading(true);
       try {
@@ -134,7 +136,7 @@ export function EstateBillsTab({ estateId }: Props) {
           getBillsByEstate({
             estateId,
             page,
-            limit: 10,
+            limit,
             startDate: shouldApplyDate ? billsStartDate : undefined,
             endDate: shouldApplyDate ? billsEndDate : undefined,
           }),
@@ -150,11 +152,11 @@ export function EstateBillsTab({ estateId }: Props) {
         setBillsLoading(false);
       }
     },
-    [dispatch, estateId, billsStartDate, billsEndDate],
+    [dispatch, estateId, billsStartDate, billsEndDate, billsPageSize],
   );
 
   const fetchAssignedBills = useCallback(
-    async (addressId: string, page = 1) => {
+    async (addressId: string, page = 1, limit = assignedPageSize) => {
       if (!estateId || !addressId) return;
       setAssignedLoading(true);
       try {
@@ -164,7 +166,7 @@ export function EstateBillsTab({ estateId }: Props) {
             addressId,
             estateId,
             page,
-            limit: 10,
+            limit,
             startDate: shouldApplyDate ? assignedStartDate : undefined,
             endDate: shouldApplyDate ? assignedEndDate : undefined,
           }),
@@ -180,7 +182,7 @@ export function EstateBillsTab({ estateId }: Props) {
         setAssignedLoading(false);
       }
     },
-    [dispatch, estateId, assignedStartDate, assignedEndDate],
+    [dispatch, estateId, assignedStartDate, assignedEndDate, assignedPageSize],
   );
 
   useEffect(() => {
@@ -431,12 +433,16 @@ export function EstateBillsTab({ estateId }: Props) {
                   ? {
                       total: billsPagination.total,
                       current: billsPage,
-                      pageSize: billsPagination.limit,
+                      pageSize: billsPageSize,
                     }
                   : undefined
               }
               onPageChange={(page) => {
                 fetchBills(page).catch(() => {});
+              }}
+              onPageSizeChange={(size) => {
+                setBillsPageSize(size);
+                fetchBills(1, size).catch(() => {});
               }}
             />
           )}
@@ -502,15 +508,16 @@ export function EstateBillsTab({ estateId }: Props) {
                         Number(assignedPagination.page) ||
                         Number(assignedPagination.currentPage) ||
                         1,
-                      pageSize:
-                        Number(assignedPagination.limit) ||
-                        Number(assignedPagination.pageSize) ||
-                        10,
+                      pageSize: assignedPageSize,
                     }
                   : undefined
               }
               onPageChange={(page) => {
                 fetchAssignedBills(assignedAddressId, page).catch(() => {});
+              }}
+              onPageSizeChange={(size) => {
+                setAssignedPageSize(size);
+                fetchAssignedBills(assignedAddressId, 1, size).catch(() => {});
               }}
             />
           )}

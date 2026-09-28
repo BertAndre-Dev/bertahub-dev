@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import Loader from "@/components/ui/Loader";
 import Table from "@/components/tables/list/page";
 import Modal from "@/components/modal/page";
@@ -1040,48 +1041,59 @@ export default function UserDetailView({
                     </Button>
 
                     {updateUser ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        disabled={actionLoading}
-                        onClick={() => setEditing(true)}
-                        title="Edit user details"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <IconTooltip label="Edit user details">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          disabled={actionLoading}
+                          onClick={() => setEditing(true)}
+                          aria-label="Edit user details"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </IconTooltip>
                     ) : null}
 
                     {user.isActive ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        disabled={actionLoading}
-                        onClick={() => setSuspendOpen(true)}
-                      >
-                        <PowerOff className="h-4 w-4" />
-                      </Button>
+                      <IconTooltip label="Suspend user">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          disabled={actionLoading}
+                          onClick={() => setSuspendOpen(true)}
+                          aria-label="Suspend user"
+                        >
+                          <PowerOff className="h-4 w-4" />
+                        </Button>
+                      </IconTooltip>
                     ) : (
+                      <IconTooltip label="Activate user">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          disabled={actionLoading}
+                          onClick={() => setActivateOpen(true)}
+                          aria-label="Activate user"
+                        >
+                          <Power className="h-4 w-4" />
+                        </Button>
+                      </IconTooltip>
+                    )}
+                    <IconTooltip label="Delete user">
                       <Button
-                        variant="outline"
+                        variant="destructive"
                         size="sm"
                         className="gap-2"
                         disabled={actionLoading}
-                        onClick={() => setActivateOpen(true)}
+                        onClick={handleDelete}
+                        aria-label="Delete user"
                       >
-                        <Power className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    )}
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="gap-2"
-                      disabled={actionLoading}
-                      onClick={handleDelete}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </IconTooltip>
                   </div>
 
                   {profileOpen ? (

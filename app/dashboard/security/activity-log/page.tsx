@@ -63,6 +63,7 @@ export default function ActivityLogPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [bootstrapping, setBootstrapping] = useState(true);
+  const [pageSize, setPageSize] = useState(PAGE_LIMIT);
   const [viewingVisitor, setViewingVisitor] =
     useState<SecurityVisitorItem | null>(null);
 
@@ -114,20 +115,20 @@ export default function ActivityLogPage() {
   }, [list, search]);
 
   const fetchVisitors = useCallback(
-    async (page = 1) => {
+    async (page = 1, limit = pageSize) => {
       if (!estateId) return;
       const shouldApplyDate = Boolean(startDate && endDate);
       await dispatch(
         getAllVisitors({
           estateId,
           page,
-          limit: PAGE_LIMIT,
+          limit,
           startDate: shouldApplyDate ? startDate : undefined,
           endDate: shouldApplyDate ? endDate : undefined,
         }),
       ).unwrap();
     },
-    [dispatch, estateId, startDate, endDate],
+    [dispatch, estateId, startDate, endDate, pageSize],
   );
 
   useEffect(() => {
@@ -364,11 +365,18 @@ export default function ActivityLogPage() {
                   ? {
                       total: pagination.total,
                       current: pagination.page,
-                      pageSize: pagination.limit,
+                      pageSize: pageSize,
                     }
                   : undefined
               }
               onPageChange={onPageChange}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                fetchVisitors(1, size).catch((err: unknown) => {
+                  const message = getApiErrorMessage(err);
+                  if (message) toast.error(message);
+                });
+              }}
             />
           </CardContent>
         </Card>

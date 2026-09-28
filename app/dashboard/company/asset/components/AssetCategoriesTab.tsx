@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Table from "@/components/tables/list/page";
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { Pencil, Trash2 } from "lucide-react";
 import DeleteModal from "@/components/resident/delete-modal/page";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -31,6 +32,7 @@ type Props = {
 export default function AssetCategoriesTab({ estateId }: Readonly<Props>) {
   const dispatch = useDispatch<AppDispatch>();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AssetCategory | null>(null);
@@ -55,13 +57,13 @@ export default function AssetCategoriesTab({ estateId }: Readonly<Props>) {
 
   useEffect(() => {
     if (!estateId) return;
-    dispatch(getAssetCategories({ estateId, page, limit: PAGE_SIZE, search }))
+    dispatch(getAssetCategories({ estateId, page, limit: pageSize, search }))
       .unwrap()
       .catch((err: unknown) => {
         const message = getApiErrorMessage(err);
         if (message) toast.error(message);
       });
-  }, [dispatch, estateId, page, search]);
+  }, [dispatch, estateId, page, pageSize, search]);
 
   const handleConfirmDelete = async () => {
     if (!categoryToDelete || !estateId) return;
@@ -97,31 +99,37 @@ export default function AssetCategoriesTab({ estateId }: Readonly<Props>) {
         exportable: false,
         render: (item: AssetCategory) => (
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditing(item);
-                setModalOpen(true);
-              }}
-            >
-              <Pencil className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:text-destructive h-8"
-              disabled={deleteStatus === "isLoading"}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!getId(item)) return;
-                setCategoryToDelete(item);
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <IconTooltip label="Edit">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditing(item);
+                  setModalOpen(true);
+                }}
+                aria-label="Edit"
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
+            <IconTooltip label="Delete">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive h-8"
+                disabled={deleteStatus === "isLoading"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!getId(item)) return;
+                  setCategoryToDelete(item);
+                }}
+                aria-label="Delete"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </IconTooltip>
           </div>
         ),
       },
@@ -205,11 +213,13 @@ export default function AssetCategoriesTab({ estateId }: Readonly<Props>) {
             categories.length,
           current:
             Number(pagination?.page ?? pagination?.currentPage ?? page) || page,
-          pageSize:
-            Number(pagination?.limit ?? pagination?.pageSize ?? PAGE_SIZE) ||
-            PAGE_SIZE,
+          pageSize,
         }}
         onPageChange={(p) => setPage(p)}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
         enableExport
         exportFileName="asset-categories"
         onExportRequest={() => Promise.resolve(categories)}
