@@ -9,6 +9,7 @@ import { Lock, Eye, EyeOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { OtpInput } from "@/components/ui/otp-input";
 import { forgotPassword, resetPassword } from "@/redux/slice/auth-mgt/auth-mgt";
 import type { AppDispatch, RootState } from "@/redux/store";
 
@@ -92,6 +93,11 @@ export function SecuritySettingsCard() {
 
     if (!email.includes("@")) {
       setResetError("Please enter a valid email");
+      return;
+    }
+
+    if (!/^\d{6}$/.test(resetToken)) {
+      setResetError("Please enter the 6-digit reset code");
       return;
     }
 
@@ -186,17 +192,19 @@ export function SecuritySettingsCard() {
                   </div>
                 )}
                 <div>
-                  <label className="text-sm font-medium" htmlFor="reset-code">
+                  <p className="text-sm font-medium" id="reset-code-label">
                     Reset Code
-                  </label>
-                  <Input
+                  </p>
+                  <OtpInput
                     id="reset-code"
-                    name="resetToken"
-                    type="text"
-                    placeholder="Enter the 6-digit code"
+                    label="Reset Code"
+                    length={6}
                     value={formData.resetToken}
-                    onChange={handleChange}
-                    className="mt-2 h-10"
+                    onChange={(resetToken) =>
+                      setFormData((prev) => ({ ...prev, resetToken }))
+                    }
+                    autoFocus
+                    className="mt-2"
                   />
                 </div>
                 <div>
