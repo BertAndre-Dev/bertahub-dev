@@ -47,10 +47,6 @@ export function DateRangeFilter({
     <div className="w-full min-w-0 md:w-fit">
       <div className="@container/date-range w-full md:contents">
         <div className="flex w-full min-w-0 flex-col gap-2 @min-[24rem]/date-range:flex-row @min-[24rem]/date-range:items-end md:w-auto md:flex-row md:items-end">
-          <Calendar
-            className="mb-3 hidden h-4 w-4 shrink-0 text-muted-foreground @min-[24rem]/date-range:block md:block"
-            aria-hidden
-          />
           <div className={fieldClassName}>
             <label htmlFor={startFieldId} className={labelClassName}>
               Start date

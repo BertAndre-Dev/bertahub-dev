@@ -173,15 +173,10 @@ export default function ReportsPage() {
   const [chartRevenueCategory, setChartRevenueCategory] =
     useState<RevenueCategory>("all");
 
-  // Revenue table filters — isolated to the Revenue ReportTable only
-  const [revenueStartDate, setRevenueStartDate] = useState("");
-  const [revenueEndDate, setRevenueEndDate] = useState("");
   const [revenueFilter, setRevenueFilter] = useState("all");
-
-  // Expenses table filters — isolated to the Expenses ReportTable only
-  const [expensesStartDate, setExpensesStartDate] = useState("");
-  const [expensesEndDate, setExpensesEndDate] = useState("");
   const [expensesHeadId, setExpensesHeadId] = useState<string>("all");
+  const [sharedStartDate, setSharedStartDate] = useState("");
+  const [sharedEndDate, setSharedEndDate] = useState("");
 
   const datePlaceholders = useMemo(() => getDateRangePlaceholders(), []);
 
@@ -246,16 +241,16 @@ export default function ReportsPage() {
 
   const { data: revenueReport, loading: revenueLoading } = useIsolatedReport(
     estateId,
-    revenueStartDate,
-    revenueEndDate,
+    sharedStartDate,
+    sharedEndDate,
     dispatch,
     "revenue report",
   );
 
   const { data: expensesReport, loading: expensesLoading } = useIsolatedReport(
     estateId,
-    expensesStartDate,
-    expensesEndDate,
+    sharedStartDate,
+    sharedEndDate,
     dispatch,
     "expenses report",
   );
@@ -352,8 +347,8 @@ export default function ReportsPage() {
             "expenses",
             h._id,
             h.headName,
-            expensesStartDate,
-            expensesEndDate,
+            sharedStartDate,
+            sharedEndDate,
           )
         : undefined,
     }));
@@ -371,8 +366,8 @@ export default function ReportsPage() {
               "revenue",
               headId,
               row.label,
-              revenueStartDate,
-              revenueEndDate,
+              sharedStartDate,
+              sharedEndDate,
             ),
           };
         },
@@ -381,8 +376,8 @@ export default function ReportsPage() {
       revenueReport?.revenue,
       revenueFilter,
       revenueHeads,
-      revenueStartDate,
-      revenueEndDate,
+      sharedStartDate,
+      sharedEndDate,
     ],
   );
 
@@ -469,6 +464,7 @@ export default function ReportsPage() {
               endPlaceholder={datePlaceholders.end}
             />
 
+            <div className="flex items-center gap-2 ">
             <Select
               value={chartRevenueCategory}
               onChange={(e) =>
@@ -502,6 +498,8 @@ export default function ReportsPage() {
             >
               Export
             </Button>
+            </div>
+
           </div>
         </div>
 
@@ -514,11 +512,45 @@ export default function ReportsPage() {
         </div>
       </Card>
 
-      {estateId ? <RevenueChartCard estateId={estateId} /> : null}
+      <div className="flex justify-end">
+        <DateRangeFilter
+          startId="reports-shared-start"
+          endId="reports-shared-end"
+          startDate={sharedStartDate}
+          endDate={sharedEndDate}
+          onStartChange={setSharedStartDate}
+          onEndChange={setSharedEndDate}
+          startPlaceholder={datePlaceholders.start}
+          endPlaceholder={datePlaceholders.end}
+        />
+      </div>
 
-      {estateId ? <ExpenseChartCard estateId={estateId} /> : null}
+      {estateId ? (
+        <RevenueChartCard
+          estateId={estateId}
+          startDate={sharedStartDate}
+          endDate={sharedEndDate}
+          onDateRangeChange={({ startDate, endDate }) => {
+            setSharedStartDate(startDate);
+            setSharedEndDate(endDate);
+          }}
+          showDateRange={false}
+        />
+      ) : null}
 
-      {/* Revenue table — revenue filters are fully isolated here */}
+      {estateId ? (
+        <ExpenseChartCard
+          estateId={estateId}
+          startDate={sharedStartDate}
+          endDate={sharedEndDate}
+          onDateRangeChange={({ startDate, endDate }) => {
+            setSharedStartDate(startDate);
+            setSharedEndDate(endDate);
+          }}
+          showDateRange={false}
+        />
+      ) : null}
+
       <ReportTable
         columnLabel="Revenue"
         rows={revenueTableRows}
@@ -536,12 +568,13 @@ export default function ReportsPage() {
         filterOptions={revenueFilterOptions}
         filterValue={revenueFilter}
         onFilterChange={setRevenueFilter}
-        startDate={revenueStartDate}
-        endDate={revenueEndDate}
+        startDate={sharedStartDate}
+        endDate={sharedEndDate}
         onDateRangeChange={({ startDate, endDate }) => {
-          setRevenueStartDate(startDate);
-          setRevenueEndDate(endDate);
+          setSharedStartDate(startDate);
+          setSharedEndDate(endDate);
         }}
+        showDateRange={false}
         exportFileName="revenue_report"
       />
 
@@ -577,12 +610,13 @@ export default function ReportsPage() {
         ]}
         filterValue={expensesHeadId}
         onFilterChange={setExpensesHeadId}
-        startDate={expensesStartDate}
-        endDate={expensesEndDate}
+        startDate={sharedStartDate}
+        endDate={sharedEndDate}
         onDateRangeChange={({ startDate, endDate }) => {
-          setExpensesStartDate(startDate);
-          setExpensesEndDate(endDate);
+          setSharedStartDate(startDate);
+          setSharedEndDate(endDate);
         }}
+        showDateRange={false}
         exportFileName="expenses_report"
       />
       </div>

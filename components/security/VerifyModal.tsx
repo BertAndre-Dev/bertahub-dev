@@ -17,7 +17,7 @@ import {
   getApiErrorMessage,
   getApiSuccessMessage,
 } from "@/lib/api-error";
-import type { VisitorDetailsData } from "@/app/dashboard/security/types";
+import type { VisitorDetailsData } from "@/app/(platform)/dashboard/security/types";
 import type { AppDispatch, RootState } from "@/redux/store";
 import { toast } from "react-toastify";
 

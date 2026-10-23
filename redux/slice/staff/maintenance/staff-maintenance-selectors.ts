@@ -4,7 +4,7 @@ import { isPending } from "@/lib/async-status";
 import {
   getAddressDisplay,
   getResidentName,
-} from "@/app/dashboard/staff/maintenance/lib/format";
+} from "@/app/(platform)/dashboard/staff/maintenance/lib/format";
 import type { StaffComplaintItem } from "./staff-maintenance";
 
 function ticketLabel(item: StaffComplaintItem) {

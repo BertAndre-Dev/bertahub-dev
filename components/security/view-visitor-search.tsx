@@ -19,7 +19,7 @@ import {
 } from "@/lib/api-error";
 import { Eye, ScanLine, ShieldCheck } from "lucide-react";
 import BarcodeScannerModal from "@/components/security/barcode-scanner-modal";
-import type { VisitorDetailsData } from "@/app/dashboard/security/types";
+import type { VisitorDetailsData } from "@/app/(platform)/dashboard/security/types";
 import type { VisitorVerificationFlags } from "@/lib/visitor-verification-mode";
 import { getVerificationFlags } from "@/lib/visitor-verification-mode";
 

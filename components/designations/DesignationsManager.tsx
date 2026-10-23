@@ -27,8 +27,8 @@ import {
   type Designation,
 } from "@/lib/designations";
 import { labelForEstateModule } from "@/lib/estate-module-labels";
-import { parseAdminEstate } from "@/app/dashboard/admin/asset/lib/estate";
-import { parseCompanyFromUser } from "@/app/dashboard/company/lib/company";
+import { parseAdminEstate } from "@/app/(platform)/dashboard/admin/asset/lib/estate";
+import { parseCompanyFromUser } from "@/app/(platform)/dashboard/company/lib/company";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import {
   createDesignation,

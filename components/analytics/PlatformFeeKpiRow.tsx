@@ -1,7 +1,7 @@
 "use client";
 
 import { Banknote, Receipt } from "lucide-react";
-import { KpiCard } from "@/app/dashboard/super-admin/dashboard/components/kpi-card";
+import { KpiCard } from "@/app/(platform)/dashboard/super-admin/dashboard/components/kpi-card";
 import { formatTransactionAmount } from "@/lib/transaction-summary-chart";
 import type { PlatformFeeCards } from "@/types/analytics";
 

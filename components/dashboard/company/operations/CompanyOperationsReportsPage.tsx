@@ -5,10 +5,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Select from "react-select";
 
-import OperationsReportingFillReportPanel from "@/app/dashboard/admin/operations-reporting/components/OperationsReportingFillReportPanel";
-import OperationsReportingTypesTab from "@/app/dashboard/admin/operations-reporting/components/OperationsReportingTypesTab";
-import OperationsReportingTypeFormModal from "@/app/dashboard/admin/operations-reporting/components/OperationsReportingTypeFormModal";
-import OperationsReportingConfigureFieldsModal from "@/app/dashboard/admin/operations-reporting/components/OperationsReportingConfigureFieldsModal";
+import OperationsReportingFillReportPanel from "@/app/(platform)/dashboard/admin/operations-reporting/components/OperationsReportingFillReportPanel";
+import OperationsReportingTypesTab from "@/app/(platform)/dashboard/admin/operations-reporting/components/OperationsReportingTypesTab";
+import OperationsReportingTypeFormModal from "@/app/(platform)/dashboard/admin/operations-reporting/components/OperationsReportingTypeFormModal";
+import OperationsReportingConfigureFieldsModal from "@/app/(platform)/dashboard/admin/operations-reporting/components/OperationsReportingConfigureFieldsModal";
 import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
 import { getCompanyEstates } from "@/redux/slice/company/estate-mgt/company-estate";
 import {
@@ -24,12 +24,12 @@ import {
   setCompanyOperationsReportingEstate,
 } from "@/redux/slice/company/operations-reporting/company-operations-reporting-slice";
 import type { AppDispatch } from "@/redux/store";
-import { parseCompanyFromUser } from "@/app/dashboard/company/lib/company";
+import { parseCompanyFromUser } from "@/app/(platform)/dashboard/company/lib/company";
 import {
   mapCompanyEstateRows,
   parseCompanyEstates,
   type EstateOption,
-} from "@/app/dashboard/company/asset/lib/estate";
+} from "@/app/(platform)/dashboard/company/asset/lib/estate";
 import Loader from "@/components/ui/Loader";
 import { Button } from "@/components/ui/button";
 import DeleteModal from "@/components/resident/delete-modal/page";

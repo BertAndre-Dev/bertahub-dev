@@ -34,6 +34,7 @@ export interface ReportTableProps {
   startDate: string;
   endDate: string;
   onDateRangeChange: (range: { startDate: string; endDate: string }) => void;
+  showDateRange?: boolean;
   exportFileName?: string;
 }
 
@@ -56,6 +57,7 @@ export function ReportTable({
   startDate,
   endDate,
   onDateRangeChange,
+  showDateRange = true,
   exportFileName = "report",
 }: ReportTableProps) {
   const router = useRouter();
@@ -83,6 +85,7 @@ export function ReportTable({
   return (
     <div className="rounded-lg border border-border bg-white">
       {/* Controls */}
+      {showDateRange ? (
       <div className="flex w-full min-w-0 flex-col gap-2 border-b p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
         <DateRangeFilter
           startDate={startDate}
@@ -95,15 +98,16 @@ export function ReportTable({
           }
         />
 
-        <button
+        {/* <button
           onClick={handleExport}
           disabled={!rows.length}
           className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm hover:bg-muted/40 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Download className="h-4 w-4" />
           Export
-        </button>
+        </button> */}
       </div>
+      ) : null}
 
       {/* Table */}
       <table className="w-full text-sm">

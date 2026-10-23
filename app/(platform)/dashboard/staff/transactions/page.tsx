@@ -1,0 +1,967 @@
+"use client";
+
+import { getSignedInUser } from "@/redux/slice/auth-mgt/auth-mgt";
+import {
+  verifyTransaction,
+  getEstateTransactionHistory,
+  getEstateVends,
+  getEstatePaidBills,
+} from "@/redux/slice/staff/transaction/transaction";
+
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/redux/store";
+import { useEffect, useState, useMemo } from "react";
+import { toast } from "react-toastify";
+import { type EstateTransactionsFilters } from "@/components/estate-admin/transactions-filter-bar";
+import { TransactionsPageHeader } from "@/app/(platform)/dashboard/estate-admin/transactions/components/TransactionsPageHeader";
+import { TransactionsSearchCard } from "@/app/(platform)/dashboard/estate-admin/transactions/components/TransactionsSearchCard";
+import {
+  TransactionsTabsCard,
+  type TransactionsActiveTab,
+} from "@/app/(platform)/dashboard/estate-admin/transactions/components/TransactionsTabsCard";
+import { HistoryTransactionsTab } from "@/app/(platform)/dashboard/estate-admin/transactions/components/HistoryTransactionsTab";
+import { VendsTab } from "@/app/(platform)/dashboard/estate-admin/transactions/components/VendsTab";
+import { PaidBillsTab } from "@/app/(platform)/dashboard/estate-admin/transactions/components/PaidBillsTab";
+import {
+  PaidBillResidentCell,
+  paidBillResidentExportValue,
+} from "@/app/(platform)/dashboard/estate-admin/transactions/components/PaidBillResidentCell";
+import {
+  PaidBillDetailsModal,
+  type PaidBillDetailsItem,
+} from "@/app/(platform)/dashboard/estate-admin/transactions/components/PaidBillDetailsModal";
+import { formatDateTime } from "@/lib/format-date";
+import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/tooltip";
+import { Eye } from "lucide-react";
+import Loader from "@/components/ui/Loader";
+import { isPending } from "@/lib/async-status";
+
+interface TransactionData {
+  walletId: string;
+  type: string;
+  amount: number;
+  description: string;
+  userId: string;
+  id?: string;
+  paymentStatus?: string;
+  tx_ref?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export default function StaffTransactionPage() {
+  const dispatch = useDispatch<AppDispatch>();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [estateId, setEstateId] = useState<string | null>(null);
+  const [estateName, setEstateName] = useState("Estate");
+  const [email, setEmail] = useState<string>("");
+  const [bootstrapping, setBootstrapping] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [activeTab, setActiveTab] = useState<TransactionsActiveTab>("vends");
+  const [vendsData, setVendsData] = useState<any[]>([]);
+  const [vendsPagination, setVendsPagination] = useState<{
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  } | null>(null);
+  const [vendsPage, setVendsPage] = useState(1);
+  const [loadingVends, setLoadingVends] = useState(true);
+  const [vendsStartDate, setVendsStartDate] = useState<string>("");
+  const [vendsEndDate, setVendsEndDate] = useState<string>("");
+  const [paidBillsData, setPaidBillsData] = useState<any[]>([]);
+  const [paidBillsPagination, setPaidBillsPagination] = useState<{
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  } | null>(null);
+  const [paidBillsPage, setPaidBillsPage] = useState(1);
+  const [loadingPaidBills, setLoadingPaidBills] = useState(false);
+  const [paidBillsStartDate, setPaidBillsStartDate] = useState<string>("");
+  const [paidBillsEndDate, setPaidBillsEndDate] = useState<string>("");
+  const [viewingPaidBill, setViewingPaidBill] =
+    useState<PaidBillDetailsItem | null>(null);
+  const [search, setSearch] = useState("");
+  const [filterType] = useState<string>("");
+  const [filterStatus] = useState<string>("");
+  const [filterFrequency, setFilterFrequency] = useState<string>("");
+  const [filterBill, setFilterBill] = useState<string>("");
+  const [filterBillStatus, setFilterBillStatus] = useState<string>("");
+  const transactions = useSelector(
+    (state: RootState) => state.staffTransaction?.allTransactions?.data || [],
+  );
+  const pagination = useSelector(
+    (state: RootState) =>
+      state.staffTransaction?.allTransactions?.pagination,
+  );
+  const historyStatus = useSelector(
+    (state: RootState) =>
+      state.staffTransaction?.getEstateTransactionHistoryState as
+        | string
+        | undefined,
+  );
+
+  const pageLoading =
+    bootstrapping ||
+    (activeTab === "history" && isPending(historyStatus)) ||
+    (activeTab === "vends" && loadingVends) ||
+    (activeTab === "paid-bills" &&
+      loadingPaidBills &&
+      paidBillsData.length === 0);
+
+  // 🔹 Fetch signed-in user and wallet on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const userRes = await dispatch(getSignedInUser()).unwrap();
+        const data = userRes?.data ?? (userRes as Record<string, unknown>);
+        const id = (data?.id as string) || (data?._id as string) || null;
+        const userEmail = (data?.email as string) || "";
+        const rawEstateId = data?.estateId as
+          | string
+          | { id?: string; _id?: string }
+          | undefined;
+        const estateIdFromUser =
+          typeof rawEstateId === "string"
+            ? rawEstateId
+            : rawEstateId?._id || rawEstateId?.id || "";
+
+        const estateFromId =
+          (data?.estateId as { name?: string } | undefined)?.name ?? "";
+        const estateFromObj =
+          (data?.estate as { name?: string } | undefined)?.name ?? "";
+        const fallbackEstateName = (data?.estateName as string) ?? "";
+        const name =
+          estateFromId || estateFromObj || fallbackEstateName || "Estate";
+        setEstateName(name);
+
+        if (!id) {
+          toast.warning("No user found.");
+          return;
+        }
+
+        setUserId(id);
+        setEmail(userEmail || "");
+
+        if (!estateIdFromUser) {
+          toast.error("No estate ID found for this user.");
+          return;
+        }
+
+        setEstateId(estateIdFromUser);
+
+        // ✅ Fetch estate transactions (paginated) using estateId
+        await dispatch(
+          getEstateTransactionHistory({
+            estateId: estateIdFromUser,
+            page: 1,
+            limit: pageSize,
+            search: search || undefined,
+            type: filterType || undefined,
+            paymentStatus: filterStatus || undefined,
+          }),
+        );
+
+        // ✅ Fetch vends and paid bills totals for stats (limit 1 just to get pagination.total)
+        await Promise.all([
+          dispatch(
+            getEstateVends({
+              estateId: estateIdFromUser,
+              page: 1,
+              limit: 1,
+            }),
+          )
+            .unwrap()
+            .catch(() => ({ pagination: { total: 0 } })),
+          dispatch(
+            getEstatePaidBills({
+              estateId: estateIdFromUser,
+              page: 1,
+              limit: 50000,
+            }),
+          )
+            .unwrap()
+            .catch(() => ({ pagination: { total: 0 } })),
+        ]);
+      } catch {
+        toast.error("Failed to load data.");
+      } finally {
+        setBootstrapping(false);
+      }
+    })();
+  }, [dispatch, pageSize]);
+
+  // 🔹 Refetch transaction history when search or filters change (debounced for search).
+  useEffect(() => {
+    if (!estateId) return;
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      dispatch(
+        getEstateTransactionHistory({
+          estateId,
+          page: 1,
+          limit: pageSize,
+          search: search.trim() || undefined,
+          type: filterType || undefined,
+          paymentStatus: filterStatus || undefined,
+        }),
+      );
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, filterType, filterStatus, estateId, dispatch, pageSize]);
+
+  // 🔹 Fetch vends when tab is vends
+  useEffect(() => {
+    if (activeTab !== "vends" || !estateId) return;
+    (async () => {
+      setLoadingVends(true);
+      try {
+        const res = await dispatch(
+          getEstateVends({
+            estateId,
+            page: vendsPage,
+            limit: pageSize,
+            startDate: vendsStartDate || undefined,
+            endDate: vendsEndDate || undefined,
+          }),
+        ).unwrap();
+        setVendsData(res?.data ?? []);
+        setVendsPagination(res?.pagination ?? null);
+      } catch {
+        setVendsData([]);
+        setVendsPagination(null);
+      } finally {
+        setLoadingVends(false);
+      }
+    })();
+  }, [
+    activeTab,
+    estateId,
+    vendsPage,
+    dispatch,
+    pageSize,
+    vendsStartDate,
+    vendsEndDate,
+  ]);
+
+  useEffect(() => {
+    if (activeTab !== "paid-bills" || !estateId) return;
+    (async () => {
+      setLoadingPaidBills(true);
+      try {
+        const res = await dispatch(
+          getEstatePaidBills({
+            estateId,
+            page: paidBillsPage,
+            limit: pageSize,
+            startDate: paidBillsStartDate || undefined,
+            endDate: paidBillsEndDate || undefined,
+          }),
+        ).unwrap();
+        setPaidBillsData(res?.data ?? []);
+        const apiPagination = res?.pagination ?? {};
+        const total =
+          apiPagination.total ??
+          res?.totals?.totalRecords ??
+          (Array.isArray(res?.data) ? res.data.length : 0);
+        const resolvedPageSize = apiPagination.limit ?? pageSize;
+        const pages =
+          apiPagination.pages ??
+          Math.max(1, Math.ceil((Number(total) || 0) / (resolvedPageSize || 1)));
+        setPaidBillsPagination({
+          total: Number(total) || 0,
+          page: apiPagination.page ?? paidBillsPage,
+          limit: resolvedPageSize,
+          pages,
+        });
+      } catch {
+        setPaidBillsData([]);
+        setPaidBillsPagination(null);
+      } finally {
+        setLoadingPaidBills(false);
+      }
+    })();
+  }, [
+    activeTab,
+    estateId,
+    paidBillsPage,
+    dispatch,
+    pageSize,
+    paidBillsStartDate,
+    paidBillsEndDate,
+  ]);
+
+  // 🔹 Pagination Handler
+  const handlePageChange = async (newPage: number) => {
+    if (!estateId) return;
+    setCurrentPage(newPage);
+    await dispatch(
+      getEstateTransactionHistory({
+        estateId,
+        page: newPage,
+        limit: pageSize,
+        search: search.trim() || undefined,
+        type: filterType || undefined,
+        paymentStatus: filterStatus || undefined,
+      }),
+    );
+  };
+
+  // 🔹 Filter paid bills by Frequency, Bill, Status (client-side)
+  const filteredPaidBills = useMemo(() => {
+    return (paidBillsData ?? []).filter((item: any) => {
+      if (filterFrequency) {
+        const freq = (item.frequency ?? "").toString().toLowerCase();
+        if (freq !== filterFrequency.toLowerCase()) return false;
+      }
+      if (filterBill) {
+        const billName = item.bill?.name ?? item.billName ?? "";
+        if (billName !== filterBill) return false;
+      }
+      if (filterBillStatus) {
+        const status = (item.status ?? "").toString().toLowerCase();
+        if (status !== filterBillStatus.toLowerCase()) return false;
+      }
+      return true;
+    });
+  }, [paidBillsData, filterFrequency, filterBill, filterBillStatus]);
+
+  const paidBillsPageSize = paidBillsPagination?.limit ?? pageSize;
+  const paidBillsTotalPages = Math.max(
+    1,
+    paidBillsPagination?.pages ??
+      Math.ceil((paidBillsPagination?.total ?? 0) / (paidBillsPageSize || 1)),
+  );
+
+  const paidBillsFrequencyOptions = useMemo(() => {
+    const set = new Set<string>();
+    (paidBillsData ?? []).forEach((item: any) => {
+      const f = item.frequency;
+      if (f) set.add(f);
+    });
+    return [
+      { value: "", label: "All" },
+      ...Array.from(set).map((f) => ({
+        value: f,
+        label:
+          f.toLowerCase() === "oneoff"
+            ? "One-off"
+            : f.charAt(0).toUpperCase() + f.slice(1),
+      })),
+    ];
+  }, [paidBillsData]);
+
+  const paidBillsBillOptions = useMemo(() => {
+    const set = new Set<string>();
+    (paidBillsData ?? []).forEach((item: any) => {
+      const name = item.bill?.name ?? item.billName;
+      if (name) set.add(name);
+    });
+    return [
+      { value: "", label: "All" },
+      ...Array.from(set).map((name) => ({ value: name, label: name })),
+    ];
+  }, [paidBillsData]);
+
+  const handlePaidBillsFiltersChange = (filters: EstateTransactionsFilters) => {
+    setFilterFrequency(filters.frequency);
+    setFilterBill(filters.bill);
+    setFilterBillStatus(filters.status);
+    setPaidBillsPage(1);
+  };
+
+  // Keep paidBillsPage in bounds when filtered list shrinks
+  useEffect(() => {
+    if (!paidBillsPagination) return;
+    if (paidBillsPage > paidBillsPagination.pages) {
+      setPaidBillsPage(Math.max(1, paidBillsPagination.pages));
+    }
+  }, [paidBillsPagination, paidBillsPage]);
+
+  const paidBillsEmptyMessage =
+    filteredPaidBills.length === 0
+      ? "No paid bills match the selected filters."
+      : "No paid bills found.";
+
+  // 🔹 Automatically verify transaction when redirected back
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tx_ref = urlParams.get("tx_ref") || urlParams.get("trx_ref");
+
+    if (!tx_ref) return; // User didn't come from Flutterwave
+
+    const verifyTransactionAsync = async () => {
+      try {
+        // Wait for user info if not ready
+        let currentUserId = userId;
+        let currentEstateId = estateId;
+
+        if (!currentUserId || !currentEstateId) {
+          const userRes = await dispatch(getSignedInUser()).unwrap();
+          currentUserId = userRes?.data?.id;
+          const currentEmail = userRes?.data?.email || "";
+          currentEstateId =
+            userRes?.data?.estateId || userRes?.data?.estate?.id;
+          setUserId(currentUserId);
+          setEmail(currentEmail);
+          setEstateId(currentEstateId);
+        }
+
+        if (!currentUserId) throw new Error("User not found for verification");
+        if (!currentEstateId)
+          throw new Error("Estate not found for verification");
+
+        // ✅ Trigger verification via Redux thunk
+        await dispatch(
+          verifyTransaction({ tx_ref, paymentType: "withdrawFund" }),
+        ).unwrap();
+
+        toast.success("Withdrawal successful!");
+
+        // Refresh transaction history
+        await dispatch(
+          getEstateTransactionHistory({
+            estateId: currentEstateId,
+            page: currentPage,
+            limit: pageSize,
+          }),
+        );
+
+        // Clean up URL params
+        const url = new URL(window.location.href);
+        ["tx_ref", "trx_ref", "transaction_id", "status"].forEach((key) =>
+          url.searchParams.delete(key),
+        );
+        window.history.replaceState({}, document.title, url.toString());
+      } catch (err: any) {
+        const errorMessage =
+          err?.message || err?.payload?.message || "Verification failed";
+        toast.error(errorMessage);
+      }
+    };
+
+    // Small delay helps ensure wallet/user state is loaded
+    const timer = setTimeout(verifyTransactionAsync, 800);
+    return () => clearTimeout(timer);
+  }, [dispatch, userId, email, estateId, currentPage, pageSize]);
+
+  // Table columns for transaction history
+  const columns = [
+    {
+      key: "createdAt",
+      header: "Date",
+      render: (item: any) =>
+        formatDateTime(item.createdAt, "-"),
+      exportValue: (item: any) =>
+        formatDateTime(item.createdAt, ""),
+    },
+    {
+      key: "user",
+      header: "Resident",
+      render: (item: any) =>
+        item.user
+          ? [item.user.firstName, item.user.lastName]
+              .filter(Boolean)
+              .join(" ") || item.user.email
+          : "-",
+      exportValue: (item: any) => {
+        const u = item?.user;
+        if (!u) return "";
+        const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+        return name || u.email || "";
+      },
+    },
+    {
+      key: "email",
+      header: "Email",
+      render: (item: any) => item.user?.email ?? "-",
+      exportValue: (item: any) => String(item?.user?.email ?? ""),
+    },
+    {
+      key: "tx_ref",
+      header: "Transaction Reference",
+      render: (item: any) => item.tx_ref ?? "-",
+      exportValue: (item: any) => String(item?.tx_ref ?? ""),
+    },
+
+    {
+      key: "type",
+      header: "Type",
+      render: (item: any) =>
+        item.type === "credit" ? (
+          <span className="text-green-600 font-medium">Credit</span>
+        ) : (
+          <span className="text-red-600 font-medium">Debit</span>
+        ),
+      exportValue: (item: any) => (item.type === "credit" ? "Credit" : "Debit"),
+    },
+    {
+      key: "amount",
+      header: "Amount (₦)",
+      render: (item: any) => item.amount?.toLocaleString() ?? 0,
+      exportValue: (item: any) =>
+        item.amount != null ? String(item.amount) : "",
+    },
+    {
+      key: "paymentStatus",
+      header: "Status",
+      render: (item: any) => {
+        const status = (item.paymentStatus ?? "").toString().toLowerCase();
+        if (status === "successful" || status === "paid" || status === "success") {
+          return (
+            <span className="text-green-600 font-medium">Successful</span>
+          );
+        }
+        if (
+          status === "failed" ||
+          status === "fail" ||
+          status === "unsuccessful" ||
+          status === "cancelled" ||
+          status === "canceled"
+        ) {
+          return (
+            <span className="text-red-600 font-medium capitalize">
+              {item.paymentStatus}
+            </span>
+          );
+        }
+        return (
+          <span className="text-yellow-600 font-medium">
+            {item.paymentStatus || "Pending"}
+          </span>
+        );
+      },
+      exportValue: (item: any) =>
+        item.paymentStatus === "successful"
+          ? "Successful"
+          : String(item.paymentStatus || "Pending"),
+    },
+  ];
+
+
+  const vendsColumns = [
+    {
+      key: "createdAt",
+      header: "Date",
+      render: (item: any) =>
+        formatDateTime(item.createdAt, "-"),
+      exportValue: (item: any) =>
+        formatDateTime(item.createdAt, ""),
+    },
+    {
+      key: "user",
+      header: "Resident",
+      render: (item: any) =>
+        item.user
+          ? [item.user.firstName, item.user.lastName]
+              .filter(Boolean)
+              .join(" ") || item.user.email
+          : "-",
+      exportValue: (item: any) => {
+        const u = item?.user;
+        if (!u) return "";
+        const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+        return name || u.email || "";
+      },
+    },
+    {
+      key: "email",
+      header: "Email",
+      render: (item: any) => {
+        const email = (item?.user?.email ?? "").toString();
+        if (!email) return "-";
+        return (
+          <span
+            className="inline-block max-w-[180px] truncate align-bottom"
+            title={email}
+          >
+            {email}
+          </span>
+        );
+      },
+      exportValue: (item: any) => String(item?.user?.email ?? ""),
+    },
+    {
+      key: "meterNumber",
+      header: "Meter",
+      render: (item: any) => item.meterNumber ?? "-",
+      exportValue: (item: any) => String(item?.meterNumber ?? ""),
+    },
+    {
+      key: "amount",
+      header: "Amount (₦)",
+      render: (item: any) => item.amount?.toLocaleString() ?? 0,
+      exportValue: (item: any) =>
+        item.amount != null ? String(item.amount) : "",
+    },
+
+    {
+      key: "netEnergyPrice",
+      header: "Price(₦/kWh)",
+      render: (item: any) => {
+        const e = item?.fullResponse?.energyList?.[0];
+
+        const price = Number(e?.price);
+        const taxRate = Number(e?.taxRate ?? e?.tax_rate);
+
+        if (!Number.isFinite(price)) return "—";
+        if (!Number.isFinite(taxRate)) return "—";
+
+        const totalAmount = price * (1 + taxRate / 100);
+
+        if (!Number.isFinite(totalAmount)) return "—";
+
+        const roundToWhole = (value: number) =>
+          Number.isFinite(value) ? Math.round(value) : "—";
+
+        return roundToWhole(totalAmount);
+      },
+      exportValue: (item: any) => {
+        const e = item?.fullResponse?.energyList?.[0];
+        const price = Number(e?.price);
+        const taxRate = Number(e?.taxRate ?? e?.tax_rate);
+
+        // Keep exports machine-friendly (no commas) while still being resilient
+        // to inconsistent API responses.
+        if (!Number.isFinite(price)) return "";
+        if (!Number.isFinite(taxRate)) return "";
+
+        const totalAmount = price * (1 + taxRate / 100);
+
+        if (!Number.isFinite(totalAmount)) return "";
+        return String(Math.round(totalAmount));
+      },
+    },
+    {
+      key: "energyPrice",
+      header: "Net Price(₦/kWh)",
+      render: (item: any) => {
+        const price = item?.fullResponse?.energyList?.[0]?.price;
+        if (price == null || price === "") return "—";
+        const n = Number(price);
+        if (!Number.isFinite(n)) return "—";
+        return n.toLocaleString();
+      },
+      exportValue: (item: any) => {
+        const price = item?.fullResponse?.energyList?.[0]?.price;
+        if (price == null || price === "") return "";
+        const n = Number(price);
+        if (!Number.isFinite(n)) return "";
+        // clean export value (rounded, no commas)
+        return String(Math.round(n));
+      },
+    },
+    {
+      key: "energyValue",
+      header: "Value",
+      render: (item: any) => {
+        const value = item?.fullResponse?.energyList?.[0]?.value ?? null;
+        if (value == null || value === "") return "—";
+        const vNum = Number(value);
+        return Number(vNum) ? String(vNum) : String(value);
+      },
+      exportValue: (item: any) => {
+        const value = item?.fullResponse?.energyList?.[0]?.value ?? "";
+        return value == null ? "" : String(value);
+      },
+    },
+    {
+      key: "taxRate",
+      header: "Tax Rate (%)",
+      render: (item: any) => {
+        const rate =
+          item?.fullResponse?.energyList?.[0]?.taxRate ??
+          item?.fullResponse?.energyList?.[0]?.tax_rate ??
+          null;
+        if (rate == null || rate === "") return "—";
+        const n = Number(rate);
+        return Number(n) ? String(n) : String(rate);
+      },
+      exportValue: (item: any) => {
+        const rate =
+          item?.fullResponse?.energyList?.[0]?.taxRate ??
+          item?.fullResponse?.energyList?.[0]?.tax_rate ??
+          "";
+        return rate == null ? "" : String(rate);
+      },
+    },
+  ];
+
+  const paidBillsColumns = [
+    {
+      key: "createdAt",
+      header: "Created",
+      render: (item: any) => formatDateTime(item.createdAt, "-"),
+      exportValue: (item: any) => formatDateTime(item.createdAt, ""),
+    },
+    {
+      key: "lastPaymentDate",
+      header: "Last Payment",
+      render: (item: any) => formatDateTime(item.lastPaymentDate, "-"),
+      exportValue: (item: any) => formatDateTime(item.lastPaymentDate, ""),
+    },
+    {
+      key: "user",
+      header: "Resident",
+      render: (item: any) => <PaidBillResidentCell user={item.user} />,
+      exportValue: (item: any) => paidBillResidentExportValue(item?.user),
+    },
+    {
+      key: "bill",
+      header: "Bill",
+      render: (item: any) => item.bill?.name ?? item.billName ?? "-",
+      exportValue: (item: any) =>
+        String(item.bill?.name ?? item.billName ?? ""),
+    },
+    {
+      key: "frequency",
+      header: "Frequency",
+      render: (item: any) => {
+        const freq = (item.frequency ?? "").toString();
+        if (!freq) return "-";
+        if (freq.toLowerCase() === "oneoff") return "One-off";
+        return freq.charAt(0).toUpperCase() + freq.slice(1);
+      },
+      exportValue: (item: any) => String(item.frequency ?? ""),
+    },
+    {
+      key: "amountPaid",
+      header: "Amount Paid (₦)",
+      render: (item: any) =>
+        item.amountPaid != null
+          ? Number(item.amountPaid).toLocaleString()
+          : "0",
+      exportValue: (item: any) =>
+        item.amountPaid != null ? String(item.amountPaid) : "",
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (item: any) => {
+        const status = (item.status ?? "-").toString().toLowerCase();
+        let className = "text-yellow-600 font-medium capitalize";
+        if (status === "paid")
+          className = "text-green-600 font-medium capitalize";
+        else if (status === "active")
+          className = "text-blue-600 font-medium capitalize";
+        return <span className={className}>{item.status ?? "-"}</span>;
+      },
+      exportValue: (item: any) => String(item.status ?? ""),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      exportable: false as const,
+      render: (item: any) => (
+        <IconTooltip label="View details">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-[#0150AC] hover:text-[#01408A] cursor-pointer"
+            aria-label="View details"
+            onClick={() => setViewingPaidBill(item)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </IconTooltip>
+      ),
+    },
+  ];
+
+  return (
+    <div className="relative">
+      {pageLoading && <Loader fullScreen label="Loading transactions..." />}
+
+      <div
+        className={[
+          "space-y-6",
+          pageLoading ? "pointer-events-none select-none" : "",
+        ].join(" ")}
+      >
+      <TransactionsPageHeader estateName={estateName} />
+      <TransactionsSearchCard search={search} onSearchChange={setSearch} />
+      <TransactionsTabsCard
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        history={
+          <HistoryTransactionsTab
+            columns={columns}
+            data={transactions}
+            emptyMessage={
+              isPending(historyStatus)
+                ? "Loading transactions..."
+                : "No transactions found."
+            }
+            showPagination
+            paginationInfo={{
+              total: pagination?.total || transactions.length || 0,
+              current: pagination?.currentPage || currentPage,
+              pageSize,
+            }}
+            onPageChange={handlePageChange}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+            currentPage={currentPage}
+            totalPages={pagination?.totalPages || 1}
+            onExportRequest={
+              estateId
+                ? async () => {
+                    const res = await dispatch(
+                      getEstateTransactionHistory({
+                        estateId,
+                        page: 1,
+                        limit: 50000,
+                      }),
+                    ).unwrap();
+                    return res?.data ?? [];
+                  }
+                : undefined
+            }
+          />
+        }
+        vends={
+          <VendsTab
+            columns={vendsColumns}
+            data={vendsData}
+            emptyMessage={loadingVends ? "Loading vends..." : "No vends found."}
+            defaultDateRangeDays={0}
+            startDate={vendsStartDate}
+            endDate={vendsEndDate}
+            onDateRangeChange={({
+              startDate,
+              endDate,
+            }: {
+              startDate: string;
+              endDate: string;
+            }) => {
+              setVendsStartDate(startDate);
+              setVendsEndDate(endDate);
+              setVendsPage(1);
+            }}
+            paginationInfo={{
+              total: vendsPagination?.total ?? 0,
+              current: vendsPagination?.page ?? vendsPage,
+              pageSize,
+            }}
+            onPageChange={(p: number) => setVendsPage(p)}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setVendsPage(1);
+            }}
+            onExportRequest={
+              estateId
+                ? async () => {
+                    const res = await dispatch(
+                      getEstateVends({
+                        estateId,
+                        page: 1,
+                        limit: 50000,
+                        startDate: vendsStartDate || undefined,
+                        endDate: vendsEndDate || undefined,
+                      }),
+                    ).unwrap();
+                    return res?.data ?? [];
+                  }
+                : undefined
+            }
+          />
+        }
+        paidBills={
+          <PaidBillsTab
+            defaultDateRangeDays={0}
+            frequency={filterFrequency}
+            bill={filterBill}
+            status={filterBillStatus}
+            onFiltersChange={handlePaidBillsFiltersChange}
+            frequencyOptions={paidBillsFrequencyOptions}
+            billOptions={paidBillsBillOptions}
+            data={filteredPaidBills}
+            columns={paidBillsColumns}
+            emptyMessage={paidBillsEmptyMessage}
+            startDate={paidBillsStartDate}
+            endDate={paidBillsEndDate}
+            onDateRangeChange={({
+              startDate,
+              endDate,
+            }: {
+              startDate: string;
+              endDate: string;
+            }) => {
+              setPaidBillsStartDate(startDate);
+              setPaidBillsEndDate(endDate);
+              setPaidBillsPage(1);
+            }}
+            paginationInfo={{
+              total: paidBillsPagination?.total ?? filteredPaidBills.length,
+              current: paidBillsPage,
+              pageSize,
+            }}
+            onPageChange={(p: number) => setPaidBillsPage(p)}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPaidBillsPage(1);
+            }}
+            currentPage={paidBillsPage}
+            totalPages={paidBillsTotalPages}
+            onPrev={() => setPaidBillsPage((p) => Math.max(1, p - 1))}
+            onNext={() =>
+              setPaidBillsPage((p) => Math.min(paidBillsTotalPages, p + 1))
+            }
+            onExportRequest={
+              estateId
+                ? async () => {
+                    const res = await dispatch(
+                      getEstatePaidBills({
+                        estateId,
+                        page: 1,
+                        limit: 50000,
+                        startDate: paidBillsStartDate || undefined,
+                        endDate: paidBillsEndDate || undefined,
+                      }),
+                    ).unwrap();
+                    const rows = res?.data ?? [];
+                    return rows.filter((item: any) => {
+                      if (filterFrequency) {
+                        const freq = (item.frequency ?? "")
+                          .toString()
+                          .toLowerCase();
+                        if (freq !== filterFrequency.toLowerCase()) return false;
+                      }
+                      if (filterBill) {
+                        const billName = item.bill?.name ?? item.billName ?? "";
+                        if (billName !== filterBill) return false;
+                      }
+                      if (filterBillStatus) {
+                        const status = (item.status ?? "")
+                          .toString()
+                          .toLowerCase();
+                        if (status !== filterBillStatus.toLowerCase()) {
+                          return false;
+                        }
+                      }
+                      return true;
+                    });
+                  }
+                : undefined
+            }
+          />
+        }
+      />
+
+      <PaidBillDetailsModal
+        open={Boolean(viewingPaidBill)}
+        item={viewingPaidBill}
+        onOpenChange={(open) => {
+          if (!open) setViewingPaidBill(null);
+        }}
+      />
+      </div>
+    </div>
+  );
+}

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
@@ -161,15 +161,17 @@ export function ReportHeadEntriesPage({ kind }: { readonly kind: EntryKind }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-2">
-        <button
-          type="button"
-          aria-label="Back to estate reports"
-          onClick={() => router.push("/dashboard/estate-admin/reports")}
-          className="mt-1 grid h-8 w-8 cursor-pointer place-items-center rounded-full hover:bg-muted"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
+      <div className="flex items-center gap-2">
+        <div className="rounded-full bg-[#F2F2F2] p-3">
+          <Image
+            src="/arrow.svg"
+            alt="Back to estate reports"
+            width={20}
+            height={20}
+            className="cursor-pointer hover:opacity-80"
+            onClick={() => router.back()}
+          />
+        </div>
         <div>
           <h1 className="font-heading text-3xl font-bold">{headName}</h1>
           <p className="text-muted-foreground mt-1">{title}</p>

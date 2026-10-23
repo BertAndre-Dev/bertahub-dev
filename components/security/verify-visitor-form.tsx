@@ -19,7 +19,7 @@ import {
   getApiSuccessMessage,
 } from "@/lib/api-error";
 import { CheckCircle, Eye, Phone } from "lucide-react";
-import type { VisitorDetailsData } from "@/app/dashboard/security/types";
+import type { VisitorDetailsData } from "@/app/(platform)/dashboard/security/types";
 import type { VisitorVerificationFlags } from "@/lib/visitor-verification-mode";
 import { getVerificationFlags } from "@/lib/visitor-verification-mode";
 

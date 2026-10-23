@@ -2,7 +2,7 @@
 
 import { AlertCircle, MessagesSquare, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { KpiCard } from "@/app/dashboard/super-admin/dashboard/components/kpi-card";
+import { KpiCard } from "@/app/(platform)/dashboard/super-admin/dashboard/components/kpi-card";
 import { cn } from "@/lib/utils";
 import type { ComplaintsSummaryData } from "@/types/analytics";
 

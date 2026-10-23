@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { VisitorDetailsData } from "@/app/dashboard/security/types";
+import type { VisitorDetailsData } from "@/app/(platform)/dashboard/security/types";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { parseGateResponse, type GateResult } from "@/lib/security-gate";
 import { VisitorVerificationMode } from "@/redux/slice/super-admin/super-admin-est-mgt/super-admin-est-mgt";

@@ -14,7 +14,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
-import { KpiCard } from "@/app/dashboard/super-admin/dashboard/components/kpi-card";
+import { KpiCard } from "@/app/(platform)/dashboard/super-admin/dashboard/components/kpi-card";
 import { cn } from "@/lib/utils";
 import type { AppDispatch } from "@/redux/store";
 import { getCompanyOverviewFinancialReport } from "@/redux/slice/company/overview-financial-report/overview-financial-report";
