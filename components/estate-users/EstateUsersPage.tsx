@@ -59,7 +59,7 @@ import {
   DESIGNATIONS_PAGE_SIZE,
 } from "@/lib/designations";
 import { DesignationsManager } from "@/components/designations/DesignationsManager";
-import { parseCompanyFromUser } from "@/app/dashboard/company/lib/company";
+import { parseCompanyFromUser } from "@/app/(platform)/dashboard/company/lib/company";
 import { selectEstateModules } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 
 type AdminStaffPageTab = "staff" | "designations";

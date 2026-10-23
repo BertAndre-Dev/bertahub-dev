@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeftRight, BadgeCheck, Banknote } from "lucide-react";
-import { KpiCard } from "@/app/dashboard/super-admin/dashboard/components/kpi-card";
+import { KpiCard } from "@/app/(platform)/dashboard/super-admin/dashboard/components/kpi-card";
 import { formatTransactionAmount } from "@/lib/transaction-summary-chart";
 import type { TransactionSummary } from "@/types/analytics";
 

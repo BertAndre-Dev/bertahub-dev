@@ -55,7 +55,19 @@ export function ExpenseEntriesTable({
         render: () => headName,
         exportValue: () => headName,
       },
-      { key: "description", header: "Description" },
+      {
+        key: "description",
+        header: "Description",
+        render: (item: ExpenseEntry) => (
+          <span
+            className="inline-block w-48 max-w-48 truncate normal-case"
+            title={item.description || undefined}
+          >
+            {item.description || "—"}
+          </span>
+        ),
+        exportValue: (item: ExpenseEntry) => item.description ?? "",
+      },
       {
         key: "amount",
         header: "Amount",

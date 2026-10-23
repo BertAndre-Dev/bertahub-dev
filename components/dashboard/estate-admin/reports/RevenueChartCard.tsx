@@ -46,18 +46,47 @@ function toIsoIfPresent(dateInputValue: string): string | undefined {
 interface RevenueChartCardProps {
   estateId: string;
   variant?: "estate-admin" | "company";
+  startDate?: string;
+  endDate?: string;
+  onDateRangeChange?: (range: { startDate: string; endDate: string }) => void;
+  showDateRange?: boolean;
 }
 
 export function RevenueChartCard({
   estateId,
   variant = "estate-admin",
+  startDate: controlledStartDate,
+  endDate: controlledEndDate,
+  onDateRangeChange,
+  showDateRange = true,
 }: Readonly<RevenueChartCardProps>) {
   const dispatch = useDispatch<AppDispatch>();
   const isCompany = variant === "company";
   const idPrefix = isCompany ? "company-" : "";
+  const isDateControlled = onDateRangeChange != null;
 
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [localStartDate, setLocalStartDate] = useState("");
+  const [localEndDate, setLocalEndDate] = useState("");
+  const startDate = isDateControlled
+    ? (controlledStartDate ?? "")
+    : localStartDate;
+  const endDate = isDateControlled ? (controlledEndDate ?? "") : localEndDate;
+
+  function setStartDate(value: string) {
+    if (isDateControlled) {
+      onDateRangeChange?.({ startDate: value, endDate });
+      return;
+    }
+    setLocalStartDate(value);
+  }
+
+  function setEndDate(value: string) {
+    if (isDateControlled) {
+      onDateRangeChange?.({ startDate, endDate: value });
+      return;
+    }
+    setLocalEndDate(value);
+  }
   const [period, setPeriod] = useState<
     RevenueChartPeriod | CompanyRevenueChartPeriod
   >("monthly");
@@ -163,16 +192,18 @@ export function RevenueChartCard({
         </div>
 
         <div className="flex w-full min-w-0 flex-col gap-2 md:flex-row md:flex-wrap md:items-center justify-between">
-          <DateRangeFilter
-            startId={`${idPrefix}revenue-chart-start`}
-            endId={`${idPrefix}revenue-chart-end`}
-            startDate={startDate}
-            endDate={endDate}
-            onStartChange={setStartDate}
-            onEndChange={setEndDate}
-            startPlaceholder={datePlaceholders.start}
-            endPlaceholder={datePlaceholders.end}
-          />
+          {showDateRange ? (
+            <DateRangeFilter
+              startId={`${idPrefix}revenue-chart-start`}
+              endId={`${idPrefix}revenue-chart-end`}
+              startDate={startDate}
+              endDate={endDate}
+              onStartChange={setStartDate}
+              onEndChange={setEndDate}
+              startPlaceholder={datePlaceholders.start}
+              endPlaceholder={datePlaceholders.end}
+            />
+          ) : null}
 
           <div className="flex items-center gap-2">
             <Select

@@ -42,12 +42,12 @@ import {
 } from "@/lib/financial-report-utils";
 import { RevenueChartCard } from "@/components/dashboard/estate-admin/reports/RevenueChartCard";
 import { ExpenseChartCard } from "@/components/dashboard/estate-admin/reports/ExpenseChartCard";
-import { parseCompanyFromUser } from "@/app/dashboard/company/lib/company";
+import { parseCompanyFromUser } from "@/app/(platform)/dashboard/company/lib/company";
 import {
   mapCompanyEstateRows,
   parseCompanyEstates,
   type EstateOption,
-} from "@/app/dashboard/company/asset/lib/estate";
+} from "@/app/(platform)/dashboard/company/asset/lib/estate";
 
 type EstateSelectOption = { label: string; value: string };
 type RevenueCategory = "all" | "bills" | "vending";

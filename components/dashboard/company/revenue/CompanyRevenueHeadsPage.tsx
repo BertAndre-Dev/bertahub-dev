@@ -31,12 +31,12 @@ import {
   setCompanyRevenueHeadEstate,
 } from "@/redux/slice/company/revenue-head/company-revenue-head-slice";
 import type { AppDispatch, RootState } from "@/redux/store";
-import { parseCompanyFromUser } from "@/app/dashboard/company/lib/company";
+import { parseCompanyFromUser } from "@/app/(platform)/dashboard/company/lib/company";
 import {
   mapCompanyEstateRows,
   parseCompanyEstates,
   type EstateOption,
-} from "@/app/dashboard/company/asset/lib/estate";
+} from "@/app/(platform)/dashboard/company/asset/lib/estate";
 import { Card } from "@/components/ui/card";
 import Loader from "@/components/ui/Loader";
 import Pagination from "@/components/pagination/page";

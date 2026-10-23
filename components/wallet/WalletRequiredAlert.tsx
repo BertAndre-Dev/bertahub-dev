@@ -9,7 +9,7 @@ import { selectUserRole } from "@/redux/slice/auth-mgt/auth-mgt-slice";
 import { getWallet as getEstateWallet } from "@/redux/slice/estate-admin/wallet-mgt/wallet-mgt";
 import { getWallet as getStaffWallet } from "@/redux/slice/staff/wallet-mgt/wallet-mgt";
 import { getCompanyWallet } from "@/redux/slice/company/wallet-mgt/company-wallet-mgt";
-import { parseCompanyFromUser } from "@/app/dashboard/company/lib/company";
+import { parseCompanyFromUser } from "@/app/(platform)/dashboard/company/lib/company";
 import { extractEstateIdFromUser } from "@/lib/user-id";
 import { isNavModuleEnabled } from "@/lib/nav-module-filter";
 import { getUserAssignedModules } from "@/lib/overview-chart-modules";

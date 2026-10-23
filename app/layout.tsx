@@ -1,10 +1,10 @@
 
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { Geist, Geist_Mono, Varela_Round, Albert_Sans } from "next/font/google"
 import { absoluteUrl, getSiteUrl } from "@/lib/site-url"
-import { Analytics } from "@vercel/analytics/next"
+import { DeferredVercelAnalytics } from "@/components/analytics/deferred-vercel-analytics"
 import "./globals.css";
-import ClientProvider from "@/components/client-provider/page";
 import { CookieBanner } from "@/components/cookie-banner"; 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -74,9 +74,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <ClientProvider>{children}</ClientProvider>
+        {children}
         <CookieBanner />
-        <Analytics />
+        <Suspense fallback={null}>
+          <DeferredVercelAnalytics />
+        </Suspense>
         <GoogleAnalytics gaId="G-2QKPRW9HZL" />
       </body>
     </html>

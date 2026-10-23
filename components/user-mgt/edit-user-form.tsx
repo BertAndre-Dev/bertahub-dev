@@ -34,7 +34,7 @@ import {
   userDesignationId,
 } from "@/lib/designations";
 import { extractEstateNameFromUser } from "@/lib/user-id";
-import { parseCompanyFromUser } from "@/app/dashboard/company/lib/company";
+import { parseCompanyFromUser } from "@/app/(platform)/dashboard/company/lib/company";
 import type { AppDispatch } from "@/redux/store";
 
 type AddressSelectOption = { label: string; value: string };

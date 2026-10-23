@@ -4,14 +4,15 @@ import React, { useEffect, useRef } from "react";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
 
 function toIsoDateUTC(d: Date): string {
-  return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
-  )
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
     .toISOString()
     .slice(0, 10);
 }
 
-function getLastNDaysRangeIsoUTC(days: number): { fromDate: string; toDate: string } {
+function getLastNDaysRangeIsoUTC(days: number): {
+  fromDate: string;
+  toDate: string;
+} {
   const now = new Date();
   const to = new Date(now);
   const from = new Date(now);
@@ -74,14 +75,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
       estate,
       type,
     });
-  }, [
-    defaultDateRangeDays,
-    fromDate,
-    toDate,
-    onFiltersChange,
-    estate,
-    type,
-  ]);
+  }, [defaultDateRangeDays, fromDate, toDate, onFiltersChange, estate, type]);
 
   const handleFromDateChange = (iso: string) => {
     onFiltersChange({
@@ -127,7 +121,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border bg-white p-4 sm:flex-row sm:flex-wrap sm:items-center">
+    <div className="w-full flex flex-col gap-3 rounded-lg border bg-white p-4 sm:flex-row sm:flex-wrap sm:items-center">
       <DateRangeFilter
         startDate={fromDate ?? ""}
         endDate={toDate ?? ""}
@@ -137,49 +131,50 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
         endPlaceholder={defaultDateRangeDays ? "" : undefined}
       />
 
-      {showSearchInput && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{searchFieldLabel}:</span>
-          <input
-            type="text"
-            placeholder={searchPlaceholder}
-            value={estate}
-            onChange={handleEstateChange}
-            className="px-3 py-2 border rounded-lg text-sm min-w-[200px]"
-          />
-        </div>
-      )}
+      <div className="flex items-center gap-2 pt-4">
+        {showSearchInput && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">{searchFieldLabel}:</span>
+            <input
+              type="text"
+              placeholder={searchPlaceholder}
+              value={estate}
+              onChange={handleEstateChange}
+              className="px-3 py-2 border rounded-lg text-sm min-w-[200px]"
+            />
+          </div>
+        )}
 
-      {showTypeFilter && (
+        {showTypeFilter && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Type:</span>
+            <select
+              aria-label="Select type"
+              value={type}
+              onChange={handleTypeChange}
+              className="px-3 py-2 border rounded-lg text-sm min-w-[160px] bg-white cursor-pointer"
+            >
+              <option value="">All</option>
+              <option value="credit">Credit</option>
+              <option value="debit">Debit</option>
+            </select>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Type:</span>
+          <span className="text-sm font-medium">Export:</span>
           <select
-            aria-label="Select type"
-            value={type}
-            onChange={handleTypeChange}
-            className="px-3 py-2 border rounded-lg text-sm min-w-[160px] bg-white cursor-pointer"
+            defaultValue=""
+            onChange={handleExportClick}
+            className="px-3 py-2 border rounded-lg text-sm bg-white cursor-pointer"
+            aria-label="Select export format"
           >
-            <option value="">All</option>
-            <option value="credit">Credit</option>
-            <option value="debit">Debit</option>
+            <option value="">Select format</option>
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
           </select>
         </div>
-      )}
-
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">Export:</span>
-        <select
-          defaultValue=""
-          onChange={handleExportClick}
-          className="px-3 py-2 border rounded-lg text-sm bg-white cursor-pointer"
-          aria-label="Select export format"
-        >
-          <option value="">Select format</option>
-          <option value="csv">CSV</option>
-          <option value="pdf">PDF</option>
-        </select>
       </div>
     </div>
   );
 };
-

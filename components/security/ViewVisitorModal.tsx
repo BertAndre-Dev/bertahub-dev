@@ -3,7 +3,7 @@
 import Modal from "@/components/modal/page";
 import ViewVisitorSearch from "@/components/security/view-visitor-search";
 import VerifyVisitorForm from "@/components/security/verify-visitor-form";
-import type { VisitorDetailsData } from "@/app/dashboard/security/types";
+import type { VisitorDetailsData } from "@/app/(platform)/dashboard/security/types";
 import type { VisitorVerificationFlags } from "@/lib/visitor-verification-mode";
 
 interface ViewVisitorModalProps {

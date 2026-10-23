@@ -1,4 +1,4 @@
-import type { VisitorDetailsData } from "@/app/dashboard/security/types";
+import type { VisitorDetailsData } from "@/app/(platform)/dashboard/security/types";
 import type {
   ScanVisitorParams,
   VerifyVisitorParams,

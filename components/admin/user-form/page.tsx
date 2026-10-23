@@ -26,7 +26,7 @@ import {
   getAdminInviteLabel,
   type AdminInviteRole,
 } from "@/lib/invite-user-roles";
-import { parseCompanyFromUser } from "@/app/dashboard/company/lib/company";
+import { parseCompanyFromUser } from "@/app/(platform)/dashboard/company/lib/company";
 
 type InviteUserFormProps = {
   close: () => void;

@@ -30,12 +30,12 @@ import {
   selectCompanyRevenueEntriesLoading,
   selectCompanyRevenueEntriesPagination,
 } from "@/redux/slice/company/revenue-entry/company-revenue-entry-slice";
-import { parseCompanyFromUser } from "@/app/dashboard/company/lib/company";
+import { parseCompanyFromUser } from "@/app/(platform)/dashboard/company/lib/company";
 import {
   mapCompanyEstateRows,
   parseCompanyEstates,
   type EstateOption,
-} from "@/app/dashboard/company/asset/lib/estate";
+} from "@/app/(platform)/dashboard/company/asset/lib/estate";
 import { slugify } from "@/lib/slug";
 import { getApiErrorMessage } from "@/lib/api-error";
 
